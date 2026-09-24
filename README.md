@@ -9,6 +9,7 @@ The product's core promise is traceable signal evidence: every generated signal 
 This repository starts with the product research and an early visual prototype. The prototype uses illustrative sample data and does not connect to a market-data provider, generate production AI signals, grade trades, or send notifications.
 
 - `docs/alphasigs-ux-audit.md` — reference product review and adaptation blueprint.
+- `docs/market-data-readiness.md` — review of existing provider adapters and Vercel access limits.
 - `prototype/index.html` — early workspace mockup for visual direction.
 
 ## Product principles
