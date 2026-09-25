@@ -6,14 +6,14 @@
 
 | กลุ่ม | ดึงได้จากโค้ดที่มี | สิ่งที่ต้องตรวจเพิ่ม |
 |---|---|---|
-| หุ้น SET / mai | Settrade quote และ daily OHLCV ใน adapter ของ workspace ใหม่ | สิทธิ์บัญชี, universe ครบทั้งตลาด, source timestamp, ความยาวย้อนหลังและแท่งระหว่างวัน |
-| DR | ใช้ Settrade path เดียวกับหุ้นไทยสำหรับ quote และ daily OHLCV; ไม่ต้องพึ่ง DR Tracker เก่าเพื่อแสดงราคาตัว DR | coverage รายสัญลักษณ์, underlying, FX, conversion ratio, corporate actions |
+| หุ้น SET / mai | ทดสอบ PTT ได้ quote และแท่งรายวัน 100 แท่ง ล่าสุด 25 กันยายน 2026 | universe ครบทั้งตลาด, source timestamp, ความยาวย้อนหลังและแท่งระหว่างวัน |
+| DR | ใช้ Settrade path เดียวกับหุ้นไทย; ทดสอบ AAPL80 ได้ quote และแท่งรายวัน 100 แท่ง ล่าสุด 25 กันยายน 2026 | coverage รายสัญลักษณ์, underlying, FX, conversion ratio, corporate actions |
 | TFEX: Gold / Silver / SET50 | ทดสอบ read-only สำเร็จสำหรับ S50U26, GOU26, SVFU26 โดยใช้ TFEX app ID/secret และ broker/app-code ทั่วไป; ได้ quote ที่มีราคา | source timestamp, bars, bid/offer, streaming และความครอบคลุมสัญญาที่ยังไม่ทดสอบ |
 | ดัชนี SET และ breadth | ยังไม่มี feed ที่ยืนยันได้ในโค้ดเดิม | API สิทธิ์ตรงจาก SET หรือช่องทาง broker; breadth ปัจจุบันคืน `unavailable` |
 
 คำว่า “live” ในบางส่วนของแอปเก่าหมายถึงคำขอสำเร็จ ไม่ได้พิสูจน์ว่า exchange ส่งข้อมูลตามเวลาจริง ตัวแปลงแท่งรายวันเก่าแทน timestamp ที่ผิดรูปแบบด้วยเวลา `now`; ต้องแก้ให้ปฏิเสธแท่งนั้น เพราะ timestamp ที่แต่งขึ้นทำให้กราฟและการตัดสินผลสัญญาณผิดได้ Quote บางตัวติดเวลา fetch แทนเวลา exchange ต้องแสดง `receivedAt` แยกจาก `observedAt` และใช้คำว่า latency ไม่ทราบถ้าไม่มีเวลาจากต้นทาง
 
-**ผลตรวจแบบ read-only จากเครื่องนี้ (25 กันยายน 2026):** ไฟล์ `tfex.txt` ไฟล์เดียวมี app key pair ทั่วไปกับ TFEX แยกกัน คู่ทั่วไป login ได้ HTTP 404; เมื่อนำ TFEX app ID/secret ไปใช้กับ broker/app-code เดียวกัน login สำเร็จ แต่ขอ quote หุ้น PTT และ DR AAPL80 ได้ HTTP 403 จึงยังยืนยันราคาหุ้นไทย/DR ไม่ได้ ส่วน TFEX พบราคาใน S50U26, GOU26, SVFU26 แต่ไม่มี timestamp จากต้นทางและยังไม่ได้ทดสอบแท่งย้อนหลัง ตัว probe ไม่แสดงราคา คีย์ หรือ payload การทดลองไม่ได้เรียกบัญชีหรือส่งคำสั่งซื้อขาย
+**ผลตรวจแบบ read-only จากเครื่องนี้ (25 กันยายน 2026):** ไฟล์ `tfex.txt` เดียวกันมี app key pair ทั่วไปกับ TFEX และมี app code ซ้ำสองค่าต่างกัน การจับคู่ค่าแรกกับ key pair ทั่วไปทำให้ PTT และ DR AAPL80 ได้ quote และแท่งรายวัน 100 แท่ง (ล่าสุด 25 กันยายน) ส่วนค่า app code สุดท้ายกับ TFEX app ID/secret ใช้ดึง quote S50U26, GOU26, SVFU26 ได้ แต่ไม่มี timestamp จากต้นทางและยังไม่ได้ทดสอบแท่งย้อนหลัง ตัว probe ไม่แสดงราคา คีย์ หรือ payload การทดลองไม่ได้เรียกบัญชีหรือส่งคำสั่งซื้อขาย
 
 **สิ่งที่เห็นบน Production UI วันที่ 25 กันยายน:** หน้า SET/mai แสดง AI Picks โดยระบุ Settrade Market API; หน้า DR ระบุว่า DR Tracker ขาด credential; หน้า TFEX แสดงราคาสัญญาปัจจุบันเป็น unavailable ทั้ง S50, GO, MGO และ Silver รายการ mai ตัวหนึ่งยังถูกนำเสนอเป็น AI Pick ทั้งที่ราคาปิดล่าสุดลงวันที่ 3 กรกฎาคม (84 วันก่อนวันตรวจ) จึงต้องแยก “ได้รับข้อมูล” จาก “ข้อมูลใหม่พอสำหรับสัญญาณ” และห้ามเรียก quote ว่า real-time หากไม่มี timestamp ของต้นทาง การเห็นข้อมูลบนหน้าเว็บไม่ได้พิสูจน์สิทธิ์เผยแพร่หรือ latency ของ API
 

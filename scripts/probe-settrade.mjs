@@ -20,10 +20,18 @@ if (fileFlag !== -1) {
   try {
     const allowlist = new Set(['SETTRADE_BROKER_ID', 'SETTRADE_APP_CODE', 'BROKER_APP_ID', 'BROKER_API_SECRET', 'SETTRADE_APP_ID', 'SETTRADE_APP_SECRET', 'TFEX_BROKER_ID', 'TFEX_APP_CODE', 'TFEX_APP_ID', 'TFEX_APP_SECRET', 'TFEX_API_SECRET']);
     const selected = {};
+    const settradeAppCodes = [];
     for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
       const match = line.match(/^([A-Z][A-Z0-9_]*)=(.*)$/);
       if (!match || !allowlist.has(match[1])) continue;
-      selected[match[1]] = match[2].trim().replace(/^("|')(.*)\1$/, '$2');
+      const value = match[2].trim().replace(/^("|')(.*)\1$/, '$2');
+      if (match[1] === 'SETTRADE_APP_CODE') settradeAppCodes.push(value);
+      else selected[match[1]] = value;
+    }
+    // Credential files may contain one app code per market under the repeated
+    // generic key. The confirmed file order is equity first, TFEX second.
+    if (settradeAppCodes.length) {
+      selected.SETTRADE_APP_CODE = market === 'TFEX' ? settradeAppCodes.at(-1) : settradeAppCodes[0];
     }
     env = selected;
   } catch {
