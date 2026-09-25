@@ -18,6 +18,14 @@ MetaQuotes describes its Python package as obtaining data by inter-process commu
 
 The official integration setup describes Windows Python and connection to an installed MT5 terminal. That means a hosted Colab runtime, which does not share a local broker terminal's IPC, is not the right place to run this connector. This conclusion follows from the documented local-terminal architecture. [MetaQuotes Python integration setup](https://www.mql5.com/en/docs/python_metatrader5)
 
+## Mac and J.P. Morgan options
+
+MetaQuotes does offer an MT5 installer for macOS. It installs the Windows terminal inside a Wine environment rather than as a fully native macOS terminal, and MetaQuotes says it supports Apple processors. This is a practical way to run the broker's MT5 desktop on the user's Mac, but does not establish that the Windows-only Python package/IPC bridge will work from macOS Python. [MetaTrader 5 on macOS](https://www.mql5.com/en/articles/619)
+
+For a Mac-hosted MT5 terminal, a possible live-feed bridge is a small read-only MQL5 Expert Advisor that posts approved tick/bar fields to a secured HTTPS endpoint using `WebRequest`. MetaQuotes documents that `WebRequest` is allowed from scripts and Expert Advisors, requires explicitly allowing the destination host in terminal settings, and blocks calls from indicators. This is a separate native MQL5 route, not the Python integration used by the Colab notebook. [MQL5 WebRequest](https://www.mql5.com/en/docs/network/webrequest)
+
+J.P. Morgan DataQuery includes FX content: its public product page describes spot and forward rates for 60+ pairs and API access, but does not state that this is a free, publicly redistributable live OHLC feed. J.P. Morgan separately says DataQuery users receive free access to JPMaQS indicators while excluding the most recent six months of history, specifically for research/testing. Those delayed research indicators are not a substitute for live Forex chart prices. Treat JPM DataQuery as an optional research/macro source unless J.P. Morgan confirms the exact FX dataset, real-time entitlement, API access, and display rights for this app. [DataQuery FX coverage](https://www.jpmorgan.com/markets/dataquery), [JPMaQS access](https://www.jpmorgan.com/markets/jpmaqs)
+
 ## Recommended architecture
 
 - Treat the user's own MT5 broker feed as the preferred Forex source. Its price/spread series matches the broker where they may act on a signal, unlike a blended reference-rate source.
