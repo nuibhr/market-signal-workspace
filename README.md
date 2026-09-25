@@ -10,6 +10,7 @@ This repository starts with the product research and an early visual prototype. 
 
 - `docs/alphasigs-ux-audit.md` — reference product review and adaptation blueprint.
 - `docs/market-data-readiness.md` — review of existing provider adapters and Vercel access limits.
+- `docs/thai-market-coverage-and-widgets.md` — Thai market coverage, Settrade/SET/Yahoo source boundaries, and Investing.com Webmaster Tools assessment.
 - `prototype/index.html` — early workspace mockup for visual direction.
 
 ## Product principles
