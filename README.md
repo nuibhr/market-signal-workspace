@@ -1,6 +1,6 @@
 # Market Signal Workspace
 
-A chart-led trading research workspace for Thai equities, DRs, TFEX, international equities, and forex pairs.
+A chart-led trading research workspace for Thai equities, DRs, TFEX, international equities, forex pairs, and crypto pairs.
 
 The product's core promise is traceable signal evidence: every generated signal remains in the ledger, including wins, losses, expiries, and ambiguous outcomes. Charts, notifications, outcome grading, and aggregate statistics must all refer to the same immutable signal record.
 
@@ -12,6 +12,7 @@ This repository has product research, an early visual prototype, and a server-si
 - `docs/market-data-readiness.md` — review of existing provider adapters and Vercel access limits.
 - `docs/thai-market-coverage-and-widgets.md` — Thai market coverage, Settrade/SET/Yahoo source boundaries, and Investing.com Webmaster Tools assessment.
 - `docs/settrade-adapter.md` — secure capability probe and data-quality rules for the new read-only Settrade module.
+- `docs/market-universes-and-crypto-data.md` — agreed Thai-market universe rules, Webull selection status, and the candidate crypto market-data source.
 - `prototype/index.html` — early workspace mockup for visual direction.
 - `src/market-data/settrade.mjs` — server-only Settrade quote and daily-candle adapter.
 
@@ -31,6 +32,7 @@ This repository has product research, an early visual prototype, and a server-si
 3. TFEX: Gold, Silver, SET50
 4. International equities
 5. Forex pairs
+6. Crypto pairs (spot initially unless perpetual futures are explicitly selected)
 
 ## First implementation milestone
 
