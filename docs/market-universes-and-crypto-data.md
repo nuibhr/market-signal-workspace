@@ -42,3 +42,5 @@ Every universe entry should carry:
 `instrumentId`, `symbol`, `market`, `venue`, `productType`, `baseAsset`, `quoteAsset`, `currency`, `expiry`, `universeRule`, `rank`, `rankAsOf`, `source`, `status`.
 
 Store membership/rank snapshots with effective dates. This keeps past signals associated with the universe and instrument definition that existed when they were created.
+
+The new code now provides these snapshot helpers in `src/markets/universe.mjs`. Actual SET100/mai/DR80 symbol membership is supplied as a dated source snapshot rather than guessed or copied as a permanent list. The crypto adapter in `src/market-data/binance-spot.mjs` checks exchange metadata, returns spot quote fields, and normalizes OHLCV klines; run `npm run probe:binance-spot -- <PAIR>` for a sanitized availability check. It does not contain a hardcoded crypto watchlist and is not connected to the visual prototype yet.

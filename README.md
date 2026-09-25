@@ -6,7 +6,7 @@ The product's core promise is traceable signal evidence: every generated signal 
 
 ## Project status
 
-This repository has product research, an early visual prototype, and a server-side read-only Settrade adapter. The prototype uses illustrative sample data and does not connect to the adapter, generate production AI signals, grade trades, or send notifications.
+This repository has product research, an early visual prototype, and server-side read-only Settrade and Binance Spot data adapters. It also has dated-universe helpers. The prototype uses illustrative sample data and does not connect to these adapters, generate production AI signals, grade trades, or send notifications.
 
 - `docs/alphasigs-ux-audit.md` — reference product review and adaptation blueprint.
 - `docs/market-data-readiness.md` — review of existing provider adapters and Vercel access limits.
@@ -15,6 +15,8 @@ This repository has product research, an early visual prototype, and a server-si
 - `docs/market-universes-and-crypto-data.md` — agreed Thai-market universe rules, Webull selection status, and the candidate crypto market-data source.
 - `prototype/index.html` — early workspace mockup for visual direction.
 - `src/market-data/settrade.mjs` — server-only Settrade quote and daily-candle adapter.
+- `src/market-data/binance-spot.mjs` — server-only Binance Spot exchange-info, quote and OHLCV adapter; uses public market data and needs no API secret.
+- `src/markets/universe.mjs` — dated snapshots and selection rules for SET100, mai Top 50, DR80, TFEX contracts and configured crypto pairs.
 
 ## Product principles
 
@@ -41,6 +43,8 @@ Build one end-to-end vertical slice with a licensed real data source:
 `instrument registry → OHLCV feed → Lightweight Charts → immutable signal record → deterministic outcome grading → per-trade evidence → aggregate statistics → alert state change`
 
 The first instrument will be selected after confirming which market-data API and permissions are available.
+
+`npm run probe:binance-spot -- BTCUSDT` reports provider availability without printing prices. Pass the user's configured spot pairs to check them; no pair universe is hardcoded.
 
 ## Development notes
 
