@@ -6,7 +6,7 @@ The product's core promise is traceable signal evidence: every generated signal 
 
 ## Project status
 
-This repository has product research, a Next.js workspace shell with Lightweight Charts, and server-side read-only Settrade, Twelve Data Forex candidate, and Binance Spot data adapters. The preferred Forex source is the user's broker-specific MT5 feed, pending a secure bridge. The workspace currently uses clearly labeled generated DEMO candles and sample signal rows; it does not connect the UI to adapters, generate production AI signals, grade real trades, or send notifications.
+This repository has product research, a Next.js trading workspace with Lightweight Charts, automatic-signal and team-chat UI previews, and server-side read-only Settrade, Twelve Data Forex candidate, and Binance Spot data adapters. The workspace still uses labeled DEMO market data. Its scanner, saved signal outcomes, browser-speech preview, and analyst/marketing chat are local demonstrations; none is connected to production data, an AI voice service, a push-notification worker, or a real support inbox.
 
 - `docs/alphasigs-ux-audit.md` — reference product review and adaptation blueprint.
 - `docs/market-data-readiness.md` — review of existing provider adapters and Vercel access limits.
@@ -15,7 +15,7 @@ This repository has product research, a Next.js workspace shell with Lightweight
 - `docs/market-universes-and-market-data.md` — agreed market universes, first-class Forex source assessment, Webull selection status, and secondary crypto market-data source.
 - `docs/mt5-forex-bridge.md` — review of the shared MT5 Colab notebook and the safe path from a broker's terminal to the web workspace.
 - `prototype/index.html` — original single-file mockup for visual direction.
-- `src/app` and `src/components/workspace.jsx` — Next.js dashboard shell, market-category UI, and Lightweight Charts chart with generated DEMO bars.
+- `src/app` and `src/components/workspace.jsx` — Next.js workspace, market-category watchlist, popups, demo signal ledger/notifications, support-chat preview, and Lightweight Charts chart with generated DEMO bars.
 - `src/market-data/settrade.mjs` — server-only Settrade quote and daily-candle adapter.
 - `src/market-data/binance-spot.mjs` — server-only Binance Spot exchange-info, quote and OHLCV adapter; uses public market data and needs no API secret.
 - `src/market-data/twelve-data-forex.mjs` — optional server-only Forex pair, reference-rate and OHLC adapter; requires `TWELVE_DATA_API_KEY` and does not provide bid/ask quotes.
