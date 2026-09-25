@@ -4,3 +4,6 @@
 tfex.txt
 WEBULL.txt
 node_modules/
+.next/
+out/
+build/

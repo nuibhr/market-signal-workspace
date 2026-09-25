@@ -6,7 +6,7 @@ The product's core promise is traceable signal evidence: every generated signal 
 
 ## Project status
 
-This repository has product research, an early visual prototype, and server-side read-only Settrade, Twelve Data Forex candidate, and Binance Spot data adapters. The preferred Forex source is the user's broker-specific MT5 feed, pending confirmation of where its terminal runs and how it can securely bridge to the web app. It also has dated-universe helpers. The prototype uses illustrative sample data and does not connect to these adapters, generate production AI signals, grade trades, or send notifications.
+This repository has product research, a Next.js workspace shell with Lightweight Charts, and server-side read-only Settrade, Twelve Data Forex candidate, and Binance Spot data adapters. The preferred Forex source is the user's broker-specific MT5 feed, pending a secure bridge. The workspace currently uses clearly labeled generated DEMO candles and sample signal rows; it does not connect the UI to adapters, generate production AI signals, grade real trades, or send notifications.
 
 - `docs/alphasigs-ux-audit.md` — reference product review and adaptation blueprint.
 - `docs/market-data-readiness.md` — review of existing provider adapters and Vercel access limits.
@@ -14,7 +14,8 @@ This repository has product research, an early visual prototype, and server-side
 - `docs/settrade-adapter.md` — secure capability probe and data-quality rules for the new read-only Settrade module.
 - `docs/market-universes-and-market-data.md` — agreed market universes, first-class Forex source assessment, Webull selection status, and secondary crypto market-data source.
 - `docs/mt5-forex-bridge.md` — review of the shared MT5 Colab notebook and the safe path from a broker's terminal to the web workspace.
-- `prototype/index.html` — early workspace mockup for visual direction.
+- `prototype/index.html` — original single-file mockup for visual direction.
+- `src/app` and `src/components/workspace.jsx` — Next.js dashboard shell, market-category UI, and Lightweight Charts chart with generated DEMO bars.
 - `src/market-data/settrade.mjs` — server-only Settrade quote and daily-candle adapter.
 - `src/market-data/binance-spot.mjs` — server-only Binance Spot exchange-info, quote and OHLCV adapter; uses public market data and needs no API secret.
 - `src/market-data/twelve-data-forex.mjs` — optional server-only Forex pair, reference-rate and OHLC adapter; requires `TWELVE_DATA_API_KEY` and does not provide bid/ask quotes.
@@ -47,6 +48,8 @@ Build one end-to-end vertical slice with a licensed real data source:
 The first instrument will be selected after confirming which market-data API and permissions are available.
 
 `npm run probe:forex -- EUR/USD USD/JPY` and `npm run probe:binance-spot -- BTCUSDT` report provider availability without printing prices. Forex checks require `TWELVE_DATA_API_KEY`; neither market has a hardcoded user watchlist.
+
+Run the workspace locally with `npm run dev` and open `http://localhost:3000`.
 
 ## Development notes
 

@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "probe:settrade": "node scripts/probe-settrade.mjs",
     "probe:binance-spot": "node scripts/probe-binance-spot.mjs",
     "probe:forex": "node scripts/probe-forex.mjs",
@@ -10,5 +13,11 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "lightweight-charts": "^5.2.1",
+    "next": "^16.3.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   }
 }
