@@ -1,0 +1,219 @@
+import { createPrivateKey, sign } from 'node:crypto';
+
+const LOGIN_BASE = 'https://open-api.settrade.com/api/oam/v1';
+const MARKET_BASE = 'https://marketapi.settrade.com/api';
+const TIMEOUT_MS = 10_000;
+
+export class SettradeDataError extends Error {
+  constructor(code, status = null) {
+    super(code);
+    this.name = 'SettradeDataError';
+    this.code = code;
+    this.status = status;
+  }
+}
+
+function getSettradeConfiguration(env = process.env) {
+  const brokerId = env.SETTRADE_BROKER_ID?.trim() ?? '';
+  const appCode = env.SETTRADE_APP_CODE?.trim() ?? '';
+  const appId = env.BROKER_APP_ID?.trim() || env.SETTRADE_APP_ID?.trim() || '';
+  const appSecret = env.BROKER_API_SECRET?.trim() || env.SETTRADE_APP_SECRET?.trim() || '';
+  return {
+    brokerId, appCode, appId, appSecret,
+    missing: [
+      ['SETTRADE_BROKER_ID', brokerId],
+      ['SETTRADE_APP_CODE', appCode],
+      ['BROKER_APP_ID or SETTRADE_APP_ID', appId],
+      ['BROKER_API_SECRET or SETTRADE_APP_SECRET', appSecret],
+    ].filter(([, value]) => !value).map(([name]) => name),
+  };
+}
+
+function createSignature(appId, secret, timestamp) {
+  const decoded = Buffer.from(secret, 'base64');
+  const raw = decoded.length === 33 && decoded[0] === 0 ? decoded.subarray(1) : decoded;
+  if (raw.length !== 32) throw new SettradeDataError('INVALID_CREDENTIAL_FORMAT');
+  const privateKey = createPrivateKey({
+    key: Buffer.concat([
+      Buffer.from('3041020100301306072a8648ce3d020106082a8648ce3d0301070427', 'hex'),
+      Buffer.from('30250201010420', 'hex'), raw,
+    ]),
+    format: 'der', type: 'pkcs8',
+  });
+  return sign('sha256', Buffer.from(`${appId}..${timestamp}`, 'utf8'), privateKey).toString('hex');
+}
+
+function parseTimestamp(value) {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    const milliseconds = value < 10_000_000_000 ? value * 1000 : value;
+    const date = new Date(milliseconds);
+    return Number.isFinite(date.valueOf()) ? date.toISOString() : null;
+  }
+  if (typeof value === 'string' && /(?:Z|[+-]\d\d:\d\d)$/i.test(value)) {
+    const date = new Date(value);
+    return Number.isFinite(date.valueOf()) ? date.toISOString() : null;
+  }
+  return null;
+}
+
+function bangkokDate(iso) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date(iso));
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function candleDay(value) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return Number.isFinite(date.valueOf()) && date.toISOString().slice(0, 10) === value ? value : null;
+  }
+  const iso = parseTimestamp(value);
+  return iso ? bangkokDate(iso) : null;
+}
+
+function finiteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+export function normalizeSettradeQuote(raw, symbol, receivedAt) {
+  const price = finiteNumber(raw?.last);
+  const observedAt = parseTimestamp(raw?.time ?? raw?.timestamp ?? raw?.quoteTime);
+  return {
+    instrumentId: `SET:${symbol}`,
+    symbol,
+    source: 'Settrade Market API',
+    price,
+    change: finiteNumber(raw?.change),
+    changePercent: finiteNumber(raw?.percentChange),
+    high: finiteNumber(raw?.high),
+    low: finiteNumber(raw?.low),
+    volume: finiteNumber(raw?.totalVolume),
+    observedAt,
+    receivedAt,
+    latency: observedAt ? 'source-timestamp-available' : 'unknown',
+    status: price === null ? 'unavailable' : 'available',
+  };
+}
+
+export function normalizeSettradeDailyCandles(raw, symbol, receivedAt) {
+  const columns = ['time', 'open', 'high', 'low', 'close', 'volume'];
+  const arrays = Object.fromEntries(columns.map(column => [column, Array.isArray(raw?.[column]) ? raw[column] : []]));
+  const total = arrays.time.length;
+  const byDay = new Map();
+  const duplicatedDays = new Set();
+  let rejected = 0;
+  for (let index = 0; index < total; index += 1) {
+    const time = candleDay(arrays.time[index]);
+    const open = finiteNumber(arrays.open[index]);
+    const high = finiteNumber(arrays.high[index]);
+    const low = finiteNumber(arrays.low[index]);
+    const close = finiteNumber(arrays.close[index]);
+    const volume = finiteNumber(arrays.volume[index]);
+    if (!time || open === null || high === null || low === null || close === null || volume === null
+      || open <= 0 || close <= 0 || low <= 0 || volume < 0
+      || high < Math.max(open, close, low) || low > Math.min(open, close)) {
+      rejected += 1;
+      continue;
+    }
+    // Duplicate trading days are ambiguous; never quietly choose one bar.
+    if (byDay.has(time)) {
+      byDay.delete(time);
+      duplicatedDays.add(time);
+      rejected += 2;
+      continue;
+    }
+    if (duplicatedDays.has(time)) {
+      rejected += 1;
+      continue;
+    }
+    byDay.set(time, { time, open, high, low, close, volume });
+  }
+  return {
+    instrumentId: `SET:${symbol}`,
+    symbol,
+    source: 'Settrade Market API',
+    timeframe: '1d',
+    receivedAt,
+    bars: [...byDay.values()].sort((a, b) => a.time.localeCompare(b.time)),
+    diagnostics: { received: total, rejected },
+    status: byDay.size ? 'available' : 'unavailable',
+  };
+}
+
+/** Older bars remain visible as history, but cannot qualify a new signal. */
+export function assessDailySeries(series, now = Date.now(), maxAgeDays = 7) {
+  const latestDay = series.bars.at(-1)?.time ?? null;
+  if (!latestDay) return { freshness: 'unavailable', latestDay: null, ageDays: null, signalEligible: false };
+  const latest = Date.parse(`${latestDay}T00:00:00.000Z`);
+  const today = Date.parse(`${bangkokDate(new Date(now).toISOString())}T00:00:00.000Z`);
+  const ageDays = Math.round((today - latest) / 86_400_000);
+  const freshness = ageDays >= 0 && ageDays <= maxAgeDays ? 'recent' : 'stale';
+  return { freshness, latestDay, ageDays, signalEligible: freshness === 'recent' };
+}
+
+function safeSymbol(symbol) {
+  if (typeof symbol !== 'string' || !/^[A-Z0-9-]{1,24}$/.test(symbol)) {
+    throw new SettradeDataError('INVALID_SYMBOL');
+  }
+  return symbol;
+}
+
+export function createSettradeClient({ env = process.env, fetcher = fetch, now = Date.now } = {}) {
+  const config = getSettradeConfiguration(env);
+  let token = null;
+  let expiresAt = 0;
+  async function request(url, init, code) {
+    let response;
+    try {
+      response = await fetcher(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    } catch {
+      throw new SettradeDataError('NETWORK_UNAVAILABLE');
+    }
+    if (!response.ok) throw new SettradeDataError(code, response.status);
+    try {
+      return await response.json();
+    } catch {
+      throw new SettradeDataError('INVALID_RESPONSE');
+    }
+  }
+  async function login() {
+    if (config.missing.length) throw new SettradeDataError('NOT_CONFIGURED');
+    if (token && expiresAt > now()) return token;
+    const timestamp = String(now());
+    const signature = createSignature(config.appId, config.appSecret, timestamp);
+    const payload = await request(
+      `${LOGIN_BASE}/${encodeURIComponent(config.brokerId)}/broker-apps/${encodeURIComponent(config.appCode)}/login`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ apiKey: config.appId, params: '', signature, timestamp }) },
+      'AUTH_FAILED',
+    );
+    if (typeof payload?.access_token !== 'string' || !payload.access_token) throw new SettradeDataError('INVALID_AUTH_RESPONSE');
+    token = payload.access_token;
+    expiresAt = now() + Math.max(0, (Number(payload.expires_in) || 3600) - 30) * 1000;
+    return token;
+  }
+  async function marketRequest(path) {
+    const accessToken = await login();
+    try {
+      return await request(`${MARKET_BASE}/${path}`, { headers: { Accept: 'application/json', Authorization: `Bearer ${accessToken}` } }, 'MARKET_DATA_UNAVAILABLE');
+    } catch (error) {
+      if (!(error instanceof SettradeDataError) || error.status !== 401) throw error;
+      token = null;
+      const refreshed = await login();
+      return request(`${MARKET_BASE}/${path}`, { headers: { Accept: 'application/json', Authorization: `Bearer ${refreshed}` } }, 'MARKET_DATA_UNAVAILABLE');
+    }
+  }
+  async function getQuote(symbol) {
+    safeSymbol(symbol);
+    const raw = await marketRequest(`marketdata/v3/${encodeURIComponent(config.brokerId)}/quote/${encodeURIComponent(symbol)}`);
+    return normalizeSettradeQuote(raw, symbol, new Date(now()).toISOString());
+  }
+  async function getDailyCandles(symbol) {
+    safeSymbol(symbol);
+    const raw = await marketRequest(`techchart/v3/${encodeURIComponent(config.brokerId)}/candlesticks?symbol=${encodeURIComponent(symbol)}&interval=1d&limit=100`);
+    return normalizeSettradeDailyCandles(raw, symbol, new Date(now()).toISOString());
+  }
+  return { configuration: { configured: config.missing.length === 0, missing: config.missing }, login, getQuote, getDailyCandles };
+}

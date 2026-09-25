@@ -67,6 +67,7 @@ The checked-in `.env.example` does not list the TFEX or primary Settrade key set
 - The authenticated admin capability query returns configured key names and market status; the probe can call the TFEX quote endpoint. It should only be invoked as an intentional read-only entitlement check.
 - No live production capability probe was run. Dashboard visibility confirms variable names only; it does not validate credentials or data entitlements.
 - A separate read-only login attempt on 25 September 2026 using the general Settrade fields from the local `tfex.txt` returned HTTP 404 at the broker-app login path. No quote or candle request followed. This does not establish the health of the different Vercel Production values.
+- On 25 September 2026 the old app's Production UI displayed SET and mai AI Pick rows labeled `Settrade Market API`. Its DR screen reported that the DR Tracker credential was missing, and its TFEX screen displayed unavailable quotes for the active S50, GO, MGO and Silver contracts. The UI alone cannot verify latency, exact API entitlement, or the server-side path of each row. One mai row used a latest close dated 3 July 2026 while shown in the 25 September 2026 AI Picks list; the new adapter therefore gates stale bars from new signals.
 - No Yahoo Finance or Google Finance network request was made.
 
 ## Important implementation details

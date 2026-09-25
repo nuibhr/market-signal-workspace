@@ -1,0 +1,12 @@
+{
+  "name": "market-signal-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "probe:settrade": "node scripts/probe-settrade.mjs",
+    "test:market-data": "node --test src/market-data/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

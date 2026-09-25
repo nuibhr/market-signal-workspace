@@ -1,0 +1,6 @@
+.env
+.env.*
+*.env
+tfex.txt
+WEBULL.txt
+node_modules/

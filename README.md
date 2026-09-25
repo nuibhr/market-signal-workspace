@@ -6,12 +6,14 @@ The product's core promise is traceable signal evidence: every generated signal 
 
 ## Project status
 
-This repository starts with the product research and an early visual prototype. The prototype uses illustrative sample data and does not connect to a market-data provider, generate production AI signals, grade trades, or send notifications.
+This repository has product research, an early visual prototype, and a server-side read-only Settrade adapter. The prototype uses illustrative sample data and does not connect to the adapter, generate production AI signals, grade trades, or send notifications.
 
 - `docs/alphasigs-ux-audit.md` — reference product review and adaptation blueprint.
 - `docs/market-data-readiness.md` — review of existing provider adapters and Vercel access limits.
 - `docs/thai-market-coverage-and-widgets.md` — Thai market coverage, Settrade/SET/Yahoo source boundaries, and Investing.com Webmaster Tools assessment.
+- `docs/settrade-adapter.md` — secure capability probe and data-quality rules for the new read-only Settrade module.
 - `prototype/index.html` — early workspace mockup for visual direction.
+- `src/market-data/settrade.mjs` — server-only Settrade quote and daily-candle adapter.
 
 ## Product principles
 
