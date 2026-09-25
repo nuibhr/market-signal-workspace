@@ -9,6 +9,7 @@ The product's core promise is traceable signal evidence: every generated signal 
 This repository has product research, a Next.js trading workspace with Lightweight Charts, automatic-signal and team-chat UI previews, and server-side read-only Settrade, Twelve Data Forex candidate, and Binance Spot data adapters. The workspace still uses labeled DEMO market data. Its scanner, saved signal outcomes, browser-speech preview, and analyst/marketing chat are local demonstrations; none is connected to production data, an AI voice service, a push-notification worker, or a real support inbox.
 
 - `docs/alphasigs-ux-audit.md` — reference product review and adaptation blueprint.
+- `docs/alphasigs-workspace-deep-audit-2026-09-25.md` — detailed workspace interactions, signal-statistics audit, and honest gap matrix against the current NOVA demo.
 - `docs/market-data-readiness.md` — review of existing provider adapters and Vercel access limits.
 - `docs/thai-market-coverage-and-widgets.md` — Thai market coverage, Settrade/SET/Yahoo source boundaries, and Investing.com Webmaster Tools assessment.
 - `docs/settrade-adapter.md` — secure capability probe and data-quality rules for the new read-only Settrade module.
