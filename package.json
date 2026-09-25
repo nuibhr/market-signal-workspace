@@ -5,6 +5,7 @@
   "scripts": {
     "probe:settrade": "node scripts/probe-settrade.mjs",
     "probe:binance-spot": "node scripts/probe-binance-spot.mjs",
+    "probe:forex": "node scripts/probe-forex.mjs",
     "test:market-data": "node --test src/market-data/*.test.mjs"
   },
   "engines": {

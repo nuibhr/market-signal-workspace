@@ -1,4 +1,4 @@
-# Market universes and price-source plan
+# Market universes and Forex / crypto price-source plan
 
 **Updated:** 25 September 2026
 
@@ -11,8 +11,18 @@
 | DR80 | Include instruments whose SET symbol ends exactly in `80`. Load the current exchange list so new listings are included; do not hardcode a permanent count. | The remembered count of 113 appears to predate recent listings: SET announced 28 new KTB-issued DRs to begin trading 9 September 2026, and the reported DR80 total after that issue is 141. SET's all-issuer DR total is a different count and includes other issuer codes. [SET listing announcement](https://www.set.or.th/en/market/news-and-alert/newsdetails?id=106730500&symbol=SET&t=SET+News+%3A28+new+DRs+referencing+securities+in+Asia%2C+U.S.%2C+and+Europe+issued+by+KTB+to+start+trading+on+September+9), [total reported by KTB](https://radiokhonkaen985.prd.go.th/pdf/web/viewer.html?file=%2Fth%2Ffile%2Fget%2Ffile%2F202609093fef14fad3534d099ba585f448e175fb160939.pdf). |
 | TFEX | SET50, gold and silver futures. Each listed contract/expiry is a separate instrument. | Quotes for S50U26, GOU26 and SVFU26 were verified. Provider timestamp and historical candles remain unknown. |
 | International equities | Use Webull as the candidate source; decide the popular-symbol universe together later. | Do not invent a permanent stock list yet. |
-| Forex | Keep the category; select and verify a pair/quote provider before connecting it. | Distinguish spot FX from CFDs/futures and record provider, quote currency and timestamp. |
-| Crypto pairs | The pair list can be supplied to an exchange adapter; start with spot pairs unless the user specifies perpetual futures. | Recommended candidate: Binance Spot public market-data API. Use the same exchange's quote, ticker and candles for a pair; do not silently aggregate or stitch prices across exchanges. |
+| Forex | First-class market. Use a configured major/minor/cross pair list and preserve each pair's base and quote currencies. | Candidate adapter uses Twelve Data's Forex composite reference rates and candles. It is not a broker/execution quote and has no bid/ask spread. Licensing and the actual account entitlement must be confirmed. |
+| Crypto pairs | Secondary category; the pair list can be supplied to an exchange adapter. Start with spot unless the user specifies perpetual futures. | Binance Spot public market-data API. Use the same exchange's quote, ticker and candles for a pair; do not silently aggregate or stitch prices across exchanges. |
+
+## Forex source and pair handling
+
+Webull OpenAPI's documented US products are stocks, ETFs, options, futures, crypto and event contracts; spot Forex is not listed as a supported product. Keep Forex on its own provider path rather than deriving FX values from Webull instruments. [Webull supported markets](https://developer.webull.com/apis/docs/about-open-api/)
+
+The new server-only adapter in `src/market-data/twelve-data-forex.mjs` uses Twelve Data's `/forex_pairs`, `/exchange_rate` and `/time_series` endpoints. Twelve Data documents live Forex market data, historical OHLC candles from 1-minute through monthly intervals, and composite rates sourced from multiple liquidity providers. The quote endpoint returns a timestamped reference rate, not bid/ask. [API documentation](https://twelvedata.com/docs), [Forex API v2](https://support.twelvedata.com/en/articles/12520817-forex-api-v2)
+
+Use canonical symbols such as `EUR/USD`, `GBP/USD`, `USD/JPY`, `AUD/USD`, `USD/CHF`, `USD/CAD`, `NZD/USD`, and selected crosses. Never remove the slash in the registry, and never mix composite spot-FX prices with CFDs, futures, or another broker's executable feed. Each signal/outcome must carry source, pair, price basis and source timestamp. Since this source has no bid/ask, do not claim spread-aware execution results until a broker/venue feed supplies those fields.
+
+The adapter is ready for server-side use with `TWELVE_DATA_API_KEY`; run `npm run probe:forex -- EUR/USD USD/JPY` for a sanitized quote/bar availability check. No API key was found or tested in this workspace, so current availability is unverified. Twelve Data's terms restrict external display/redistribution unless explicitly permitted by the subscription tier or a separate agreement; its current support guidance says individual plans are internal/non-commercial and redistribution needs separate rights. Keep Forex in development/internal use until the selected account's coverage and rights are confirmed. [Terms of Use](https://twelvedata.com/terms), [commercial and personal use](https://support.twelvedata.com/en/articles/5332349-commercial-and-personal-usage), [attribution](https://support.twelvedata.com/en/articles/12647398-attribution-guidelines-for-using-twelve-data)
 
 ## Crypto price fields and source
 
@@ -43,4 +53,4 @@ Every universe entry should carry:
 
 Store membership/rank snapshots with effective dates. This keeps past signals associated with the universe and instrument definition that existed when they were created.
 
-The new code now provides these snapshot helpers in `src/markets/universe.mjs`. Actual SET100/mai/DR80 symbol membership is supplied as a dated source snapshot rather than guessed or copied as a permanent list. The crypto adapter in `src/market-data/binance-spot.mjs` checks exchange metadata, returns spot quote fields, and normalizes OHLCV klines; run `npm run probe:binance-spot -- <PAIR>` for a sanitized availability check. It does not contain a hardcoded crypto watchlist and is not connected to the visual prototype yet.
+The new code now provides snapshot helpers in `src/markets/universe.mjs`, including configured Forex pairs with base/quote and major/minor/cross grouping. Actual SET100/mai/DR80 membership is supplied as a dated source snapshot rather than guessed or copied as a permanent list. The Forex and crypto adapters are not connected to the visual prototype yet.

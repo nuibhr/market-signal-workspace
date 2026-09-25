@@ -4,7 +4,7 @@ const MARKET_CONFIG = Object.freeze({
   DR80: { name: 'DR ending in 80', rule: 'symbol-suffix-80', venue: 'SET' },
   TFEX: { name: 'TFEX futures', rule: 'configured-contracts', venue: 'TFEX' },
   INTERNATIONAL: { name: 'International equities', rule: 'user-selected', venue: null },
-  FOREX: { name: 'Forex pairs', rule: 'user-selected', venue: null },
+  FOREX: { name: 'Forex pairs', rule: 'configured-currency-pairs', venue: 'TWELVE_DATA_COMPOSITE' },
   CRYPTO_SPOT: { name: 'Crypto spot pairs', rule: 'configured-spot-pairs', venue: 'BINANCE' },
 });
 
@@ -17,7 +17,7 @@ function validDate(value) {
 function normalizeInstrument(instrument, market) {
   if (!instrument || typeof instrument !== 'object' || Array.isArray(instrument)) return null;
   const symbol = typeof instrument.symbol === 'string' ? instrument.symbol.trim().toUpperCase() : '';
-  if (!/^[A-Z0-9][A-Z0-9._-]{0,31}$/.test(symbol)) return null;
+  if (!/^[A-Z0-9][A-Z0-9._/-]{0,31}$/.test(symbol)) return null;
   return {
     instrumentId: instrument.instrumentId ?? `${market}:${symbol}`,
     symbol,
@@ -27,6 +27,7 @@ function normalizeInstrument(instrument, market) {
     currency: instrument.currency ?? null,
     baseAsset: instrument.baseAsset ?? null,
     quoteAsset: instrument.quoteAsset ?? null,
+    group: instrument.group ?? null,
     expiry: instrument.expiry ?? null,
     status: instrument.status ?? 'unknown',
     source: instrument.source ?? null,
@@ -111,6 +112,29 @@ export function createCryptoSpotSnapshot(exchangeSymbols, configuredSymbols, { s
       : { symbol, productType: 'spot', status: 'unavailable' };
   });
   return makeSnapshot('CRYPTO_SPOT', rows, { source, asOf, expectedCount: configuredSymbols.length });
+}
+
+/** Keep FX symbols, base/quote currencies and provider group explicit in dated snapshots. */
+export function createForexSnapshot(providerPairs, configuredSymbols, { source = 'Twelve Data Forex Composite', asOf } = {}) {
+  if (!validDate(asOf)) throw new TypeError('SNAPSHOT_AS_OF_REQUIRED');
+  const bySymbol = new Map(providerPairs.map(row => [String(row?.symbol ?? '').toUpperCase(), row]));
+  const rows = configuredSymbols.map(symbol => {
+    const normalized = typeof symbol === 'string' ? symbol.trim().toUpperCase() : '';
+    const listed = bySymbol.get(normalized);
+    const match = /^([A-Z]{3})\/([A-Z]{3})$/.exec(normalized);
+    if (!match) return { symbol: normalized, productType: 'spot-fx-reference', status: 'unavailable' };
+    return listed
+      ? {
+          symbol: normalized,
+          baseAsset: listed.baseAsset ?? match[1],
+          quoteAsset: listed.quoteAsset ?? match[2],
+          group: listed.group ?? null,
+          productType: 'spot-fx-reference',
+          status: 'available',
+        }
+      : { symbol: normalized, baseAsset: match[1], quoteAsset: match[2], productType: 'spot-fx-reference', status: 'unavailable' };
+  });
+  return makeSnapshot('FOREX', rows, { source, asOf, expectedCount: configuredSymbols.length });
 }
 
 export const MARKET_UNIVERSE_CONFIG = MARKET_CONFIG;
