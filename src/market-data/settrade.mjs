@@ -13,12 +13,28 @@ export class SettradeDataError extends Error {
   }
 }
 
-function getSettradeConfiguration(env = process.env) {
+function getSettradeConfiguration(env = process.env, market = 'SET') {
+  if (market === 'TFEX') {
+    const brokerId = env.TFEX_BROKER_ID?.trim() || env.SETTRADE_BROKER_ID?.trim() || '';
+    const appCode = env.TFEX_APP_CODE?.trim() || env.SETTRADE_APP_CODE?.trim() || '';
+    const appId = env.TFEX_APP_ID?.trim() || '';
+    const appSecret = env.TFEX_APP_SECRET?.trim() || env.TFEX_API_SECRET?.trim() || '';
+    return {
+      market, brokerId, appCode, appId, appSecret,
+      missing: [
+        ['TFEX_BROKER_ID or SETTRADE_BROKER_ID', brokerId],
+        ['TFEX_APP_CODE or SETTRADE_APP_CODE', appCode],
+        ['TFEX_APP_ID', appId],
+        ['TFEX_APP_SECRET or TFEX_API_SECRET', appSecret],
+      ].filter(([, value]) => !value).map(([name]) => name),
+    };
+  }
   const brokerId = env.SETTRADE_BROKER_ID?.trim() ?? '';
   const appCode = env.SETTRADE_APP_CODE?.trim() ?? '';
   const appId = env.BROKER_APP_ID?.trim() || env.SETTRADE_APP_ID?.trim() || '';
   const appSecret = env.BROKER_API_SECRET?.trim() || env.SETTRADE_APP_SECRET?.trim() || '';
   return {
+    market,
     brokerId, appCode, appId, appSecret,
     missing: [
       ['SETTRADE_BROKER_ID', brokerId],
@@ -77,19 +93,47 @@ function finiteNumber(value) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-export function normalizeSettradeQuote(raw, symbol, receivedAt) {
-  const price = finiteNumber(raw?.last);
-  const observedAt = parseTimestamp(raw?.time ?? raw?.timestamp ?? raw?.quoteTime);
+function numericValue(value) {
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return finiteNumber(value);
+}
+
+function unwrapQuote(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  for (const key of ['data', 'result', 'quote']) {
+    const nested = raw[key];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested) && Object.keys(nested).length) return nested;
+  }
+  return raw;
+}
+
+function quoteValue(raw, keys) {
+  for (const key of keys) if (raw[key] !== undefined && raw[key] !== null) return raw[key];
+  return null;
+}
+
+export function normalizeSettradeQuote(payload, symbol, receivedAt, market = 'SET') {
+  const raw = unwrapQuote(payload);
+  const receivedPrice = numericValue(quoteValue(raw, ['last', 'lastPrice', 'last_price', 'lastPaid']));
+  const price = receivedPrice !== null && receivedPrice > 0 ? receivedPrice : null;
+  const observedAt = parseTimestamp(quoteValue(raw, ['time', 'timestamp', 'quoteTime', 'updatedAt', 'lastUpdateTime']));
+  const tfex = market === 'TFEX';
   return {
-    instrumentId: `SET:${symbol}`,
+    instrumentId: `${tfex ? 'TFEX' : 'SET'}:${symbol}`,
     symbol,
-    source: 'Settrade Market API',
+    source: tfex ? 'TFEX Open API' : 'Settrade Market API',
     price,
-    change: finiteNumber(raw?.change),
-    changePercent: finiteNumber(raw?.percentChange),
-    high: finiteNumber(raw?.high),
-    low: finiteNumber(raw?.low),
-    volume: finiteNumber(raw?.totalVolume),
+    change: numericValue(quoteValue(raw, ['change', 'changePrice', 'priceChange', 'change_price'])),
+    changePercent: numericValue(quoteValue(raw, ['percentChange', 'changePercent', 'pctChange', 'percent_change'])),
+    high: numericValue(quoteValue(raw, ['high', 'highPrice', 'high_price'])),
+    low: numericValue(quoteValue(raw, ['low', 'lowPrice', 'low_price'])),
+    volume: numericValue(quoteValue(raw, ['totalVolume', 'volume', 'tradeVolume', 'total_volume'])),
+    openInterest: numericValue(quoteValue(raw, ['openInterest', 'oi', 'open_interest'])),
+    marketStatus: typeof quoteValue(raw, ['marketStatus', 'market_status', 'tradingStatus']) === 'string'
+      ? quoteValue(raw, ['marketStatus', 'market_status', 'tradingStatus']) : null,
     observedAt,
     receivedAt,
     latency: observedAt ? 'source-timestamp-available' : 'unknown',
@@ -160,8 +204,9 @@ function safeSymbol(symbol) {
   return symbol;
 }
 
-export function createSettradeClient({ env = process.env, fetcher = fetch, now = Date.now } = {}) {
-  const config = getSettradeConfiguration(env);
+export function createSettradeClient(options = {}) {
+  const { env = process.env, fetcher = fetch, now = Date.now, market = 'SET' } = options;
+  const config = getSettradeConfiguration(env, market);
   let token = null;
   let expiresAt = 0;
   async function request(url, init, code) {
@@ -208,12 +253,17 @@ export function createSettradeClient({ env = process.env, fetcher = fetch, now =
   async function getQuote(symbol) {
     safeSymbol(symbol);
     const raw = await marketRequest(`marketdata/v3/${encodeURIComponent(config.brokerId)}/quote/${encodeURIComponent(symbol)}`);
-    return normalizeSettradeQuote(raw, symbol, new Date(now()).toISOString());
+    return normalizeSettradeQuote(raw, symbol, new Date(now()).toISOString(), market);
   }
   async function getDailyCandles(symbol) {
+    if (market === 'TFEX') throw new SettradeDataError('HISTORICAL_ENDPOINT_NOT_VERIFIED');
     safeSymbol(symbol);
     const raw = await marketRequest(`techchart/v3/${encodeURIComponent(config.brokerId)}/candlesticks?symbol=${encodeURIComponent(symbol)}&interval=1d&limit=100`);
     return normalizeSettradeDailyCandles(raw, symbol, new Date(now()).toISOString());
   }
   return { configuration: { configured: config.missing.length === 0, missing: config.missing }, login, getQuote, getDailyCandles };
+}
+
+export function createTfexClient(options = {}) {
+  return createSettradeClient({ ...options, market: 'TFEX' });
 }

@@ -1,7 +1,14 @@
 import { readFileSync } from 'node:fs';
-import { assessDailySeries, createSettradeClient, SettradeDataError } from '../src/market-data/settrade.mjs';
+import { assessDailySeries, createSettradeClient, createTfexClient, SettradeDataError } from '../src/market-data/settrade.mjs';
 
 const args = process.argv.slice(2);
+const marketFlag = args.indexOf('--market');
+const market = marketFlag === -1 ? 'SET' : (args[marketFlag + 1] ?? '').toUpperCase();
+if (!['SET', 'DR', 'TFEX'].includes(market)) {
+  process.stdout.write('{"stage":"configuration","state":"INVALID_MARKET"}\n');
+  process.exit(1);
+}
+if (marketFlag !== -1) args.splice(marketFlag, 2);
 const fileFlag = args.indexOf('--credentials-file');
 let env = process.env;
 if (fileFlag !== -1) {
@@ -11,7 +18,7 @@ if (fileFlag !== -1) {
     process.exit(1);
   }
   try {
-    const allowlist = new Set(['SETTRADE_BROKER_ID', 'SETTRADE_APP_CODE', 'BROKER_APP_ID', 'BROKER_API_SECRET', 'SETTRADE_APP_ID', 'SETTRADE_APP_SECRET']);
+    const allowlist = new Set(['SETTRADE_BROKER_ID', 'SETTRADE_APP_CODE', 'BROKER_APP_ID', 'BROKER_API_SECRET', 'SETTRADE_APP_ID', 'SETTRADE_APP_SECRET', 'TFEX_BROKER_ID', 'TFEX_APP_CODE', 'TFEX_APP_ID', 'TFEX_APP_SECRET', 'TFEX_API_SECRET']);
     const selected = {};
     for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
       const match = line.match(/^([A-Z][A-Z0-9_]*)=(.*)$/);
@@ -26,8 +33,8 @@ if (fileFlag !== -1) {
   args.splice(fileFlag, 2);
 }
 const symbols = args;
-const requested = symbols.length ? symbols : ['PTT', 'AAPL80'];
-const client = createSettradeClient({ env });
+const requested = symbols.length ? symbols : market === 'TFEX' ? ['S50U26', 'GOU26', 'SVFU26'] : ['PTT', 'AAPL80'];
+const client = market === 'TFEX' ? createTfexClient({ env }) : createSettradeClient({ env });
 
 function result(row) {
   process.stdout.write(`${JSON.stringify(row)}\n`);
@@ -39,24 +46,26 @@ function safeError(error) {
     : { state: 'UNEXPECTED_FAILURE' };
 }
 
-result({ stage: 'configuration', configured: client.configuration.configured, missing: client.configuration.missing });
+result({ stage: 'configuration', market, configured: client.configuration.configured, missing: client.configuration.missing });
 if (!client.configuration.configured) process.exit(0);
 
 try {
   await client.login();
-  result({ stage: 'authentication', state: 'AUTHENTICATED' });
+  result({ stage: 'authentication', market, state: 'AUTHENTICATED' });
 } catch (error) {
-  result({ stage: 'authentication', ...safeError(error) });
+  result({ stage: 'authentication', market, ...safeError(error) });
   process.exit(0);
 }
 
 for (const symbol of requested) {
   try {
     const quote = await client.getQuote(symbol);
-    result({ symbol, capability: 'quote', state: quote.status, sourceTimestampKnown: Boolean(quote.observedAt) });
+    result({ market, symbol, capability: 'quote', state: quote.status, priceAvailable: quote.price !== null,
+      sourceTimestampKnown: Boolean(quote.observedAt), source: quote.source });
   } catch (error) {
     result({ symbol, capability: 'quote', ...safeError(error) });
   }
+  if (market === 'TFEX') continue;
   try {
     const series = await client.getDailyCandles(symbol);
     const assessment = assessDailySeries(series);

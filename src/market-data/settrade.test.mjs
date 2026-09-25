@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { assessDailySeries, createSettradeClient, normalizeSettradeDailyCandles, normalizeSettradeQuote, SettradeDataError } from './settrade.mjs';
+import { assessDailySeries, createSettradeClient, createTfexClient, normalizeSettradeDailyCandles, normalizeSettradeQuote, SettradeDataError } from './settrade.mjs';
 
 test('quote distinguishes provider observation time from receipt time', () => {
   const quote = normalizeSettradeQuote({ last: 42.5 }, 'PTT', '2026-09-25T03:00:00.000Z');
@@ -62,4 +62,32 @@ test('client makes read-only quote and candle calls after authentication', async
   assert.equal((await client.getDailyCandles('PTT')).bars.length, 1);
   assert.deepEqual(requests.map(request => request.method), ['POST', 'GET', 'GET']);
   assert.equal(requests.some(request => /account|order|portfolio/.test(request.url)), false);
+});
+
+test('TFEX client accepts the confirmed secret typo and generic broker/app-code aliases', async () => {
+  const env = {
+    SETTRADE_BROKER_ID: '022', SETTRADE_APP_CODE: 'tfex-test', TFEX_APP_ID: 'tfex-id',
+    TFEX_API_SECRET: Buffer.alloc(32, 2).toString('base64'),
+  };
+  const requests = [];
+  const client = createTfexClient({ env, now: () => 1_700_000_000_000, fetcher: async (url, init) => {
+    requests.push({ url, method: init.method ?? 'GET' });
+    const body = url.endsWith('/login')
+      ? { access_token: 'tfex-private-token', expires_in: 3600 }
+      : { data: { symbol: 'S50U26', lastPrice: '1150.5', openInterest: '420' } };
+    return { ok: true, json: async () => body };
+  } });
+  const quote = await client.getQuote('S50U26');
+  assert.equal(quote.instrumentId, 'TFEX:S50U26');
+  assert.equal(quote.source, 'TFEX Open API');
+  assert.equal(quote.price, 1150.5);
+  assert.equal(quote.openInterest, 420);
+  assert.deepEqual(requests.map(request => request.method), ['POST', 'GET']);
+  assert.match(requests[1].url, /marketdata\/v3\/022\/quote\/S50U26$/);
+  await assert.rejects(client.getDailyCandles('S50U26'), error => error.code === 'HISTORICAL_ENDPOINT_NOT_VERIFIED');
+});
+
+test('a zero or negative last price is unavailable for a listed instrument', () => {
+  assert.equal(normalizeSettradeQuote({ last: 0 }, 'S50U26', '2026-09-25T04:00:00.000Z', 'TFEX').status, 'unavailable');
+  assert.equal(normalizeSettradeQuote({ last: -1 }, 'S50U26', '2026-09-25T04:00:00.000Z', 'TFEX').price, null);
 });
