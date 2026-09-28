@@ -1,5 +1,5 @@
 {
-  "name": "market-signal-workspace",
+  "name": "nugaom-ai-pick",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,13 +9,15 @@
     "probe:settrade": "node scripts/probe-settrade.mjs",
     "probe:binance-spot": "node scripts/probe-binance-spot.mjs",
     "probe:forex": "node scripts/probe-forex.mjs",
+    "autopick:worker": "node --env-file=.env.local scripts/auto-pick-worker.mjs",
     "test:market-data": "node --test src/market-data/*.test.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "dependencies": {
     "lightweight-charts": "^5.2.1",
+    "lucide-react": "^1.48.0",
     "next": "^16.3.6",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"

@@ -1,5 +1,6 @@
 .env
 .env.*
+!.env.example
 *.env
 tfex.txt
 WEBULL.txt
@@ -7,3 +8,4 @@ node_modules/
 .next/
 out/
 build/
+data/

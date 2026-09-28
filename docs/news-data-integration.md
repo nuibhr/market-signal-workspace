@@ -1,0 +1,21 @@
+# News and research sources — 26 September 2026
+
+## Working local path
+
+The News window requests `/api/news`. The server route fetches up to four MarketDX stock articles for Thailand and four for the United States, classified by the listed company's country. Every card carries its publisher, publication time, source URL, topic and MarketDX impact score. The score is newsworthiness, not a predicted return. The feeds are market-wide and are not yet mapped to the selected chart symbol.
+
+`MARKETDX_API_KEY` lives in private `.env.local` for development. The route keeps a 15-minute per-market, per-process snapshot, shares in-flight requests, limits each provider response to four articles, and can show a last-good snapshot for up to 24 hours if one source fails. The UI labels that fallback as cached. MarketDX [charges one credit per returned article](https://marketdx.lab.ai/console/docs); even with caching, several server instances can spend credits independently. A durable shared cache and request budget are needed before a larger release.
+
+Production use is blocked until `MARKETDX_PUBLIC_DISPLAY_RIGHTS_CONFIRMED=true` is set after checking the plan and permission to display or redistribute news in this product. MarketDX lists a distinct Redistribution tier in its [API documentation](https://marketdx.lab.ai/console/docs). This toggle must reflect an actual rights decision, not merely a successful API request. Third-party article pages remain linked to their publishers.
+
+## Yahoo Finance candidate
+
+The supplied [Yahoo OAuth 2.0 guide](https://developer.yahoo.com/oauth2/guide/) covers authorization for Oath Ad Platforms and UserInfo APIs. It does not supply a licensed Yahoo Finance quote or candle API. The open-source [yahoo-finance2](https://github.com/gadicc/yahoo-finance2/blob/dev/README.md) package can run in Node.js and read quote/chart data, but explicitly calls itself unofficial. Its MIT code license is separate from permission to redistribute underlying market data. Therefore Yahoo is not an automatic fallback for member-facing prices or signal settlement. Add it only after obtaining the applicable data product, access method and display rights; then label source, timestamp and delay, and keep its candles distinct from Settrade series.
+
+## Plugin capabilities and app boundary
+
+The [Aiera API](https://rest.aiera.com/) offers event calendars, transcripts, filings and embed components; its quick start requires a separate API key. [Bigdata.com's developer platform](https://bigdata.com/developers) offers search, research, structured financial data and embeddable widgets; it also requires an application API key. The Aiera plugin advertises corporate events, filings, publications and broker research. Bigdata.com skills describe research workflows using security resolution, company tear sheets and cited searches. Stock Market Summary is a skill for neutral, cited market summaries. These are useful for analyst research, but no callable Aiera or Bigdata tools or production API credentials were available to this app session. A Codex plugin session is not an API entitlement for end users of this website. Do not render their outputs as live website data until a documented API, customer-facing usage rights, schema, cache policy and server-side credentials are in place.
+
+When provider access is available, prioritize an Aiera earnings/event timeline beside the selected symbol and a Bigdata.com source-linked company brief or filing search. Keep quoted source passages short, show publication and retrieval times, and let users open original documents. These panels should be introduced only after a real response can be displayed and the instrument has been resolved to the provider's company identifier.
+
+Suggested order after the MarketDX news window: (1) durable news cache and rights check, (2) map article tickers to the instrument registry with explicit exchange codes, (3) show only supported company research or event panels after provider access is confirmed, (4) connect news timestamps to real chart candles, (5) evaluate whether the new context improves a measured daily scan. Do not let news direction directly generate a BUY or SELL label.

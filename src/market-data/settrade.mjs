@@ -3,6 +3,7 @@ import { createPrivateKey, sign } from 'node:crypto';
 const LOGIN_BASE = 'https://open-api.settrade.com/api/oam/v1';
 const MARKET_BASE = 'https://marketapi.settrade.com/api';
 const TIMEOUT_MS = 10_000;
+const CANDLE_INTERVALS = Object.freeze({ '15m': '15m', '1h': '60m', '4h': '240m', '1d': '1d' });
 
 export class SettradeDataError extends Error {
   constructor(code, status = null) {
@@ -186,6 +187,48 @@ export function normalizeSettradeDailyCandles(raw, symbol, receivedAt) {
   };
 }
 
+/** Intraday bars use UTC seconds, as required by Lightweight Charts. */
+export function normalizeSettradeIntradayCandles(raw, symbol, receivedAt, timeframe) {
+  const columns = ['time', 'open', 'high', 'low', 'close', 'volume'];
+  const arrays = Object.fromEntries(columns.map(column => [column, Array.isArray(raw?.[column]) ? raw[column] : []]));
+  const byTime = new Map();
+  const duplicatedTimes = new Set();
+  let rejected = 0;
+  for (let index = 0; index < arrays.time.length; index += 1) {
+    const timestamp = arrays.time[index];
+    const time = Number.isInteger(timestamp) && timestamp > 1_000_000_000 && timestamp < 10_000_000_000 ? timestamp : null;
+    const open = finiteNumber(arrays.open[index]);
+    const high = finiteNumber(arrays.high[index]);
+    const low = finiteNumber(arrays.low[index]);
+    const close = finiteNumber(arrays.close[index]);
+    const volume = finiteNumber(arrays.volume[index]);
+    if (time === null || open === null || high === null || low === null || close === null || volume === null
+      || open <= 0 || close <= 0 || low <= 0 || volume < 0
+      || high < Math.max(open, close, low) || low > Math.min(open, close)) {
+      rejected += 1;
+      continue;
+    }
+    if (byTime.has(time)) {
+      byTime.delete(time);
+      duplicatedTimes.add(time);
+      rejected += 2;
+      continue;
+    }
+    if (duplicatedTimes.has(time)) { rejected += 1; continue; }
+    byTime.set(time, { time, open, high, low, close, volume });
+  }
+  return {
+    instrumentId: `SET:${symbol}`,
+    symbol,
+    source: 'Settrade Market API',
+    timeframe,
+    receivedAt,
+    bars: [...byTime.values()].sort((a, b) => a.time - b.time),
+    diagnostics: { received: arrays.time.length, rejected },
+    status: byTime.size ? 'available' : 'unavailable',
+  };
+}
+
 /** Older bars remain visible as history, but cannot qualify a new signal. */
 export function assessDailySeries(series, now = Date.now(), maxAgeDays = 7) {
   const latestDay = series.bars.at(-1)?.time ?? null;
@@ -195,6 +238,15 @@ export function assessDailySeries(series, now = Date.now(), maxAgeDays = 7) {
   const ageDays = Math.round((today - latest) / 86_400_000);
   const freshness = ageDays >= 0 && ageDays <= maxAgeDays ? 'recent' : 'stale';
   return { freshness, latestDay, ageDays, signalEligible: freshness === 'recent' };
+}
+
+export function assessIntradaySeries(series, now = Date.now(), maxAgeHours = 72) {
+  const latestSeconds = series.bars.at(-1)?.time ?? null;
+  if (!Number.isInteger(latestSeconds)) return { freshness: 'unavailable', latestDay: null, latestTime: null, ageHours: null, signalEligible: false };
+  const latestTime = new Date(latestSeconds * 1000).toISOString();
+  const ageHours = (now - latestSeconds * 1000) / 3_600_000;
+  const freshness = ageHours >= 0 && ageHours <= maxAgeHours ? 'recent' : 'stale';
+  return { freshness, latestDay: bangkokDate(latestTime), latestTime, ageHours, signalEligible: freshness === 'recent' };
 }
 
 function safeSymbol(symbol) {
@@ -209,6 +261,7 @@ export function createSettradeClient(options = {}) {
   const config = getSettradeConfiguration(env, market);
   let token = null;
   let expiresAt = 0;
+  let loginPromise = null;
   async function request(url, init, code) {
     let response;
     try {
@@ -226,18 +279,23 @@ export function createSettradeClient(options = {}) {
   async function login() {
     if (config.missing.length) throw new SettradeDataError('NOT_CONFIGURED');
     if (token && expiresAt > now()) return token;
-    const timestamp = String(now());
-    const signature = createSignature(config.appId, config.appSecret, timestamp);
-    const payload = await request(
-      `${LOGIN_BASE}/${encodeURIComponent(config.brokerId)}/broker-apps/${encodeURIComponent(config.appCode)}/login`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ apiKey: config.appId, params: '', signature, timestamp }) },
-      'AUTH_FAILED',
-    );
-    if (typeof payload?.access_token !== 'string' || !payload.access_token) throw new SettradeDataError('INVALID_AUTH_RESPONSE');
-    token = payload.access_token;
-    expiresAt = now() + Math.max(0, (Number(payload.expires_in) || 3600) - 30) * 1000;
-    return token;
+    if (!loginPromise) {
+      loginPromise = (async () => {
+        const timestamp = String(now());
+        const signature = createSignature(config.appId, config.appSecret, timestamp);
+        const payload = await request(
+          `${LOGIN_BASE}/${encodeURIComponent(config.brokerId)}/broker-apps/${encodeURIComponent(config.appCode)}/login`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ apiKey: config.appId, params: '', signature, timestamp }) },
+          'AUTH_FAILED',
+        );
+        if (typeof payload?.access_token !== 'string' || !payload.access_token) throw new SettradeDataError('INVALID_AUTH_RESPONSE');
+        token = payload.access_token;
+        expiresAt = now() + Math.max(0, (Number(payload.expires_in) || 3600) - 30) * 1000;
+        return token;
+      })();
+    }
+    try { return await loginPromise; } finally { loginPromise = null; }
   }
   async function marketRequest(path) {
     const accessToken = await login();
@@ -255,13 +313,19 @@ export function createSettradeClient(options = {}) {
     const raw = await marketRequest(`marketdata/v3/${encodeURIComponent(config.brokerId)}/quote/${encodeURIComponent(symbol)}`);
     return normalizeSettradeQuote(raw, symbol, new Date(now()).toISOString(), market);
   }
-  async function getDailyCandles(symbol) {
+  async function getCandles(symbol, timeframe = '1d') {
     if (market === 'TFEX') throw new SettradeDataError('HISTORICAL_ENDPOINT_NOT_VERIFIED');
     safeSymbol(symbol);
-    const raw = await marketRequest(`techchart/v3/${encodeURIComponent(config.brokerId)}/candlesticks?symbol=${encodeURIComponent(symbol)}&interval=1d&limit=100`);
-    return normalizeSettradeDailyCandles(raw, symbol, new Date(now()).toISOString());
+    const interval = CANDLE_INTERVALS[timeframe];
+    if (!interval) throw new SettradeDataError('INVALID_TIMEFRAME');
+    const raw = await marketRequest(`techchart/v3/${encodeURIComponent(config.brokerId)}/candlesticks?symbol=${encodeURIComponent(symbol)}&interval=${interval}&limit=100`);
+    const receivedAt = new Date(now()).toISOString();
+    return timeframe === '1d'
+      ? normalizeSettradeDailyCandles(raw, symbol, receivedAt)
+      : normalizeSettradeIntradayCandles(raw, symbol, receivedAt, timeframe);
   }
-  return { configuration: { configured: config.missing.length === 0, missing: config.missing }, login, getQuote, getDailyCandles };
+  async function getDailyCandles(symbol) { return getCandles(symbol, '1d'); }
+  return { configuration: { configured: config.missing.length === 0, missing: config.missing }, login, getQuote, getCandles, getDailyCandles };
 }
 
 export function createTfexClient(options = {}) {

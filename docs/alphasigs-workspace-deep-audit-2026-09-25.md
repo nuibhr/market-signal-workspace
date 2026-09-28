@@ -1,10 +1,10 @@
-# AlphaSigs workspace: ตรวจใหม่แบบลงลึกก่อนพัฒนา NOVA ต่อ
+# AlphaSigs workspace: ตรวจใหม่แบบลงลึกก่อนพัฒนา Nugaom AI Pick ต่อ
 
 **สำรวจ:** 25 กันยายน 2026, หน้า [alphasigs.net](https://alphasigs.net/) ที่เปิด workspace ได้ในบัญชี Free  
-**เทียบกับ:** NOVA ที่ `src/components/workspace.jsx` และ `http://localhost:3000/` ณ วันเดียวกัน  
+**เทียบกับ:** Nugaom AI Pick ที่ `src/components/workspace.jsx` และ `http://localhost:3000/` ณ วันเดียวกัน
 **ขอบเขต:** ดูหน้าจอและเปิดเมนู/แท็บ/หน้าต่างแบบอ่านอย่างเดียว ไม่สร้าง alert, ไม่ส่งข้อความ, ไม่ใช้เครดิต, ไม่ซื้อแพ็กเกจ และไม่ยืนยันว่าตัวเลขที่เว็บต้นทางแสดงเป็นผลที่ตรวจสอบจากภายนอกแล้ว
 
-เอกสาร [สำรวจทุกหน้ารอบแรก](alphasigs-ux-audit.md) มี route map ของหน้าเว็บสาธารณะและภาพรวมผลิตภัณฑ์อยู่แล้ว ฉบับนี้ลงรายละเอียด **workspace และเส้นทางการใช้งานที่เป็นหัวใจของ NOVA** พร้อมแก้ข้อประเมินเดิม: เรายังไม่มีหลักฐานที่จะบอกว่า NOVA ใกล้ต้นทาง 80% หน้า NOVA ในปัจจุบันเป็น prototype ที่มีองค์ประกอบบางอย่างคล้ายกัน แต่ความลึกของหน้าจอ การเชื่อมกันของเครื่องมือ และระบบข้อมูลจริงยังห่างมาก
+เอกสาร [สำรวจทุกหน้ารอบแรก](alphasigs-ux-audit.md) มี route map ของหน้าเว็บสาธารณะและภาพรวมผลิตภัณฑ์อยู่แล้ว ฉบับนี้ลงรายละเอียด **workspace และเส้นทางการใช้งานที่เป็นหัวใจของ Nugaom AI Pick** พร้อมแก้ข้อประเมินเดิม: เรายังไม่มีหลักฐานที่จะบอกว่า Nugaom AI Pick ใกล้ต้นทาง 80% หน้า Nugaom AI Pick ในปัจจุบันเป็น prototype ที่มีองค์ประกอบบางอย่างคล้ายกัน แต่ความลึกของหน้าจอ การเชื่อมกันของเครื่องมือ และระบบข้อมูลจริงยังห่างมาก
 
 ## 1. แผนที่ผลิตภัณฑ์ที่พบจริง
 
@@ -12,14 +12,14 @@
 
 เมนูด้านข้างที่เปิดตรวจพบกลุ่มต่อไปนี้:
 
-| กลุ่ม | ทางเข้าที่เห็นในรอบนี้ | ความสำคัญต่อ NOVA |
+| กลุ่ม | ทางเข้าที่เห็นในรอบนี้ | ความสำคัญต่อ Nugaom AI Pick |
 |---|---|---|
 | วิเคราะห์ตลาด | Dashboard & Charts, Meta-Learning AI, Market Scanner, Analysis Feed, Signal Filter Flow, **สถิติสัญญาณ AI ทุกไม้**, Fund Flow Monitor | แกนหลัก |
 | ระบบเทรด | Binary Live Queue, Prediction Markets | นอกขอบเขตเริ่มต้น |
 | ตลาด | ร้านค้า, MT5, Indicators, EA, เช่าด้วยเครดิต, API | ภายหลัง |
 | My Lab | Signal Backtest, EA Gate Lab, Trade Diary, Crowd Sim | ledger/journal สำคัญ แต่ backtest และ simulation แยกจากผลจริง |
 | ข่าวสาร & เศรษฐกิจ | ข่าวการเงิน, ปฏิทินเศรษฐกิจ | เกี่ยวกับความเสี่ยงและเหตุการณ์ |
-| ชุมชน | อันดับห้อง, สมุดเรียนรู้, ตู้เสื้อผ้า, โค้ชเต่า, ฟีดชุมชน, Discord, ส่งเสียงถึงทีมงาน | การคุยกับทีมเป็นโจทย์ของ NOVA; ส่วน gamification รอได้ |
+| ชุมชน | อันดับห้อง, สมุดเรียนรู้, ตู้เสื้อผ้า, โค้ชเต่า, ฟีดชุมชน, Discord, ส่งเสียงถึงทีมงาน | การคุยกับทีมเป็นโจทย์ของ Nugaom AI Pick; ส่วน gamification รอได้ |
 | เรียนรู้ / ตั้งค่า | Academy, Guide, SMC, คีย์ลัด, คู่โปรด, ธีม, ภาษา, แจ้งเตือน, เสียง | ช่วยให้เครื่องมือซับซ้อนยังใช้งานได้ |
 
 Header มี server/latency/online status, theme, language, Journal, Script, Panels, Broadcasts และบัญชี Free. `Panels` เปิดเครื่องมือข้างกราฟ ส่วน `Broadcasts` เปิดหน้าต่าง “มีอะไรใหม่” พร้อมแท็บทั้งหมด/ยังไม่อ่าน, ปุ่มอ่านทั้งหมด, ซ่อนข่าวแต่ละรายการ และบทความยาวที่อธิบายทั้งฟีเจอร์ใหม่และข้อจำกัดของการวัดผล รูปแบบนี้ทำให้ผู้ใช้เห็นเหตุผลของการเปลี่ยนระบบ ไม่ใช่แค่ปุ่มใหม่
@@ -36,11 +36,11 @@ Header มี server/latency/online status, theme, language, Journal, Script, Pa
 
 ภาพรวมใช้พื้นสีเข้มมาก, แผงน้ำเงินเข้ม, เส้นขอบจาง, สีเขียว/แดงบอกทิศ, ม่วง/ฟ้าสำหรับ AI หรือเครื่องมือ และ highlight สีสดเป็นจุด ๆ สิ่งที่ให้ความรู้สึก “ล้ำ” จริงคือ **ข้อมูลหลายชั้นที่เปิดขยายได้โดยไม่หลุดจากกราฟ**, ราคา/เวลา/สถานะสดที่ปรากฏในบริบท และกราฟที่เป็นจุดเชื่อมระหว่าง watchlist กับเครื่องมือ ไม่ใช่แค่ gradient หรือเงา
 
-ข้อเสียที่เห็น: density สูงมากบนความกว้างประมาณ 1200px; คำย่อจำนวนมากอยู่พร้อมกัน; กล่องข้อมูลอาจแย่งพื้นที่กราฟ; ปุ่มปิดของบาง modal ไม่มี accessible label. NOVA ควรยืมโครงสามคอลัมน์และความต่อเนื่องของงาน แต่ลดเครื่องมือที่เห็นพร้อมกันด้วย preset และชั้น Advanced
+ข้อเสียที่เห็น: density สูงมากบนความกว้างประมาณ 1200px; คำย่อจำนวนมากอยู่พร้อมกัน; กล่องข้อมูลอาจแย่งพื้นที่กราฟ; ปุ่มปิดของบาง modal ไม่มี accessible label. Nugaom AI Pick ควรยืมโครงสามคอลัมน์และความต่อเนื่องของงาน แต่ลดเครื่องมือที่เห็นพร้อมกันด้วย preset และชั้น Advanced
 
 ## 3. เส้นทางใช้งานที่ตรวจทีละขั้น
 
-| เส้นทาง | สิ่งที่เกิดขึ้นในต้นทาง | ข้อกำหนดของ NOVA |
+| เส้นทาง | สิ่งที่เกิดขึ้นในต้นทาง | ข้อกำหนดของ Nugaom AI Pick |
 |---|---|---|
 | เลือกสินทรัพย์ | Watchlist มีค้นหา, favorites, หมวดพร้อมจำนวน, MARKET/FUND FLOW/SMT, “Top Tradeable Now”; แถวมีราคา, % เปลี่ยน, high/low, volume. เลือกแล้ว hero, กราฟ, toolbox และ AI เปลี่ยนบริบท | `instrumentId` เดียวต้องกำหนดทุกแผง; แยก SET/DR/TFEX/US/Forex ชัด; แสดง venue, สกุลเงิน, แหล่งข้อมูลและความสด |
 | วิเคราะห์กราฟ | Chart มี timeframe จำนวนมาก, ชนิดกราฟ, zoom, fullscreen, share, auto-fit/log, right shift, indicator, SMC, Liq/VP/News/Sessions และ drawing tools; TradingView attribution แสดงในกราฟ | ใช้ Lightweight Charts กับแท่งจริง; chart toolbar ชุดเล็กก่อน; overlay แต่ละอันมีแหล่งข้อมูลและสถานะที่ชัด |
@@ -49,14 +49,14 @@ Header มี server/latency/online status, theme, language, Journal, Script, Pa
 | ดูขั้นตอนคัด | Signal Filter Flow เปิด modal: scanned → blocked → passed, แล้วแสดง gate เรียง เช่น Meta Learning, Signal Strength, Bad Samples, Calendar, Multi-TF, Microstructure, Sweep และ Final Signals; มีเวลา scan ล่าสุด | ถ้าสแกนทุกวัน ต้องเก็บ run ID, universe, pass/reject reason, version ของเกณฑ์ และเวลาของแต่ละรอบ; ผู้ใช้เปิดดูได้ว่าทำไมไม่มีแผน |
 | ดูผล scanner | Market Scanner เปิด modal มีหมวดตลาด, Top Patterns Today, ตาราง asset/signal/confidence/24h/pattern/details. ช่วงโหลดแสดง 0/0 และ `NaN%`; หลังโหลด Crypto แสดง 8 รายการในรอบที่ดู | loading ต้องไม่มี NaN; แยกกำลังคำนวณ, ไม่มีผู้ผ่าน, feed ล้มเหลว; คลิกแถวไปกราฟและเปิดแผนเดียวกัน |
 | ตั้งเตือนราคา | Price Alerts มี “เฝ้าอยู่/ประวัติ”, current price, ราคาเป้าหมาย, preset ±1/2/5%, ทะลุขึ้น/หลุดลง และปุ่มสร้าง | แยก price alert ที่ผู้ใช้ตั้งเองจากผลของแผน scanner; แสดงราคาอ้างอิง/เวลาฟีด/กติกา trigger/วิธีส่ง |
-| ดูประกาศ | Broadcasts แสดง changelog ที่อธิบายข้อจำกัด เช่น ambiguity ในแท่งเดียว, spread, evidence และ metric ที่ถอนออก | NOVA ควรมีบันทึกการเปลี่ยนกติกาและ model version ผูกกับสถิติย้อนหลัง |
-| ติดต่อทีม | “ส่งเสียงถึงทีมงาน” เป็นฟอร์มเลือกปัญหา/ข้อเสนอแนะ/ฟีเจอร์/อื่น ๆ, ช่องรายละเอียด และช่องทางติดต่อกลับที่ไม่บังคับ; ไม่ใช่ห้องแชตสดตามที่เห็นในรอบนี้ | ความต้องการคุยนักวิเคราะห์และการตลาดโดยตรงของผู้ใช้เป็นฟีเจอร์ที่ NOVA เพิ่มได้จริงเมื่อมีทีมรับและระบบ inbox |
+| ดูประกาศ | Broadcasts แสดง changelog ที่อธิบายข้อจำกัด เช่น ambiguity ในแท่งเดียว, spread, evidence และ metric ที่ถอนออก | Nugaom AI Pick ควรมีบันทึกการเปลี่ยนกติกาและ model version ผูกกับสถิติย้อนหลัง |
+| ติดต่อทีม | “ส่งเสียงถึงทีมงาน” เป็นฟอร์มเลือกปัญหา/ข้อเสนอแนะ/ฟีเจอร์/อื่น ๆ, ช่องรายละเอียด และช่องทางติดต่อกลับที่ไม่บังคับ; ไม่ใช่ห้องแชตสดตามที่เห็นในรอบนี้ | ความต้องการคุยนักวิเคราะห์และการตลาดโดยตรงของผู้ใช้เป็นฟีเจอร์ที่ Nugaom AI Pick เพิ่มได้จริงเมื่อมีทีมรับและระบบ inbox |
 
 ### เฉพาะกราฟ: hierarchy ที่ควรเก็บ
 
 ต้นทางวางเครื่องมือบนกราฟหลายระดับ: timeframe → chart style/scale → overlay สั้น ๆ (EMA, BB, VP, SESS, NEWS ฯลฯ) → drawing toolbar → แผงวิเคราะห์ที่ผูกกับสินทรัพย์ → toolbox รายโมดูล. บางปุ่ม disabled พร้อมคำอธิบายว่าใช้ได้เฉพาะสินทรัพย์ประเภทใด เช่น LIQ บางตลาด นี่เป็นแบบอย่างที่ดี: ความสามารถของข้อมูลต้องควบคุม UI อย่างตรงไปตรงมา
 
-ใน NVDA ที่ดูรอบนี้มี “Multi-Timeframe Analysis” 14 กรอบเวลา พร้อม Value Map, Wyckoff, SMC Overlay, Liquidity, Quasimodo และ Patterns. มีเวลาอัปเดต Yahoo Finance และตาราง POC/EQ/ตำแหน่ง/ระยะห่าง/ความมั่นใจ/ความเสี่ยง/Confluence. สิ่งนี้ลึกกว่าปุ่ม timeframe บน NOVA ที่ปัจจุบันยังไม่เปลี่ยนแท่งหรือการวิเคราะห์
+ใน NVDA ที่ดูรอบนี้มี “Multi-Timeframe Analysis” 14 กรอบเวลา พร้อม Value Map, Wyckoff, SMC Overlay, Liquidity, Quasimodo และ Patterns. มีเวลาอัปเดต Yahoo Finance และตาราง POC/EQ/ตำแหน่ง/ระยะห่าง/ความมั่นใจ/ความเสี่ยง/Confluence. สิ่งนี้ลึกกว่าปุ่ม timeframe บน Nugaom AI Pick ที่ปัจจุบันยังไม่เปลี่ยนแท่งหรือการวิเคราะห์
 
 ## 4. จุดเด่นที่สุด: สถิติ AI ทุกไม้แบบเจาะลึก
 
@@ -79,16 +79,16 @@ Header มี server/latency/online status, theme, language, Journal, Script, Pa
 
 แยกเป็นเอนจิน order flow; หัวสถิติใช้ **R** เทียบระยะ SL, แสดง win/loss, PF, expectancy, max drawdown, streak, ปฏิทิน Net R และต้นทุนในหน่วยราคา. มีคำอธิบายว่าค่า R ไม่ใช่ % พอร์ต และผลกลุ่มย่อยอาจต่างจากผลทั้งเอนจินเพราะรับคนละชุดสัญญาณ. นี่เป็นตัวอย่างของการแยก metric ตามระบบอย่างถูกหลัก แม้ตัวเลขบนเว็บยังไม่ได้ตรวจสอบภายนอก
 
-### กติกาที่ NOVA ต้องมี ก่อนแสดงเลขแบบนี้
+### กติกาที่ Nugaom AI Pick ต้องมี ก่อนแสดงเลขแบบนี้
 
 `scanner_run → candidate → published_signal → delivery → price observation → outcome → alert event → aggregate snapshot` ต้องมี ID และ timestamp ทุกขั้น ผลย้อนหลังต้องย้อนถึงสัญญาณต้นทางและแท่งราคาที่ตัดสินได้. Win/loss อย่างเดียวไม่พอ: ต้องมี open, expired, void, unsupported และ ambiguous. ถ้าแท่งเดียวแตะ TP กับ SL ต้องใช้ข้อมูลละเอียดขึ้นหรือระบุว่าไม่ทราบลำดับ ห้ามเลือกผลที่ทำให้สถิติสวยขึ้น
 
-## 5. ความต่างจริงของ NOVA วันนี้
+## 5. ความต่างจริงของ Nugaom AI Pick วันนี้
 
-| หัวข้อ | AlphaSigs ที่สังเกต | NOVA วันนี้ | ช่องว่างหลัก |
+| หัวข้อ | AlphaSigs ที่สังเกต | Nugaom AI Pick วันนี้ | ช่องว่างหลัก |
 |---|---|---|---|
 | Visual shell | hero, ticker, favorites, สามคอลัมน์, หลาย overlay | dark dashboard, sidebar, category strip, การ์ดและ modal | ยังไม่มี hierarchy และความต่อเนื่องแบบ terminal |
-| หมวดตลาด | หมวดกว้าง 10 กลุ่มใน watchlist | มี 6 กลุ่มตามโจทย์ไทย/DR/TFEX/US/Forex/crypto | NOVA วาง taxonomy ถูกทาง แต่มีเพียง symbol/ราคา DEMO ไม่ใช่ universe จริง |
+| หมวดตลาด | หมวดกว้าง 10 กลุ่มใน watchlist | มี 6 กลุ่มตามโจทย์ไทย/DR/TFEX/US/Forex/crypto | Nugaom AI Pick วาง taxonomy ถูกทาง แต่มีเพียง symbol/ราคา DEMO ไม่ใช่ universe จริง |
 | กราฟ | แท่งตามฟีด, TF/zoom/overlay/drawing/replay/tools ผูกข้อมูล | Lightweight Charts มีแท่งที่สร้างขึ้นเอง 96 แท่ง; ปุ่ม toolbar ส่วนใหญ่ยังไม่ทำงาน | ไม่มีแท่งจริง, chart state, signal marker และ context link |
 | Scanner | หมวด, patterns, ตารางคัดเลือก, filter gates | ปุ่มจำลองว่า scanner พบแผน | ไม่มี run, strategy, candidate หรือ reject reason |
 | สัญญาณ | engine, delivery, evidence, outcome, filter flow | การ์ดตัวอย่างหนึ่งใบ และ plan DEMO ใน localStorage | ไม่มีสัญญาณ AI จริง/immutable record/grade จากราคา |
@@ -97,7 +97,7 @@ Header มี server/latency/online status, theme, language, Journal, Script, Pa
 | สื่อสารทีม | ฟอร์มส่งเสียงถึงทีมงาน, Discord, broadcasts | modal chat ตัวอย่างที่ตอบในหน้าเอง | ยังไม่มี inbox/นักวิเคราะห์/ทีมการตลาดจริง; แชตสดเป็นความต่างที่เราจะสร้าง |
 | ความน่าเชื่อถือ | มีคู่มือ, changelog, ข้อจำกัดและผลที่ไม่สวย | มีป้าย DEMO และคำอธิบายสถานะ | ต้องเพิ่ม methodology/version/source ของทุกสถิติเมื่อเชื่อมจริง |
 
-**ข้อสรุปการเทียบ:** NOVA มีเค้าโครงและภาษา UI เริ่มต้น แต่ core workflow ของต้นทางยังไม่ครบแม้หนึ่งเส้นทางตั้งแต่ข้อมูลราคา → scanner → สัญญาณ → การแจ้งเตือน → ผลจริง → หลักฐานรายไม้ จึงไม่ควรใช้เปอร์เซ็นต์ “ความเหมือน” จนกว่าจะมี checklist และการตรวจแบบข้างต่อข้าง
+**ข้อสรุปการเทียบ:** Nugaom AI Pick มีเค้าโครงและภาษา UI เริ่มต้น แต่ core workflow ของต้นทางยังไม่ครบแม้หนึ่งเส้นทางตั้งแต่ข้อมูลราคา → scanner → สัญญาณ → การแจ้งเตือน → ผลจริง → หลักฐานรายไม้ จึงไม่ควรใช้เปอร์เซ็นต์ “ความเหมือน” จนกว่าจะมี checklist และการตรวจแบบข้างต่อข้าง
 
 ## 6. จุดที่ควรยืม และจุดที่ต้องทำให้ดีกว่า
 
@@ -105,11 +105,11 @@ Header มี server/latency/online status, theme, language, Journal, Script, Pa
 
 **ทำให้ดีกว่า:** แยก spot gold จาก TFEX futures และ SET index จาก SET50 contract; ไม่แสดงเปอร์เซ็นต์/คะแนนที่นิยามไม่ชัด; ไม่โชว์ `NaN%` ระหว่างโหลด; ทุก modal มีชื่อปุ่มปิดและ keyboard behavior; แยก AI interpretation, simulation, market data, published signal และ user trade ออกจากกัน; ไม่ใช้คำว่า “กำไรแล้ว” ถ้าราคาต้นทางล่าช้าหรือ outcome ยังไม่แน่ชัด; ผูกแชตทีมกับบัญชีและผู้รับจริงเมื่อพร้อม
 
-สิ่งที่ต้องระวังเป็นพิเศษ: ในประกาศของต้นทางเองมีคำอธิบายว่าคะแนน confidence บางชุดไม่เรียงตามผลจริงอย่างที่คนคาด แต่แผง AI ยังแสดง `Confidence Score`. นี่เป็นตัวอย่างว่าคะแนนที่ดูน่าตื่นตาอาจชวนตีความเกินหลักฐาน NOVA ควรโชว์คะแนนชนิดนี้ก็ต่อเมื่อมีนิยาม การทดสอบ calibration และลิงก์ไปผลแยกตามช่วงคะแนน; มิฉะนั้นให้แสดงเพียงเหตุผลและคุณภาพข้อมูล
+สิ่งที่ต้องระวังเป็นพิเศษ: ในประกาศของต้นทางเองมีคำอธิบายว่าคะแนน confidence บางชุดไม่เรียงตามผลจริงอย่างที่คนคาด แต่แผง AI ยังแสดง `Confidence Score`. นี่เป็นตัวอย่างว่าคะแนนที่ดูน่าตื่นตาอาจชวนตีความเกินหลักฐาน Nugaom AI Pick ควรโชว์คะแนนชนิดนี้ก็ต่อเมื่อมีนิยาม การทดสอบ calibration และลิงก์ไปผลแยกตามช่วงคะแนน; มิฉะนั้นให้แสดงเพียงเหตุผลและคุณภาพข้อมูล
 
 ## 7. ลำดับลงมือที่ทำให้ตรวจผลได้
 
-1. **ออกแบบจอ NOVA v2 จากโครงจริง** — header + asset hero + ticker/favorites + watchlist ซ้าย + chart กลาง + thesis/alerts ขวา; ทำ responsive layout และสถานะ loading/empty/error ก่อนเพิ่มโมดูลหนัก
+1. **ออกแบบจอ Nugaom AI Pick v2 จากโครงจริง** — header + asset hero + ticker/favorites + watchlist ซ้าย + chart กลาง + thesis/alerts ขวา; ทำ responsive layout และสถานะ loading/empty/error ก่อนเพิ่มโมดูลหนัก
 2. **จบกราฟจริงหนึ่งสินทรัพย์** — registry → สิทธิข้อมูล → OHLCV → Lightweight Charts → timeframe เปลี่ยนจริง → source/freshness; เลือกตลาดแรกที่ใช้ข้อมูลได้ตามสิทธิจริง
 3. **จบ scanner-to-ledger หนึ่งกลยุทธ์** — run ตามตารางทุกวัน, candidate/rejection, immutable published signal, entry/TP/SL, outcome worker, ambiguity, status history; บันทึกทุกไม้ชนะและแพ้
 4. **สร้างหน้า “สถิติทุกไม้” เป็น feature หลัก** — filter, metric/สูตร/ตัวหาร/ต้นทุน, ปฏิทิน, รายตลาด/สินทรัพย์, ประวัติรายไม้, click ไปกราฟช่วงที่เกิดเหตุ
