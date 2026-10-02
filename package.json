@@ -10,7 +10,11 @@
     "probe:binance-spot": "node scripts/probe-binance-spot.mjs",
     "probe:forex": "node scripts/probe-forex.mjs",
     "autopick:worker": "node --env-file=.env.local scripts/auto-pick-worker.mjs",
-    "test:market-data": "node --test src/market-data/*.test.mjs"
+    "probe:autopick": "node --env-file=.env.local scripts/probe-auto-pick.mjs",
+    "test:market-data": "node --test src/market-data/*.test.mjs",
+    "backup:database": "node --env-file=.env.local scripts/backup-database.mjs",
+    "check:production": "node --env-file=.env.local scripts/production-preflight.mjs",
+    "backtest:refresh": "node --env-file=.env.local scripts/refresh-backtest-summaries.mjs"
   },
   "engines": {
     "node": ">=22.13"

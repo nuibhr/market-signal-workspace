@@ -17,7 +17,7 @@ export function thaiSession(now = Date.now()) {
   const { day, minutes } = bangkokParts(now);
   const weekday = new Date(`${day}T12:00:00+07:00`).getUTCDay();
   const businessDay = weekday >= 1 && weekday <= 5;
-  return { day, candidateWindow: businessDay && minutes >= 615 && minutes < 675,
+  return { day, minutes, candidateWindow: businessDay && minutes >= 615 && minutes < 675,
     monitorWindow: businessDay && minutes >= 600 && minutes < 1020 };
 }
 

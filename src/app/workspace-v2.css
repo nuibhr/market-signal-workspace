@@ -224,6 +224,7 @@
 .chart-header-name h2 small { color: #849ab0; font: 400 10px 'Noto Sans Thai', sans-serif; }
 .chart-meta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; padding-bottom: 13px; border-bottom: 1px solid #1a293b; color: #7990a5; font: 8px 'DM Mono', monospace; }
 .chart-meta-row span:first-child { color: #a9d8cd; }
+.chart-meta-row a { color: #73d5c3; text-decoration: underline; text-underline-offset: 2px; }
 .timeframe-bar { display: flex; align-items: center; gap: 12px; min-height: 42px; }
 .timeframe-bar > span { color: #677b90; font: 8px 'DM Mono', monospace; letter-spacing: .6px; }
 .timeframe-bar .timeframe-switch { gap: 2px; }

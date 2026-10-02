@@ -1,4 +1,4 @@
-import { assessDailySeries, assessIntradaySeries, createSettradeClient, SettradeDataError } from '../../../market-data/settrade.mjs';
+import { assessDailySeries, assessIntradaySeries, createSettradeClient, MAX_CANDLE_BARS, SettradeDataError } from '../../../market-data/settrade.mjs';
 import { ALL_ASSETS, SETTRADE_SYMBOLS } from '../../../markets/catalog.mjs';
 
 export const runtime = 'nodejs';
@@ -38,11 +38,12 @@ export async function GET(request) {
 
   try {
     // This client caches a token after login; make the first login once per request.
-    const series = await client.getCandles(symbol, timeframe);
+    const series = await client.getCandles(symbol, timeframe, MAX_CANDLE_BARS);
     const quote = await client.getQuote(symbol).catch(() => null);
     const today = bangkokToday();
-    const latestAllowed = Math.floor(Date.now() / 1000) + 60;
-    const bars = series.bars.filter(bar => timeframe === '1d' ? bar.time <= today : bar.time <= latestAllowed);
+    const durations = { '15m': 900, '1h': 3600, '4h': 14_400 };
+    const bars = series.bars.filter(bar => timeframe === '1d' ? bar.time < today
+      : (bar.time + durations[timeframe]) * 1000 <= Date.now());
     const assessment = timeframe === '1d'
       ? assessDailySeries({ ...series, bars })
       : assessIntradaySeries({ ...series, bars });
@@ -58,6 +59,8 @@ export async function GET(request) {
       latestTime: assessment.latestTime ?? null,
       freshness: assessment.freshness,
       signalEligible: assessment.signalEligible,
+      requestedBars: MAX_CANDLE_BARS,
+      availableBars: bars.length,
       bars,
       excludedFutureBars: series.bars.length - bars.length,
       quote: quote?.status === 'available' ? {

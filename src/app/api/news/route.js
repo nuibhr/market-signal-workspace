@@ -3,6 +3,7 @@ const MARKETS = [{ id: 'thai', country: 'TH', label: 'หุ้นไทย' }, 
 const TTL_MS = 15 * 60_000;
 const STALE_MS = 24 * 60 * 60_000;
 const snapshots = new Map();
+const failures = new Map();
 const pending = new Map();
 
 export const runtime = 'nodejs';
@@ -76,12 +77,17 @@ function errorCode(error) {
 async function marketResult(market, key) {
   const cached = snapshots.get(market.id);
   if (cached?.expiresAt > Date.now()) return cached;
+  const failed = failures.get(market.id);
+  if (failed?.retryAt > Date.now()) return failed.result;
   try {
     if (!pending.has(market.id)) pending.set(market.id, fetchMarket(market, key).finally(() => pending.delete(market.id)));
-    return await pending.get(market.id);
+    const result = await pending.get(market.id); failures.delete(market.id); return result;
   } catch (error) {
-    if (cached && Date.now() - Date.parse(cached.receivedAt) < STALE_MS) return { ...cached, status: 'stale', code: errorCode(error) };
-    return { id: market.id, country: market.country, label: market.label, status: 'unavailable', code: errorCode(error), articles: [] };
+    const result = cached && Date.now() - Date.parse(cached.receivedAt) < STALE_MS
+      ? { ...cached, status: 'stale', code: errorCode(error) }
+      : { id: market.id, country: market.country, label: market.label, status: 'unavailable', code: errorCode(error), articles: [] };
+    failures.set(market.id, { retryAt: Date.now()+60000, result });
+    return result;
   }
 }
 

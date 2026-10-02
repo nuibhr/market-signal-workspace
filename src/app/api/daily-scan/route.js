@@ -1,3 +1,6 @@
+import { rateLimit } from '../../../security/request-guard.mjs';
+import { sharedDatabase } from '../../../membership/store.mjs';
+import { customerSummary } from '../../../analysis/customer-summary.mjs';
 import { analyzeCandles } from '../../../analysis/technical.mjs';
 import { SETTRADE_SYMBOLS } from '../../../markets/catalog.mjs';
 import { currentMember } from '../../../membership/server.mjs';
@@ -17,8 +20,16 @@ function todayInBangkok() {
 }
 
 export async function GET(request) {
-  const rights = membershipFor(await currentMember());
+  const member = await currentMember();
+  const rights = membershipFor(member);
   if (!rights.capabilities.manualDailyScan) return Response.json({ status: 'forbidden', code: 'MEMBERSHIP_REQUIRED' }, { status: 403, headers: HEADERS });
+  const db = sharedDatabase();
+  db.exec('CREATE TABLE IF NOT EXISTS customer_daily_reports(member_id TEXT PRIMARY KEY, report_json TEXT NOT NULL)');
+  if (new URL(request.url).searchParams.get('saved') === '1') {
+    const row = db.prepare('SELECT report_json FROM customer_daily_reports WHERE member_id=?').get(member.id);
+    return Response.json(row ? JSON.parse(row.report_json) : { status: 'empty', results: [] }, { headers: HEADERS });
+  }
+  const limited = rateLimit('daily-scan', member.id, 3); if (limited) return limited;
   const requested = (new URL(request.url).searchParams.get('symbols') ?? 'PTT,AOT,CPALL,KBANK,SCB,ADVANC')
     .split(',').map(symbol => symbol.trim().toUpperCase()).filter(Boolean);
   const symbols = [...new Set(requested)];
@@ -43,8 +54,8 @@ export async function GET(request) {
   // Keep calls bounded and serial to respect the upstream feed and shared token.
   for (const symbol of symbols) {
     try {
-      const series = await client.getCandles(symbol, '1d');
-      const bars = series.bars.filter(bar => bar.time <= today);
+      const series = await client.getCandles(symbol, '1d', 250);
+      const bars = series.bars.filter(bar => bar.time < today);
       const assessment = assessDailySeries({ ...series, bars });
       const analysis = analyzeCandles(bars, null, 'รายวัน');
       results.push({
@@ -59,11 +70,15 @@ export async function GET(request) {
         rsi14: analysis?.rsi14 ?? null,
         support: analysis?.support ?? null,
         resistance: analysis?.resistance ?? null,
+        summary: customerSummary(analysis, assessment.signalEligible),
+        plan: analysis?.plan ?? null,
         conditions: analysis?.events?.filter(event => event.tone !== 'flat').map(event => ({ tone: event.tone, label: event.label })) ?? [],
       });
     } catch (error) {
       results.push({ symbol, status: 'unavailable', code: error instanceof SettradeDataError ? error.code : 'SOURCE_UNAVAILABLE' });
     }
   }
-  return Response.json({ status: 'complete', tier: rights.tier, scannedAt: new Date().toISOString(), timeframe: '1d', results }, { headers: HEADERS });
+  const report = { status: 'complete', tier: rights.tier, scannedAt: new Date().toISOString(), timeframe: '1d', results };
+  db.prepare('INSERT INTO customer_daily_reports VALUES(?,?) ON CONFLICT(member_id) DO UPDATE SET report_json=excluded.report_json').run(member.id, JSON.stringify(report));
+  return Response.json(report, { headers: HEADERS });
 }

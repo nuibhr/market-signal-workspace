@@ -1,37 +1,49 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { Activity, Bell, BookOpen, CalendarDays, CandlestickChart, ChartNoAxesCombined, ChevronDown, CircleHelp, Clock3, Compass, FlaskConical, Gauge, GraduationCap, LayoutDashboard, LockKeyhole, MessageCircle, Newspaper, Radar, RefreshCw, Search, ShieldCheck, Sparkles, Star, TrendingUp, Wallet, Waves } from 'lucide-react';
+import { Activity, Bell, BookOpen, CalendarDays, CandlestickChart, ChartNoAxesCombined, ChevronDown, CircleHelp, Compass, Gauge, GraduationCap, LayoutDashboard, LockKeyhole, Newspaper, Radar, RefreshCw, Search, ShieldCheck, Sparkles, Star, Wallet } from 'lucide-react';
+import MemberAvatar from './member-avatar.jsx';
+import HoldingsDesk from './holdings-desk.jsx';
 import { ALL_ASSETS } from '../markets/catalog.mjs';
 
+// Keep every destination in one map so desktop and mobile expose the same tools.
 const GROUPS = [
-  { id: 'analysis', label: 'วิเคราะห์ตลาด', icon: ChartNoAxesCombined, items: [['overview', 'ภาพรวมตลาด', LayoutDashboard], ['daily', 'สแกนวันนี้', Radar], ['analysis-tools', 'สแกน · Multi-TF · Volume', Search], ['signals', 'แผนสัญญาณ', Sparkles]] },
-  { id: 'trade', label: 'ระบบเทรด', icon: Activity, items: [['autopick', 'AutoPick · แจ้งเตือน', Bell], ['terminal', 'สมุดแผน · DEMO', Wallet], ['history', 'ประวัติ · DEMO', Clock3], ['stats', 'สถิติ · DEMO', ChartNoAxesCombined]] },
-  { id: 'markets', label: 'ตลาด', icon: TrendingUp, items: [['watchlist', 'Watchlist', Star], ['search', 'ค้นหาสินทรัพย์', Search], ['chart', 'กราฟราคา', CandlestickChart]] },
-  { id: 'lab', label: 'MY LAB', icon: FlaskConical, items: [['financial', 'Financial Check', Gauge]] },
-  { id: 'news', label: 'ข่าวสาร & เศรษฐกิจ', icon: Newspaper, items: [['news', 'ข่าวตลาด', Newspaper], ['calendar', 'ปฏิทินเศรษฐกิจ', CalendarDays], ['dividends', 'ปันผลหุ้นไทย · XD', CalendarDays], ['news-guide', 'คู่มืออ่านข่าว', BookOpen]] },
-  { id: 'community', label: 'ชุมชน', icon: MessageCircle, items: [['community', 'พื้นที่ชุมชน', MessageCircle], ['contact', 'ติดต่อทีม · DEMO', CircleHelp]] },
-  { id: 'learn', label: 'เรียนรู้', icon: GraduationCap, items: [['learn', 'เริ่มต้นใช้งาน', BookOpen], ['roadmap', 'แผนพัฒนาระบบ', Compass]] },
+  { id: 'today', label: 'เริ่มวันนี้', icon: Compass, items: [['overview', 'หน้าต้อนรับ', LayoutDashboard], ['daily', 'คัดหุ้นรายวัน', Radar], ['autopick', 'จังหวะที่ระบบพบ', Bell]] },
+  { id: 'explore', label: 'สำรวจราคา', icon: CandlestickChart, items: [['watchlist', 'รายการที่ติดตาม', Star], ['search', 'ค้นหาสินทรัพย์', Search], ['chart', 'กราฟและตัวชี้วัด', CandlestickChart], ['analysis-tools', 'ชุดสแกนเชิงลึก', Activity], ['signals', 'แผนจากกราฟ', Sparkles]] },
+  { id: 'context', label: 'ก่อนตัดสินใจ', icon: Newspaper, items: [['news', 'ข่าวไทยและสหรัฐฯ', Newspaper], ['calendar', 'วันข่าวเศรษฐกิจ', CalendarDays], ['dividends', 'ปันผลและ XD', CalendarDays], ['news-guide', 'อ่านข่าวอย่างไร', BookOpen]] },
+  { id: 'plan', label: 'ผลสัญญาณ', icon: Wallet, items: [['results', 'ผลงานสัญญาณ', ChartNoAxesCombined], ['financial', 'คำนวณความเสี่ยง', Gauge]] },
+  { id: 'more', label: 'เพิ่มเติม', icon: CircleHelp, items: [['learn', 'วิธีเริ่มใช้', GraduationCap], ['roadmap', 'สถานะระบบ', Compass]] },
 ];
 
-export function WorkspaceSidebar({ activeNav, onNavigate, rights, hasRealBars, favoriteCount }) {
-  const [expanded, setExpanded] = useState(['analysis', 'trade', 'markets']);
+export function WorkspaceSidebar({ activeNav, onNavigate, rights, account, loginHref = '/account', hasRealBars, favoriteCount }) {
+  const [expanded, setExpanded] = useState(['today', 'explore']);
   const [mobileOpen, setMobileOpen] = useState(false);
+  useEffect(() => {
+    const group = GROUPS.find(item => item.items.some(([id]) => id === activeNav));
+    if (group) setExpanded(current => current.includes(group.id) ? current : [...current, group.id]);
+  }, [activeNav]);
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const closeOnEscape = event => { if (event.key === 'Escape') setMobileOpen(false); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [mobileOpen]);
   const toggle = id => setExpanded(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]);
   const mobileNavigate = id => { setMobileOpen(false); onNavigate(id); };
+  const isGuest = rights?.tier === 'guest' || !rights;
   return <><aside className="sidebar hub-sidebar">
     <div className="hub-sidebar-scroll">
-      <div className="brand"><div className="brand-mark"><Image src="/nugaom-mascot.png" width={52} height={52} alt="มาสคอต Nugaom AI Pick" /></div><div><strong>Nugaom AI Pick</strong><small>MARKET INTELLIGENCE</small></div></div>
-      <button className="hub-account-card" onClick={() => onNavigate('account')}><span className="hub-account-avatar"><Image src="/nugaom-mascot.png" width={40} height={40} alt="" /></span><span><strong>บัญชีของฉัน</strong><small>{rights?.label ?? 'กำลังอ่านสิทธิ…'}</small></span><ShieldCheck size={16} /></button>
-      <div className="hub-sidebar-caption">WORKSPACE</div>
+      <div className="brand"><div className="brand-mark"><Image src="/nugaom-mascot.png" width={52} height={52} alt="มาสคอต Nugaom AI Pick" /></div><div><strong>Nugaom</strong><small>AI PICK · พื้นที่ดูตลาด</small></div></div>
+      <a className="hub-account-card" href={loginHref}><span className="hub-account-avatar"><MemberAvatar account={isGuest ? null : account} size={40} /></span><span><strong>{isGuest ? 'เริ่มด้วย LINE' : account?.displayName || 'มุมสมาชิกของฉัน'}</strong><small>{isGuest ? 'เชื่อมบัญชี · แจ้งพอร์ต · ทดลอง 14 วัน' : rights?.label}</small></span><span className="hub-account-arrow">↗</span></a>
+      <div className="hub-sidebar-caption">เส้นทางใช้งาน</div>
       <nav className="hub-group-list" aria-label="เมนูหลัก">
-        {GROUPS.map(group => <section key={group.id} className="hub-menu-group"><button className="hub-group-toggle" aria-expanded={expanded.includes(group.id)} onClick={() => toggle(group.id)}><span className="hub-nav-glyph"><group.icon size={17} strokeWidth={1.9} /></span><span>{group.label}</span><ChevronDown size={14} className={expanded.includes(group.id) ? 'hub-chevron open' : 'hub-chevron'} /></button>{expanded.includes(group.id) && <div className="hub-group-items">{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'hub-subnav active' : 'hub-subnav'} onClick={() => onNavigate(id)}><Icon size={15} strokeWidth={1.9} /><span>{label}</span>{id === 'watchlist' && favoriteCount > 0 && <em>{favoriteCount}</em>}{id === 'analysis-tools' && <em>3-in-1</em>}</button>)}</div>}</section>)}
+        {GROUPS.map((group, index) => <section key={group.id} className="hub-menu-group"><button className="hub-group-toggle" aria-expanded={expanded.includes(group.id)} onClick={() => toggle(group.id)}><span className="hub-group-index">0{index + 1}</span><span className="hub-nav-glyph"><group.icon size={17} strokeWidth={1.9} /></span><span>{group.label}</span><ChevronDown size={14} className={expanded.includes(group.id) ? 'hub-chevron open' : 'hub-chevron'} /></button>{expanded.includes(group.id) && <div className="hub-group-items">{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'hub-subnav active' : 'hub-subnav'} onClick={() => onNavigate(id)}><Icon size={15} strokeWidth={1.9} /><span>{label}</span>{id === 'watchlist' && favoriteCount > 0 && <em>{favoriteCount}</em>}{id === 'analysis-tools' && <em>3 เครื่องมือ</em>}</button>)}</div>}</section>)}
       </nav>
-      <div className="engine-card"><div className="engine-heading">DATA STATUS <span className={hasRealBars ? 'real-pill' : 'demo-pill'}>{hasRealBars ? 'REAL OHLC' : 'MIXED'}</span></div><p>หุ้นไทย / DR: Settrade · หุ้นสหรัฐฯ 1D: FMP EOD<br />สถิติผลลัพธ์: DEMO · สแกนด้วยกติกา</p></div>
+      <div className="engine-card"><div className="engine-heading">สถานะข้อมูล <span className={hasRealBars ? 'real-pill' : 'demo-pill'}>{hasRealBars ? 'OHLC จริง' : 'รอฟีด'}</span></div><p>ราคาและผลสัญญาณแสดงเฉพาะข้อมูลที่เชื่อมได้ พร้อมที่มาและเวลา</p></div>
     </div>
-    <div className="sidebar-foot">NUGAOM AI PICK <span>v0.4</span></div>
-  </aside><nav className="hub-mobile-dock" aria-label="เมนูมือถือ"><button onClick={() => onNavigate('overview')}><LayoutDashboard size={18} /><span>ภาพรวม</span></button><button onClick={() => onNavigate('daily')}><Radar size={18} /><span>สแกน</span></button><button onClick={() => onNavigate('analysis-tools')}><Search size={18} /><span>วิเคราะห์</span></button><button onClick={() => onNavigate('watchlist')}><Star size={18} /><span>คู่โปรด</span></button><button onClick={() => setMobileOpen(true)}><Compass size={18} /><span>เมนู</span></button></nav>{mobileOpen && <div className="hub-mobile-scrim" onClick={() => setMobileOpen(false)}><div className="hub-mobile-sheet" role="dialog" aria-modal="true" aria-label="เมนู Nugaom AI Pick" onClick={event => event.stopPropagation()}><div className="hub-mobile-sheet-head"><strong>Nugaom AI Pick</strong><button onClick={() => setMobileOpen(false)} aria-label="ปิดเมนู">×</button></div><button className="hub-mobile-membership" onClick={() => mobileNavigate('account')}><ShieldCheck size={16} /> บัญชีของฉัน · {rights?.label ?? 'กำลังอ่านสิทธิ'}</button>{GROUPS.map(group => <div key={group.id} className="hub-mobile-group"><strong>{group.label}</strong><div>{group.items.map(([id, label, Icon]) => <button key={id} onClick={() => mobileNavigate(id)}><Icon size={16} />{label}</button>)}</div></div>)}</div></div>}</>;
+    <div className="sidebar-foot">NUGAOM <span>ทุกวัน เริ่มจากข้อมูล</span></div>
+  </aside><nav className="hub-mobile-dock" aria-label="เมนูมือถือ"><button className={activeNav === 'overview' ? 'active' : ''} onClick={() => onNavigate('overview')}><LayoutDashboard size={20} /><span>วันนี้</span></button><button className={activeNav === 'daily' ? 'active' : ''} onClick={() => onNavigate('daily')}><Radar size={20} /><span>คัดหุ้น</span></button><button className={activeNav === 'autopick' ? 'active' : ''} onClick={() => onNavigate('autopick')}><Bell size={20} /><span>จังหวะ</span></button><a className="hub-mobile-line" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้า LINE' : 'บัญชี'}</span></a><button onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen}><Compass size={20} /><span>ทั้งหมด</span></button></nav>{mobileOpen && <div className="hub-mobile-scrim" onClick={() => setMobileOpen(false)}><div className="hub-mobile-sheet" role="dialog" aria-modal="true" aria-label="เครื่องมือทั้งหมดของ Nugaom" onClick={event => event.stopPropagation()}><div className="hub-mobile-sheet-head"><strong>เครื่องมือทั้งหมด</strong><button onClick={() => setMobileOpen(false)} aria-label="ปิดเมนู">×</button></div><a className="hub-mobile-membership" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้าสู่ระบบด้วย LINE · ทดลอง 14 วัน' : `มุมสมาชิก · ${rights?.label}`}</span><span>↗</span></a>{GROUPS.map((group, index) => <div key={group.id} className="hub-mobile-group"><strong>0{index + 1} / {group.label}</strong><div>{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'active' : ''} onClick={() => mobileNavigate(id)}><Icon size={18} />{label}</button>)}</div></div>)}</div></div>}</>;
 }
 
 const PRESETS = [
@@ -63,6 +75,12 @@ export function DailyDesk({ favorites, onSelect, rights }) {
     } catch { setError('เชื่อมเซิร์ฟเวอร์สแกนไม่ได้ กรุณาลองใหม่'); }
     finally { setBusy(false); }
   }
+  useEffect(() => {
+    if (!rights?.capabilities?.manualDailyScan) return;
+    let stopped = false;
+    fetch('/api/daily-scan?saved=1', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => { if (!stopped && d?.status === 'complete') setReport(d); }).catch(() => {});
+    return () => { stopped = true; };
+  }, [rights?.capabilities?.manualDailyScan]);
   const available = report?.results?.filter(item => item.status === 'available') ?? [];
   return <section id="section-daily" className="daily-desk" aria-labelledby="daily-desk-title">
     <div className="daily-desk-heading"><span className="hub-heading-icon"><Radar size={21} /></span><div><span className="eyebrow">DAILY ROUTINE / SETTRADE 1D</span><h2 id="daily-desk-title">สแกนตลาดวันนี้</h2><p>เลือกชุดสินทรัพย์ อ่านเงื่อนไขจากแท่งรายวัน แล้วเปิดกราฟเพื่อตรวจด้วยตัวเอง</p></div><span className="daily-membership-link"><ShieldCheck size={14} /> {rights?.label ?? 'กำลังอ่านสิทธิ'}</span></div>
@@ -70,9 +88,10 @@ export function DailyDesk({ favorites, onSelect, rights }) {
     <div className="daily-symbols">{choices.length ? choices.map(symbol => <span key={symbol}>{symbol}</span>) : <span>ยังไม่มีคู่โปรดจากฟีด Settrade — ปักหมุดใน Watchlist ก่อน</span>}</div>
     {busy && <div className="daily-loading" aria-busy="true"><span className="ui-skeleton-line" /><span className="ui-skeleton-line" /><span className="ui-skeleton-line" /></div>}
     {error && <div className="daily-callout" role="status"><CircleHelp size={17} /><span>{error} · ยังไม่มีผลสแกนสำหรับชุดนี้</span></div>}
-    {report && <><div className="daily-result-head"><span><b>{available.length}</b> / {report.results.length} อ่านแท่งได้</span><span>สแกน {formatTimestamp(report.scannedAt)} · แท่ง 1D</span></div><div className="daily-results">{report.results.map(item => { const asset = ALL_ASSETS.find(candidate => candidate.symbol === item.symbol && candidate.feed === 'settrade-daily'); return <div className="daily-result" key={item.symbol}><div><strong>{item.symbol}</strong><small>{item.latestDay ? `${item.latestDay} · ${item.freshness === 'recent' ? 'ล่าสุด' : 'ข้อมูลเก่า'}` : item.code ?? 'ไม่มีข้อมูลล่าสุด'}</small></div><span className={item.trend === 'up' ? 'daily-trend up' : item.trend === 'down' ? 'daily-trend down' : 'daily-trend'}>{item.status !== 'available' ? 'ไม่มีฟีด' : item.freshness !== 'recent' ? 'ข้อมูลเก่า' : item.trend === 'up' ? 'ขึ้น' : item.trend === 'down' ? 'ลง' : 'แกว่ง'}</span><span className="daily-price">{typeof item.price === 'number' ? item.price.toLocaleString('en-US', { maximumFractionDigits: 4 }) : '—'}</span><span className="daily-event">{item.status === 'available' && item.freshness !== 'recent' ? 'ตรวจข้อมูลล่าสุดก่อนใช้' : item.conditions?.[0]?.label ?? (item.status === 'available' ? 'ยังไม่มีเงื่อนไขเด่น' : 'รอแหล่งข้อมูล')}</span><button disabled={!asset || item.status !== 'available'} onClick={() => onSelect(asset)}>เปิดกราฟ ↗</button></div>; })}</div></>}
+    {report && <><div className="daily-result-head"><span><b>{available.length}</b> / {report.results.length} อ่านแท่งได้</span><span>สแกน {formatTimestamp(report.scannedAt)} · แท่ง 1D</span></div><div className="daily-results">{report.results.map(item => { const asset = ALL_ASSETS.find(candidate => candidate.symbol === item.symbol && candidate.feed === 'settrade-daily'); return <div className="daily-result" key={item.symbol}><div><strong>{item.symbol}</strong><small>{item.latestDay ? `${item.latestDay} · ${item.freshness === 'recent' ? 'ล่าสุด' : 'ข้อมูลเก่า'}` : item.code ?? 'ไม่มีข้อมูลล่าสุด'}</small></div><span className={item.trend === 'up' ? 'daily-trend up' : item.trend === 'down' ? 'daily-trend down' : 'daily-trend'}>{item.status !== 'available' ? 'ไม่มีฟีด' : item.freshness !== 'recent' ? 'ข้อมูลเก่า' : item.trend === 'up' ? 'ขึ้น' : item.trend === 'down' ? 'ลง' : 'แกว่ง'}</span><span className="daily-price">{typeof item.price === 'number' ? item.price.toLocaleString('en-US', { maximumFractionDigits: 4 }) : '—'}</span><span className="daily-event">{item.status === 'available' && item.freshness !== 'recent' ? 'ตรวจข้อมูลล่าสุดก่อนใช้' : item.conditions?.[0]?.label ?? (item.status === 'available' ? 'ยังไม่มีเงื่อนไขเด่น' : 'รอแหล่งข้อมูล')}</span><span className="daily-plan-summary"><b>{item.summary?.score == null ? 'ไม่มีคะแนน' : `${item.summary.score}/100 · ${item.summary.label}`}</b><small>{item.summary?.text}</small></span><button disabled={!asset || item.status !== 'available'} onClick={() => onSelect(asset)}>เปิดกราฟ ↗</button></div>; })}</div></>}
     {!report && !busy && !error && <div className="daily-empty"><Compass size={19} /><span>เริ่มจากชุดหุ้นที่สนใจ แล้วกด “สแกนวันนี้”</span></div>}
-    <div className="daily-desk-foot"><span>ข้อมูลจาก Settrade เมื่อเชื่อมต่อและได้รับสิทธิแสดงผล · ไม่มีคะแนน AI หรืออัตราชนะที่ยังไม่ได้วัด</span></div>
+    <HoldingsDesk rights={rights} onSelect={onSelect} />
+    <div className="daily-desk-foot"><span>ข้อมูลจาก Settrade เมื่อเชื่อมต่อและได้รับสิทธิแสดงผล · คะแนนเทคนิคจากกติกา 5 ข้อ ไม่ใช่เปอร์เซ็นต์ชนะ</span></div>
   </section>;
 }
 
@@ -94,7 +113,7 @@ export function LearningPanel({ onOpen }) {
     ['02', 'สแกนด้วยกติกา', 'เลือกชุดหุ้น เปิดสแกนรายวัน แล้วตรวจเงื่อนไขที่ปรากฏ', 'daily'],
     ['03', 'ยืนยันหลายกรอบเวลา', 'เทียบแนวโน้ม 15m ถึง 1D และอ่านแนวรับแนวต้าน', 'multi-tf'],
     ['04', 'กำหนดความเสี่ยง', 'วาง Entry และ Stop ก่อนคำนวณจำนวนหน่วย', 'financial'],
-    ['05', 'ทบทวนผล', 'บันทึกแผนและแยกข้อมูลตัวอย่างออกจากผลจริง', 'terminal'],
+    ['05', 'ทบทวนผล', 'ดูราคาเข้า ราคาออก และผลของสัญญาณที่ระบบบันทึกจริง', 'results'],
   ];
   return <div className="hub-panel learning-panel"><div className="hub-intro"><span className="hub-heading-icon"><GraduationCap size={23} /></span><div><h3>เส้นทางใช้งานประจำวัน</h3><p>เริ่มจากข้อมูลที่มีที่มา ตรวจกราฟ แล้วค่อยวางแผนความเสี่ยง</p></div></div><div className="learning-steps">{lessons.map(([num, title, copy, target]) => <button key={num} onClick={() => onOpen(target)}><em>{num}</em><span><strong>{title}</strong><small>{copy}</small></span><span>↗</span></button>)}</div><div className="daily-callout"><CircleHelp size={17} /><span>สัญญาณและกราฟเป็นเครื่องมือช่วยอ่านตลาด ตรวจแหล่งข้อมูลและเวลาของแท่งทุกครั้งก่อนใช้ประกอบการตัดสินใจ</span></div></div>;
 }
@@ -106,19 +125,45 @@ export function RoadmapPanel({ onOpen }) {
     ['พร้อมตั้งค่า', 'บัญชี LINE และสิทธิสมาชิก', 'ทดลอง 14 วัน ตรวจพอร์ต และต่ออายุผ่านแอดมิน · รอค่า LINE และฐานข้อมูลถาวร', 'account'],
     ['ขั้นถัดไป', 'ชำระเงินอัตโนมัติ', 'ปัจจุบันแอดมินตรวจและอนุมัติการต่ออายุ · ระบบชำระเงินอัตโนมัติยังไม่เชื่อม', 'account'],
     ['นำร่อง', 'แจ้งเตือนในเว็บ', 'บันทึกเหตุการณ์เข้า/TP/SL และแสดงขณะเปิดเว็บ · ต้องยืนยันความเสถียรและการอ่านย้อนหลัง', 'autopick'],
-    ['บางส่วน', 'ข่าว ปฏิทินเศรษฐกิจ และ XD', 'ข่าวไทย/สหรัฐฯ มีฟีด · ปฏิทินเศรษฐกิจยังไม่มีรายการในเว็บ · XD เปิดดูต้นทาง SET ได้', 'calendar'],
-    ['รอข้อมูล', 'TFEX · Forex · Nasdaq-100 AutoPick', 'ต้องมีแท่ง intraday เวลาต้นทาง รายชื่อ/สัญญาปัจจุบัน และต้นทุนเทรดของแต่ละตลาด', 'autopick'],
-    ['ขั้นถัดไป', 'ชุมชนและบทเรียน', 'โปรไฟล์ การกลั่นกรองเนื้อหา และคอร์สที่มีข้อมูลอ้างอิง', 'learn'],
+    ['รอผลจริง', 'ผลงานสัญญาณ', 'อ่านราคาเข้า/ออกจาก AutoPick และไม่นับแผนหมดเวลาเป็นไม้ชนะ · ยังไม่มีไม้ที่เข้าและปิดผลพอแสดงสถิติ', 'results'],
+    ['บางส่วน', 'ข่าว ปฏิทินเศรษฐกิจ และ XD', 'ข่าวไทย/สหรัฐฯ จาก MarketDX · วันประกาศและตัวเลขสหรัฐฯ จาก FRED · XD เปิดดูต้นทาง SET', 'calendar'],
+    ['รอข้อมูล', 'TFEX · Forex AutoPick', 'TFEX มีกราฟ OHLC แล้ว แต่ยังต้องยืนยันสัญญานำและกติกาความเสี่ยง · Forex รอฟีด bid/ask กับแท่งจริง', 'autopick'],
+    ['ขั้นถัดไป', 'ช่องคุยกับทีมและชุมชน', 'ซ่อนหน้าจอสนทนา DEMO แล้ว · ต้องมีระบบส่งข้อความและทีมรับจริงก่อนเปิดเมนู', 'learn'],
   ];
   return <div className="hub-panel roadmap-panel"><div className="hub-intro"><span className="hub-heading-icon"><Compass size={23} /></span><div><h3>สถานะระบบและสิ่งที่ยังขาด</h3><p>รายการนี้ช่วยแยกของที่ใช้ได้ตอนนี้ออกจากงาน fullstack ที่ต้องเชื่อมก่อนเปิดจริง</p></div></div><div className="roadmap-list">{items.map(([status, title, copy, target]) => <button key={title} onClick={() => onOpen(target)}><span className={status === 'พร้อมใช้' ? 'roadmap-state ready' : 'roadmap-state'}>{status}</span><span><strong>{title}</strong><small>{copy}</small></span><span>↗</span></button>)}</div></div>;
 }
 
-export function CommunityPanel({ onOpenContact }) {
-  return <div className="hub-panel community-panel"><span className="hub-heading-icon"><MessageCircle size={23} /></span><h3>พื้นที่ชุมชน</h3><p>ตอนนี้ยังไม่มีโพสต์หรือห้องสนทนาสมาชิกในระบบ Nugaom AI Pick การเปิดชุมชนจริงต้องมีบัญชีผู้ใช้ กติกาเนื้อหา และเครื่องมือดูแลข้อความ</p><button className="feature-primary" onClick={onOpenContact}>ดูช่องทางติดต่อใน DEMO ↗</button></div>;
-}
-
 export function CalendarPanel({ onOpenGuide }) {
-  return <div className="hub-panel community-panel"><span className="hub-heading-icon"><CalendarDays size={23} /></span><h3>ปฏิทินเศรษฐกิจ · รอฟีดข้อมูล</h3><p>ยังไม่มีรายการเหตุการณ์เศรษฐกิจในแอปที่ตรวจเวลา ประเทศ ความสำคัญ และตัวเลขก่อนหน้า/คาดการณ์/จริงได้ ขณะนี้แสดงทางไปยังปฏิทินของหน่วยงานต้นทางเพื่อให้ตรวจข้อมูลได้ทันที</p><div className="calendar-source-links"><a href="https://www.bot.or.th/en/our-roles/monetary-policy/mpc-meeting.html" target="_blank" rel="noopener noreferrer">ธปท. · กำหนดประชุม กนง. ↗</a><a href="https://www.bls.gov/schedule/2026/" target="_blank" rel="noopener noreferrer">BLS · กำหนดประกาศข้อมูลสหรัฐฯ ↗</a></div><div className="daily-callout"><CircleHelp size={17} /><span>เวลาในเว็บต้นทางอาจใช้คนละโซนเวลา เมื่อมีฟีดที่มีสิทธิแสดงผล จะจัดเวลาเป็น Asia/Bangkok และแสดงสถานะข้อมูลล่าสุดในแอป</span></div><button className="feature-primary" onClick={onOpenGuide}>อ่านวิธีใช้ข่าวประกอบกราฟ ↗</button></div>;
+  const [state, setState] = useState({ status: 'loading', releases: [], indicators: [] });
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/macro', { signal: controller.signal, cache: 'no-store' })
+      .then(response => response.json())
+      .then(data => { if (!controller.signal.aborted) setState(data); })
+      .catch(() => { if (!controller.signal.aborted) setState({ status: 'unavailable', releases: [], indicators: [] }); });
+    return () => controller.abort();
+  }, [revision]);
+  const dateLabel = date => new Date(`${date}T12:00:00Z`).toLocaleDateString('th-TH', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' });
+  const ready = ['available', 'partial', 'stale'].includes(state.status);
+  return <div className="hub-panel community-panel fred-calendar">
+    <div className="fred-heading"><span className="hub-heading-icon"><CalendarDays size={23} /></span><div><h3>วันประกาศเศรษฐกิจสหรัฐฯ</h3><p>วันประกาศและตัวเลขล่าสุดจาก FRED · อ่านคู่กับข่าวหุ้นและกราฟ</p></div><button className="feature-refresh" onClick={() => { setState(current => ({ ...current, status: 'loading' })); setRevision(value => value + 1); }} aria-label="โหลดข้อมูลเศรษฐกิจใหม่"><RefreshCw size={15} /> โหลดใหม่</button></div>
+    <p className="fred-legal">This product uses the FRED® API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. <a href="https://fred.stlouisfed.org/docs/api/terms_of_use.html" target="_blank" rel="noopener noreferrer">FRED API Terms of Use ↗</a></p>
+    {state.status === 'loading' && <div className="fred-message" role="status">กำลังอ่านข้อมูลจาก FRED…</div>}
+    {!ready && state.status !== 'loading' && <div className="fred-message" role="status">{state.status === 'unconfigured' ? 'ยังไม่ได้ตั้งค่าคีย์ FRED บนเซิร์ฟเวอร์' : state.code === 'DISPLAY_RIGHTS_UNCONFIRMED' ? 'รอยืนยันสิทธิการแสดงข้อมูล FRED ต่อสมาชิก' : 'ข้อมูล FRED ยังไม่พร้อม ลองโหลดใหม่ภายหลัง'}</div>}
+    {ready && <>
+      {state.status === 'stale' && <div className="fred-message" role="status">แสดงข้อมูลล่าสุดที่เก็บไว้ เพราะ FRED ตอบกลับไม่ได้ชั่วคราว</div>}
+      {state.status === 'partial' && <div className="fred-message" role="status">ข้อมูลบางชุดยังไม่พร้อม แสดงเฉพาะชุดที่ดึงได้</div>}
+      <div className="fred-section-head"><strong>ตัวเลขล่าสุดที่เผยแพร่แล้ว</strong><small>วันที่ใต้ตัวเลขคือช่วงข้อมูล ไม่ใช่เวลาเผยแพร่</small></div>
+      <div className="fred-indicators">{state.indicators?.map(item => <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="fred-indicator"><span>{item.label}</span><strong>{item.value.toLocaleString('en-US', { maximumFractionDigits: 2 })}{item.suffix}</strong><small>ข้อมูล {dateLabel(item.observationDate)} · {item.id} ↗</small></a>)}</div>
+      <div className="fred-section-head"><strong>วันประกาศที่กำลังจะมาถึง</strong><small>วันที่ตามปฏิทินสหรัฐฯ · ไม่ระบุชั่วโมง</small></div>
+      {state.releases?.length ? <div className="fred-release-list">{state.releases.map(item => <a href={item.url} target="_blank" rel="noopener noreferrer" key={item.id}><span className="fred-release-date">{dateLabel(item.date)}</span><strong>{item.label}</strong><small>ดูต้นทาง FRED ↗</small></a>)}</div> : <div className="fred-message">ยังไม่มีวันประกาศใน 45 วันข้างหน้าจากชุดข้อมูลที่ติดตาม</div>}
+      <p className="fred-source">FRED · Federal Reserve Bank of St. Louis · ดึงล่าสุด {state.receivedAt ? new Date(state.receivedAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' }) : '—'}</p>
+    </>}
+    <div className="daily-callout"><CircleHelp size={17} /><span>FRED ให้วันประกาศและค่าที่เผยแพร่แล้ว ไม่ใช่ฟีดพาดหัวข่าว ไม่มีค่า forecast หรือเวลาออกข่าวในข้อมูลชุดนี้ วันประกาศอาจเปลี่ยนได้และข้อมูลอาจถูกปรับย้อนหลัง</span></div>
+    <div className="calendar-source-links"><a href="https://www.bot.or.th/en/our-roles/monetary-policy/mpc-meeting.html" target="_blank" rel="noopener noreferrer">ธปท. · กำหนดประชุม กนง. ↗</a><a href="https://www.bls.gov/schedule/" target="_blank" rel="noopener noreferrer">BLS · เวลาออกข่าวสหรัฐฯ ↗</a></div>
+    <button className="feature-primary" onClick={onOpenGuide}>อ่านวิธีใช้ข่าวประกอบกราฟ ↗</button>
+  </div>;
 }
 
 export function DividendCalendarPanel() {

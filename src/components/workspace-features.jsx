@@ -19,8 +19,9 @@ function timeLabel(series) {
   return day && !Number.isNaN(day.valueOf()) ? day.toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short', year: 'numeric' }) : series.latestDay ?? '—';
 }
 
-async function readSeries(symbol, timeframe, signal) {
-  const response = await fetch(`/api/market-data?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}`, { cache: 'no-store', signal });
+async function readSeries(symbol, timeframe, signal, feed = 'settrade-daily') {
+  const route = feed === 'tfex-quote' ? '/api/tfex/candles' : feed === 'fmp-quote' ? '/api/us-bars' : '/api/market-data';
+  const response = await fetch(`${route}?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}`, { cache: 'no-store', signal });
   const payload = await response.json();
   if (!response.ok || payload.status !== 'available' || !Array.isArray(payload.bars) || payload.bars.length < 50) return null;
   return payload;
@@ -52,7 +53,7 @@ export function AmbientDepth() {
 }
 
 export function MarketScanner({ asset, market, favorites, timeframe, onSelect }) {
-  const [category, setCategory] = useState(market.id);
+  const [category, setCategory] = useState(['thai', 'dr'].includes(market.id) ? market.id : 'thai');
   const [query, setQuery] = useState('');
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState('loading');
@@ -94,13 +95,13 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
       if (!controller.signal.aborted) { setResults(Object.fromEntries(loaded)); setState('ready'); }
     }, 250);
     return () => { controller.abort(); window.clearTimeout(timeout); };
-  }, [symbols, timeframe, revision]);
+  }, [symbols, timeframe, revision, category]);
 
   return <div className="feature-body scanner-view">
     <div className="feature-intro"><div><span className="feature-kicker">REGIME SCANNER / RULE ENGINE</span><p>ตรวจชุดสัญลักษณ์ที่เลือกจากแท่ง {timeframe.toUpperCase()} และแสดงหลักฐานจริงที่คำนวณได้</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ สแกนอีกครั้ง</button></div>
-    <div className="feature-market-tabs">{MARKET_GROUPS.map(group => <button key={group.id} className={category === group.id ? 'selected' : ''} onClick={() => { setCategory(group.id); setQuery(''); setExpanded(''); setConditionFilter(''); }}>{group.label}</button>)}</div>
+    <div className="feature-market-tabs">{MARKET_GROUPS.filter(group => ['thai', 'dr'].includes(group.id)).map(group => <button key={group.id} className={category === group.id ? 'selected' : ''} onClick={() => { setCategory(group.id); setQuery(''); setExpanded(''); setConditionFilter(''); }}>{group.label}</button>)}</div>
     <div className="scanner-controls"><label><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder={`ค้นหาใน ${MARKET_GROUPS.find(item => item.id === category)?.label ?? ''}`} /></label><span>{state === 'loading' ? 'กำลังสแกน…' : `ตรวจ ${candidates.length} symbols`}</span></div>
-    <StatusNote>สแกนสูงสุด 6 ตัวต่อครั้งจากรายการที่เห็น · ไม่มีคะแนนความมั่นใจหรืออัตราชนะที่ยังไม่ได้วัด · {category === 'thai' || category === 'dr' ? 'แท่ง Settrade' : 'หมวดนี้ยังไม่มีแท่งจริงเชื่อมต่อ'}</StatusNote>
+    <StatusNote>สแกนสูงสุด 6 ตัวต่อครั้งจากรายการที่เห็นด้วยแท่ง Settrade · หน้า AutoPick แยกต่างหากจะตรวจทั้งจักรวาลตามรอบตลาด · ไม่มีอัตราชนะที่ยังไม่ได้วัด</StatusNote>
     {conditions.length > 0 && <div className="scanner-condition-chips"><strong>เงื่อนไขที่พบ</strong><button className={!conditionFilter ? 'selected' : ''} onClick={() => setConditionFilter('')}>ทั้งหมด {candidates.length}</button>{conditions.map(([label, count]) => <button key={label} className={conditionFilter === label ? 'selected' : ''} onClick={() => setConditionFilter(label)}>{label} <b>{count}</b></button>)}</div>}
     <div className="scanner-table-wrap" aria-busy={state === 'loading'}><table className="scanner-table"><thead><tr><th>ASSET</th><th>STRUCTURE</th><th>RSI 14</th><th>PRICE</th><th>CONDITIONS</th><th aria-label="รายละเอียด" /></tr></thead><tbody>{state === 'loading' ? candidates.map(item => <tr className="scanner-skeleton-row" key={item.symbol}><td><strong>{item.symbol}</strong><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td /></tr>) : visibleCandidates.map(item => {
       const series = results[item.symbol];
@@ -123,22 +124,25 @@ export function MultiTimeframe({ asset, onSelectFrame }) {
   const [series, setSeries] = useState({});
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
+  const frames = asset.id === 'us' ? FRAMES.filter(([frame]) => frame === '1d')
+    : asset.feed === 'settrade-daily' || asset.feed === 'tfex-quote' ? FRAMES : [];
   useEffect(() => {
-    if (asset.feed !== 'settrade-daily') { setLoading(false); setSeries({}); return undefined; }
+    if (!frames.length) { setLoading(false); setSeries({}); return undefined; }
     const controller = new AbortController();
     setLoading(true);
-    Promise.all(FRAMES.map(async ([frame]) => {
-      try { return [frame, await readSeries(asset.symbol, frame, controller.signal)]; }
+    Promise.all(frames.map(async ([frame]) => {
+      try { return [frame, await readSeries(asset.symbol, frame, controller.signal, asset.feed)]; }
       catch { return [frame, null]; }
     })).then(loaded => { if (!controller.signal.aborted) { setSeries(Object.fromEntries(loaded)); setLoading(false); } });
     return () => controller.abort();
-  }, [asset.symbol, asset.feed, revision]);
+  }, [asset.symbol, asset.feed, asset.id, revision]);
 
-  return <div className="feature-body"><div className="feature-intro"><div><span className="feature-kicker">STRUCTURE ACROSS TIME</span><p>{asset.symbol} · เปรียบเทียบ 4 ช่วงเวลา แล้วแตะการ์ดเพื่อเปิดบนกราฟหลัก</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ อัปเดต</button></div><StatusNote>แต่ละกรอบเวลาใช้แท่ง Settrade ของ {asset.symbol} แยกกัน · เงื่อนไขสแกนใช้กติกาเดียวกับกราฟหลัก</StatusNote><div className="mtf-grid" aria-busy={loading}>{FRAMES.map(([frame, label]) => {
+  return <div className="feature-body"><div className="feature-intro"><div><span className="feature-kicker">STRUCTURE ACROSS TIME</span><p>{asset.symbol} · เปรียบเทียบเฉพาะกรอบเวลาที่อ่านแท่งจริงได้</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ อัปเดต</button></div><StatusNote>{asset.feed === 'settrade-daily' ? 'แท่ง Settrade' : asset.feed === 'tfex-quote' ? 'แท่ง TFEX Open API' : asset.id === 'us' ? 'แท่ง FMP รายวันหลังตลาดปิด' : 'สินทรัพย์นี้ยังไม่มีแท่งจริงสำหรับเปรียบเทียบ' } · การ์ดที่ข้อมูลไม่พร้อมจะไม่แสดง</StatusNote><div className="mtf-grid" aria-busy={loading}>{frames.map(([frame, label]) => {
     const feed = series[frame];
     const result = feed ? analyzeCandles(feed.bars, feed.quote?.price ?? null, label) : null;
+    if (!loading && !feed) return null;
     return loading ? <div key={frame} className="mtf-card mtf-skeleton"><span className="mtf-card-top"><strong>{frame.toUpperCase()}</strong><i className="ui-skeleton-line" /></span><i className="ui-skeleton-line" /><div className="mtf-skeleton-metrics"><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /></div><i className="ui-skeleton-line" /></div> : <button key={frame} className="mtf-card" onClick={() => onSelectFrame(frame)}><span className="mtf-card-top"><strong>{frame.toUpperCase()}</strong><small>{feed ? timeLabel(feed) : 'NO FEED'}</small></span><b className={result?.trend === 'up' ? 'positive' : result?.trend === 'down' ? 'negative' : ''}>{result?.trend === 'up' ? '↗ ขาขึ้น' : result?.trend === 'down' ? '↘ ขาลง' : result ? '→ ออกข้าง' : 'ยังวิเคราะห์ไม่ได้'}</b><div className="mtf-card-metrics"><span>ราคา <strong>{result ? number(result.price) : '—'}</strong></span><span>RSI <strong>{result ? number(result.rsi14, 1) : '—'}</strong></span><span>แนวรับ <strong>{result ? number(result.support) : '—'}</strong></span><span>แนวต้าน <strong>{result ? number(result.resistance) : '—'}</strong></span></div><small className="mtf-card-event">{result?.events[0]?.label ?? 'รอแท่งจริงอย่างน้อย 50 แท่ง'}</small><span className="mtf-card-link">เปิดกราฟ {frame.toUpperCase()} ↗</span></button>;
-  })}</div></div>;
+  })}</div>{!loading && !frames.some(([frame]) => series[frame]) && <div className="feature-empty">ยังไม่มีแท่งราคาที่ใช้เปรียบเทียบได้สำหรับ {asset.symbol}</div>}</div>;
 }
 
 export function VolumePulse({ asset, bars, timeframe, onOpenScanner }) {
@@ -152,21 +156,11 @@ export function VolumePulse({ asset, bars, timeframe, onOpenScanner }) {
   return <div className="feature-body"><div className="feature-intro"><div><span className="feature-kicker">VOLUME PULSE / {asset.symbol}</span><p>มุมมองกิจกรรมซื้อขายจากปริมาณแท่ง {timeframe.toUpperCase()} ของสินทรัพย์ที่เลือก</p></div><button className="feature-refresh" onClick={onOpenScanner}>ดู Scanner ↗</button></div><StatusNote>Volume Pulse คือปริมาณซื้อขาย ไม่ใช่ Fund Flow สุทธิหรือข้อมูล bid/ask · ไม่มีฟีด Fund Flow เชื่อมต่อในตอนนี้</StatusNote><div className="volume-summary"><div><small>ปริมาณเฉลี่ย 16 แท่ง</small><strong>{recent.length ? number(recentAverage, 0) : '—'}</strong></div><div><small>เทียบ 20 แท่งก่อนหน้า</small><strong className={ratio && ratio >= 1 ? 'positive' : ''}>{ratio ? `${number(ratio, 2)}×` : '—'}</strong></div><div><small>แท่งล่าสุด</small><strong>{recent.length ? number(recent.at(-1).volume, 0) : '—'}</strong></div></div>{recent.length ? <div className="volume-bars" aria-label="ปริมาณซื้อขาย 16 แท่งล่าสุด">{recent.map((bar, index) => <div key={`${bar.time}-${index}`} title={`แท่ง ${index + 1}: ${number(bar.volume, 0)}`}><span className={bar.close >= bar.open ? 'up' : 'down'} style={{ height: `${Math.max(7, (bar.volume / max) * 100)}%` }} /></div>)}</div> : <div className="feature-empty">ยังไม่มีแท่งจริงของ {asset.symbol} ในช่วงเวลา {timeframe.toUpperCase()} สำหรับกราฟปริมาณ</div>}<div className="flow-coming"><strong>Fund Flow Dashboard</strong><p>ส่วนนี้จะใช้ข้อมูลกระแสเงินจากแหล่งที่มีสิทธิ์ใช้งานเมื่อเชื่อมต่อสำเร็จ ขณะนี้แสดง Volume Pulse จาก OHLCV เพื่อสำรวจจังหวะกิจกรรมเท่านั้น</p></div></div>;
 }
 
-export function TerminalView({ asset, sampleRows, ledger, onSelectSymbol, onOpenAutomation }) {
-  const [tab, setTab] = useState('exposure');
-  const records = [...ledger, ...sampleRows.map((row, index) => ({ ...row, id: `sample-${index}`, sample: true }))];
-  const open = ledger.filter(row => row.result === 'กำลังติดตาม');
-  const closed = records.filter(row => row.result === 'ชนะ' || row.result === 'แพ้');
-  const wins = closed.filter(row => row.result === 'ชนะ').length;
-  const visible = tab === 'exposure' ? records : closed;
-  return <div className="feature-body"><div className="feature-intro"><div><span className="feature-kicker">TRADE TERMINAL / DEMO</span><p>สมุดสัญญาณตัวอย่างเชื่อมกับสถิติและประวัติด้านล่างของ workspace</p></div><button className="feature-refresh" onClick={onOpenAutomation}>＋ บันทึกแผน DEMO</button></div><StatusNote>ทุกแถวและตัวเลขใน Terminal เป็น DEMO · รายการใหม่เก็บในเบราว์เซอร์นี้ · ไม่มีรายการเทรดจริงหรือผลย้อนหลังที่ตรวจสอบแล้ว</StatusNote><div className="terminal-tabs">{[['exposure', 'Exposure · ทั้งหมด'], ['history', 'History · ปิดผล'], ['report', 'Report']].map(([key, label]) => <button key={key} className={tab === key ? 'selected' : ''} onClick={() => setTab(key)}>{label}</button>)}</div><div className="terminal-summary"><div><small>รายการตัวอย่าง</small><strong>{records.length}</strong></div><div><small>กำลังติดตาม</small><strong>{open.length}</strong></div><div><small>ปิดผลแล้ว</small><strong>{closed.length}</strong></div><div><small>Win rate · DEMO</small><strong>{closed.length ? `${number(wins / closed.length * 100, 1)}%` : '—'}</strong></div></div><div className="terminal-table-wrap"><table className="scanner-table"><thead><tr><th>ASSET</th><th>SIDE</th><th>ENTRY</th><th>EXIT / TP</th><th>RESULT</th><th>P/L</th></tr></thead><tbody>{visible.map(row => <tr key={row.id}><td><button className="scanner-symbol" onClick={() => onSelectSymbol(row.symbol)}><strong>{row.symbol} ↗</strong><small>{row.sample ? 'ตัวอย่างหน้าจอ' : 'บันทึกในเบราว์เซอร์'}</small></button></td><td className={row.side === 'BUY' ? 'positive' : 'negative'}>{row.side}</td><td>{row.entry}</td><td>{row.exit ?? row.tp ?? '—'}</td><td>{row.result}</td><td className={row.result === 'ชนะ' ? 'positive' : row.result === 'แพ้' ? 'negative' : ''}>{row.pnl}</td></tr>)}</tbody></table>{visible.length === 0 && <div className="feature-empty">ยังไม่มีรายการในส่วนนี้</div>}</div>{tab === 'report' && <div className="terminal-report"><div className="terminal-donut" style={{ '--win-share': `${closed.length ? wins / closed.length * 100 : 0}%` }}><span>{closed.length ? `${number(wins / closed.length * 100, 1)}%` : '—'}</span></div><div className="terminal-report-copy"><strong>ผลรายการตัวอย่างที่ปิดแล้ว</strong><span>ชนะ {wins} · แพ้ {closed.length - wins}</span><small>ตัวเลขนี้ใช้ DEMO เท่านั้น ยังไม่มีประวัติการเทรดจริง</small></div></div>}</div>;
-}
-
 export function NewsGuide({ onOpenNews }) {
   return <div className="feature-body news-guide"><div className="news-guide-lead"><span className="news-guide-symbol">?</span><div><h3>อ่านข่าวตลาดอย่างมีบริบท</h3><p>ใช้ข่าวประกอบการติดตามราคาและแผน โดยตรวจแหล่งข่าว เวลาเผยแพร่ และผลกระทบที่ยังไม่แน่นอน</p></div></div><section><h3>What is market news?</h3><p>หัวข้อข่าวช่วยบอกเหตุการณ์ที่ตลาดอาจกำลังตอบสนอง การจัดหมวดและ sentiment เป็นเพียงการอ่านเนื้อหาเบื้องต้น ไม่ใช่ผลตอบแทนที่คาดการณ์ได้</p></section><section><h3>↗ Sentiment Analysis</h3><div className="guide-item green"><b>Bullish / เชิงบวก</b><span>เนื้อหาสื่อถึงปัจจัยหนุน แต่ราคาจริงอาจไม่ขึ้นตาม</span></div><div className="guide-item red"><b>Bearish / เชิงลบ</b><span>เนื้อหาสื่อถึงแรงกดดัน แต่ราคาจริงอาจไม่ลงตาม</span></div><div className="guide-item"><b>Neutral / กลาง</b><span>ยังไม่มีทิศทางชัดจากตัวข่าว</span></div></section><section><h3>ϟ Impact Levels</h3><div className="impact-row"><b>HIGH</b><span>เหตุการณ์ที่ควรเช็กเวลาและความผันผวน</span></div><div className="impact-row"><b>MED</b><span>อาจเกี่ยวข้องกับสินทรัพย์ที่ติดตาม</span></div><div className="impact-row"><b>LOW</b><span>ข่าวทั่วไปหรือมีผลกระทบจำกัด</span></div></section><section><h3>วิธีใช้ร่วมกับกราฟ</h3><ol><li>ดูเวลาข่าว เทียบกับแท่งราคาที่ปิดแล้ว</li><li>อ่านแหล่งข่าวต้นทางก่อนตัดสินใจ</li><li>เช็กแนวรับ แนวต้าน และความเสี่ยงบนกราฟ</li></ol></section><button className="feature-primary" onClick={onOpenNews}>เปิดข่าวตลาด ↗</button></div>;
 }
 
-export function NewsFeedState({ onOpenGuide }) {
+export function NewsFeedState({ onOpenGuide, onOpenCalendar }) {
   const [state, setState] = useState({ status: 'loading', markets: [] });
   const [revision, setRevision] = useState(0);
   useEffect(() => {
@@ -191,6 +185,7 @@ export function NewsFeedState({ onOpenGuide }) {
   const markets = state.markets?.length ? state.markets : state.status === 'loading' ? [{ id: 'thai', label: 'หุ้นไทย', status: 'loading', articles: [] }, { id: 'us', label: 'หุ้นอเมริกา', status: 'loading', articles: [] }] : [];
   return <div className="feature-body market-news">
     <div className="feature-intro"><div><span className="feature-kicker">MARKET NEWS / MARKETDX</span><p>ข่าวหุ้นไทยและหุ้นอเมริกา อย่างละ 4 ข่าวล่าสุด · คัดตามประเทศที่หุ้นจดทะเบียน</p></div><div className="market-news-actions"><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ โหลดใหม่</button><button className="feature-refresh" onClick={onOpenGuide}>? คู่มือ</button></div></div>
+    <button className="fred-news-link" onClick={onOpenCalendar}><span>◷</span><strong>ติดตามวันประกาศและตัวเลขเศรษฐกิจสหรัฐฯ จาก FRED</strong><small>FRED เป็นข้อมูลเศรษฐกิจ ไม่ใช่พาดหัวข่าว</small><span>เปิด ↗</span></button>
     {(state.status === 'unconfigured' || state.status === 'unavailable' && !state.markets?.length) && <div className="feature-empty feature-news-empty" role="status"><strong>{errorMessages[state.code] ?? 'ยังดึงข่าวไม่ได้'}</strong><p>ระบบไม่แสดงข่าวตัวอย่างแทนข่าวจริง</p></div>}
     <div className="market-news-sections">{markets.map(market => <section className="market-news-market" key={market.id} aria-label={`ข่าว${market.label}`}><div className="market-news-market-head"><div><span className="market-news-flag">{market.id === 'thai' ? '🇹🇭' : '🇺🇸'}</span><h3>{market.label}</h3><small>ล่าสุดไม่เกิน 4 ข่าว</small></div><span>{market.status === 'stale' ? 'ข้อมูลเก่าจากแคช' : market.status === 'available' ? 'ข้อมูลจริง' : market.status === 'loading' ? 'กำลังโหลด' : 'ยังไม่พร้อม'}</span></div>
       {market.status === 'loading' && <div className="market-news-skeleton" aria-busy="true"><span className="ui-skeleton-line" /><span className="ui-skeleton-line" /><span className="ui-skeleton-line" /></div>}

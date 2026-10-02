@@ -1,3 +1,4 @@
+import { rateLimit, readJsonBody, requestErrorResponse } from '../../../security/request-guard.mjs';
 import { SETTRADE_SYMBOLS } from '../../../markets/catalog.mjs';
 import { currentMember, sameOrigin } from '../../../membership/server.mjs';
 import { membershipFor } from '../../../membership/rights.mjs';
@@ -74,17 +75,16 @@ async function generate(snapshot) {
 
 export async function POST(request) {
   if (!sameOrigin(request)) return Response.json({ status: 'forbidden', code: 'INVALID_ORIGIN' }, { status: 403, headers: NO_STORE });
-  if (!membershipFor(await currentMember()).capabilities.manualDailyScan) {
+  const member = await currentMember();
+  if (!membershipFor(member).capabilities.manualDailyScan) {
     return Response.json({ status: 'forbidden', code: 'MEMBERSHIP_REQUIRED' }, { status: 403, headers: NO_STORE });
   }
   if (process.env.NODE_ENV === 'production') {
     return Response.json({ status: 'unavailable', code: 'LOCAL_MODEL_ONLY' }, { status: 503, headers: NO_STORE });
   }
-  if (Number(request.headers.get('content-length') ?? 0) > 3_000) {
-    return Response.json({ status: 'unavailable', code: 'INVALID_INPUT' }, { status: 400, headers: NO_STORE });
-  }
+  const limited = rateLimit('chart-ai', member.id, 6); if (limited) return limited;
   let snapshot;
-  try { snapshot = parseSnapshot(await request.json()); } catch { snapshot = null; }
+  try { snapshot = parseSnapshot(await readJsonBody(request,3000)); } catch (error) { return requestErrorResponse(error); }
   if (!snapshot) return Response.json({ status: 'unavailable', code: 'INVALID_INPUT' }, { status: 400, headers: NO_STORE });
   const key = JSON.stringify(snapshot);
   const hit = cache.get(key);

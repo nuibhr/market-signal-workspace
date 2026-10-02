@@ -1,0 +1,25 @@
+[Unit]
+Description=Nugaom AI Pick scanner
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=nugaom
+Group=nugaom
+WorkingDirectory=/opt/nugaom/current
+EnvironmentFile=/etc/nugaom/production.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node scripts/auto-pick-worker.mjs
+Restart=always
+RestartSec=15
+TimeoutStopSec=40
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/nugaom
+
+[Install]
+WantedBy=multi-user.target

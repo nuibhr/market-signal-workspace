@@ -3,9 +3,17 @@
 !.env.example
 *.env
 tfex.txt
-WEBULL.txt
 node_modules/
 .next/
 out/
 build/
 data/
+.DS_Store
+
+# Actual server secrets and tunnel credentials (templates stay versioned).
+/deploy/production.env
+/deploy/*.credentials.json
+/deploy/tunnel-token*
+
+# Isolated local acceptance-review output.
+.next-review/

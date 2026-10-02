@@ -1,0 +1,17 @@
+[Unit]
+Description=Encrypted Nugaom database snapshot
+
+[Service]
+Type=oneshot
+User=nugaom
+Group=nugaom
+WorkingDirectory=/opt/nugaom/current
+EnvironmentFile=/etc/nugaom/production.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node scripts/backup-database.mjs
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/nugaom

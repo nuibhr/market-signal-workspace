@@ -1,20 +1,40 @@
-import { runThaiAutoPick, autoPickReadiness } from '../src/auto-pick/runner.mjs';
+import { refreshNextBacktest } from '../src/auto-pick/backtest-summary.mjs';
+import { runThaiAutoPick, runDrAutoPick, runUsAutoPick, autoPickReadiness } from '../src/auto-pick/runner.mjs';
+import { heartbeatWorker, reconcileWatchPlans } from '../src/auto-pick/store.mjs';
 
-if (!autoPickReadiness().enabled || !process.env.AUTO_PICK_RUN_SECRET || process.env.AUTO_PICK_RUN_SECRET.length < 32) {
-  process.stderr.write('AutoPick is not configured. Check AUTO_PICK_ENABLED, persistent storage, Settrade rights and AUTO_PICK_RUN_SECRET.\n');
+const initialReadiness = autoPickReadiness();
+if (!initialReadiness.enabled || !process.env.AUTO_PICK_RUN_SECRET || process.env.AUTO_PICK_RUN_SECRET.length < 32) {
+  process.stderr.write('AutoPick is not configured. Check enabled market flags, data credentials/rights, persistent storage and AUTO_PICK_RUN_SECRET.\n');
   process.exitCode = 1;
 } else {
-  process.stdout.write('AutoPick worker ready. Thai market scans run every 15 minutes during the configured session.\n');
+  process.stdout.write(`AutoPick worker ready. Markets enabled: ${initialReadiness.markets.filter(item => item.status === 'active').map(item => item.id).join(', ')}.\n`);
+  // Keep the liveness marker current while a long market scan is awaiting provider calls.
+  setInterval(() => {
+    try { heartbeatWorker(); }
+    catch (error) { process.stderr.write(`${new Date().toISOString()} Worker heartbeat failed: ${error.message}\n`); }
+  }, 30_000);
+  let lastWake = Date.now();
   while (true) {
+    heartbeatWorker();
     const now = Date.now();
-    try {
-      const result = await runThaiAutoPick(now);
-      if (result.status !== 'outside-session' && result.status !== 'already-run')
-        process.stdout.write(`${new Date().toISOString()} ${result.status} scanned=${result.scanned ?? 0} candidates=${result.candidates ?? 0}\n`);
-    } catch (error) {
-      process.stderr.write(`${new Date().toISOString()} AutoPick run failed: ${error.message}\n`);
+    if (now - lastWake > 120_000) process.stderr.write(`${new Date(now).toISOString()} AutoPick resumed after a ${Math.round((now - lastWake) / 60_000)}m process pause.\n`);
+    lastWake = now;
+    const readiness = autoPickReadiness();
+    const enabled = new Set(readiness.markets.filter(item => item.status === 'active').map(item => item.id));
+    for (const [market, run] of [['thai', runThaiAutoPick], ['dr', runDrAutoPick], ['us', runUsAutoPick]]) {
+      if (!enabled.has(market)) continue;
+      try {
+        const result = await run(Date.now());
+        if (!['outside-session', 'already-run', 'waiting-eod'].includes(result.status))
+          process.stdout.write(`${new Date().toISOString()} ${market} ${result.status} scanned=${result.scanned ?? 0} candidates=${result.candidates ?? 0}\n`);
+      } catch (error) {
+        process.stderr.write(`${new Date().toISOString()} ${market} AutoPick run failed: ${error.message}\n`);
+      }
+      heartbeatWorker();
     }
-    const delay = Math.max(1000, Math.ceil(Date.now() / 900_000) * 900_000 - Date.now() + 3000);
-    await new Promise(resolve => setTimeout(resolve, delay));
+    reconcileWatchPlans([...enabled]);
+    try { await refreshNextBacktest(); } catch { process.stderr.write("Historical summary refresh unavailable.\n"); }
+    // Wake frequently so sleep/wake and clock changes cannot leave an old timer pending.
+    await new Promise(resolve => setTimeout(resolve, 30_000));
   }
 }

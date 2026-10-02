@@ -4,6 +4,8 @@ const LOGIN_BASE = 'https://open-api.settrade.com/api/oam/v1';
 const MARKET_BASE = 'https://marketapi.settrade.com/api';
 const TIMEOUT_MS = 10_000;
 const CANDLE_INTERVALS = Object.freeze({ '15m': '15m', '1h': '60m', '4h': '240m', '1d': '1d' });
+// The Settrade candle endpoint accepts at most 1,000 bars per request.
+export const MAX_CANDLE_BARS = 1000;
 
 export class SettradeDataError extends Error {
   constructor(code, status = null) {
@@ -142,7 +144,7 @@ export function normalizeSettradeQuote(payload, symbol, receivedAt, market = 'SE
   };
 }
 
-export function normalizeSettradeDailyCandles(raw, symbol, receivedAt) {
+export function normalizeSettradeDailyCandles(raw, symbol, receivedAt, market = 'SET') {
   const columns = ['time', 'open', 'high', 'low', 'close', 'volume'];
   const arrays = Object.fromEntries(columns.map(column => [column, Array.isArray(raw?.[column]) ? raw[column] : []]));
   const total = arrays.time.length;
@@ -176,9 +178,9 @@ export function normalizeSettradeDailyCandles(raw, symbol, receivedAt) {
     byDay.set(time, { time, open, high, low, close, volume });
   }
   return {
-    instrumentId: `SET:${symbol}`,
+    instrumentId: `${market === 'TFEX' ? 'TFEX' : 'SET'}:${symbol}`,
     symbol,
-    source: 'Settrade Market API',
+    source: market === 'TFEX' ? 'TFEX Open API' : 'Settrade Market API',
     timeframe: '1d',
     receivedAt,
     bars: [...byDay.values()].sort((a, b) => a.time.localeCompare(b.time)),
@@ -188,7 +190,7 @@ export function normalizeSettradeDailyCandles(raw, symbol, receivedAt) {
 }
 
 /** Intraday bars use UTC seconds, as required by Lightweight Charts. */
-export function normalizeSettradeIntradayCandles(raw, symbol, receivedAt, timeframe) {
+export function normalizeSettradeIntradayCandles(raw, symbol, receivedAt, timeframe, market = 'SET') {
   const columns = ['time', 'open', 'high', 'low', 'close', 'volume'];
   const arrays = Object.fromEntries(columns.map(column => [column, Array.isArray(raw?.[column]) ? raw[column] : []]));
   const byTime = new Map();
@@ -218,9 +220,9 @@ export function normalizeSettradeIntradayCandles(raw, symbol, receivedAt, timefr
     byTime.set(time, { time, open, high, low, close, volume });
   }
   return {
-    instrumentId: `SET:${symbol}`,
+    instrumentId: `${market === 'TFEX' ? 'TFEX' : 'SET'}:${symbol}`,
     symbol,
-    source: 'Settrade Market API',
+    source: market === 'TFEX' ? 'TFEX Open API' : 'Settrade Market API',
     timeframe,
     receivedAt,
     bars: [...byTime.values()].sort((a, b) => a.time - b.time),
@@ -256,7 +258,11 @@ function safeSymbol(symbol) {
   return symbol;
 }
 
+const sharedClients = new Map();
 export function createSettradeClient(options = {}) {
+  const shared = Object.keys(options).every(key => key === 'market');
+  const clientKey = options.market ?? 'SET';
+  if (shared && sharedClients.has(clientKey)) return sharedClients.get(clientKey);
   const { env = process.env, fetcher = fetch, now = Date.now, market = 'SET' } = options;
   const config = getSettradeConfiguration(env, market);
   let token = null;
@@ -308,24 +314,37 @@ export function createSettradeClient(options = {}) {
       return request(`${MARKET_BASE}/${path}`, { headers: { Accept: 'application/json', Authorization: `Bearer ${refreshed}` } }, 'MARKET_DATA_UNAVAILABLE');
     }
   }
-  async function getQuote(symbol) {
+  const responses = new Map(), pending = new Map();
+  async function sharedRequest(key, ttl, load) {
+    if (!shared) return load();
+    const hit = responses.get(key); if (hit && hit.expires > now()) return hit.data;
+    if (pending.has(key)) return pending.get(key);
+    const job = load().then(data => { responses.set(key, { data, expires: now() + ttl });
+      if (responses.size > 1000) responses.delete(responses.keys().next().value); return data; }).finally(() => pending.delete(key));
+    pending.set(key, job); return job;
+  }
+  async function loadQuote(symbol) {
     safeSymbol(symbol);
     const raw = await marketRequest(`marketdata/v3/${encodeURIComponent(config.brokerId)}/quote/${encodeURIComponent(symbol)}`);
     return normalizeSettradeQuote(raw, symbol, new Date(now()).toISOString(), market);
   }
-  async function getCandles(symbol, timeframe = '1d') {
-    if (market === 'TFEX') throw new SettradeDataError('HISTORICAL_ENDPOINT_NOT_VERIFIED');
+  async function loadCandles(symbol, timeframe = '1d', limit = 100) {
     safeSymbol(symbol);
     const interval = CANDLE_INTERVALS[timeframe];
     if (!interval) throw new SettradeDataError('INVALID_TIMEFRAME');
-    const raw = await marketRequest(`techchart/v3/${encodeURIComponent(config.brokerId)}/candlesticks?symbol=${encodeURIComponent(symbol)}&interval=${interval}&limit=100`);
+    if (!Number.isInteger(limit) || limit < 1 || limit > MAX_CANDLE_BARS) throw new SettradeDataError('INVALID_CANDLE_LIMIT');
+    const raw = await marketRequest(`techchart/v3/${encodeURIComponent(config.brokerId)}/candlesticks?symbol=${encodeURIComponent(symbol)}&interval=${interval}&limit=${limit}`);
     const receivedAt = new Date(now()).toISOString();
     return timeframe === '1d'
-      ? normalizeSettradeDailyCandles(raw, symbol, receivedAt)
-      : normalizeSettradeIntradayCandles(raw, symbol, receivedAt, timeframe);
+      ? normalizeSettradeDailyCandles(raw, symbol, receivedAt, market)
+      : normalizeSettradeIntradayCandles(raw, symbol, receivedAt, timeframe, market);
   }
-  async function getDailyCandles(symbol) { return getCandles(symbol, '1d'); }
-  return { configuration: { configured: config.missing.length === 0, missing: config.missing }, login, getQuote, getCandles, getDailyCandles };
+  async function getQuote(symbol) { safeSymbol(symbol); return sharedRequest(`quote:${symbol}`, 3000, () => loadQuote(symbol)); }
+  async function getCandles(symbol, timeframe = '1d', limit = 100) { return sharedRequest(`candles:${symbol}:${timeframe}:${limit}`, timeframe === '1d' ? 900000 : 10000, () => loadCandles(symbol, timeframe, limit)); }
+  async function getDailyCandles(symbol, limit = 100) { return getCandles(symbol, '1d', limit); }
+  const client = { configuration: { configured: config.missing.length === 0, missing: config.missing }, login, getQuote, getCandles, getDailyCandles };
+  if (shared) sharedClients.set(clientKey, client);
+  return client;
 }
 
 export function createTfexClient(options = {}) {

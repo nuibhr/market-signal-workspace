@@ -1,26 +1,57 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { BellRing, ChartNoAxesCombined, Clock3, Radar, ShieldCheck } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { BellRing, ChartNoAxesCombined, Clock3, Radar, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { ALL_ASSETS } from '../markets/catalog.mjs';
+import { ANNOUNCEMENT_TYPES, SPOKEN_TYPES, announcementFor } from '../auto-pick/announcements.mjs';
 
 const SEEN_KEY = 'nugaom-autopick-last-event';
-const ALERT_TYPES = new Set(['ENTRY', 'TARGET', 'STOP', 'AMBIGUOUS', 'DATA_GAP', 'SESSION_END']);
-const LABELS = { PICK_READY: 'พบแผน · รอยืนยัน', ENTRY: 'เข้าเงื่อนไขราคา', TARGET: 'ถึงเป้า TP1',
-  STOP: 'ถึงจุดตัดขาดทุน', AMBIGUOUS: 'ต้องตรวจผล', DATA_GAP: 'ข้อมูลขาดช่วง', SESSION_END: 'สิ้นวัน · ต้องตรวจผล', EXPIRED: 'หมดเวลารอเข้า', ENTRY_SKIPPED: 'ราคาเลยจุดเข้า' };
-const fmt = value => typeof value === 'number' && Number.isFinite(value)
-  ? value.toLocaleString('en-US', { maximumFractionDigits: value < 1 ? 5 : 2 }) : '—';
+const VOICE_KEY = 'nugaom-autopick-voice-enabled';
+const WORKER_LABELS = { healthy: 'สแกนตามเวลา', running: 'กำลังสแกน', degraded: 'ข้อมูลบางส่วนมีปัญหา',
+  'scanning-incomplete': 'กำลังตรวจให้ครบ',
+  stuck: 'รอบสแกนค้าง', 'not-running': 'worker ไม่ทำงาน', 'awaiting-first-run': 'รอรอบสแกนแรก',
+  'outside-session': 'นอกเวลาตลาด', 'missed-candidate-window': 'พลาดรอบคัดหุ้นเช้า',
+  'candidate-degraded': 'รอบคัดหุ้นมีปัญหาข้อมูล', unavailable: 'อ่านสถานะ worker ไม่ได้',
+  'awaiting-eod-data': 'รอแท่งปิดจาก FMP', 'eod-data-delayed': 'แท่งปิดจาก FMP มาช้า' };
+const LABELS = { PICK_READY: 'ระบบจับตา · รอยืนยัน', ENTRY: 'เข้าเงื่อนไขราคา', TARGET: 'ถึงเป้า TP1',
+  STOP: 'ถึงจุดตัดขาดทุน', EXIT: 'จบแผนตามเงื่อนไข', AMBIGUOUS: 'ต้องตรวจผล', DATA_GAP: 'ข้อมูลขาดช่วง', SESSION_END: 'จบช่วงติดตาม · ต้องตรวจผล', EXPIRED: 'หมดเวลารอเข้า', ENTRY_SKIPPED: 'ราคาเลยจุดเข้า' };
+const fmt = (value, market = '') => typeof value === 'number' && Number.isFinite(value)
+  ? `${market === 'us' ? '$' : ''}${value.toLocaleString('en-US', { maximumFractionDigits: value < 1 ? 5 : 2 })}` : '—';
 const at = value => value ? new Date(value).toLocaleString('th-TH', {
   timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
 }) : '—';
 const observedAt = item => item.barTime
-  ? (item.barTime + (item.type === 'ENTRY' || item.type === 'ENTRY_SKIPPED' || item.type === 'PICK_READY' ? 3600 : 900)) * 1000
+  ? (item.barTime + (item.type === 'ENTRY' || item.type === 'ENTRY_SKIPPED' || item.type === 'PICK_READY'
+    ? 900 : 900)) * 1000
   : item.createdAt;
+const eventDateLabel = item => item.market === 'us' && item.barDay ? `แท่ง D1 ปิด ${item.barDay} · New York` : at(observedAt(item));
+
+function speak(text) {
+  if (!text || !('speechSynthesis' in window) || typeof window.SpeechSynthesisUtterance !== 'function') return;
+  const synthesis = window.speechSynthesis;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'th-TH';
+  utterance.rate = 0.9;
+  utterance.pitch = 1.03;
+  utterance.voice = synthesis.getVoices().find(voice => voice.lang.toLowerCase().startsWith('th')) || null;
+  synthesis.cancel();
+  synthesis.speak(utterance);
+}
 
 export default function AutoPickBoard({ onSelect }) {
   const [state, setState] = useState(null);
   const [error, setError] = useState(false);
-  const [alert, setAlert] = useState(null);
+  const [alerts, setAlerts] = useState([]);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const spokenId = useRef(null);
+  const alert = alerts[0] ?? null;
+
+  useEffect(() => {
+    setSpeechSupported('speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function');
+    try { setVoiceEnabled(window.localStorage.getItem(VOICE_KEY) === 'true'); } catch { /* Private browsing may disable storage. */ }
+  }, []);
 
   useEffect(() => {
     let stopped = false;
@@ -37,8 +68,14 @@ export default function AutoPickBoard({ onSelect }) {
         try { seen = window.localStorage.getItem(SEEN_KEY); } catch { /* Storage is optional. */ }
         if (seen && seen !== newest) {
           const index = data.events.findIndex(item => item.id === seen);
-          const unseen = (index < 0 ? data.events.slice(0, 1) : data.events.slice(0, index)).filter(item => ALERT_TYPES.has(item.type));
-          if (unseen.length) setAlert(unseen[0]);
+          const unseen = (index < 0 ? data.events.slice(0, 1) : data.events.slice(0, index))
+            .filter(item => ANNOUNCEMENT_TYPES.has(item.type) && Date.now() - Date.parse(item.createdAt) < 30 * 60_000
+              && (item.market === 'us' || !item.barTime || Date.now() - (item.barTime + 900) * 1000 < 30 * 60_000)).reverse();
+          if (unseen.length) {
+            const priority = unseen.filter(item => item.type !== 'PICK_READY');
+            const latestWatch = unseen.filter(item => item.type === 'PICK_READY').at(-1);
+            setAlerts(current => [...priority, ...current, ...(latestWatch ? [latestWatch] : [])].slice(0, 12));
+          }
         }
         try { window.localStorage.setItem(SEEN_KEY, newest); } catch { /* Storage is optional. */ }
       } catch { if (!stopped) setError(true); }
@@ -50,38 +87,81 @@ export default function AutoPickBoard({ onSelect }) {
 
   useEffect(() => {
     if (!alert) return undefined;
-    const timer = window.setTimeout(() => setAlert(null), 12000);
+    const timer = window.setTimeout(() => setAlerts(current => current.slice(1)), voiceEnabled && SPOKEN_TYPES.has(alert.type) ? Math.min(90000, Math.max(35000, announcementFor(alert).text.length * 120)) : 12000);
     return () => window.clearTimeout(timer);
-  }, [alert]);
+  }, [alert?.id, voiceEnabled]);
+
+  useEffect(() => {
+    if (!alert || spokenId.current === alert.id) return;
+    spokenId.current = alert.id;
+    if (voiceEnabled && document.visibilityState === 'visible' && SPOKEN_TYPES.has(alert.type)) speak(announcementFor(alert).text);
+  }, [alert, voiceEnabled]);
+
+  function toggleVoice() {
+    const next = !voiceEnabled;
+    setVoiceEnabled(next);
+    try { window.localStorage.setItem(VOICE_KEY, String(next)); } catch { /* Voice still works for this page. */ }
+    if (next) {
+      spokenId.current = alert?.id ?? null;
+      speak('เปิดเสียงแจ้งเตือนจากน้องนักออมแล้ว');
+    } else if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
+
+  function previewAnnouncement() {
+    const demo = { id: `preview-${Date.now()}`, type: 'ENTRY', symbol: 'NVDA80', market: 'dr', session: 'night',
+      price: 39, entryCeiling: 39, tp1: 40.5, stopLoss: 38.25, createdAt: new Date().toISOString(), demo: true };
+    spokenId.current = demo.id;
+    setAlerts(current => [...current, demo]);
+    if (speechSupported) speak(announcementFor(demo).text);
+  }
 
   const readiness = state?.readiness?.markets ?? [];
+  const coverage = state?.coverage ?? {};
+  const worker = state?.worker;
+  const workers = state?.workers ?? { thai: worker };
+  const workerProcess = state?.workerProcess;
+  const processRunning = workerProcess?.status === 'running';
+  const activeMarkets = readiness.filter(market => market.status === 'active'
+    && !(market.id === 'us' && workers.us?.scanUnverified));
+  const shelvedMarkets = readiness.filter(market => !activeMarkets.includes(market));
   const signals = state?.signals ?? [];
   const events = state?.events ?? [];
   const decisions = state?.decisions ?? [];
   const outcomes = state?.outcomes ?? {};
   const lastRun = state?.runs?.[0];
+  const statusLabel = market => market.id === 'us' && workers.us?.scanUnverified
+    ? `ฟีด FMP ใช้ไม่ได้ ${workers.us.planRequired} ตัว` : WORKER_LABELS[workers[market.id]?.status] ?? 'รอรอบสแกน';
+  const workerSummary = activeMarkets.map(market => `${market.id === 'us' ? 'สหรัฐฯ' : market.id === 'thai' ? 'หุ้นไทย' : market.label}: ${statusLabel(market)}`).join(' · ');
+  const workerLabel = WORKER_LABELS[worker?.status] ?? 'กำลังตรวจสถานะ worker';
+  const badgeLabel = activeMarkets.length ? workerProcess?.status === 'offline' ? 'ตัวสแกนหยุดทำงาน' : activeMarkets.map(statusLabel).join(' · ') : 'รอเปิดสแกน';
   return <section id="section-auto-pick" className="auto-pick-board" aria-labelledby="auto-pick-title">
-    <div className="auto-pick-head"><span className="hub-heading-icon"><Radar size={22} /></span><div><span className="eyebrow">AUTOPICK / SAVED SIGNAL EVENTS</span><h2 id="auto-pick-title">AutoPick และแจ้งเตือน</h2><p>ระบบคัดแผนตามกติกา แจ้งเมื่อแท่งปิดยืนยันราคาเข้า และติดตาม TP1 / SL จากแท่งจริง</p></div><span className="auto-pick-badge"><BellRing size={15} /> {state?.readiness?.enabled ? 'สแกนเปิดใช้งาน' : 'รอเปิดสแกน'}</span></div>
-    <div className="auto-pick-markets">{readiness.map(market => <div className={market.status === 'active' ? 'auto-pick-market active' : 'auto-pick-market'} key={market.id}>
-      <strong>{market.label}</strong><span>{market.status === 'active' ? 'พร้อมสแกน' : 'ยังไม่เปิดสัญญาณ'}</span>
-      <small>{market.status === 'active' ? `${market.universe?.length ?? 0} หุ้นนำร่อง · ${market.source}` : market.reason}</small>
+    <div className="auto-pick-head"><span className="hub-heading-icon"><Radar size={22} /></span><div><span className="eyebrow">NUGAOM / AUTOPICK</span><h2 id="auto-pick-title">จังหวะที่ระบบพบ</h2><p>คัดแผนด้วยกติกา แจ้งเมื่อมีหุ้นเข้ารายการจับตา ยืนยันจุดเข้า แตะ TP1 หรือ SL จากแท่งราคาจริง</p></div><span className="auto-pick-badge"><BellRing size={15} /> {badgeLabel}</span></div>
+    {activeMarkets.length > 0 && <div className={`auto-pick-worker ${processRunning && activeMarkets.every(market => ['healthy', 'running', 'outside-session', 'awaiting-first-run'].includes(workers[market.id]?.status)) ? 'healthy' : ''}`}><strong>{processRunning ? 'ตัวสแกนทำงานอยู่' : workerProcess?.status === 'offline' ? 'ไม่พบตัวสแกนทำงาน' : 'ยังอ่านสถานะตัวสแกนไม่ได้'} · {workerSummary || workerLabel}</strong><span>{activeMarkets.map(market => workers[market.id]?.lastRunAt ? `${market.label} รอบล่าสุด ${at(workers[market.id].lastRunAt)}` : `${market.label} ยังไม่มีรอบที่บันทึกไว้`).join(' · ')} · {workerProcess?.lastSeenAt ? `อัปเดตระบบล่าสุด ${at(workerProcess.lastSeenAt)}` : 'รออัปเดตสถานะ'}</span></div>}
+    <div className="auto-pick-voice"><div><strong>น้องนักออมเล่าเหตุการณ์</strong><span>ป๊อปอัปทำงานขณะเปิดเว็บ · ใช้เสียงจากอุปกรณ์ และเลือกเสียงภาษาไทยเมื่อมี</span></div><div className="auto-pick-voice-actions"><button type="button" className="auto-pick-preview" onClick={previewAnnouncement}>ลองฟังสัญญาณเข้า DR</button><button type="button" aria-pressed={voiceEnabled} onClick={toggleVoice} disabled={!speechSupported}>{voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}{!speechSupported ? 'อุปกรณ์ไม่รองรับเสียง' : voiceEnabled ? 'เปิดเสียงแล้ว' : 'เปิดเสียงแจ้งเตือน'}</button></div></div>
+    <div className="auto-pick-markets">{activeMarkets.map(market => <div className="auto-pick-market active" key={market.id}>
+      <strong>{market.label}</strong><span>{workerProcess?.status === 'offline' ? 'ตัวสแกนหยุดทำงาน' : coverage[market.id]
+        ? coverage[market.id].remaining > 0 ? 'อยู่ระหว่างตรวจครบชุด'
+          : coverage[market.id].ineligible + coverage[market.id].unavailable > 0 ? 'ปิดรอบแล้ว · บางตัวไม่มีข้อมูล' : 'ตรวจครบชุดแล้ว'
+        : workers[market.id]?.status === 'outside-session' ? 'รอเปิดตลาด' : 'รอรอบตรวจ'}</span>
+      <small>{market.universeCount ?? 0} ตัว</small>
+      {coverage[market.id] && <small>รอบนี้ตรวจ {coverage[market.id].done + coverage[market.id].ineligible + coverage[market.id].unavailable}/{coverage[market.id].expected} · ไม่พร้อมตามช่วง/ไม่มีแท่ง {coverage[market.id].ineligible} · ฟีดไม่พร้อม {coverage[market.id].unavailable} · รอตรวจ/ลองใหม่ {coverage[market.id].remaining}</small>}
     </div>)}</div>
+    {shelvedMarkets.length > 0 && <details className="auto-pick-shelved-markets"><summary>ตลาดที่ยังสแกนไม่ครบหรือยังไม่เปิด {shelvedMarkets.length} หมวด</summary><div>{shelvedMarkets.map(market => <article key={market.id}><strong>{market.label}</strong><span>{market.id === 'us' && workers.us?.scanUnverified ? `รอบเต็มล่าสุดยังไม่ผ่าน: ${workers.us.planRequired ? `สิทธิ FMP ไม่ครอบคลุม ${workers.us.planRequired} ตัว` : 'ยังไม่มีข้อมูลยืนยันครบ Nasdaq-100'} · ตรวจรอบใหม่ก่อนเปิดแสดง` : market.reason ?? 'รอข้อมูลราคาและกติกาสแกนที่ยืนยันแล้ว'}</span></article>)}</div></details>}
     {!state && !error && <div className="auto-pick-empty">กำลังอ่านสถานะระบบ…</div>}
     {error && <div className="auto-pick-empty">อ่านสถานะสัญญาณจากเซิร์ฟเวอร์ไม่ได้</div>}
     {state?.status === 'membership-required' && <div className="auto-pick-empty"><ShieldCheck size={18} /><span>เข้าสู่ระบบ LINE และแจ้งเลขพอร์ตเพื่อรับสิทธิทดลองใช้ฟรี 14 วัน</span><a href="/account">บัญชีของฉัน ↗</a></div>}
     {state?.status === 'available' && <>
-      <div className="auto-pick-outcomes"><span><b>{outcomes.WAITING_FOR_ENTRY ?? 0}</b> รอเข้า</span><span><b>{outcomes.OPEN ?? 0}</b> ติดตามอยู่</span><span><b>{outcomes.TARGET ?? 0}</b> ถึง TP1</span><span><b>{outcomes.STOP ?? 0}</b> ถึง SL</span><span><b>{(outcomes.AMBIGUOUS ?? 0) + (outcomes.REVIEW ?? 0)}</b> รอตรวจ</span></div>
-      <div className="auto-pick-section-title"><strong>แผนที่ระบบบันทึก</strong><span>{lastRun ? `สแกนล่าสุด ${at(lastRun.finishedAt ?? lastRun.startedAt)} · ${lastRun.scanned} ตัว · ผ่าน ${lastRun.candidates} ตัว${lastRun.status === 'FAILED' ? ' · ฟีดบางส่วนมีปัญหา' : ''}` : 'ยังไม่มีรอบสแกน'}</span></div>
-      {signals.length ? <div className="auto-pick-signal-list">{signals.slice(0, 8).map(signal => <article key={signal.id} className="auto-pick-signal">
-        <div><strong>{signal.symbol} <small>{signal.plan?.side === 'LONG' ? 'LONG' : 'SHORT'}</small></strong><span>{signal.status === 'WAITING_FOR_ENTRY' ? 'รอยืนยันราคาเข้า' : signal.status === 'OPEN' ? 'เข้าเงื่อนไขแล้ว · ติดตามอยู่' : signal.status === 'TARGET' ? 'ถึง TP1' : signal.status === 'STOP' ? 'ถึง SL' : signal.status === 'EXPIRED' ? 'หมดเวลารอเข้า' : 'ตรวจผลเพิ่มเติม'}</span></div>
-        <div className="auto-pick-levels"><span>เข้า <b>{fmt(signal.entryPrice ?? signal.plan?.entry)}</b></span><span>TP1 <b>{fmt(signal.plan?.tp1)}</b></span><span>SL <b>{fmt(signal.plan?.stopLoss)}</b></span></div>
-        <div className="auto-pick-signal-foot"><small><Clock3 size={13} /> {at(signal.publishedAt)} · {signal.plan?.ruleVersion} · {signal.source}</small><button onClick={() => { const asset = ALL_ASSETS.find(item => item.symbol === signal.symbol && item.id === signal.market); if (asset) onSelect(asset, '1h'); }}><ChartNoAxesCombined size={13} /> เปิดกราฟ 1H</button></div>
+      <div className="auto-pick-outcomes"><span><b>{outcomes.WAITING_FOR_ENTRY ?? 0}</b> รอเข้า</span><span><b>{outcomes.OPEN ?? 0}</b> ติดตามอยู่</span><span><b>{outcomes.EXPIRED ?? 0}</b> หมดเวลารอเข้า</span><span><b>{outcomes.TARGET ?? 0}</b> ถึง TP1</span><span><b>{outcomes.STOP ?? 0}</b> ถึง SL</span><span><b>{outcomes.EXIT ?? 0}</b> จบตามแผน</span><span><b>{(outcomes.AMBIGUOUS ?? 0) + (outcomes.REVIEW ?? 0)}</b> รอตรวจ</span></div>
+      <div className="auto-pick-section-title"><strong>ระบบจับตาวันนี้ · แยกจากรายการโปรดของคุณ</strong><span>{lastRun ? `${lastRun.scanned ? `ตรวจ ${lastRun.scanned} ตัว · ผ่าน ${lastRun.candidates} ตัว` : 'รอบติดตามแผน'} · ${at(lastRun.finishedAt ?? lastRun.startedAt)}${lastRun.status === 'FAILED' ? ' · ฟีดบางส่วนมีปัญหา' : ''}` : 'ยังไม่มีรอบสแกน'}</span></div>
+      {signals.length ? <div className="auto-pick-signal-list">{signals.slice(0, 7).map(signal => <article key={signal.id} className="auto-pick-signal">
+        <div><strong>{signal.symbol} <small>{signal.plan?.side === 'LONG' ? 'LONG' : 'SHORT'}</small></strong><span>{signal.status === 'WAITING_FOR_ENTRY' ? signal.market === 'us' ? 'รอปิดทะลุจุดยืนยัน · D1' : 'รอยืนยันราคาเข้า' : signal.status === 'OPEN' ? 'เข้าเงื่อนไขแล้ว · ติดตามอยู่' : signal.status === 'TARGET' ? 'ถึง TP1' : signal.status === 'STOP' ? 'ถึง SL' : signal.status === 'EXIT' ? 'จบตามเงื่อนไข' : signal.status === 'EXPIRED' ? 'หมดเวลารอเข้า' : 'ตรวจผลเพิ่มเติม'}</span></div>
+        <div className="auto-pick-levels"><span>{signal.entryPrice == null ? 'แผนรอเข้า' : 'เข้าอ้างอิง'} <b>{fmt(signal.entryPrice ?? signal.plan?.entry, signal.market)}</b></span><span>TP1 <b>{fmt(signal.plan?.tp1, signal.market)}</b></span><span>SL <b>{fmt(signal.plan?.stopLoss, signal.market)}</b></span></div>
+        <div className="auto-pick-signal-foot"><small><Clock3 size={13} /> {signal.market === 'us' ? `ข้อมูลปิด ${signal.plan?.referenceCandles?.dailyDay ?? signal.sessionDay} · ` : `${at(signal.publishedAt)} · `}{signal.market === 'us' ? 'หุ้นสหรัฐฯ' : signal.market === 'dr' ? 'DR' : 'หุ้นไทย'}</small><button onClick={() => { const asset = ALL_ASSETS.find(item => item.symbol === signal.symbol && item.id === signal.market); if (asset) onSelect(asset, signal.plan?.signalTimeframe === '15m' ? '15m' : signal.market === 'us' ? '1d' : '1h'); }}><ChartNoAxesCombined size={13} /> เปิดกราฟ {signal.plan?.signalTimeframe === '15m' ? '15m' : signal.market === 'us' ? '1D' : '1H'}</button></div>
       </article>)}</div> : <div className="auto-pick-empty">ยังไม่มีแผนที่ผ่านกติกา ระบบจะไม่สร้างสัญญาณจากราคาตัวอย่าง</div>}
-      {decisions.length > 0 && <details className="auto-pick-decisions"><summary>ดูผลตรวจล่าสุด {decisions.length} หุ้น</summary><div>{decisions.map(item => <p key={item.symbol}><strong>{item.symbol}</strong><span>{item.decision === 'CANDIDATE' ? 'ผ่านเงื่อนไข' : item.reason ?? 'ไม่ผ่านเงื่อนไข'}</span><small>{typeof item.score === 'number' ? `${item.score} คะแนน` : '—'}</small></p>)}</div></details>}
       <div className="auto-pick-section-title"><strong>เหตุการณ์ล่าสุด</strong><span>ราคาเป็นจุดอ้างอิงของสัญญาณ ไม่ใช่ราคาที่บัญชีลูกค้าซื้อขายได้จริง</span></div>
-      {events.length ? <div className="auto-pick-events">{events.slice(0, 8).map(item => <div key={item.id}><span className={`auto-pick-event-type ${item.type.toLowerCase()}`}>{LABELS[item.type] ?? item.type}</span><strong>{item.symbol}</strong><span>{fmt(item.price)}</span><small>{at(observedAt(item))}</small></div>)}</div> : <div className="auto-pick-empty">ยังไม่มีเหตุการณ์สัญญาณ</div>}
+      {events.length ? <div className="auto-pick-events">{events.slice(0, 7).map(item => <div key={item.id}><span className={`auto-pick-event-type ${item.type.toLowerCase()}`}>{LABELS[item.type] ?? item.type}</span><strong>{item.symbol}</strong><span>{fmt(item.price, item.market)}</span><small>{eventDateLabel(item)}</small></div>)}</div> : <div className="auto-pick-empty">ยังไม่มีเหตุการณ์สัญญาณ</div>}
     </>}
     <p className="auto-pick-disclaimer">ผลลัพธ์เป็นการติดตามแผนสมมติจาก OHLC ที่ปิดแล้ว ไม่ส่งคำสั่งซื้อขาย · หากแท่งเดียวแตะ TP และ SL หรือข้อมูลขาดช่วง ระบบจะส่งตรวจผลและไม่นับเป็นชนะ/แพ้</p>
-    {alert && <aside className="auto-pick-toast" role="status" aria-live="polite"><BellRing size={20} /><div><strong>{LABELS[alert.type]} · {alert.symbol}</strong><span>ราคาอ้างอิง {fmt(alert.price)} · แท่งปิด {at(observedAt(alert))}</span><small>{alert.detail}</small></div><button onClick={() => setAlert(null)} aria-label="ปิดการแจ้งเตือน">×</button></aside>}
+    {alert && <aside className={`auto-pick-toast ${announcementFor(alert).tone}`} role="status" aria-live="polite"><span className="auto-pick-toast-avatar"><Image src="/nugaom-mascot.png" alt="" width={42} height={42} /></span><div><strong>{alert.demo ? 'ตัวอย่าง · ' : ''}{announcementFor(alert).title}</strong><span>{announcementFor(alert).detail}</span><small>{alert.demo ? 'ตัวอย่างหน้าจอและเสียง · ไม่ใช่สัญญาณจากตลาด' : `ราคาอ้างอิง ${fmt(alert.price, alert.market)} · ${eventDateLabel(alert)}`}{alerts.length > 1 ? ` · อีก ${alerts.length - 1} รายการ` : ''}</small>{!alert.demo && <button className="auto-pick-toast-plan" onClick={() => document.getElementById('section-auto-pick')?.scrollIntoView({ behavior: 'smooth' })}>ดูแผนและที่มาราคา ↗</button>}</div><button className="auto-pick-toast-close" onClick={() => setAlerts(current => current.slice(1))} aria-label="ปิดการแจ้งเตือน">×</button></aside>}
   </section>;
 }

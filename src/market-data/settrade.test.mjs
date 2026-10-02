@@ -74,6 +74,7 @@ test('TFEX client accepts the confirmed secret typo and generic broker/app-code 
     requests.push({ url, method: init.method ?? 'GET' });
     const body = url.endsWith('/login')
       ? { access_token: 'tfex-private-token', expires_in: 3600 }
+      : url.includes('/candlesticks?') ? { time: ['2026-09-24'], open: [1150], high: [1152], low: [1148], close: [1151], volume: [100] }
       : { data: { symbol: 'S50U26', lastPrice: '1150.5', openInterest: '420' } };
     return { ok: true, json: async () => body };
   } });
@@ -82,9 +83,14 @@ test('TFEX client accepts the confirmed secret typo and generic broker/app-code 
   assert.equal(quote.source, 'TFEX Open API');
   assert.equal(quote.price, 1150.5);
   assert.equal(quote.openInterest, 420);
-  assert.deepEqual(requests.map(request => request.method), ['POST', 'GET']);
+  const candles = await client.getDailyCandles('S50U26');
+  assert.equal(candles.instrumentId, 'TFEX:S50U26');
+  assert.equal(candles.source, 'TFEX Open API');
+  assert.equal(candles.bars.length, 1);
+  assert.deepEqual(requests.map(request => request.method), ['POST', 'GET', 'GET']);
   assert.match(requests[1].url, /marketdata\/v3\/022\/quote\/S50U26$/);
-  await assert.rejects(client.getDailyCandles('S50U26'), error => error.code === 'HISTORICAL_ENDPOINT_NOT_VERIFIED');
+  assert.match(requests[2].url, /techchart\/v3\/022\/candlesticks\?symbol=S50U26&interval=1d&limit=100$/);
+  assert.equal(requests.some(request => /account|order|portfolio/.test(request.url)), false);
 });
 
 test('a zero or negative last price is unavailable for a listed instrument', () => {

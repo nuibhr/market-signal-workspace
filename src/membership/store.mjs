@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { createHash, createHmac, randomBytes } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, chmodSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 const DAY = 86_400_000;
@@ -8,10 +8,11 @@ let database;
 
 function db() {
   if (database) return database;
-  const path = resolve(process.cwd(), process.env.DATABASE_PATH || './data/nugaom.sqlite');
-  mkdirSync(dirname(path), { recursive: true });
+  const path = resolve(/* turbopackIgnore: true */ process.cwd(), process.env.DATABASE_PATH || './data/nugaom.sqlite');
+  mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
   database = new DatabaseSync(path);
-  database.exec(`PRAGMA journal_mode=WAL;
+  database.exec(`PRAGMA busy_timeout=5000;
+    PRAGMA journal_mode=WAL;
     PRAGMA foreign_keys=ON;
     CREATE TABLE IF NOT EXISTS members (
       id TEXT PRIMARY KEY,
@@ -29,6 +30,9 @@ function db() {
       subscription_ends_at TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS line_oauth_flows (
+      token_hash TEXT PRIMARY KEY, state TEXT NOT NULL, nonce TEXT NOT NULL, verifier TEXT NOT NULL, expires_at INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS sessions (
       token_hash TEXT PRIMARY KEY,
@@ -95,6 +99,7 @@ function db() {
   if (!questionColumns.has('conversation_id')) database.exec('ALTER TABLE ai_questions ADD COLUMN conversation_id TEXT');
   if (!questionColumns.has('question_text')) database.exec('ALTER TABLE ai_questions ADD COLUMN question_text TEXT');
   database.exec('CREATE INDEX IF NOT EXISTS ai_questions_conversation ON ai_questions(member_id,conversation_id,created_at)');
+  for (const file of [path, `${path}-wal`, `${path}-shm`]) { try { chmodSync(file, 0o600); } catch { /* SQLite sidecars may not exist yet. */ } }
   return database;
 }
 
@@ -105,7 +110,12 @@ export function digest(value) { return createHash('sha256').update(value).digest
 function sessionDigest(value) { return createHmac('sha256', process.env.SESSION_SECRET).update(value).digest('hex'); }
 export function token() { return randomBytes(32).toString('base64url'); }
 export function isConfigured() {
-  return Boolean(process.env.LINE_CHANNEL_ID && process.env.LINE_CHANNEL_SECRET && process.env.LINE_REDIRECT_URI && process.env.SESSION_SECRET?.length >= 32 && process.env.PORTFOLIO_HASH_SECRET?.length >= 32);
+  try {
+    const redirect = new URL(process.env.LINE_REDIRECT_URI);
+    if (redirect.pathname !== '/api/auth/line/callback' || redirect.search || redirect.hash) return false;
+    if (process.env.NODE_ENV === 'production' && (redirect.protocol !== 'https:' || !process.env.APP_ORIGIN || new URL(process.env.APP_ORIGIN).origin !== redirect.origin)) return false;
+    return Boolean(process.env.LINE_CHANNEL_ID && process.env.LINE_CHANNEL_SECRET && process.env.SESSION_SECRET?.length >= 32 && process.env.PORTFOLIO_HASH_SECRET?.length >= 32);
+  } catch { return false; }
 }
 export function portfolioDigest(broker, number) {
   if (!process.env.PORTFOLIO_HASH_SECRET || process.env.PORTFOLIO_HASH_SECRET.length < 32) throw new Error('PORTFOLIO_HASH_SECRET missing');
@@ -123,14 +133,25 @@ export function upsertLineMember({ lineId, displayName, pictureUrl }) {
     picture_url=excluded.picture_url,updated_at=excluded.updated_at`).run(token(), lineId, displayName.slice(0, 80), pictureUrl || null, now, now);
   return db().prepare('SELECT * FROM members WHERE line_id=?').get(lineId);
 }
+export function createLineFlow() {
+  const value = token(), state = token(), nonce = token(), verifier = token();
+  db().prepare('DELETE FROM line_oauth_flows WHERE expires_at<?').run(Date.now());
+  db().prepare('INSERT INTO line_oauth_flows VALUES(?,?,?,?,?)').run(sessionDigest(value), state, nonce, verifier, Date.now() + 600000);
+  return { value, state, nonce, verifier };
+}
+export function consumeLineFlow(value) {
+  if (typeof value !== 'string' || value.length > 100) return null;
+  return db().prepare('DELETE FROM line_oauth_flows WHERE token_hash=? RETURNING state,nonce,verifier,expires_at').get(sessionDigest(value)) ?? null;
+}
 export function createSession(memberId) {
+  db().prepare('DELETE FROM sessions WHERE expires_at<=?').run(new Date().toISOString());
   const value = token();
   const expiresAt = new Date(Date.now() + 30 * DAY).toISOString();
   db().prepare('INSERT INTO sessions (token_hash,member_id,expires_at) VALUES (?,?,?)').run(sessionDigest(value), memberId, expiresAt);
   return { value, expiresAt };
 }
 export function sessionMember(value) {
-  if (!value) return null;
+  if (typeof value !== 'string' || value.length > 100) return null;
   return db().prepare(`SELECT m.* FROM sessions s JOIN members m ON m.id=s.member_id
     WHERE s.token_hash=? AND s.expires_at>?`).get(sessionDigest(value), new Date().toISOString()) || null;
 }

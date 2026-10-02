@@ -1,3 +1,4 @@
+import { rateLimit, readJsonBody, requestErrorResponse, RequestError } from '../../../../security/request-guard.mjs';
 import { currentMember, errorResponse, privateHeaders, sameOrigin } from '../../../../membership/server.mjs';
 import { approveRenewal, grantAiCredits, isAdmin, issueCode, listAdminMembers, listRenewals, rejectPortfolio, rejectRenewal, verifyPortfolio } from '../../../../membership/store.mjs';
 
@@ -14,8 +15,9 @@ export async function POST(request) {
   const member = await currentMember();
   if (!isAdmin(member)) return Response.json({ error: 'FORBIDDEN' }, { status: 403, headers: privateHeaders });
   if (Number(request.headers.get('content-length') || 0) > 4096) return Response.json({ error: 'PAYLOAD_TOO_LARGE' }, { status: 413, headers: privateHeaders });
+  const limited = rateLimit('admin-write', member.id, 30); if (limited) return limited;
   try {
-    const body = await request.json();
+    const body = await readJsonBody(request, 4096);
     if (body.action === 'verify') verifyPortfolio(member, body.memberId, body.number);
     else if (body.action === 'reject-portfolio') rejectPortfolio(member, body.memberId);
     else if (body.action === 'approve-renewal') approveRenewal(member, body.requestId);
@@ -26,5 +28,5 @@ export async function POST(request) {
       return Response.json({ code, members: listAdminMembers(), renewals: listRenewals() }, { headers: privateHeaders });
     } else return Response.json({ error: 'INVALID_ACTION' }, { status: 400, headers: privateHeaders });
     return Response.json({ members: listAdminMembers(), renewals: listRenewals() }, { headers: privateHeaders });
-  } catch (error) { return errorResponse(error); }
+  } catch (error) { return error instanceof RequestError ? requestErrorResponse(error) : errorResponse(error); }
 }

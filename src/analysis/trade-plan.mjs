@@ -3,7 +3,7 @@ import { calculatePivots, completedCandles } from './pivots.mjs';
 export const TRADE_PLAN_CONFIG = Object.freeze({
   version: 'technical-plan-v1', minBars: 55, levelClusterATR: 0.25,
   entryZoneBufferATR: 0.15, breakoutBufferATR: 0.10, stopBufferATR: 0.20,
-  minStopATR: 0.60, maxStopATR: 1.50, minRiskReward: 1.80, preferredRiskReward: 2.00,
+  minStopATR: 0.60, maxStopATR: 1.50, minRiskReward: 2.00, preferredRiskReward: 2.00,
   minRoomATR: 1.00, maxEntryDistanceATR: 0.60,
   levelWeights: { swing4h: 25, daily: 20, pivot: 15, fibonacci: 10, touches: 10, volume: 10, round: 5, rejection: 5 },
 });

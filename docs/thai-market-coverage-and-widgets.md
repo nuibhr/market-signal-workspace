@@ -8,12 +8,12 @@
 |---|---|---|
 | หุ้น SET / mai | ทดสอบ PTT ได้ quote และแท่งรายวัน 100 แท่ง ล่าสุด 25 กันยายน 2026 | universe ครบทั้งตลาด, source timestamp, ความยาวย้อนหลังและแท่งระหว่างวัน |
 | DR | ใช้ Settrade path เดียวกับหุ้นไทย; ทดสอบ AAPL80 ได้ quote และแท่งรายวัน 100 แท่ง ล่าสุด 25 กันยายน 2026 | coverage รายสัญลักษณ์, underlying, FX, conversion ratio, corporate actions |
-| TFEX: Gold / Silver / SET50 | ทดสอบ read-only สำเร็จสำหรับ S50U26, GOU26, SVFU26 โดยใช้ TFEX app ID/secret และ broker/app-code ทั่วไป; ได้ quote ที่มีราคา | source timestamp, bars, bid/offer, streaming และความครอบคลุมสัญญาที่ยังไม่ทดสอบ |
+| TFEX: Gold / Silver / SET50 | ทดสอบ quote แบบ read-only และแท่ง OHLCV ที่มี timestamp แล้ว; กราฟรองรับ 15m/1h/4h/1d โดยใช้ TFEX Open API | การเลือกสัญญานำ/วันหมดอายุ, bid/offer, streaming และสิทธิ์แสดงข้อมูลต่อผู้ใช้ |
 | ดัชนี SET และ breadth | ยังไม่มี feed ที่ยืนยันได้ในโค้ดเดิม | API สิทธิ์ตรงจาก SET หรือช่องทาง broker; breadth ปัจจุบันคืน `unavailable` |
 
 คำว่า “live” ในบางส่วนของแอปเก่าหมายถึงคำขอสำเร็จ ไม่ได้พิสูจน์ว่า exchange ส่งข้อมูลตามเวลาจริง ตัวแปลงแท่งรายวันเก่าแทน timestamp ที่ผิดรูปแบบด้วยเวลา `now`; ต้องแก้ให้ปฏิเสธแท่งนั้น เพราะ timestamp ที่แต่งขึ้นทำให้กราฟและการตัดสินผลสัญญาณผิดได้ Quote บางตัวติดเวลา fetch แทนเวลา exchange ต้องแสดง `receivedAt` แยกจาก `observedAt` และใช้คำว่า latency ไม่ทราบถ้าไม่มีเวลาจากต้นทาง
 
-**ผลตรวจแบบ read-only จากเครื่องนี้ (25 กันยายน 2026):** ไฟล์ `tfex.txt` เดียวกันมี app key pair ทั่วไปกับ TFEX และมี app code ซ้ำสองค่าต่างกัน การจับคู่ค่าแรกกับ key pair ทั่วไปทำให้ PTT และ DR AAPL80 ได้ quote และแท่งรายวัน 100 แท่ง (ล่าสุด 25 กันยายน) ส่วนค่า app code สุดท้ายกับ TFEX app ID/secret ใช้ดึง quote S50U26, GOU26, SVFU26 ได้ แต่ไม่มี timestamp จากต้นทางและยังไม่ได้ทดสอบแท่งย้อนหลัง ตัว probe ไม่แสดงราคา คีย์ หรือ payload การทดลองไม่ได้เรียกบัญชีหรือส่งคำสั่งซื้อขาย
+**ผลตรวจแบบ read-only จากเครื่องนี้:** หุ้นไทย/DR เคยยืนยัน quote และแท่งรายวันได้; วันที่ 29 กันยายน 2026 ยืนยัน TFEX S50V26 มีแท่ง OHLCV พร้อม timestamp บน 15m, 1h, 4h และ 1d ผ่าน Settrade techchart API ตัวตรวจอ่านเฉพาะชื่อฟิลด์ จำนวนแท่ง และเวลา ไม่แสดงราคา คีย์ หรือ payload และไม่ได้เรียกบัญชีหรือส่งคำสั่งซื้อขาย
 
 **สิ่งที่เห็นบน Production UI วันที่ 25 กันยายน:** หน้า SET/mai แสดง AI Picks โดยระบุ Settrade Market API; หน้า DR ระบุว่า DR Tracker ขาด credential; หน้า TFEX แสดงราคาสัญญาปัจจุบันเป็น unavailable ทั้ง S50, GO, MGO และ Silver รายการ mai ตัวหนึ่งยังถูกนำเสนอเป็น AI Pick ทั้งที่ราคาปิดล่าสุดลงวันที่ 3 กรกฎาคม (84 วันก่อนวันตรวจ) จึงต้องแยก “ได้รับข้อมูล” จาก “ข้อมูลใหม่พอสำหรับสัญญาณ” และห้ามเรียก quote ว่า real-time หากไม่มี timestamp ของต้นทาง การเห็นข้อมูลบนหน้าเว็บไม่ได้พิสูจน์สิทธิ์เผยแพร่หรือ latency ของ API
 
@@ -24,7 +24,7 @@
 1. **Settrade หุ้นไทยและ DR / TFEX Open API:** ใช้ Settrade path เดียวกันสำหรับราคาหุ้นไทยและ DR ส่วน TFEX ใช้ quote path ของ TFEX Open API ที่ทดสอบแล้ว; บันทึกสถานะ configured → authenticated → quote available → daily bars available → intraday available แยกกัน ห้ามแปล quote ที่ไม่มี timestamp ว่า real-time
 2. **Yahoo Finance:** เจ้าของอนุญาตให้พิจารณาเป็นตัวเสริมแล้ว โค้ดเดิมเรียก `query1.finance.yahoo.com/v8/finance/chart/` และใช้ `.BK` กับหุ้นไทย แต่ endpoint นี้ไม่ได้เป็นหลักฐานสิทธิ์นำราคาไปทำ feed ของแอป [Terms of Service ของ Yahoo ฉบับภูมิภาคหนึ่ง](https://legal.yahoo.com/in/en/yahoo/terms/otos/index.html) ระบุข้อจำกัดเรื่องการเก็บข้อมูลด้วยวิธีอัตโนมัติและการสร้างบริการข้อมูลทดแทน ต้องตรวจเงื่อนไขที่ใช้กับประเทศไทยและขอสิทธิ์ให้ตรงรูปแบบผลิตภัณฑ์ก่อนเปิด production หรือใช้ตัดสินแพ้ชนะโดยอัตโนมัติ หากใช้ได้ในภายหลัง ให้แสดงชื่อ Yahoo, delay และเวลาข้อมูลชัดเจน ห้ามต่อแท่งจากคนละต้นทางเป็น series เดียวโดยเงียบ ๆ
 3. **SET SMART Marketplace:** เป็นทางตรงจากตลาดหลักทรัพย์ที่มี API สำหรับ historical intraday ของหุ้นและอนุพันธ์, EOD ของหุ้น/อนุพันธ์, ดัชนี, corporate actions และ fundamentals ตามผลิตภัณฑ์ที่สมัคร ไม่ใช่ API ฟรีที่เข้าได้ทันที [รายการบริการ](https://www.set.or.th/en/services/connectivity-and-data/data/smart-marketplace) และ [ตัวอย่างสเปก quote API](https://media.set.or.th/set/Documents/2023/May/Market_Data_API_Service_Specification.pdf) ระบุการใช้ API key หลังได้รับบัญชีจาก SET หน้า [ค่าบริการ snapshot หุ้น/ดัชนี](https://www.set.or.th/app/online-data/market-data?lang=en) แสดง real-time สำหรับบุคคล 15,000 บาท/เดือน และให้ติดต่อ SET สำหรับ delayed หรือการเผยแพร่ต่อ ราคา/สิทธิ์ผลิตภัณฑ์อื่นต้องขอใบเสนอราคาปัจจุบัน
-4. **ข้อมูล TFEX ย้อนหลัง:** หาก broker ไม่เปิด candle endpoint ทางตรงคือผลิตภัณฑ์ historical/ EOD จาก SET ภายใต้สิทธิ์ที่ซื้อให้ตรงการใช้งาน [SET tick data](https://www.set.or.th/app/online-data/tick-data) ระบุการใช้ส่วนบุคคล/ภายในและให้ติดต่อเมื่อจะเผยแพร่ต่อ ห้ามใช้ spot gold, silver หรือดัชนี SET50 แทนแท่งสัญญา TFEX
+4. **ข้อมูล TFEX ย้อนหลัง:** TFEX chart ใช้แท่งจาก Settrade techchart API แล้ว แต่ AutoPick ยังต้องรู้สัญญานำ วันซื้อขายวันสุดท้าย และวิธี roll โดยอ้างปฏิทิน TFEX; ห้ามใช้ spot gold, silver หรือดัชนี SET50 แทนแท่งของสัญญา futures
 
 การสลับแหล่งข้อมูลทำได้เฉพาะเมื่อ `venue + instrument ID + contract expiry + currency + timeframe + adjustment` ตรงกัน ระบบต้องแสดงสถานะขาดข้อมูลถ้าไม่ตรงกัน แต่ละสัญญาณเก็บ source และเวอร์ชันของข้อมูลที่ใช้สร้าง; การตัดสินผลใช้ series ที่ระบุไว้ล่วงหน้าและเก็บหลักฐานราคาแต่ละไม้ รวมทั้งไม้ที่แพ้ ไม่ชัดเจน หรือหมดอายุ
 
@@ -43,7 +43,7 @@
 ## งานถัดไปที่ลงมือทำได้
 
 1. ใช้ adapter read-only ใน repo ใหม่โดยเก็บ keys ใน environment ของ workspace นี้เท่านั้น ไม่ย้ายไฟล์ key หรือข้อมูลบัญชี broker
-2. ตรวจ quote และ daily bars ของหุ้นไทยกับ DR แยกตามสัญลักษณ์; การทดสอบ TFEX ที่ผ่านมายืนยัน quote ของสามสัญญาเท่านั้น พร้อมสถานะ timestamp ไม่ทราบ
-3. สร้าง instrument registry และ Lightweight Charts จากแท่งจริงที่ผ่าน validation; สำหรับ TFEX ให้แสดงราคาและ “ยังไม่มีแท่งย้อนหลังที่ตรวจสอบแล้ว” จนกว่าจะยืนยัน historical endpoint
+2. ตรวจ quote และ daily bars ของหุ้นไทยกับ DR แยกตามสัญลักษณ์; สำหรับ TFEX ยังต้องยืนยันสัญญานำและสิทธิ์แสดงข้อมูลก่อนใช้สัญญาณ
+3. สร้าง instrument registry และ Lightweight Charts จากแท่งจริงที่ผ่าน validation; TFEX มี OHLC chart แล้ว แต่ยังไม่เปิด AutoPick จนกว่าจะยืนยันสัญญานำและกติกาความเสี่ยง
 4. ขอรายละเอียดสิทธิ์ display/storage/redistribution จาก broker/SET สำหรับแอปที่มีผู้ใช้อื่น และจาก Investing.com หากต้องการ widget ในผลิตภัณฑ์ที่มีรายได้; ประเมิน Yahoo เฉพาะเมื่อมีสิทธิ์เป็น feed เสริม
 5. เริ่ม signal ledger หลังเลือกแหล่งราคาและนโยบายผลแพ้ชนะของแต่ละตลาดแล้วเท่านั้น

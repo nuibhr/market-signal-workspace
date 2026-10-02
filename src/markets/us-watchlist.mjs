@@ -194,6 +194,12 @@ export const US_WATCHLIST = [
   },
   {
     "kind": "stock",
+    "symbol": "CSGP",
+    "name": "CoStar Group",
+    "theme": "ข้อมูลอสังหาริมทรัพย์"
+  },
+  {
+    "kind": "stock",
     "symbol": "CSX",
     "name": "CSX",
     "theme": "รถไฟ/ขนส่ง"
@@ -209,6 +215,12 @@ export const US_WATCHLIST = [
     "symbol": "DXCM",
     "name": "DexCom",
     "theme": "อุปกรณ์การแพทย์"
+  },
+  {
+    "kind": "stock",
+    "symbol": "EA",
+    "name": "Electronic Arts",
+    "theme": "เกมและความบันเทิง"
   },
   {
     "kind": "stock",

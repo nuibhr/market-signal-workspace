@@ -1,3 +1,5 @@
+import { chartPivotLevels, atr14 } from './chart-levels.mjs';
+import { completedCandles } from './pivots.mjs';
 function average(values) {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
@@ -37,23 +39,7 @@ function rsi(values, period = 14) {
   return 100 - 100 / (1 + ratio);
 }
 
-function pivotLevels(bars, price) {
-  const window = bars.slice(-90);
-  const lows = [];
-  const highs = [];
-  for (let index = 2; index < window.length - 2; index += 1) {
-    const bar = window[index];
-    if (window.slice(index - 2, index + 3).every(other => other.low >= bar.low)) lows.push(bar.low);
-    if (window.slice(index - 2, index + 3).every(other => other.high <= bar.high)) highs.push(bar.high);
-  }
-  const support = lows.filter(level => level < price).sort((a, b) => b - a)[0]
-    ?? Math.min(...window.slice(-20).map(bar => bar.low));
-  const resistance = highs.filter(level => level > price).sort((a, b) => a - b)[0]
-    ?? Math.max(...window.slice(-20).map(bar => bar.high));
-  return { support, resistance };
-}
-
-export function analyzeCandles(bars, quotePrice = null, timeframeLabel = 'รายวัน') {
+export function analyzeCandles(bars, quotePrice = null, timeframeLabel = 'รายวัน', context = {}) {
   if (!Array.isArray(bars) || bars.length < 50) return null;
   const closes = bars.map(bar => bar.close);
   const ema20 = ema(closes, 20);
@@ -69,7 +55,8 @@ export function analyzeCandles(bars, quotePrice = null, timeframeLabel = 'รา
   const mean = average(recent);
   const deviation = Math.sqrt(average(recent.map(value => (value - mean) ** 2)));
   const price = typeof quotePrice === 'number' && quotePrice > 0 ? quotePrice : last(closes);
-  const levels = pivotLevels(bars, price);
+  const frame = context.timeframe ?? (typeof bars[0]?.time === 'string' ? '1d' : '15m');
+  const levels = chartPivotLevels({ dailyBars: context.dailyBars ?? (frame === '1d' ? bars : []), timeframe: frame, price, atr: atr14(completedCandles(bars, frame, context.now ?? Date.now())), now: context.now ?? Date.now() });
   const latestEma20 = last(ema20);
   const latestEma50 = last(ema50);
   const latestRsi = rsi(closes);
@@ -82,7 +69,7 @@ export function analyzeCandles(bars, quotePrice = null, timeframeLabel = 'รา
   if (closes.at(-1) > previousHigh) events.push({ tone: 'up', label: 'ปิดเหนือจุดสูงสุด 20 แท่ง' });
   if (latestRsi >= 70) events.push({ tone: 'watch', label: 'RSI อยู่ในเขตสูง' });
   if (latestRsi <= 30) events.push({ tone: 'watch', label: 'RSI อยู่ในเขตต่ำ' });
-  if (Math.abs(price - levels.support) / price <= 0.01) events.push({ tone: 'watch', label: 'ราคาใกล้แนวรับ' });
+  if (Number.isFinite(levels.support) && Math.abs(price - levels.support) / price <= 0.01) events.push({ tone: 'watch', label: 'ราคาใกล้แนวรับ' });
   if (!events.length) events.push({ tone: 'flat', label: 'ยังไม่มีเงื่อนไขสแกนเด่น' });
 
   const plan = trend === 'up' && levels.resistance > price
@@ -96,6 +83,7 @@ export function analyzeCandles(bars, quotePrice = null, timeframeLabel = 'รา
 
   return {
     price,
+    levels,
     support: levels.support,
     resistance: levels.resistance,
     ema20: latestEma20,

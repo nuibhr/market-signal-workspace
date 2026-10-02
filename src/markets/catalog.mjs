@@ -3,6 +3,9 @@
 // mai: user's 50-name initial list; market-cap ranking is still unverified.
 // DR80: KTB's 2026-08-14 list plus the 28 new KTB DRs listed 2026-09-09.
 import { US_WATCHLIST } from './us-watchlist.mjs';
+import { TFEX_CONTRACTS, TFEX_SYMBOLS } from './tfex-contracts.mjs';
+
+export { TFEX_SYMBOLS };
 
 export const SET100_SYMBOLS = [
   'AAV', 'ADVANC', 'AEONTS', 'AMATA', 'AOT', 'AP', 'AURA', 'AWC', 'BA', 'BAM',
@@ -43,7 +46,6 @@ export const DR80_SYMBOLS = [
   'AIRBUS80',
 ];
 
-export const TFEX_SYMBOLS = ['S50U26', 'GOU26', 'SVFU26'];
 export const FOREX_SYMBOLS = [
   'EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CHF', 'USD/CAD', 'NZD/USD',
   'EUR/GBP', 'EUR/JPY', 'GBP/JPY', 'EUR/CHF', 'AUD/JPY', 'CAD/JPY', 'NZD/JPY',
@@ -57,17 +59,9 @@ export const CRYPTO_SYMBOLS = ['BTCUSDT', 'ETHUSDT'];
 const DISPLAY_NAMES = {
   PTT: 'ปตท.', AOT: 'ท่าอากาศยานไทย', DELTA: 'เดลต้า อีเลคโทรนิคส์',
   AAPL80: 'Apple DR', NVDA80: 'NVIDIA DR',
-  S50U26: 'SET50 Futures · Sep 2026', GOU26: 'Gold Online Futures · Sep 2026',
-  SVFU26: 'Silver Online Futures · Sep 2026',
   NVDA: 'NVIDIA', AAPL: 'Apple', SPY: 'SPDR S&P 500 ETF',
   BTCUSDT: 'Bitcoin / Tether · Spot', ETHUSDT: 'Ethereum / Tether · Spot',
   'XAU/USD': 'Gold / US Dollar', 'XAG/USD': 'Silver / US Dollar',
-};
-const DEMO_PRICES = {
-  'EUR/USD': '1.08426', 'GBP/USD': '1.27184', 'USD/JPY': '149.382',
-  'AUD/USD': '0.65428', 'XAU/USD': '2,345.70',
-  NVDA: '142.68', AAPL: '211.30', SPY: '588.44',
-  BTCUSDT: '64,280.50', ETHUSDT: '2,485.20',
 };
 const GROUPS = [
   { id: 'thai', label: 'หุ้นไทย', detail: 'SET100 · mai 50', sections: [
@@ -77,18 +71,15 @@ const GROUPS = [
   { id: 'dr', label: 'DR', detail: 'DR80 · KTB', sections: [
     { id: 'DR80', label: 'DR80 · snapshot 25 ก.ย. 2026', symbols: DR80_SYMBOLS },
   ] },
-  { id: 'tfex', label: 'TFEX', detail: 'ทอง · เงิน · SET50', sections: [
-    { id: 'TFEX', label: 'TFEX · สัญญาที่ตรวจราคาได้', symbols: TFEX_SYMBOLS },
+  { id: 'tfex', label: 'TFEX', detail: 'SET50 · Gold Online · Silver Online', sections: [
+    { id: 'TFEX', label: 'TFEX · เดือนสัญญาใกล้และถัดไป', symbols: TFEX_SYMBOLS },
   ] },
-  { id: 'us', label: 'หุ้นอเมริกา', detail: 'หุ้น 200 · ETF 50', sections: [
-    { id: 'US_STOCKS', label: 'หุ้นสหรัฐฯ · watchlist 200', symbols: US_STOCKS.map(item => item.symbol) },
-    { id: 'US_ETFS', label: 'ETF · watchlist 50', symbols: US_ETFS.map(item => item.symbol) },
+  { id: 'us', label: 'หุ้นอเมริกา', detail: `หุ้น ${US_STOCKS.length} · ETF ${US_ETFS.length}`, sections: [
+    { id: 'US_STOCKS', label: `หุ้นสหรัฐฯ · watchlist ${US_STOCKS.length}`, symbols: US_STOCKS.map(item => item.symbol) },
+    { id: 'US_ETFS', label: `ETF · watchlist ${US_ETFS.length}`, symbols: US_ETFS.map(item => item.symbol) },
   ] },
   { id: 'forex', label: 'Forex', detail: 'คู่เงิน · โลหะสปอต', sections: [
     { id: 'FOREX', label: 'Forex · รายการเริ่มต้น', symbols: FOREX_SYMBOLS },
-  ] },
-  { id: 'crypto', label: 'คริปโต', detail: 'Spot · รอง', sections: [
-    { id: 'CRYPTO_SPOT', label: 'Crypto Spot · รายการเริ่มต้น', symbols: CRYPTO_SYMBOLS },
   ] },
 ];
 
@@ -101,12 +92,17 @@ export const MARKET_GROUPS = GROUPS.map(group => ({
       symbol,
       instrumentId: `${section.id}:${symbol}`,
       sectionId: section.id,
-      name: group.id === 'us' ? US_WATCHLIST.find(item => item.symbol === symbol)?.name ?? symbol : DISPLAY_NAMES[symbol] ?? symbol,
+      ...(group.id === 'tfex' ? TFEX_CONTRACTS.find(item => item.symbol === symbol) : null),
+      name: group.id === 'us' ? US_WATCHLIST.find(item => item.symbol === symbol)?.name ?? symbol
+        : group.id === 'tfex' ? TFEX_CONTRACTS.find(item => item.symbol === symbol)?.name ?? symbol
+          : DISPLAY_NAMES[symbol] ?? symbol,
       theme: group.id === 'us' ? US_WATCHLIST.find(item => item.symbol === symbol)?.theme ?? null : null,
-      price: group.id === 'us' || group.id === 'forex' ? '—' : DEMO_PRICES[symbol] ?? '—',
+      price: '—',
       change: '—',
-      source: '—',
-      feed: group.id === 'thai' || group.id === 'dr' ? 'settrade-daily' : group.id === 'us' || group.id === 'forex' ? 'fmp-quote' : 'unconnected',
+      source: group.id === 'tfex' ? 'TFEX Open API' : '—',
+      feed: group.id === 'thai' || group.id === 'dr' ? 'settrade-daily'
+        : group.id === 'us' || group.id === 'forex' ? 'fmp-quote'
+          : group.id === 'tfex' ? 'tfex-quote' : 'unconnected',
     })),
   })),
 }));

@@ -1,3 +1,4 @@
+import { rateLimit, readJsonBody, requestErrorResponse, RequestError } from '../../../security/request-guard.mjs';
 import { ALL_ASSETS } from '../../../markets/catalog.mjs';
 import { researchWithBigdata } from '../../../analysis/bigdata-research.mjs';
 import { currentAccount, currentMember, privateHeaders, sameOrigin } from '../../../membership/server.mjs';
@@ -21,8 +22,9 @@ export async function POST(request) {
   if (!member) return Response.json({ error: 'LOGIN_REQUIRED' }, { status: 401, headers: privateHeaders });
   if (!membershipFor(member).capabilities.aiQuestions) return Response.json({ error: 'MEMBERSHIP_REQUIRED', quota: aiQuota(member) }, { status: 403, headers: privateHeaders });
   if (!process.env.BIGDATA_API_KEY?.trim()) return Response.json({ error: 'BIGDATA_NOT_CONFIGURED', quota: aiQuota(member) }, { status: 503, headers: privateHeaders });
+  const limited = rateLimit('assistant', member.id, 8); if (limited) return limited;
   let input;
-  try { input = await request.json(); } catch { input = null; }
+  try { input = await readJsonBody(request, 2500); } catch (error) { return requestErrorResponse(error); }
   const question = typeof input?.question === 'string' ? input.question.trim() : '';
   const requestId = typeof input?.requestId === 'string' ? input.requestId : '';
   const conversationId = typeof input?.conversationId === 'string' ? input.conversationId : '';
