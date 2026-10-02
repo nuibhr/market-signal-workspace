@@ -5,6 +5,7 @@ import { autoPickReadiness } from '../../../../auto-pick/runner.mjs';
 import { scanCoverage, scannerHealth, signalFeed, workerProcessHealth } from '../../../../auto-pick/store.mjs';
 import { thaiSession } from '../../../../auto-pick/engine.mjs';
 import { drSession } from '../../../../auto-pick/dr-orb.mjs';
+import { webullSdkHealth } from '../../../../market-data/webull-status.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,8 @@ export async function GET() {
     }
     const workers = Object.fromEntries(['thai', 'dr', 'us'].map(id => [id, scannerHealth(now, id)]));
     const { runs, outcomes } = signalFeed();
-    return Response.json({ updatedAt: new Date(now).toISOString(), markets, coverage, workers, workerProcess: workerProcessHealth(now), runs, outcomes }, { headers: privateHeaders });
+    const webull = await webullSdkHealth();
+    return Response.json({ updatedAt: new Date(now).toISOString(), markets, coverage, workers, workerProcess: workerProcessHealth(now), runs, outcomes, webull }, { headers: privateHeaders });
   } catch {
     return Response.json({ error: 'SYSTEM_STATUS_UNAVAILABLE' }, { status: 503, headers: privateHeaders });
   }

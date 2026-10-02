@@ -8,5 +8,7 @@ const headers = [
 export default {
   poweredByHeader: false,
   distDir: process.env.NUGAOM_REVIEW_MODE === 'true' ? '.next-review' : '.next',
+  // Local databases, SDK runtimes and diagnostics are runtime state, not release files.
+  outputFileTracingExcludes: { '/*': ['./data/**/*'] },
   async headers() { return [{ source: '/:path*', headers }]; },
 };

@@ -8,6 +8,9 @@ node_modules/
 out/
 build/
 data/
+__pycache__/
+# SDK default logs may contain signed requests. Our adapter disables them.
+webull*_sdk.log*
 .DS_Store
 
 # Actual server secrets and tunnel credentials (templates stay versioned).

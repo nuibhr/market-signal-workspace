@@ -9,6 +9,8 @@
     "probe:settrade": "node scripts/probe-settrade.mjs",
     "probe:binance-spot": "node scripts/probe-binance-spot.mjs",
     "probe:forex": "node scripts/probe-forex.mjs",
+    "probe:webull": "node --env-file=.env.local scripts/probe-webull.mjs",
+    "probe:webull-stream": "node --env-file=.env.local scripts/probe-webull.mjs stream",
     "autopick:worker": "node --env-file=.env.local scripts/auto-pick-worker.mjs",
     "probe:autopick": "node --env-file=.env.local scripts/probe-auto-pick.mjs",
     "test:market-data": "node --test src/market-data/*.test.mjs",
