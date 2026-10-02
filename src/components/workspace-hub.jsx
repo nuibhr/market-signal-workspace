@@ -2,21 +2,22 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import MarketNavigation from './market-navigation.jsx';
 import { Activity, Bell, BookOpen, CalendarDays, CandlestickChart, ChartNoAxesCombined, ChevronDown, CircleHelp, Compass, Gauge, GraduationCap, LayoutDashboard, LockKeyhole, Newspaper, Radar, RefreshCw, Search, ShieldCheck, Sparkles, Star, Wallet } from 'lucide-react';
 import MemberAvatar from './member-avatar.jsx';
-import HoldingsDesk from './holdings-desk.jsx';
 import { ALL_ASSETS } from '../markets/catalog.mjs';
 
 // Keep every destination in one map so desktop and mobile expose the same tools.
 const GROUPS = [
-  { id: 'today', label: 'เริ่มวันนี้', icon: Compass, items: [['overview', 'หน้าต้อนรับ', LayoutDashboard], ['daily', 'คัดหุ้นรายวัน', Radar], ['autopick', 'จังหวะที่ระบบพบ', Bell]] },
+  { id: 'today', label: 'เริ่มวันนี้', icon: Compass, items: [['overview', 'หน้าต้อนรับ', LayoutDashboard], ['daily', 'สำรวจวันนี้', Radar], ['autopick', 'จังหวะที่ระบบพบ', Bell]] },
   { id: 'explore', label: 'สำรวจราคา', icon: CandlestickChart, items: [['watchlist', 'รายการที่ติดตาม', Star], ['search', 'ค้นหาสินทรัพย์', Search], ['chart', 'กราฟและตัวชี้วัด', CandlestickChart], ['analysis-tools', 'ชุดสแกนเชิงลึก', Activity], ['signals', 'แผนจากกราฟ', Sparkles]] },
   { id: 'context', label: 'ก่อนตัดสินใจ', icon: Newspaper, items: [['news', 'ข่าวไทยและสหรัฐฯ', Newspaper], ['calendar', 'วันข่าวเศรษฐกิจ', CalendarDays], ['dividends', 'ปันผลและ XD', CalendarDays], ['news-guide', 'อ่านข่าวอย่างไร', BookOpen]] },
   { id: 'plan', label: 'ผลสัญญาณ', icon: Wallet, items: [['results', 'ผลงานสัญญาณ', ChartNoAxesCombined], ['financial', 'คำนวณความเสี่ยง', Gauge]] },
   { id: 'more', label: 'เพิ่มเติม', icon: CircleHelp, items: [['learn', 'วิธีเริ่มใช้', GraduationCap], ['roadmap', 'สถานะระบบ', Compass]] },
 ];
 
-export function WorkspaceSidebar({ activeNav, onNavigate, rights, account, loginHref = '/account', hasRealBars, favoriteCount }) {
+export function WorkspaceSidebar({ marketId, activeNav, onNavigate, rights, account, loginHref = '/account', hasRealBars, favoriteCount }) {
   const [expanded, setExpanded] = useState(['today', 'explore']);
   const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => {
@@ -34,16 +35,16 @@ export function WorkspaceSidebar({ activeNav, onNavigate, rights, account, login
   const isGuest = rights?.tier === 'guest' || !rights;
   return <><aside className="sidebar hub-sidebar">
     <div className="hub-sidebar-scroll">
-      <div className="brand"><div className="brand-mark"><Image src="/nugaom-mascot.png" width={52} height={52} alt="มาสคอต Nugaom AI Pick" /></div><div><strong>Nugaom</strong><small>AI PICK · พื้นที่ดูตลาด</small></div></div>
+      <Link href="/" className="brand" aria-label="Nugaom กลับเลือกตลาด"><div className="brand-mark"><Image src="/nugaom-mascot.png" width={52} height={52} alt="มาสคอต Nugaom AI Pick" /></div><div><strong>Nugaom</strong><small>AI PICK · พื้นที่ดูตลาด</small></div></Link>
       <a className="hub-account-card" href={loginHref}><span className="hub-account-avatar"><MemberAvatar account={isGuest ? null : account} size={40} /></span><span><strong>{isGuest ? 'เริ่มด้วย LINE' : account?.displayName || 'มุมสมาชิกของฉัน'}</strong><small>{isGuest ? 'เชื่อมบัญชี · แจ้งพอร์ต · ทดลอง 14 วัน' : rights?.label}</small></span><span className="hub-account-arrow">↗</span></a>
-      <div className="hub-sidebar-caption">เส้นทางใช้งาน</div>
+      <MarketNavigation current={marketId}/><div className="hub-sidebar-caption">เครื่องมือประจำตลาด</div>
       <nav className="hub-group-list" aria-label="เมนูหลัก">
         {GROUPS.map((group, index) => <section key={group.id} className="hub-menu-group"><button className="hub-group-toggle" aria-expanded={expanded.includes(group.id)} onClick={() => toggle(group.id)}><span className="hub-group-index">0{index + 1}</span><span className="hub-nav-glyph"><group.icon size={17} strokeWidth={1.9} /></span><span>{group.label}</span><ChevronDown size={14} className={expanded.includes(group.id) ? 'hub-chevron open' : 'hub-chevron'} /></button>{expanded.includes(group.id) && <div className="hub-group-items">{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'hub-subnav active' : 'hub-subnav'} onClick={() => onNavigate(id)}><Icon size={15} strokeWidth={1.9} /><span>{label}</span>{id === 'watchlist' && favoriteCount > 0 && <em>{favoriteCount}</em>}{id === 'analysis-tools' && <em>3 เครื่องมือ</em>}</button>)}</div>}</section>)}
       </nav>
       <div className="engine-card"><div className="engine-heading">สถานะข้อมูล <span className={hasRealBars ? 'real-pill' : 'demo-pill'}>{hasRealBars ? 'OHLC จริง' : 'รอฟีด'}</span></div><p>ราคาและผลสัญญาณแสดงเฉพาะข้อมูลที่เชื่อมได้ พร้อมที่มาและเวลา</p></div>
     </div>
     <div className="sidebar-foot">NUGAOM <span>ทุกวัน เริ่มจากข้อมูล</span></div>
-  </aside><nav className="hub-mobile-dock" aria-label="เมนูมือถือ"><button className={activeNav === 'overview' ? 'active' : ''} onClick={() => onNavigate('overview')}><LayoutDashboard size={20} /><span>วันนี้</span></button><button className={activeNav === 'daily' ? 'active' : ''} onClick={() => onNavigate('daily')}><Radar size={20} /><span>คัดหุ้น</span></button><button className={activeNav === 'autopick' ? 'active' : ''} onClick={() => onNavigate('autopick')}><Bell size={20} /><span>จังหวะ</span></button><a className="hub-mobile-line" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้า LINE' : 'บัญชี'}</span></a><button onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen}><Compass size={20} /><span>ทั้งหมด</span></button></nav>{mobileOpen && <div className="hub-mobile-scrim" onClick={() => setMobileOpen(false)}><div className="hub-mobile-sheet" role="dialog" aria-modal="true" aria-label="เครื่องมือทั้งหมดของ Nugaom" onClick={event => event.stopPropagation()}><div className="hub-mobile-sheet-head"><strong>เครื่องมือทั้งหมด</strong><button onClick={() => setMobileOpen(false)} aria-label="ปิดเมนู">×</button></div><a className="hub-mobile-membership" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้าสู่ระบบด้วย LINE · ทดลอง 14 วัน' : `มุมสมาชิก · ${rights?.label}`}</span><span>↗</span></a>{GROUPS.map((group, index) => <div key={group.id} className="hub-mobile-group"><strong>0{index + 1} / {group.label}</strong><div>{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'active' : ''} onClick={() => mobileNavigate(id)}><Icon size={18} />{label}</button>)}</div></div>)}</div></div>}</>;
+  </aside><nav className="hub-mobile-dock" aria-label="เมนูมือถือ"><button className={activeNav === 'overview' ? 'active' : ''} onClick={() => onNavigate('overview')}><LayoutDashboard size={20} /><span>วันนี้</span></button><button className={activeNav === 'daily' ? 'active' : ''} onClick={() => onNavigate('daily')}><Radar size={20} /><span>สำรวจ</span></button><button className={activeNav === 'autopick' ? 'active' : ''} onClick={() => onNavigate('autopick')}><Bell size={20} /><span>จังหวะ</span></button><a className="hub-mobile-line" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้า LINE' : 'บัญชี'}</span></a><button onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen}><Compass size={20} /><span>ทั้งหมด</span></button></nav>{mobileOpen && <div className="hub-mobile-scrim" onClick={() => setMobileOpen(false)}><div className="hub-mobile-sheet" role="dialog" aria-modal="true" aria-label="เครื่องมือทั้งหมดของ Nugaom" onClick={event => event.stopPropagation()}><div className="hub-mobile-sheet-head"><strong>เครื่องมือทั้งหมด</strong><button onClick={() => setMobileOpen(false)} aria-label="ปิดเมนู">×</button></div><a className="hub-mobile-membership" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้าสู่ระบบด้วย LINE · ทดลอง 14 วัน' : `มุมสมาชิก · ${rights?.label}`}</span><span>↗</span></a><MarketNavigation current={marketId}/>{GROUPS.map((group, index) => <div key={group.id} className="hub-mobile-group"><strong>0{index + 1} / {group.label}</strong><div>{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'active' : ''} onClick={() => mobileNavigate(id)}><Icon size={18} />{label}</button>)}</div></div>)}</div></div>}</>;
 }
 
 const PRESETS = [
@@ -57,12 +58,12 @@ function formatTimestamp(value) {
   return new Date(value).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export function DailyDesk({ favorites, onSelect, rights }) {
-  const [preset, setPreset] = useState('leaders');
+export function DailyDesk({ favorites, onSelect, rights, marketId='thai' }) {
+  const [preset, setPreset] = useState(marketId==='dr'?'dr':'leaders');
   const [busy, setBusy] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState('');
-  const favoriteSymbols = useMemo(() => favorites.filter(symbol => ALL_ASSETS.some(item => item.symbol === symbol && item.feed === 'settrade-daily')).slice(0, 8), [favorites]);
+  const favoriteSymbols = useMemo(() => favorites.filter(symbol => ALL_ASSETS.some(item => item.symbol === symbol && item.feed === 'settrade-daily'&&item.id===marketId)).slice(0, 8), [favorites,marketId]);
   const choices = preset === 'favorites' ? favoriteSymbols : PRESETS.find(item => item.id === preset)?.symbols ?? PRESETS[0].symbols;
   async function runScan() {
     if (!choices.length || busy) return;
@@ -81,16 +82,16 @@ export function DailyDesk({ favorites, onSelect, rights }) {
     fetch('/api/daily-scan?saved=1', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => { if (!stopped && d?.status === 'complete') setReport(d); }).catch(() => {});
     return () => { stopped = true; };
   }, [rights?.capabilities?.manualDailyScan]);
-  const available = report?.results?.filter(item => item.status === 'available') ?? [];
+  const reportRows=(report?.results??[]).filter(r=>ALL_ASSETS.some(a=>a.symbol===r.symbol&&a.id===marketId));
+  const available = reportRows.filter(item => item.status === 'available');
   return <section id="section-daily" className="daily-desk" aria-labelledby="daily-desk-title">
     <div className="daily-desk-heading"><span className="hub-heading-icon"><Radar size={21} /></span><div><span className="eyebrow">DAILY ROUTINE / SETTRADE 1D</span><h2 id="daily-desk-title">สแกนตลาดวันนี้</h2><p>เลือกชุดสินทรัพย์ อ่านเงื่อนไขจากแท่งรายวัน แล้วเปิดกราฟเพื่อตรวจด้วยตัวเอง</p></div><span className="daily-membership-link"><ShieldCheck size={14} /> {rights?.label ?? 'กำลังอ่านสิทธิ'}</span></div>
-    <div className="daily-desk-controls"><div className="daily-presets" role="group" aria-label="ชุดสินทรัพย์สำหรับสแกน">{PRESETS.map(item => <button key={item.id} className={preset === item.id ? 'selected' : ''} onClick={() => { setPreset(item.id); setReport(null); }}>{item.label}</button>)}<button className={preset === 'favorites' ? 'selected' : ''} onClick={() => { setPreset('favorites'); setReport(null); }}>★ คู่โปรด {favoriteSymbols.length}</button></div>{rights?.capabilities?.manualDailyScan ? <button className="daily-run" disabled={busy || !choices.length} onClick={runScan}><RefreshCw size={15} className={busy ? 'spin' : ''} />{busy ? 'กำลังสแกน…' : 'สแกนวันนี้'}</button> : <a className="daily-run" href="/account"><LockKeyhole size={15} />เปิดสิทธิสแกน</a>}</div>
+    <div className="daily-desk-controls"><div className="daily-presets" role="group" aria-label="ชุดสินทรัพย์สำหรับสแกน">{PRESETS.filter(p=>marketId==='dr'?p.id==='dr':p.id!=='dr').map(item => <button key={item.id} className={preset === item.id ? 'selected' : ''} onClick={() => { setPreset(item.id); setReport(null); }}>{item.label}</button>)}<button className={preset === 'favorites' ? 'selected' : ''} onClick={() => { setPreset('favorites'); setReport(null); }}>★ คู่โปรด {favoriteSymbols.length}</button></div>{rights?.capabilities?.manualDailyScan ? <button className="daily-run" disabled={busy || !choices.length} onClick={runScan}><RefreshCw size={15} className={busy ? 'spin' : ''} />{busy ? 'กำลังสแกน…' : 'สแกนวันนี้'}</button> : <a className="daily-run" href="/account"><LockKeyhole size={15} />เปิดสิทธิสแกน</a>}</div>
     <div className="daily-symbols">{choices.length ? choices.map(symbol => <span key={symbol}>{symbol}</span>) : <span>ยังไม่มีคู่โปรดจากฟีด Settrade — ปักหมุดใน Watchlist ก่อน</span>}</div>
     {busy && <div className="daily-loading" aria-busy="true"><span className="ui-skeleton-line" /><span className="ui-skeleton-line" /><span className="ui-skeleton-line" /></div>}
     {error && <div className="daily-callout" role="status"><CircleHelp size={17} /><span>{error} · ยังไม่มีผลสแกนสำหรับชุดนี้</span></div>}
-    {report && <><div className="daily-result-head"><span><b>{available.length}</b> / {report.results.length} อ่านแท่งได้</span><span>สแกน {formatTimestamp(report.scannedAt)} · แท่ง 1D</span></div><div className="daily-results">{report.results.map(item => { const asset = ALL_ASSETS.find(candidate => candidate.symbol === item.symbol && candidate.feed === 'settrade-daily'); return <div className="daily-result" key={item.symbol}><div><strong>{item.symbol}</strong><small>{item.latestDay ? `${item.latestDay} · ${item.freshness === 'recent' ? 'ล่าสุด' : 'ข้อมูลเก่า'}` : item.code ?? 'ไม่มีข้อมูลล่าสุด'}</small></div><span className={item.trend === 'up' ? 'daily-trend up' : item.trend === 'down' ? 'daily-trend down' : 'daily-trend'}>{item.status !== 'available' ? 'ไม่มีฟีด' : item.freshness !== 'recent' ? 'ข้อมูลเก่า' : item.trend === 'up' ? 'ขึ้น' : item.trend === 'down' ? 'ลง' : 'แกว่ง'}</span><span className="daily-price">{typeof item.price === 'number' ? item.price.toLocaleString('en-US', { maximumFractionDigits: 4 }) : '—'}</span><span className="daily-event">{item.status === 'available' && item.freshness !== 'recent' ? 'ตรวจข้อมูลล่าสุดก่อนใช้' : item.conditions?.[0]?.label ?? (item.status === 'available' ? 'ยังไม่มีเงื่อนไขเด่น' : 'รอแหล่งข้อมูล')}</span><span className="daily-plan-summary"><b>{item.summary?.score == null ? 'ไม่มีคะแนน' : `${item.summary.score}/100 · ${item.summary.label}`}</b><small>{item.summary?.text}</small></span><button disabled={!asset || item.status !== 'available'} onClick={() => onSelect(asset)}>เปิดกราฟ ↗</button></div>; })}</div></>}
-    {!report && !busy && !error && <div className="daily-empty"><Compass size={19} /><span>เริ่มจากชุดหุ้นที่สนใจ แล้วกด “สแกนวันนี้”</span></div>}
-    <HoldingsDesk rights={rights} onSelect={onSelect} />
+    {reportRows.length > 0 && <><div className="daily-result-head"><span><b>{available.length}</b> / {reportRows.length} อ่านแท่งได้</span><span>สแกน {formatTimestamp(report.scannedAt)} · แท่ง 1D</span></div><div className="daily-results">{reportRows.map(item => { const asset = ALL_ASSETS.find(candidate => candidate.symbol === item.symbol && candidate.feed === 'settrade-daily'); return <div className="daily-result" key={item.symbol}><div><strong>{item.symbol}</strong><small>{item.latestDay ? `${item.latestDay} · ${item.freshness === 'recent' ? 'ล่าสุด' : 'ข้อมูลเก่า'}` : item.code ?? 'ไม่มีข้อมูลล่าสุด'}</small></div><span className={item.trend === 'up' ? 'daily-trend up' : item.trend === 'down' ? 'daily-trend down' : 'daily-trend'}>{item.status !== 'available' ? 'ไม่มีฟีด' : item.freshness !== 'recent' ? 'ข้อมูลเก่า' : item.trend === 'up' ? 'ขึ้น' : item.trend === 'down' ? 'ลง' : 'แกว่ง'}</span><span className="daily-price">{typeof item.price === 'number' ? item.price.toLocaleString('en-US', { maximumFractionDigits: 4 }) : '—'}</span><span className="daily-event">{item.status === 'available' && item.freshness !== 'recent' ? 'ตรวจข้อมูลล่าสุดก่อนใช้' : item.conditions?.[0]?.label ?? (item.status === 'available' ? 'ยังไม่มีเงื่อนไขเด่น' : 'รอแหล่งข้อมูล')}</span><span className="daily-plan-summary"><b>{item.summary?.score == null ? 'ไม่มีคะแนน' : `${item.summary.score}/100 · ${item.summary.label}`}</b><small>{item.summary?.text}</small></span><button disabled={!asset || item.status !== 'available'} onClick={() => onSelect(asset)}>เปิดกราฟ ↗</button></div>; })}</div></>}
+    {!reportRows.length && !busy && !error && <div className="daily-empty"><Compass size={19} /><span>เริ่มจากชุดหุ้นที่สนใจ แล้วกด “สแกนวันนี้”</span></div>}
     <div className="daily-desk-foot"><span>ข้อมูลจาก Settrade เมื่อเชื่อมต่อและได้รับสิทธิแสดงผล · คะแนนเทคนิคจากกติกา 5 ข้อ ไม่ใช่เปอร์เซ็นต์ชนะ</span></div>
   </section>;
 }

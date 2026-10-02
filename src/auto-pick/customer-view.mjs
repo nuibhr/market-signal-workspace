@@ -16,5 +16,5 @@ export function customerEvent(event) {
     'createdAt', 'entryCeiling', 'stopLoss', 'tp1', 'session'].filter(key => event[key] !== undefined).map(key => [key, event[key]]));
 }
 export function customerFeed(feed) {
-  return { signals: feed.signals.map(customerSignal), events: feed.events.map(customerEvent), outcomes: feed.outcomes };
+  return { signals: feed.signals.map(customerSignal), events: feed.events.map(customerEvent), outcomes: feed.outcomes, marketOutcomes: feed.marketOutcomes??{} };
 }

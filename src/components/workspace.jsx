@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import {useRouter} from 'next/navigation';
+import MarketNavigation from './market-navigation.jsx';
+import {marketPage,marketHref} from '../markets/market-pages.mjs';
+import HoldingsDesk from './holdings-desk.jsx';
 import { BookOpen, Layers3, Newspaper, Radar, Waves } from 'lucide-react';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS, TFEX_SYMBOLS } from '../markets/catalog.mjs';
 import { formatQuotePrice } from '../markets/quote-format.mjs';
@@ -94,10 +98,13 @@ function CandlestickChart({ symbol, timeframe = '1d', bars = null, analysis = nu
           } } : {}) },
         localization: { locale: 'en-US', ...(thaiIntraday ? { timeFormatter: time => typeof time === 'number' ? fullTime.format(new Date(time * 1000)) : String(time) } : {}) },
       });
+      const precision = symbol.includes('/') ? symbol.endsWith('/JPY') ? 3 : 5 : (candles.at(-1)?.close ?? 1) < 1 ? 4 : 2;
+      const priceFormat = { type: 'price', precision, minMove: 10 ** -precision };
       const series = chartStyle === 'line'
-        ? chart.addSeries(LineSeries, { color: '#6bdac3', lineWidth: 2 })
+        ? chart.addSeries(LineSeries, { color: '#6bdac3', lineWidth: 2, priceFormat })
         : chart.addSeries(CandlestickSeries, {
           upColor: '#53d6aa', downColor: '#fa7185', borderUpColor: '#53d6aa', borderDownColor: '#fa7185', wickUpColor: '#53d6aa', wickDownColor: '#fa7185',
+          priceFormat,
         });
       series.setData(chartStyle === 'line' ? candles.map(bar => ({ time: bar.time, value: bar.close })) : candles);
       if (indicators.volume) {
@@ -154,7 +161,7 @@ function CandlestickChart({ symbol, timeframe = '1d', bars = null, analysis = nu
       observer?.disconnect();
       chart?.remove();
     };
-  }, [candles, analysis, bars, indicators, timeframe, chartStyle, chartRange]);
+  }, [candles, analysis, bars, indicators, timeframe, chartStyle, chartRange, symbol]);
 
   return <div className="chart-surface"><div ref={containerRef} className="chart-canvas" aria-label={`${bars ? 'Market' : 'Unavailable'} ${TIMEFRAME_LABELS[timeframe]} ${chartStyle === 'line' ? 'line' : 'candlestick'} chart for ${symbol}`} />{loading ? <div className="chart-loading-skeleton" aria-busy="true" aria-label={`กำลังโหลดกราฟ ${symbol} ${TIMEFRAME_LABELS[timeframe]}`}><div className="chart-skeleton-head"><span className="ui-skeleton-line" /><span className="ui-skeleton-line" /></div><div className="chart-skeleton-grid">{Array.from({ length: 18 }, (_, index) => <i key={index} style={{ '--bar-height': `${36 + ((index * 19) % 50)}%`, '--bar-offset': `${(index * 13) % 31}%` }} />)}</div><span className="chart-skeleton-caption">กำลังอ่านแท่ง {TIMEFRAME_LABELS[timeframe]} จาก {source}…</span></div> : !bars && <div className="chart-empty"><strong>ยังไม่มีแท่งราคาสำหรับกราฟนี้</strong><span>เลือกสินทรัพย์อื่น หรือรอเชื่อมแหล่งข้อมูลราคา</span></div>}</div>;
 }
@@ -174,10 +181,12 @@ function displayNumber(value, digits = 2) {
     : '—';
 }
 
-export default function Workspace() {
-  const [activeMarket, setActiveMarket] = useState('thai');
+export default function Workspace({marketId='thai',initialSymbol=null}) {
+  const router=useRouter();
+  const page=marketPage(marketId);
+  const [activeMarket, setActiveMarket] = useState(marketId);
   const [activeNav, setActiveNav] = useState('overview');
-  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [selectedAsset, setSelectedAsset] = useState(()=>MARKET_ASSETS[marketId]?.find(a=>a.symbol===initialSymbol)??null);
   const [timeframe, setTimeframe] = useState('1d');
   const [indicators, setIndicators] = useState(DEFAULT_INDICATORS);
   const [chartStyle, setChartStyle] = useState('candles');
@@ -197,7 +206,7 @@ export default function Workspace() {
   const modalRef = useRef(null);
   const popupTriggerRef = useRef(null);
   const [symbolQuery, setSymbolQuery] = useState('');
-  const [symbolCategory, setSymbolCategory] = useState('all');
+  const [symbolCategory, setSymbolCategory] = useState(marketId);
   const [rights, setRights] = useState(null);
   const [memberAccount, setMemberAccount] = useState(null);
   const [accountConfigured, setAccountConfigured] = useState(false);
@@ -205,11 +214,12 @@ export default function Workspace() {
   const [quoteState, setQuoteState] = useState('idle');
   const market = MARKETS.find(item => item.id === activeMarket) ?? MARKETS[0];
   const asset = selectedAsset ?? market;
+  const chartIndicators = useMemo(() => asset.id === 'forex' ? { ...indicators, volume: false, vwap: false } : indicators, [asset.id, indicators]);
   const hasSettradeConnection = asset.feed === 'settrade-daily';
   const hasFmpConnection = asset.feed === 'fmp-quote';
   const hasTfexConnection = asset.feed === 'tfex-quote';
   const hasQuoteConnection = hasFmpConnection || hasTfexConnection;
-  const hasCandleConnection = hasSettradeConnection || hasTfexConnection || asset.id === 'us' && timeframe === '1d';
+  const hasCandleConnection = hasSettradeConnection || hasTfexConnection || asset.id === 'us' || asset.id === 'forex';
   const hasRealQuote = hasQuoteConnection && quoteState === 'available' && marketQuote?.instrumentId === asset.instrumentId;
   const hasRealBars = hasCandleConnection && liveState === 'available' && liveSeries?.instrumentId === asset.instrumentId && liveSeries?.timeframe === timeframe && (liveSeries?.bars?.length ?? 0) > 0;
   const displayedPrice = hasSettradeConnection
@@ -232,12 +242,12 @@ export default function Workspace() {
   const sparkBars = displayBars ?? [];
   const analysis = useMemo(() => hasRealBars ? analyzeCandles(liveSeries.bars, timeframe === '1d' ? liveSeries.quote?.price : null, TIMEFRAME_DESCRIPTIONS[timeframe], { timeframe, dailyBars: timeframe === '1d' ? liveSeries.bars : pivotContext?.instrumentId === asset.instrumentId ? pivotContext.bars : [] }) : null, [hasRealBars, liveSeries, timeframe, pivotContext, asset.instrumentId]);
   const tradePlan = planContext?.instrumentId === asset.instrumentId ? planContext.plan : null;
-  const currentAnalysis = Boolean(analysis) && liveSeries?.freshness === 'recent';
+  const currentAnalysis = Boolean(analysis) && liveSeries?.freshness === 'recent' && !liveSeries?.chartOnly;
   const currentAiResult = currentAnalysis && aiResult?.symbol === asset.symbol && aiResult.timeframe === timeframe && aiResult.latestDay === liveSeries?.latestDay && aiResult.latestTime === (liveSeries?.latestTime ?? null) ? aiResult : null;
-  const favoriteAssets = ALL_ASSETS.filter((item, index, all) => favorites.includes(item.symbol) && all.findIndex(candidate => candidate.symbol === item.symbol) === index);
+  const favoriteAssets = ALL_ASSETS.filter((item, index, all) => item.id===marketId && favorites.includes(item.symbol) && all.findIndex(candidate => candidate.symbol === item.symbol) === index);
   const searchResults = ALL_ASSETS.filter(item => (symbolCategory === 'all' || item.id === symbolCategory)
     && (!symbolQuery.trim() || `${item.symbol} ${item.name} ${item.sectionId}`.toLowerCase().includes(symbolQuery.trim().toLowerCase())));
-  const sourceLabel = hasRealBars ? liveSeries.source : hasCandleConnection ? liveState === 'loading' ? `กำลังเชื่อม ${hasSettradeConnection ? 'Settrade' : hasTfexConnection ? 'TFEX Open API' : 'FMP EOD'}` : 'ฟีดแท่งราคาไม่พร้อม' : hasQuoteConnection ? hasRealQuote ? marketQuote.source : quoteState === 'loading' ? 'กำลังอ่านราคา' : 'ฟีดราคาไม่พร้อม' : 'ยังไม่เชื่อมฟีด';
+  const sourceLabel = hasRealBars ? liveSeries.source : hasCandleConnection ? liveState === 'loading' ? `กำลังเชื่อม ${hasSettradeConnection ? 'Settrade' : hasTfexConnection ? 'TFEX Open API' : asset.id === 'forex' ? 'Yahoo History' : 'FMP / Yahoo History'}` : 'ฟีดแท่งราคาไม่พร้อม' : hasQuoteConnection ? hasRealQuote ? marketQuote.source : quoteState === 'loading' ? 'กำลังอ่านราคา' : 'ฟีดราคาไม่พร้อม' : 'ยังไม่เชื่อมฟีด';
   const loginHref = !rights?.authenticated && accountConfigured ? '/api/auth/line/start' : '/account';
   useEffect(() => {
     const controller = new AbortController();
@@ -258,6 +268,7 @@ export default function Workspace() {
   }
 
   function selectAsset(item, frame = '1d') {
+    if(item.id!==marketId){router.push(marketHref(item.id,item.symbol));return;}
     setActiveMarket(item.id);
     setSelectedAsset(item);
     setTimeframe(item.id === 'us' ? '1d' : frame);
@@ -266,7 +277,7 @@ export default function Workspace() {
   }
 
   function selectFrame(frame) {
-    setTimeframe(asset.id === 'us' ? '1d' : frame);
+    setTimeframe(['us','forex'].includes(asset.id)&&frame==='4h'?'1d':frame);
     setPopup(null);
     window.requestAnimationFrame(() => document.querySelector('.chart-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
@@ -282,14 +293,17 @@ export default function Workspace() {
     setLiveSeries(null);
     setLiveState('loading');
     setChartLoadMs(null);
-    const route = hasSettradeConnection ? '/api/market-data' : hasTfexConnection ? '/api/tfex/candles' : '/api/us-bars';
+    const route = hasSettradeConnection ? '/api/market-data' : hasTfexConnection ? '/api/tfex/candles' : asset.id==='forex' || asset.id==='us' && timeframe!=='1d' ? '/api/history-bars' : '/api/us-bars';
     async function loadCandles() {
       const attempts = hasTfexConnection ? 2 : 1;
       for (let attempt = 0; attempt < attempts; attempt += 1) {
         const startedAt = performance.now();
         try {
-          const response = await fetch(`${route}?symbol=${encodeURIComponent(asset.symbol)}&timeframe=${timeframe}`, { cache: 'no-store', signal: controller.signal });
-          const payload = await response.json();
+          let response = await fetch(`${route}?symbol=${encodeURIComponent(asset.symbol)}&market=${asset.id}&timeframe=${timeframe}`, { cache: 'no-store', signal: controller.signal });
+          let payload = await response.json();
+          if((!response.ok||payload.status!=='available')&&!hasTfexConnection&&route!=='/api/history-bars'&&timeframe!=='4h'){
+            response=await fetch(`/api/history-bars?symbol=${encodeURIComponent(asset.symbol)}&market=${asset.id}&timeframe=${timeframe}`,{cache:'no-store',signal:controller.signal});payload=await response.json();
+          }
           if (!response.ok || payload.status !== 'available' || !Array.isArray(payload.bars) || payload.bars.length === 0)
             throw new Error(payload.code ?? 'SOURCE_UNAVAILABLE');
           if (!controller.signal.aborted) { setLiveSeries(payload); setLiveState('available'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
@@ -326,19 +340,19 @@ export default function Workspace() {
 
   useEffect(() => {
     setPivotContext(null);
-    if (timeframe === '1d' || !hasSettradeConnection && !hasTfexConnection) return undefined;
+    if (timeframe === '1d' || !hasRealBars) return undefined;
     const controller = new AbortController();
-    const endpoint = hasTfexConnection ? '/api/tfex/candles' : '/api/market-data';
-    fetch(`${endpoint}?symbol=${encodeURIComponent(asset.symbol)}&timeframe=1d`, { cache: 'no-store', signal: controller.signal })
+    const endpoint = liveSeries?.chartOnly?'/api/history-bars':hasTfexConnection ? '/api/tfex/candles' : asset.id === 'us' ? '/api/us-bars' : '/api/market-data';
+    fetch(`${endpoint}?symbol=${encodeURIComponent(asset.symbol)}&market=${asset.id}&timeframe=1d`, { cache: 'no-store', signal: controller.signal })
       .then(async response => { const payload = await response.json();
         if (!response.ok || payload.status !== 'available' || payload.instrumentId !== asset.instrumentId || payload.timeframe !== '1d' || !Array.isArray(payload.bars)) return;
         if (!controller.signal.aborted) setPivotContext({ instrumentId: asset.instrumentId, bars: payload.bars });
       }).catch(() => {});
     return () => controller.abort();
-  }, [asset.instrumentId, asset.symbol, timeframe, hasSettradeConnection, hasTfexConnection, reloadNonce]);
+  }, [asset.instrumentId, asset.symbol, timeframe, hasSettradeConnection, hasTfexConnection, hasRealBars, reloadNonce, liveSeries?.chartOnly]);
 
   useEffect(() => {
-    if (!hasSettradeConnection || timeframe !== '1d') { setPlanContext(null); setPlanContextState('idle'); return undefined; }
+    if (!hasSettradeConnection || timeframe !== '1d' || liveSeries?.chartOnly) { setPlanContext(null); setPlanContextState('idle'); return undefined; }
     const controller = new AbortController();
     setPlanContext(null);
     setPlanContextState('loading');
@@ -347,7 +361,7 @@ export default function Workspace() {
       .then(payload=>{if(!controller.signal.aborted){setPlanContext(payload);setPlanContextState('available');}})
       .catch(()=>{if(!controller.signal.aborted){setPlanContext(null);setPlanContextState('unavailable');}});
     return () => controller.abort();
-  }, [asset.instrumentId, asset.symbol, hasSettradeConnection, timeframe, reloadNonce]);
+  }, [asset.instrumentId, asset.symbol, hasSettradeConnection, timeframe, reloadNonce, liveSeries?.chartOnly]);
 
   useEffect(() => {
     if (!hasQuoteConnection) { setMarketQuote(null); setQuoteState('idle'); return undefined; }
@@ -455,35 +469,33 @@ export default function Workspace() {
   }, [popup]);
 
   return (
-    <div className="app-frame">
+    <div className={`app-frame market-workspace market-${marketId}`} style={{'--market-accent':page.accent,'--market-rgb':page.rgb}}>
       <AmbientDepth />
-      <WorkspaceSidebar activeNav={activeNav} onNavigate={navigateTo} rights={rights} account={memberAccount} loginHref={loginHref} hasRealBars={hasRealBars} favoriteCount={favoriteAssets.length} />
+      <WorkspaceSidebar marketId={marketId} activeNav={activeNav} onNavigate={navigateTo} rights={rights} account={memberAccount} loginHref={loginHref} hasRealBars={hasRealBars} favoriteCount={favoriteAssets.length} />
 
       <main className="main-area">
         <header className="topbar">
           <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
-          <div className="topbar-search-area"><SymbolSearch onSelect={selectAsset} /></div>
-          <div className="topbar-actions"><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
+          <div className="topbar-search-area"><SymbolSearch marketId={marketId} onSelect={selectAsset} /></div>
+          <div className="topbar-actions"><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
         </header>
 
         <div className="page-content">
+          <MarketNavigation current={marketId}/>
           <section id="section-overview" className="workspace-intro nugaom-welcome">
             <div className="welcome-main">
-              <span className="eyebrow">NUGAOM / YOUR MARKET ROUTINE</span>
-              <h1>เริ่มวันด้วยข้อมูล<br /><em>แล้วค่อยเลือกจังหวะ</em></h1>
-              <p>คัดหุ้น ดูกราฟ และอ่านสัญญาณในลำดับที่เข้าใจง่าย พร้อมเห็นที่มาของราคาและเวลาของข้อมูล</p>
-              <div className="welcome-actions"><a className="welcome-line" href={loginHref}><span className="welcome-line-mark">LINE</span>{rights?.authenticated ? 'เปิดมุมสมาชิก' : 'เริ่มใช้ฟรี 14 วันด้วย LINE'} <span>↗</span></a><button className="welcome-explore" onClick={() => navigateTo('daily')}>ดูหุ้นวันนี้ <span>→</span></button></div>
+              <span className="eyebrow">{page.eyebrow}</span>
+              <h1>{page.title}</h1>
+              <p>{page.description}</p>
+              <div className="welcome-actions"><a className="welcome-line" href={loginHref}><span className="welcome-line-mark">LINE</span>{rights?.authenticated ? 'เปิดมุมสมาชิก' : 'เริ่มใช้ฟรี 14 วันด้วย LINE'} <span>↗</span></a><button className="welcome-explore" onClick={() => navigateTo('daily')}>เปิดเครื่องมือ <span>→</span></button></div>
             </div>
-            <div className="welcome-steps"><span>เริ่มต้นกับ Nugaom</span><div><b>01</b><span>สำรวจหุ้นและตลาด</span></div><div><b>02</b><span>เชื่อม LINE และแจ้งพอร์ต</span></div><div><b>03</b><span>ลองใช้เครื่องมือสมาชิก 14 วัน</span></div><small>สิทธิสมาชิกขึ้นกับสถานะบัญชีและการเชื่อมต่อระบบ</small></div>
+            <div className="welcome-steps"><span>{rights?.authenticated ? `วันนี้ / ${page.short}` : 'เริ่มต้นกับ Nugaom'}</span><div><b>01</b><span>{rights?.authenticated ? 'ตรวจจังหวะที่ระบบพบ' : 'สำรวจหุ้นและตลาด'}</span></div><div><b>02</b><span>{rights?.authenticated ? 'อ่านกราฟและบริบทตลาด' : 'เชื่อม LINE และแจ้งพอร์ต'}</span></div><div><b>03</b><span>{rights?.authenticated ? 'ติดตามผลและเสียงแจ้งเตือน' : 'ลองใช้เครื่องมือสมาชิก 14 วัน'}</span></div><small>{rights?.authenticated ? `สถานะสมาชิก: ${rights.label}` : 'สิทธิสมาชิกขึ้นกับสถานะบัญชีและการเชื่อมต่อระบบ'}</small></div>
           </section>
 
-          <DailyDesk favorites={favorites} onSelect={selectAsset} rights={rights} />
-          <AutoPickBoard onSelect={selectAsset} />
-
-          <div className="market-story-head"><div><span className="eyebrow">02 / EXPLORE</span><h2>เปิดดูตลาดในแบบของคุณ</h2><p>เลือกหมวด สินทรัพย์ และกรอบเวลา แล้วตรวจที่มาของราคาก่อนวางแผน</p></div></div>
-          <section className="market-switcher" aria-label="เลือกประเภทตลาด">
-            {MARKETS.map(item => <button key={item.id} onClick={() => { setActiveMarket(item.id); setSelectedAsset(null); setTimeframe('1d'); }} className={activeMarket === item.id ? `market-tab active ${item.id}` : `market-tab ${item.id}`}><span className="tab-title">{item.label} <b>{MARKET_ASSETS[item.id].length}</b></span><span className="tab-detail">{item.detail}</span>{item.id === 'crypto' && <span className="secondary-label">รอง</span>}</button>)}
-          </section>
+          {marketId==='dr'&&<AutoPickBoard marketId={marketId} onSelect={selectAsset}/>}
+          {['thai','dr'].includes(marketId)?<DailyDesk marketId={marketId} favorites={favorites} onSelect={selectAsset} rights={rights}/>:<section id="section-daily" className="market-routine panel"><div><span className="eyebrow">TODAY / {page.short}</span><h2>เครื่องมือประจำตลาด</h2><p>{marketId==='us'?'สัญญาณใช้แท่งรายวันหลังตลาดปิด · กราฟย้อนหลังเลือกดูได้หลายช่วงเวลา':marketId==='forex'?'กราฟย้อนหลังคู่เงิน · AutoPick ยังรอฟีดที่ยืนยันใช้แจ้งเตือนได้':'ดูซีรีส์สัญญาและกราฟจริง · AutoPick ยังรอยืนยันกติกาแต่ละสินค้า'}</p></div><div><button onClick={()=>setPopup('scanner')}>สแกนเชิงลึก</button><button onClick={()=>setPopup('calendar')}>ปฏิทินเศรษฐกิจ</button><button onClick={()=>navigateTo('results')}>ผลงานสัญญาณ</button></div></section>}
+          {marketId!=='dr'&&<AutoPickBoard marketId={marketId} onSelect={selectAsset}/>}
+          {['thai','dr','us'].includes(marketId)&&<HoldingsDesk marketId={marketId} rights={rights} onSelect={selectAsset}/>}
 
           <section className="asset-hero" aria-label="สินทรัพย์ที่เลือก">
             <div className="hero-copy">
@@ -495,7 +507,7 @@ export default function Workspace() {
             <div className="hero-art"><div className="orbit orbit-one" /><div className="orbit orbit-two" /><div className="hero-glow" /><Image className="hero-mascot" src="/nugaom-mascot.png" width={180} height={180} alt="" priority /><MarketSparkline bars={sparkBars} /><div className="hero-art-label">PRICE STRUCTURE / {asset.symbol}</div></div>
           </section>
 
-          <div className={`workspace-ticker ${hasRealBars || hasRealQuote ? 'has-live-source' : 'has-preview-source'}`}><span className="ticker-symbol" aria-hidden="true">{hasRealBars || hasRealQuote ? '◉' : '◇'}</span><span className="ticker-copy"><strong>{hasRealBars ? `ข้อมูล ${asset.symbol} พร้อมอ่าน` : hasRealQuote ? `รับราคา quote ของ ${asset.symbol} แล้ว` : `กำลังดู ${asset.symbol} ในโหมดพรีวิว`}</strong><small>{hasRealBars ? `${sourceLabel} · ${TIMEFRAME_LABELS[timeframe]} ล่าสุด ${latestBarLabel}` : hasRealQuote ? hasTfexConnection ? marketQuote.observedAt ? `TFEX Open API · quote ${formatLatestBar({ timeframe: '15m', latestTime: marketQuote.observedAt })} · ยังไม่ใช้วิเคราะห์` : `TFEX Open API · เวลา source ไม่ระบุ · รับ ${formatQuoteReceipt(marketQuote.receivedAt)} · ยังไม่ใช้วิเคราะห์` : `${sourceLabel} · ยังไม่มีแท่งใช้คำนวณ` : `${sourceLabel} · ยังไม่มีแท่งใช้คำนวณ`}</small></span><span className={hasRealBars ? 'ticker-state live' : 'ticker-state'}>{hasRealBars ? 'REAL OHLC' : hasRealQuote ? 'QUOTE ONLY' : 'PREVIEW'}</span></div>
+          <div className={`workspace-ticker ${hasRealBars || hasRealQuote ? 'has-live-source' : 'has-preview-source'}`}><span className="ticker-symbol" aria-hidden="true">{hasRealBars || hasRealQuote ? '◉' : '◇'}</span><span className="ticker-copy"><strong>{hasRealBars ? `ข้อมูล ${asset.symbol} พร้อมอ่าน` : hasRealQuote ? `รับราคา quote ของ ${asset.symbol} แล้ว` : `กำลังดู ${asset.symbol} ในโหมดพรีวิว`}</strong><small>{hasRealBars ? `${sourceLabel} · ${TIMEFRAME_LABELS[timeframe]} ล่าสุด ${latestBarLabel}` : hasRealQuote ? hasTfexConnection ? marketQuote.observedAt ? `TFEX Open API · quote ${formatLatestBar({ timeframe: '15m', latestTime: marketQuote.observedAt })} · ยังไม่ใช้วิเคราะห์` : `TFEX Open API · เวลา source ไม่ระบุ · รับ ${formatQuoteReceipt(marketQuote.receivedAt)} · ยังไม่ใช้วิเคราะห์` : `${sourceLabel} · ยังไม่มีแท่งใช้คำนวณ` : `${sourceLabel} · ยังไม่มีแท่งใช้คำนวณ`}</small></span><span className={hasRealBars ? 'ticker-state live' : 'ticker-state'}>{hasRealBars ? liveSeries.chartOnly ? 'HISTORY' : 'REAL OHLC' : hasRealQuote ? 'QUOTE ONLY' : 'PREVIEW'}</span></div>
 
           <div className="favorite-strip"><span>★ &nbsp;คู่โปรด</span>{favoriteAssets.length ? favoriteAssets.map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}>{item.symbol}</button>) : <small>กดดาวใน Watchlist เพื่อเก็บสินทรัพย์ที่ดูบ่อย</small>}<button className="favorite-toggle" aria-pressed={favorites.includes(asset.symbol)} onClick={() => toggleFavorite(asset.symbol)}>{favorites.includes(asset.symbol) ? '★ บันทึกแล้ว' : '☆ ปักหมุดคู่นี้'}</button></div>
 
@@ -504,25 +516,26 @@ export default function Workspace() {
           <section className="primary-grid">
 
             <article className="panel chart-panel">
-              <div className="chart-header"><div className="chart-header-name"><span className="eyebrow">PRICE CHART / {market.label.toUpperCase()}</span><h2>{asset.symbol} {asset.name !== asset.symbol && <small>{asset.name}</small>}</h2></div><span className={hasRealBars ? 'real-pill' : hasTfexConnection ? 'quote-only-pill' : 'demo-pill'}>{hasRealBars ? 'REAL OHLC' : hasTfexConnection ? liveState === 'loading' ? 'LOADING OHLC' : hasRealQuote ? 'QUOTE · NO OHLC' : 'OHLC UNAVAILABLE' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>
+              <div className="chart-header"><div className="chart-header-name"><span className="eyebrow">PRICE CHART / {market.label.toUpperCase()}</span><h2>{asset.symbol} {asset.name !== asset.symbol && <small>{asset.name}</small>}</h2></div><span className={hasRealBars ? 'real-pill' : hasTfexConnection ? 'quote-only-pill' : 'demo-pill'}>{hasRealBars ? liveSeries.chartOnly?'HISTORY':'REAL OHLC' : hasTfexConnection ? liveState === 'loading' ? 'LOADING OHLC' : hasRealQuote ? 'QUOTE · NO OHLC' : 'OHLC UNAVAILABLE' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>
               <div className="chart-meta-row"><span>◉ {sourceLabel}</span><span>{displaySection(asset.sectionId)}</span><span>{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} ล่าสุด ${latestBarLabel}` : 'ยังไม่ใช้ตัดสินสัญญาณ'}</span>{hasRealBars && <span>ประวัติ {liveSeries.bars.length.toLocaleString('th-TH')} แท่ง · ตั้งแต่ {formatHistoryStart(liveSeries.bars[0], timeframe)}</span>}{asset.id === 'thai' && <a href={`https://finance.yahoo.com/quote/${encodeURIComponent(`${asset.symbol}.BK`)}/history/`} target="_blank" rel="noopener noreferrer" title="เปิด Yahoo เพื่อดูย้อนหลังแยกต่างหาก แผนและเสียงแจ้งเตือนในแอปใช้ข้อมูล Settrade">ดูย้อนหลังใน Yahoo ↗</a>}</div>
-              <div className="timeframe-bar"><span>{hasTfexConnection ? 'TFEX OHLC' : 'TIMEFRAME'}</span><div className="timeframe-switch">{[['15m','15m'],['1h','1H'],['4h','4H'],['1d','1D']].map(([id,label]) => <button key={id} className={timeframe === id ? 'selected' : ''} disabled={(asset.id === 'us' || !hasSettradeConnection && !hasTfexConnection && asset.price === '—') && id !== '1d'} onClick={() => setTimeframe(id)}>{label}</button>)}</div><div className="chart-tools-end"><button aria-label={chartRange === 'recent' ? 'ดูประวัติกราฟทั้งหมด' : 'กลับไปดูแท่งล่าสุด'} aria-pressed={chartRange === 'all'} disabled={!hasRealBars} onClick={() => setChartRange(value => value === 'recent' ? 'all' : 'recent')}>{chartRange === 'recent' ? 'ดูทั้งหมด' : 'ดูล่าสุด'}</button><button aria-label="เปิดกราฟขนาดใหญ่" onClick={() => setPopup('chart')}>⤢</button><button aria-label={hasTfexConnection ? 'รีเฟรชกราฟ TFEX' : 'รีเฟรชแท่งราคา'} disabled={!hasCandleConnection && !hasTfexConnection} onClick={() => setReloadNonce(value => value + 1)}>↻</button></div></div>
-              <div className="indicator-strip"><span>CHART</span><button className={chartStyle === 'candles' ? 'selected' : ''} aria-pressed={chartStyle === 'candles'} onClick={() => setChartStyle('candles')}>Candles</button><button className={chartStyle === 'line' ? 'selected' : ''} aria-pressed={chartStyle === 'line'} onClick={() => setChartStyle('line')}>Line</button><span>OVERLAYS</span>{[['ema20', 'EMA 20'], ['ema50', 'EMA 50'], ['sma20', 'SMA 20'], ['bollinger', 'Bollinger'], ['donchian', 'Donchian 20'], ['vwap', 'VWAP*'], ['volume', 'Volume'], ['levels', 'แนวรับ / ต้าน']].map(([key, label]) => <button key={key} className={indicators[key] ? 'selected' : ''} disabled={!analysis || key === 'vwap' && !analysis?.vwapSeries?.length} aria-pressed={Boolean(indicators[key])} title={key === 'vwap' ? 'VWAP สะสมเฉพาะแท่งที่โหลดและมี Volume' : undefined} onClick={() => toggleIndicator(key)}>{label}</button>)}<button onClick={() => setIndicators(Object.fromEntries(Object.keys(DEFAULT_INDICATORS).map(key => [key, false])))}>ล้าง</button><button onClick={() => { setIndicators(DEFAULT_INDICATORS); setChartStyle('candles'); }}>ค่าเริ่มต้น</button></div>
-              <CandlestickChart symbol={asset.symbol} timeframe={timeframe} bars={displayBars} analysis={analysis} indicators={indicators} chartStyle={chartStyle} chartRange={chartRange} loading={hasCandleConnection && liveState === 'loading'} unavailable={hasCandleConnection && liveState === 'unavailable'} source={hasSettradeConnection ? 'Settrade' : hasTfexConnection ? 'TFEX Open API' : 'FMP EOD'} />
+              <div className="timeframe-bar"><span>{hasTfexConnection ? 'TFEX OHLC' : 'TIMEFRAME'}</span><div className="timeframe-switch">{[['15m','15m'],['1h','1H'],['4h','4H'],['1d','1D']].map(([id,label]) => <button key={id} className={timeframe === id ? 'selected' : ''} disabled={['us','forex'].includes(asset.id)&&id==='4h'} onClick={() => setTimeframe(id)}>{label}</button>)}</div><div className="chart-tools-end"><button aria-label={chartRange === 'recent' ? 'ดูประวัติกราฟทั้งหมด' : 'กลับไปดูแท่งล่าสุด'} aria-pressed={chartRange === 'all'} disabled={!hasRealBars} onClick={() => setChartRange(value => value === 'recent' ? 'all' : 'recent')}>{chartRange === 'recent' ? 'ดูทั้งหมด' : 'ดูล่าสุด'}</button><button aria-label="เปิดกราฟขนาดใหญ่" onClick={() => setPopup('chart')}>⤢</button><button aria-label={hasTfexConnection ? 'รีเฟรชกราฟ TFEX' : 'รีเฟรชแท่งราคา'} disabled={!hasCandleConnection && !hasTfexConnection} onClick={() => setReloadNonce(value => value + 1)}>↻</button></div></div>
+              <div className="indicator-strip"><span>CHART</span><button className={chartStyle === 'candles' ? 'selected' : ''} aria-pressed={chartStyle === 'candles'} onClick={() => setChartStyle('candles')}>Candles</button><button className={chartStyle === 'line' ? 'selected' : ''} aria-pressed={chartStyle === 'line'} onClick={() => setChartStyle('line')}>Line</button><span>OVERLAYS</span>{[['ema20', 'EMA 20'], ['ema50', 'EMA 50'], ['sma20', 'SMA 20'], ['bollinger', 'Bollinger'], ['donchian', 'Donchian 20'], ['vwap', 'VWAP*'], ['volume', 'Volume'], ['levels', 'แนวรับ / ต้าน']].map(([key, label]) => <button key={key} className={chartIndicators[key] ? 'selected' : ''} disabled={!analysis || key === 'volume' && asset.id==='forex' || key === 'vwap' && !analysis?.vwapSeries?.length} aria-pressed={Boolean(chartIndicators[key])} title={key === 'vwap' ? 'VWAP สะสมเฉพาะแท่งที่โหลดและมี Volume' : undefined} onClick={() => toggleIndicator(key)}>{label}</button>)}<button onClick={() => setIndicators(Object.fromEntries(Object.keys(DEFAULT_INDICATORS).map(key => [key, false])))}>ล้าง</button><button onClick={() => { setIndicators(DEFAULT_INDICATORS); setChartStyle('candles'); }}>ค่าเริ่มต้น</button></div>
+              <CandlestickChart symbol={asset.symbol} timeframe={timeframe} bars={displayBars} analysis={analysis} indicators={chartIndicators} chartStyle={chartStyle} chartRange={chartRange} loading={hasCandleConnection && liveState === 'loading'} unavailable={hasCandleConnection && liveState === 'unavailable'} source={sourceLabel} />
               {hasTfexConnection && <div className="tfex-quote-note">กราฟใช้แท่ง OHLCV ที่มีเวลาแท่งจาก TFEX Open API · เวลา quote ล่าสุดอาจไม่ระบุ · AutoPick ยังรอยืนยันสัญญานำ วันหมดอายุ และความเสี่ยงต่อสัญญา</div>}
-              <div className="ohlc-strip"><span>O <b>{latestBar ? displayNumber(latestBar.open) : '—'}</b></span><span>H <b>{latestBar ? displayNumber(latestBar.high) : '—'}</b></span><span>L <b>{latestBar ? displayNumber(latestBar.low) : '—'}</b></span><span>C <b>{latestBar ? displayNumber(latestBar.close) : '—'}</b></span><span>V <b>{latestBar ? displayNumber(latestBar.volume, 0) : '—'}</b></span><span className="source-time">{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} · ${latestBarLabel}` : hasTfexConnection ? 'กำลังรอ TFEX OHLC' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>
-              {analysis && <div className="chart-monitor-summary"><span>SUP <b>{displayNumber(analysis.support)}</b></span><span>RES <b>{displayNumber(analysis.resistance)}</b></span><span>RSI 14 <b>{displayNumber(analysis.rsi14, 1)}</b></span><span>MACD <b>{displayNumber(analysis.macdHistogram, 3)}</b></span></div>}
-              {hasRealBars && <div className="chart-freshness">ข้อมูลแท่ง {TIMEFRAME_LABELS[timeframe]} จาก {sourceLabel} · แท่งล่าสุด {latestBarLabel} · เซิร์ฟเวอร์รับข้อมูล {formatQuoteReceipt(liveSeries.receivedAt)} · {liveSeries.freshness === 'recent' ? 'ข้อมูลตามรอบตลาดล่าสุด' : 'ข้อมูลย้อนหลังเก่า'} · แสดงเฉพาะแท่งปิดแล้ว · โหลดผ่านเว็บ {chartLoadMs == null ? '—' : `${chartLoadMs} ms`} (ไม่ใช่ความหน่วงราคาตลาด) · รีเฟรชอัตโนมัติหลังรอบ 15 นาทีขณะเปิดหน้านี้</div>}
-              <ChartToolbox asset={asset} bars={displayBars} analysis={analysis} tradePlan={tradePlan} freshness={liveSeries?.freshness} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} indicators={indicators} onToggleIndicator={toggleIndicator} onOpenAutomation={() => navigateTo('autopick')} />
+              <div className="ohlc-strip"><span>O <b>{latestBar ? formatQuotePrice(latestBar.open,asset) : '—'}</b></span><span>H <b>{latestBar ? formatQuotePrice(latestBar.high,asset) : '—'}</b></span><span>L <b>{latestBar ? formatQuotePrice(latestBar.low,asset) : '—'}</b></span><span>C <b>{latestBar ? formatQuotePrice(latestBar.close,asset) : '—'}</b></span><span>V <b>{latestBar && asset.id!=='forex' ? displayNumber(latestBar.volume, 0) : '—'}</b></span><span className="source-time">{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} · ${latestBarLabel}` : hasTfexConnection ? 'กำลังรอ TFEX OHLC' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>
+              {analysis && <div className="chart-monitor-summary"><span>SUP <b>{formatQuotePrice(analysis.support,asset)}</b></span><span>RES <b>{formatQuotePrice(analysis.resistance,asset)}</b></span><span>RSI 14 <b>{displayNumber(analysis.rsi14, 1)}</b></span><span>MACD <b>{displayNumber(analysis.macdHistogram, 3)}</b></span></div>}
+              {liveSeries?.chartOnly&&<div className="history-feed-note">Yahoo Finance · กราฟย้อนหลังจาก {liveSeries.sourceTicker} · แท่งปิดแล้ว · ไม่ใช้กราฟสำรองนี้ยืนยัน AutoPick{asset.id==='forex'&&' · ไม่มี Volume รวมของตลาด'}</div>}
+              {hasRealBars && <div className="chart-freshness">ข้อมูลแท่ง {TIMEFRAME_LABELS[timeframe]} จาก {sourceLabel} · แท่งล่าสุด {latestBarLabel} · เซิร์ฟเวอร์รับข้อมูล {formatQuoteReceipt(liveSeries.receivedAt)} · {liveSeries.freshness === 'recent' ? 'ข้อมูลตามรอบตลาดล่าสุด' : 'ข้อมูลย้อนหลังเก่า'} · แสดงเฉพาะแท่งปิดแล้ว · โหลดผ่านเว็บ {chartLoadMs == null ? '—' : `${chartLoadMs} ms`} (ไม่ใช่ความหน่วงราคาตลาด) {!liveSeries.chartOnly&&hasSettradeConnection?' · รีเฟรชหลังรอบ 15 นาทีขณะเปิดหน้านี้':''}</div>}
+              <ChartToolbox chartOnly={Boolean(liveSeries?.chartOnly)} asset={asset} bars={displayBars} analysis={analysis} tradePlan={tradePlan} freshness={liveSeries?.freshness} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} indicators={chartIndicators} onToggleIndicator={toggleIndicator} onOpenAutomation={() => navigateTo('autopick')} />
             </article>
 
-              <AnalysisRail asset={asset} analysis={analysis} tradePlan={tradePlan} tradePlanState={hasSettradeConnection && timeframe === '1d' && (liveState === 'loading' || planContextState === 'loading') ? 'loading' : planContextState} aiState={currentAnalysis ? aiState : 'idle'} aiResult={currentAiResult} sourceState={liveState} barsCount={hasRealBars ? liveSeries.bars.length : 0} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} timeframeId={timeframe} freshness={liveSeries?.freshness} currentPrice={hasRealQuote && !hasTfexConnection ? marketQuote?.price : hasRealBars ? liveSeries.quote?.price ?? liveSeries.bars.at(-1)?.close : null} sourceLabel={hasRealQuote ? marketQuote.source : sourceLabel} onOpenAutomation={() => navigateTo('autopick')} />
+              <AnalysisRail chartOnly={Boolean(liveSeries?.chartOnly)} asset={asset} analysis={analysis} tradePlan={tradePlan} tradePlanState={hasSettradeConnection && timeframe === '1d' && (liveState === 'loading' || planContextState === 'loading') ? 'loading' : planContextState} aiState={currentAnalysis ? aiState : 'idle'} aiResult={currentAiResult} sourceState={liveState} barsCount={hasRealBars ? liveSeries.bars.length : 0} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} timeframeId={timeframe} freshness={liveSeries?.freshness} currentPrice={hasRealQuote && !hasTfexConnection ? marketQuote?.price : hasRealBars ? liveSeries.quote?.price ?? liveSeries.bars.at(-1)?.close : null} sourceLabel={hasRealQuote ? marketQuote.source : sourceLabel} onOpenAutomation={() => navigateTo('autopick')} />
 
             <LiveMarketWatch market={market} asset={asset} favorites={favorites} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} quoteState={quoteState} analysis={analysis} freshness={liveSeries?.freshness} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenVolume={() => setPopup('volume')} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory('all'); setPopup('search'); }} />
           </section>
 
-          <SignalResults onSelect={selectLedgerSymbol} loginHref={loginHref} />
-          <footer className="page-footer"><span>Nugaom AI Pick · MARKET SIGNAL WORKSPACE</span><span>หุ้นไทย / DR: Settrade · หุ้นสหรัฐฯ 1D: FMP EOD · AI ในเครื่องสำหรับหุ้นไทย / DR · ผลสัญญาณอ้างอิงราคาแท่ง ไม่ใช่ fill</span></footer>
+          <SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} />
+          <footer className="page-footer"><span>Nugaom AI Pick · MARKET SIGNAL WORKSPACE</span><span>Settrade · FMP EOD · Yahoo History สำหรับกราฟสำรอง · ผลสัญญาณอ้างอิงราคาแท่ง ไม่ใช่ fill</span></footer>
         </div>
       </main>
 
@@ -549,7 +562,7 @@ export default function Workspace() {
             <div className="asset-results">{searchResults.map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}><span><strong>{item.symbol}</strong><small>{item.name === item.symbol ? displaySection(item.sectionId) : `${item.name} · ${displaySection(item.sectionId)}`}</small></span><span className="asset-result-price">{item.symbol === asset.symbol && hasRealBars ? displayedPrice : item.symbol === asset.symbol && hasRealQuote ? displayedPrice : item.feed === 'settrade-daily' ? 'OHLC' : '—'}<small>{item.feed === 'settrade-daily' ? 'Settrade เมื่อเลือก' : item.feed === 'tfex-quote' ? 'TFEX quote เมื่อเลือก' : item.feed === 'fmp-quote' ? 'FMP เมื่อเลือก' : 'รอฟีดราคา'}</small></span></button>)}{searchResults.length === 0 && <p className="empty-state">ไม่พบสินทรัพย์ในรายการที่กำหนด</p>}</div>
             <p className="modal-footnote">SET100: snapshot 2026 H2 · DR80: snapshot 25 ก.ย. 2026 · mai 50: รายชื่อเริ่มต้น ยังไม่ยืนยันอันดับ Market Cap</p>
           </>}
-          {popup === 'chart' && <><CandlestickChart symbol={asset.symbol} timeframe={timeframe} bars={displayBars} analysis={analysis} indicators={indicators} chartStyle={chartStyle} chartRange={chartRange} loading={hasCandleConnection && liveState === 'loading'} unavailable={hasCandleConnection && liveState === 'unavailable'} source={hasSettradeConnection ? 'Settrade' : hasTfexConnection ? 'TFEX Open API' : 'FMP EOD'} /><p className="modal-footnote">{hasRealBars ? `แท่ง ${TIMEFRAME_LABELS[timeframe]} จริง ${liveSeries.bars.length.toLocaleString('th-TH')} แท่งจาก ${sourceLabel} · ล่าสุด ${latestBarLabel}` : hasCandleConnection ? 'ยังแสดงแท่งจริงไม่ได้' : 'ยังไม่มีกราฟจากราคาแท่งจริง'}</p></>}
+          {popup === 'chart' && <><CandlestickChart symbol={asset.symbol} timeframe={timeframe} bars={displayBars} analysis={analysis} indicators={chartIndicators} chartStyle={chartStyle} chartRange={chartRange} loading={hasCandleConnection && liveState === 'loading'} unavailable={hasCandleConnection && liveState === 'unavailable'} source={sourceLabel} /><p className="modal-footnote">{hasRealBars ? `แท่ง ${TIMEFRAME_LABELS[timeframe]} จริง ${liveSeries.bars.length.toLocaleString('th-TH')} แท่งจาก ${sourceLabel} · ล่าสุด ${latestBarLabel}` : hasCandleConnection ? 'ยังแสดงแท่งจริงไม่ได้' : 'ยังไม่มีกราฟจากราคาแท่งจริง'}</p></>}
         </section>
       </div>}
     </div>

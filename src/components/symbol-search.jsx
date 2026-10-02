@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ALL_ASSETS, MARKET_GROUPS } from '../markets/catalog.mjs';
 
-export default function SymbolSearch({ onSelect }) {
+export default function SymbolSearch({ onSelect,marketId=null }) {
   const rootRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('all');
+  const [category, setCategory] = useState(marketId??'all');
   const [activeIndex, setActiveIndex] = useState(0);
   const matches = useMemo(() => {
     const term = query.trim().toUpperCase();

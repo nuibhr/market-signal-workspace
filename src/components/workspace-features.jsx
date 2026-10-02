@@ -10,6 +10,7 @@ function number(value, digits = 2) {
   return typeof value === 'number' && Number.isFinite(value)
     ? value.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '—';
 }
+const priceDigits = asset => asset.id === 'forex' ? asset.symbol.endsWith('/JPY') ? 3 : 5 : 2;
 
 function timeLabel(series) {
   if (!series) return '—';
@@ -19,12 +20,16 @@ function timeLabel(series) {
   return day && !Number.isNaN(day.valueOf()) ? day.toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short', year: 'numeric' }) : series.latestDay ?? '—';
 }
 
-async function readSeries(symbol, timeframe, signal, feed = 'settrade-daily') {
-  const route = feed === 'tfex-quote' ? '/api/tfex/candles' : feed === 'fmp-quote' ? '/api/us-bars' : '/api/market-data';
-  const response = await fetch(`${route}?symbol=${encodeURIComponent(symbol)}&timeframe=${timeframe}`, { cache: 'no-store', signal });
-  const payload = await response.json();
-  if (!response.ok || payload.status !== 'available' || !Array.isArray(payload.bars) || payload.bars.length < 50) return null;
-  return payload;
+async function readSeries(symbol,timeframe,signal,feed='settrade-daily'){
+ const asset=ALL_ASSETS.find(a=>a.symbol===symbol&&a.feed===feed);if(!asset)return null;
+ const route=asset.id==='forex'||asset.id==='us'&&timeframe!=='1d'?'/api/history-bars':feed==='tfex-quote'?'/api/tfex/candles':feed==='fmp-quote'?'/api/us-bars':'/api/market-data';
+ let response=await fetch(`${route}?symbol=${encodeURIComponent(symbol)}&market=${asset.id}&timeframe=${timeframe}`,{cache:'no-store',signal});
+ let payload=await response.json();
+ if((!response.ok||payload.status!=='available')&&feed!=='tfex-quote'&&route!=='/api/history-bars'&&timeframe!=='4h'){
+  response=await fetch(`/api/history-bars?symbol=${encodeURIComponent(symbol)}&market=${asset.id}&timeframe=${timeframe}`,{cache:'no-store',signal});payload=await response.json();
+ }
+ if(!response.ok||payload.status!=='available'||payload.instrumentId!==asset.instrumentId||!Array.isArray(payload.bars)||payload.bars.length<50)return null;
+ return payload;
 }
 
 function StatusNote({ children }) { return <div className="feature-status-note">{children}</div>; }
@@ -53,7 +58,7 @@ export function AmbientDepth() {
 }
 
 export function MarketScanner({ asset, market, favorites, timeframe, onSelect }) {
-  const [category, setCategory] = useState(['thai', 'dr'].includes(market.id) ? market.id : 'thai');
+  const [category, setCategory] = useState(market.id);
   const [query, setQuery] = useState('');
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState('loading');
@@ -64,7 +69,7 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
     const list = MARKET_ASSETS[category] ?? [];
     const matched = query.trim() ? list.filter(item => `${item.symbol} ${item.name}`.toLowerCase().includes(query.trim().toLowerCase())) : list;
     const preferred = [asset, ...ALL_ASSETS.filter(item => favorites.includes(item.symbol)), ...matched]
-      .filter(item => item.id === category && (item.feed === 'settrade-daily' || item.symbol === asset.symbol)
+      .filter(item => item.id === category && ['settrade-daily','tfex-quote','fmp-quote'].includes(item.feed)
         && (!query.trim() || `${item.symbol} ${item.name}`.toLowerCase().includes(query.trim().toLowerCase())));
     return preferred.filter((item, index, all) => all.findIndex(entry => entry.symbol === item.symbol) === index).slice(0, 6);
   }, [asset, category, favorites, query]);
@@ -73,14 +78,14 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
     const counts = new Map();
     for (const item of candidates) {
       const series = results[item.symbol];
-      const scan = series ? analyzeCandles(series.bars, series.quote?.price ?? null, timeframe) : null;
+      const scan = series ? analyzeCandles(series.bars, series.quote?.price ?? null, timeframe, {timeframe}) : null;
       for (const event of scan?.events ?? []) if (event.tone !== 'flat') counts.set(event.label, (counts.get(event.label) ?? 0) + 1);
     }
     return [...counts].sort((left, right) => right[1] - left[1]).slice(0, 5);
   }, [candidates, results, timeframe]);
   const visibleCandidates = conditionFilter ? candidates.filter(item => {
     const series = results[item.symbol];
-    return series && analyzeCandles(series.bars, series.quote?.price ?? null, timeframe)?.events.some(event => event.label === conditionFilter);
+    return series && analyzeCandles(series.bars, series.quote?.price ?? null, timeframe, {timeframe})?.events.some(event => event.label === conditionFilter);
   }) : candidates;
 
   useEffect(() => {
@@ -89,7 +94,7 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
     const timeout = window.setTimeout(async () => {
       setState('loading');
       const loaded = await Promise.all(candidates.map(async item => {
-        try { return [item.symbol, await readSeries(item.symbol, timeframe, controller.signal)]; }
+        try { return [item.symbol, await readSeries(item.symbol, timeframe, controller.signal,item.feed)]; }
         catch { return [item.symbol, null]; }
       }));
       if (!controller.signal.aborted) { setResults(Object.fromEntries(loaded)); setState('ready'); }
@@ -98,14 +103,14 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
   }, [symbols, timeframe, revision, category]);
 
   return <div className="feature-body scanner-view">
-    <div className="feature-intro"><div><span className="feature-kicker">REGIME SCANNER / RULE ENGINE</span><p>ตรวจชุดสัญลักษณ์ที่เลือกจากแท่ง {timeframe.toUpperCase()} และแสดงหลักฐานจริงที่คำนวณได้</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ สแกนอีกครั้ง</button></div>
-    <div className="feature-market-tabs">{MARKET_GROUPS.filter(group => ['thai', 'dr'].includes(group.id)).map(group => <button key={group.id} className={category === group.id ? 'selected' : ''} onClick={() => { setCategory(group.id); setQuery(''); setExpanded(''); setConditionFilter(''); }}>{group.label}</button>)}</div>
+    <div className="feature-intro"><div><span className="feature-kicker">REGIME SCANNER / RULE ENGINE</span><p>อ่านแนวโน้มของสินทรัพย์ที่เลือกจากแท่ง {timeframe.toUpperCase()} · กราฟสำรองไม่ใช้ยืนยัน AutoPick</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ สแกนอีกครั้ง</button></div>
+    <div className="feature-market-tabs">{MARKET_GROUPS.filter(group=>group.id===market.id).map(group => <button key={group.id} className={category === group.id ? 'selected' : ''} onClick={() => { setCategory(group.id); setQuery(''); setExpanded(''); setConditionFilter(''); }}>{group.label}</button>)}</div>
     <div className="scanner-controls"><label><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder={`ค้นหาใน ${MARKET_GROUPS.find(item => item.id === category)?.label ?? ''}`} /></label><span>{state === 'loading' ? 'กำลังสแกน…' : `ตรวจ ${candidates.length} symbols`}</span></div>
-    <StatusNote>สแกนสูงสุด 6 ตัวต่อครั้งจากรายการที่เห็นด้วยแท่ง Settrade · หน้า AutoPick แยกต่างหากจะตรวจทั้งจักรวาลตามรอบตลาด · ไม่มีอัตราชนะที่ยังไม่ได้วัด</StatusNote>
+    <StatusNote>สแกนสูงสุด 6 ตัวต่อครั้งจากรายการที่เห็นด้วยฟีดของตลาดนี้ · หน้า AutoPick แยกต่างหากจะตรวจทั้งจักรวาลตามรอบตลาด · ไม่มีอัตราชนะที่ยังไม่ได้วัด</StatusNote>
     {conditions.length > 0 && <div className="scanner-condition-chips"><strong>เงื่อนไขที่พบ</strong><button className={!conditionFilter ? 'selected' : ''} onClick={() => setConditionFilter('')}>ทั้งหมด {candidates.length}</button>{conditions.map(([label, count]) => <button key={label} className={conditionFilter === label ? 'selected' : ''} onClick={() => setConditionFilter(label)}>{label} <b>{count}</b></button>)}</div>}
     <div className="scanner-table-wrap" aria-busy={state === 'loading'}><table className="scanner-table"><thead><tr><th>ASSET</th><th>STRUCTURE</th><th>RSI 14</th><th>PRICE</th><th>CONDITIONS</th><th aria-label="รายละเอียด" /></tr></thead><tbody>{state === 'loading' ? candidates.map(item => <tr className="scanner-skeleton-row" key={item.symbol}><td><strong>{item.symbol}</strong><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td /></tr>) : visibleCandidates.map(item => {
       const series = results[item.symbol];
-      const evidence = series ? analyzeCandles(series.bars, series.quote?.price ?? null, timeframe) : null;
+      const evidence = series ? analyzeCandles(series.bars, series.quote?.price ?? null, timeframe, {timeframe}) : null;
       const trend = evidence?.trend === 'up' ? 'ขาขึ้น' : evidence?.trend === 'down' ? 'ขาลง' : evidence ? 'ออกข้าง' : 'รอฟีด';
       const open = expanded === item.symbol;
       return <FragmentRow key={item.symbol} item={item} series={series} evidence={evidence} trend={trend} open={open} loading={state === 'loading'} onExpand={() => setExpanded(open ? '' : item.symbol)} onSelect={() => onSelect(item)} />;
@@ -115,8 +120,8 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
 
 function FragmentRow({ item, series, evidence, trend, open, loading, onExpand, onSelect }) {
   return <>
-    <tr className={open ? 'scanner-row open' : 'scanner-row'}><td><button className="scanner-symbol" onClick={onSelect}><strong>{item.symbol} ↗</strong><small>{item.name}</small></button></td><td><span className={`trend-chip ${evidence?.trend ?? ''}`}>{trend}</span></td><td>{evidence ? number(evidence.rsi14, 1) : '—'}</td><td>{evidence ? number(evidence.price) : '—'}</td><td>{evidence ? evidence.events.filter(event => event.tone !== 'flat').length : '—'}</td><td><button className="expand-button" aria-expanded={open} aria-label={`ดูรายละเอียด ${item.symbol}`} onClick={onExpand}>{open ? '⌃' : '⌄'}</button></td></tr>
-    {open && <tr className="scanner-detail-row"><td colSpan={6}><div className="scanner-evidence"><div className="scanner-evidence-head"><span>◈ {item.symbol} · {series ? `Settrade ${series.timeframe?.toUpperCase()} · ${timeLabel(series)}` : loading ? 'กำลังอ่านข้อมูล…' : 'ยังไม่มีข้อมูลแท่งเพียงพอ'}</span><button onClick={onSelect}>เปิดกราฟ ↗</button></div>{evidence ? <><div className="scanner-metrics"><span>แนวรับ <b>{number(evidence.support)}</b></span><span>แนวต้าน <b>{number(evidence.resistance)}</b></span><span>EMA20 <b>{number(evidence.ema20)}</b></span><span>EMA50 <b>{number(evidence.ema50)}</b></span></div><div className="condition-list">{evidence.events.map(event => <span key={event.label} className={event.tone}>{event.label}</span>)}</div><p>{evidence.plan.rationale}</p></> : <p>เลือกดูสินทรัพย์นี้บนกราฟเพื่อเช็กข้อมูลราคาและสถานะฟีด</p>}</div></td></tr>}
+    <tr className={open ? 'scanner-row open' : 'scanner-row'}><td><button className="scanner-symbol" onClick={onSelect}><strong>{item.symbol} ↗</strong><small>{item.name}</small></button></td><td><span className={`trend-chip ${evidence?.trend ?? ''}`}>{trend}</span></td><td>{evidence ? number(evidence.rsi14, 1) : '—'}</td><td>{evidence ? number(evidence.price,priceDigits(item)) : '—'}</td><td>{evidence ? evidence.events.filter(event => event.tone !== 'flat').length : '—'}</td><td><button className="expand-button" aria-expanded={open} aria-label={`ดูรายละเอียด ${item.symbol}`} onClick={onExpand}>{open ? '⌃' : '⌄'}</button></td></tr>
+    {open && <tr className="scanner-detail-row"><td colSpan={6}><div className="scanner-evidence"><div className="scanner-evidence-head"><span>◈ {item.symbol} · {series ? `${series.source} ${series.timeframe?.toUpperCase()} · ${timeLabel(series)}` : loading ? 'กำลังอ่านข้อมูล…' : 'ยังไม่มีข้อมูลแท่งเพียงพอ'}</span><button onClick={onSelect}>เปิดกราฟ ↗</button></div>{evidence ? <><div className="scanner-metrics"><span>แนวรับ <b>{number(evidence.support,priceDigits(item))}</b></span><span>แนวต้าน <b>{number(evidence.resistance,priceDigits(item))}</b></span><span>EMA20 <b>{number(evidence.ema20,priceDigits(item))}</b></span><span>EMA50 <b>{number(evidence.ema50,priceDigits(item))}</b></span></div><div className="condition-list">{evidence.events.map(event => <span key={event.label} className={event.tone}>{event.label}</span>)}</div><p>{evidence.plan.rationale}</p></> : <p>เลือกดูสินทรัพย์นี้บนกราฟเพื่อเช็กข้อมูลราคาและสถานะฟีด</p>}</div></td></tr>}
   </>;
 }
 
@@ -124,7 +129,7 @@ export function MultiTimeframe({ asset, onSelectFrame }) {
   const [series, setSeries] = useState({});
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
-  const frames = asset.id === 'us' ? FRAMES.filter(([frame]) => frame === '1d')
+  const frames = ['us','forex'].includes(asset.id) ? FRAMES.filter(([frame]) => frame !== '4h')
     : asset.feed === 'settrade-daily' || asset.feed === 'tfex-quote' ? FRAMES : [];
   useEffect(() => {
     if (!frames.length) { setLoading(false); setSeries({}); return undefined; }
@@ -137,15 +142,16 @@ export function MultiTimeframe({ asset, onSelectFrame }) {
     return () => controller.abort();
   }, [asset.symbol, asset.feed, asset.id, revision]);
 
-  return <div className="feature-body"><div className="feature-intro"><div><span className="feature-kicker">STRUCTURE ACROSS TIME</span><p>{asset.symbol} · เปรียบเทียบเฉพาะกรอบเวลาที่อ่านแท่งจริงได้</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ อัปเดต</button></div><StatusNote>{asset.feed === 'settrade-daily' ? 'แท่ง Settrade' : asset.feed === 'tfex-quote' ? 'แท่ง TFEX Open API' : asset.id === 'us' ? 'แท่ง FMP รายวันหลังตลาดปิด' : 'สินทรัพย์นี้ยังไม่มีแท่งจริงสำหรับเปรียบเทียบ' } · การ์ดที่ข้อมูลไม่พร้อมจะไม่แสดง</StatusNote><div className="mtf-grid" aria-busy={loading}>{frames.map(([frame, label]) => {
+  return <div className="feature-body"><div className="feature-intro"><div><span className="feature-kicker">STRUCTURE ACROSS TIME</span><p>{asset.symbol} · เปรียบเทียบเฉพาะกรอบเวลาที่อ่านแท่งจริงได้</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ อัปเดต</button></div><StatusNote>{asset.feed === 'settrade-daily' ? 'แท่ง Settrade' : asset.feed === 'tfex-quote' ? 'แท่ง TFEX Open API' : asset.id === 'us' ? 'FMP รายวัน / Yahoo ย้อนหลัง' : 'Yahoo ย้อนหลังคู่เงิน (ไม่รวมวอลุ่มซื้อขายจริง)'  } · การ์ดที่ข้อมูลไม่พร้อมจะไม่แสดง</StatusNote><div className="mtf-grid" aria-busy={loading}>{frames.map(([frame, label]) => {
     const feed = series[frame];
-    const result = feed ? analyzeCandles(feed.bars, feed.quote?.price ?? null, label) : null;
+    const result = feed ? analyzeCandles(feed.bars, feed.quote?.price ?? null, label, {timeframe:frame,dailyBars:series['1d']?.bars??[]}) : null;
     if (!loading && !feed) return null;
-    return loading ? <div key={frame} className="mtf-card mtf-skeleton"><span className="mtf-card-top"><strong>{frame.toUpperCase()}</strong><i className="ui-skeleton-line" /></span><i className="ui-skeleton-line" /><div className="mtf-skeleton-metrics"><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /></div><i className="ui-skeleton-line" /></div> : <button key={frame} className="mtf-card" onClick={() => onSelectFrame(frame)}><span className="mtf-card-top"><strong>{frame.toUpperCase()}</strong><small>{feed ? timeLabel(feed) : 'NO FEED'}</small></span><b className={result?.trend === 'up' ? 'positive' : result?.trend === 'down' ? 'negative' : ''}>{result?.trend === 'up' ? '↗ ขาขึ้น' : result?.trend === 'down' ? '↘ ขาลง' : result ? '→ ออกข้าง' : 'ยังวิเคราะห์ไม่ได้'}</b><div className="mtf-card-metrics"><span>ราคา <strong>{result ? number(result.price) : '—'}</strong></span><span>RSI <strong>{result ? number(result.rsi14, 1) : '—'}</strong></span><span>แนวรับ <strong>{result ? number(result.support) : '—'}</strong></span><span>แนวต้าน <strong>{result ? number(result.resistance) : '—'}</strong></span></div><small className="mtf-card-event">{result?.events[0]?.label ?? 'รอแท่งจริงอย่างน้อย 50 แท่ง'}</small><span className="mtf-card-link">เปิดกราฟ {frame.toUpperCase()} ↗</span></button>;
+    return loading ? <div key={frame} className="mtf-card mtf-skeleton"><span className="mtf-card-top"><strong>{frame.toUpperCase()}</strong><i className="ui-skeleton-line" /></span><i className="ui-skeleton-line" /><div className="mtf-skeleton-metrics"><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /></div><i className="ui-skeleton-line" /></div> : <button key={frame} className="mtf-card" onClick={() => onSelectFrame(frame)}><span className="mtf-card-top"><strong>{frame.toUpperCase()}</strong><small>{feed ? timeLabel(feed) : 'NO FEED'}</small></span><b className={result?.trend === 'up' ? 'positive' : result?.trend === 'down' ? 'negative' : ''}>{result?.trend === 'up' ? '↗ ขาขึ้น' : result?.trend === 'down' ? '↘ ขาลง' : result ? '→ ออกข้าง' : 'ยังวิเคราะห์ไม่ได้'}</b><div className="mtf-card-metrics"><span>ราคา <strong>{result ? number(result.price,priceDigits(asset)) : '—'}</strong></span><span>RSI <strong>{result ? number(result.rsi14, 1) : '—'}</strong></span><span>แนวรับ <strong>{result ? number(result.support,priceDigits(asset)) : '—'}</strong></span><span>แนวต้าน <strong>{result ? number(result.resistance,priceDigits(asset)) : '—'}</strong></span></div><small className="mtf-card-event">{result?.events[0]?.label ?? 'รอแท่งจริงอย่างน้อย 50 แท่ง'}</small><span className="mtf-card-link">เปิดกราฟ {frame.toUpperCase()} ↗</span></button>;
   })}</div>{!loading && !frames.some(([frame]) => series[frame]) && <div className="feature-empty">ยังไม่มีแท่งราคาที่ใช้เปรียบเทียบได้สำหรับ {asset.symbol}</div>}</div>;
 }
 
 export function VolumePulse({ asset, bars, timeframe, onOpenScanner }) {
+  if (asset.id === 'forex') return <StatusNote>ฟีดคู่เงินนี้ไม่มีปริมาณซื้อขายรวมของตลาด จึงยังไม่แสดง Volume Pulse หรือสรุปแรงซื้อขายจาก volume</StatusNote>;
   const recent = bars?.slice(-16) ?? [];
   const baseline = bars?.slice(-36, -16) ?? [];
   const average = values => values.length ? values.reduce((sum, bar) => sum + (bar.volume ?? 0), 0) / values.length : 0;

@@ -1,4 +1,5 @@
 'use client';
+import DrTracker from './dr-tracker.jsx';
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -39,7 +40,7 @@ function speak(text) {
   synthesis.speak(utterance);
 }
 
-export default function AutoPickBoard({ onSelect }) {
+export default function AutoPickBoard({ onSelect, marketId=null }) {
   const [state, setState] = useState(null);
   const [error, setError] = useState(false);
   const [alerts, setAlerts] = useState([]);
@@ -115,7 +116,7 @@ export default function AutoPickBoard({ onSelect }) {
     if (speechSupported) speak(announcementFor(demo).text);
   }
 
-  const readiness = state?.readiness?.markets ?? [];
+  const readiness = (state?.readiness?.markets ?? []).filter(m=>!marketId||m.id===marketId);
   const coverage = state?.coverage ?? {};
   const worker = state?.worker;
   const workers = state?.workers ?? { thai: worker };
@@ -124,10 +125,10 @@ export default function AutoPickBoard({ onSelect }) {
   const activeMarkets = readiness.filter(market => market.status === 'active'
     && !(market.id === 'us' && workers.us?.scanUnverified));
   const shelvedMarkets = readiness.filter(market => !activeMarkets.includes(market));
-  const signals = state?.signals ?? [];
-  const events = state?.events ?? [];
+  const signals = (state?.signals ?? []).filter(s=>!marketId||s.market===marketId);
+  const events = (state?.events ?? []).filter(e=>!marketId||e.market===marketId);
   const decisions = state?.decisions ?? [];
-  const outcomes = state?.outcomes ?? {};
+  const outcomes = (marketId?state?.marketOutcomes?.[marketId]:state?.outcomes) ?? {};
   const lastRun = state?.runs?.[0];
   const statusLabel = market => market.id === 'us' && workers.us?.scanUnverified
     ? `ฟีด FMP ใช้ไม่ได้ ${workers.us.planRequired} ตัว` : WORKER_LABELS[workers[market.id]?.status] ?? 'รอรอบสแกน';
@@ -138,6 +139,7 @@ export default function AutoPickBoard({ onSelect }) {
     <div className="auto-pick-head"><span className="hub-heading-icon"><Radar size={22} /></span><div><span className="eyebrow">NUGAOM / AUTOPICK</span><h2 id="auto-pick-title">จังหวะที่ระบบพบ</h2><p>คัดแผนด้วยกติกา แจ้งเมื่อมีหุ้นเข้ารายการจับตา ยืนยันจุดเข้า แตะ TP1 หรือ SL จากแท่งราคาจริง</p></div><span className="auto-pick-badge"><BellRing size={15} /> {badgeLabel}</span></div>
     {activeMarkets.length > 0 && <div className={`auto-pick-worker ${processRunning && activeMarkets.every(market => ['healthy', 'running', 'outside-session', 'awaiting-first-run'].includes(workers[market.id]?.status)) ? 'healthy' : ''}`}><strong>{processRunning ? 'ตัวสแกนทำงานอยู่' : workerProcess?.status === 'offline' ? 'ไม่พบตัวสแกนทำงาน' : 'ยังอ่านสถานะตัวสแกนไม่ได้'} · {workerSummary || workerLabel}</strong><span>{activeMarkets.map(market => workers[market.id]?.lastRunAt ? `${market.label} รอบล่าสุด ${at(workers[market.id].lastRunAt)}` : `${market.label} ยังไม่มีรอบที่บันทึกไว้`).join(' · ')} · {workerProcess?.lastSeenAt ? `อัปเดตระบบล่าสุด ${at(workerProcess.lastSeenAt)}` : 'รออัปเดตสถานะ'}</span></div>}
     <div className="auto-pick-voice"><div><strong>น้องนักออมเล่าเหตุการณ์</strong><span>ป๊อปอัปทำงานขณะเปิดเว็บ · ใช้เสียงจากอุปกรณ์ และเลือกเสียงภาษาไทยเมื่อมี</span></div><div className="auto-pick-voice-actions"><button type="button" className="auto-pick-preview" onClick={previewAnnouncement}>ลองฟังสัญญาณเข้า DR</button><button type="button" aria-pressed={voiceEnabled} onClick={toggleVoice} disabled={!speechSupported}>{voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}{!speechSupported ? 'อุปกรณ์ไม่รองรับเสียง' : voiceEnabled ? 'เปิดเสียงแล้ว' : 'เปิดเสียงแจ้งเตือน'}</button></div></div>
+    {marketId==='dr'&&['available','membership-required'].includes(state?.status)&&<DrTracker signals={signals} events={events} onSelect={onSelect}/>}
     <div className="auto-pick-markets">{activeMarkets.map(market => <div className="auto-pick-market active" key={market.id}>
       <strong>{market.label}</strong><span>{workerProcess?.status === 'offline' ? 'ตัวสแกนหยุดทำงาน' : coverage[market.id]
         ? coverage[market.id].remaining > 0 ? 'อยู่ระหว่างตรวจครบชุด'
@@ -153,15 +155,15 @@ export default function AutoPickBoard({ onSelect }) {
     {state?.status === 'available' && <>
       <div className="auto-pick-outcomes"><span><b>{outcomes.WAITING_FOR_ENTRY ?? 0}</b> รอเข้า</span><span><b>{outcomes.OPEN ?? 0}</b> ติดตามอยู่</span><span><b>{outcomes.EXPIRED ?? 0}</b> หมดเวลารอเข้า</span><span><b>{outcomes.TARGET ?? 0}</b> ถึง TP1</span><span><b>{outcomes.STOP ?? 0}</b> ถึง SL</span><span><b>{outcomes.EXIT ?? 0}</b> จบตามแผน</span><span><b>{(outcomes.AMBIGUOUS ?? 0) + (outcomes.REVIEW ?? 0)}</b> รอตรวจ</span></div>
       <div className="auto-pick-section-title"><strong>ระบบจับตาวันนี้ · แยกจากรายการโปรดของคุณ</strong><span>{lastRun ? `${lastRun.scanned ? `ตรวจ ${lastRun.scanned} ตัว · ผ่าน ${lastRun.candidates} ตัว` : 'รอบติดตามแผน'} · ${at(lastRun.finishedAt ?? lastRun.startedAt)}${lastRun.status === 'FAILED' ? ' · ฟีดบางส่วนมีปัญหา' : ''}` : 'ยังไม่มีรอบสแกน'}</span></div>
-      {signals.length ? <div className="auto-pick-signal-list">{signals.slice(0, 7).map(signal => <article key={signal.id} className="auto-pick-signal">
+      {marketId!=='dr'&&(signals.length ? <div className="auto-pick-signal-list">{signals.slice(0, 7).map(signal => <article key={signal.id} className="auto-pick-signal">
         <div><strong>{signal.symbol} <small>{signal.plan?.side === 'LONG' ? 'LONG' : 'SHORT'}</small></strong><span>{signal.status === 'WAITING_FOR_ENTRY' ? signal.market === 'us' ? 'รอปิดทะลุจุดยืนยัน · D1' : 'รอยืนยันราคาเข้า' : signal.status === 'OPEN' ? 'เข้าเงื่อนไขแล้ว · ติดตามอยู่' : signal.status === 'TARGET' ? 'ถึง TP1' : signal.status === 'STOP' ? 'ถึง SL' : signal.status === 'EXIT' ? 'จบตามเงื่อนไข' : signal.status === 'EXPIRED' ? 'หมดเวลารอเข้า' : 'ตรวจผลเพิ่มเติม'}</span></div>
         <div className="auto-pick-levels"><span>{signal.entryPrice == null ? 'แผนรอเข้า' : 'เข้าอ้างอิง'} <b>{fmt(signal.entryPrice ?? signal.plan?.entry, signal.market)}</b></span><span>TP1 <b>{fmt(signal.plan?.tp1, signal.market)}</b></span><span>SL <b>{fmt(signal.plan?.stopLoss, signal.market)}</b></span></div>
         <div className="auto-pick-signal-foot"><small><Clock3 size={13} /> {signal.market === 'us' ? `ข้อมูลปิด ${signal.plan?.referenceCandles?.dailyDay ?? signal.sessionDay} · ` : `${at(signal.publishedAt)} · `}{signal.market === 'us' ? 'หุ้นสหรัฐฯ' : signal.market === 'dr' ? 'DR' : 'หุ้นไทย'}</small><button onClick={() => { const asset = ALL_ASSETS.find(item => item.symbol === signal.symbol && item.id === signal.market); if (asset) onSelect(asset, signal.plan?.signalTimeframe === '15m' ? '15m' : signal.market === 'us' ? '1d' : '1h'); }}><ChartNoAxesCombined size={13} /> เปิดกราฟ {signal.plan?.signalTimeframe === '15m' ? '15m' : signal.market === 'us' ? '1D' : '1H'}</button></div>
-      </article>)}</div> : <div className="auto-pick-empty">ยังไม่มีแผนที่ผ่านกติกา ระบบจะไม่สร้างสัญญาณจากราคาตัวอย่าง</div>}
+      </article>)}</div> : <div className="auto-pick-empty">ยังไม่มีแผนที่ผ่านกติกา ระบบจะไม่สร้างสัญญาณจากราคาตัวอย่าง</div>)}
       <div className="auto-pick-section-title"><strong>เหตุการณ์ล่าสุด</strong><span>ราคาเป็นจุดอ้างอิงของสัญญาณ ไม่ใช่ราคาที่บัญชีลูกค้าซื้อขายได้จริง</span></div>
       {events.length ? <div className="auto-pick-events">{events.slice(0, 7).map(item => <div key={item.id}><span className={`auto-pick-event-type ${item.type.toLowerCase()}`}>{LABELS[item.type] ?? item.type}</span><strong>{item.symbol}</strong><span>{fmt(item.price, item.market)}</span><small>{eventDateLabel(item)}</small></div>)}</div> : <div className="auto-pick-empty">ยังไม่มีเหตุการณ์สัญญาณ</div>}
     </>}
     <p className="auto-pick-disclaimer">ผลลัพธ์เป็นการติดตามแผนสมมติจาก OHLC ที่ปิดแล้ว ไม่ส่งคำสั่งซื้อขาย · หากแท่งเดียวแตะ TP และ SL หรือข้อมูลขาดช่วง ระบบจะส่งตรวจผลและไม่นับเป็นชนะ/แพ้</p>
-    {alert && <aside className={`auto-pick-toast ${announcementFor(alert).tone}`} role="status" aria-live="polite"><span className="auto-pick-toast-avatar"><Image src="/nugaom-mascot.png" alt="" width={42} height={42} /></span><div><strong>{alert.demo ? 'ตัวอย่าง · ' : ''}{announcementFor(alert).title}</strong><span>{announcementFor(alert).detail}</span><small>{alert.demo ? 'ตัวอย่างหน้าจอและเสียง · ไม่ใช่สัญญาณจากตลาด' : `ราคาอ้างอิง ${fmt(alert.price, alert.market)} · ${eventDateLabel(alert)}`}{alerts.length > 1 ? ` · อีก ${alerts.length - 1} รายการ` : ''}</small>{!alert.demo && <button className="auto-pick-toast-plan" onClick={() => document.getElementById('section-auto-pick')?.scrollIntoView({ behavior: 'smooth' })}>ดูแผนและที่มาราคา ↗</button>}</div><button className="auto-pick-toast-close" onClick={() => setAlerts(current => current.slice(1))} aria-label="ปิดการแจ้งเตือน">×</button></aside>}
+    {alert && <aside className={`auto-pick-toast ${announcementFor(alert).tone}`} role="status" aria-live="polite"><span className="auto-pick-toast-avatar"><Image src="/nugaom-mascot.png" alt="" width={42} height={42} /></span><div><strong>{alert.demo ? 'ตัวอย่าง · ' : ''}{announcementFor(alert).title}</strong><span>{announcementFor(alert).detail}</span><small>{alert.demo ? 'ตัวอย่างหน้าจอและเสียง · ไม่ใช่สัญญาณจากตลาด' : `ราคาอ้างอิง ${fmt(alert.price, alert.market)} · ${eventDateLabel(alert)}`}{alerts.length > 1 ? ` · อีก ${alerts.length - 1} รายการ` : ''}</small>{!alert.demo && <button className="auto-pick-toast-plan" onClick={() => {if(marketId&&alert.market!==marketId)window.location.href=`/${alert.market}?symbol=${encodeURIComponent(alert.symbol)}#section-auto-pick`;else document.getElementById('section-auto-pick')?.scrollIntoView({ behavior: 'smooth' });}}>ดูแผนและที่มาราคา ↗</button>}</div><button className="auto-pick-toast-close" onClick={() => setAlerts(current => current.slice(1))} aria-label="ปิดการแจ้งเตือน">×</button></aside>}
   </section>;
 }

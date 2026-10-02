@@ -207,6 +207,7 @@ export function signalFeed() {
     decisions: db.prepare(`SELECT symbol,decision,score,reason,source_time AS sourceTime FROM auto_pick_decisions
       WHERE run_id=(SELECT id FROM auto_pick_runs ORDER BY started_at DESC LIMIT 1)
       ORDER BY decision DESC,score DESC,symbol`).all(),
+    marketOutcomes: Object.fromEntries(['thai','dr','us','tfex','forex'].map(market=>[market,Object.fromEntries(db.prepare('SELECT status,COUNT(*) AS count FROM auto_pick_signals WHERE market=? GROUP BY status').all(market).map(row=>[row.status,row.count]))])),
     outcomes: Object.fromEntries(db.prepare('SELECT status,COUNT(*) AS count FROM auto_pick_signals GROUP BY status').all()
       .map(row => [row.status, row.count])),
   };

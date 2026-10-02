@@ -3,7 +3,7 @@ import BacktestCard from './backtest-card.jsx';
 
 import { Fragment, useEffect, useState } from 'react';
 
-const MARKETS = [['all', 'ทุกตลาด'], ['thai', 'หุ้นไทย'], ['dr', 'DR'], ['us', 'หุ้นสหรัฐฯ']];
+const MARKETS = [['all', 'ทุกตลาด'], ['thai', 'หุ้นไทย'], ['dr', 'DR'], ['us', 'หุ้นสหรัฐฯ'], ['tfex', 'TFEX'], ['forex','Forex']];
 const STATUSES = [['all', 'ทุกสถานะ'], ['WAITING_FOR_ENTRY', 'รอเข้า'], ['OPEN', 'เข้าแล้ว'], ['TARGET', 'ถึงเป้า'], ['STOP', 'ตัดขาดทุน'], ['EXIT', 'ปิดตามกติกา'], ['EXPIRED', 'ไม่เข้า'], ['REVIEW', 'ข้อมูลขาด'], ['AMBIGUOUS', 'ตรวจผล']];
 const STATUS_LABEL = { WAITING_FOR_ENTRY: 'รอจุดเข้า', OPEN: 'เข้าแล้ว', TARGET: 'ถึงเป้า', STOP: 'ตัดขาดทุน', EXIT: 'ปิดตามกติกา', EXPIRED: 'หมดเวลารอ', REVIEW: 'ตรวจข้อมูล', AMBIGUOUS: 'ตรวจผล' };
 const EVENT_LABEL = { PICK_READY: 'พบแผน', ENTRY: 'ยืนยันเข้า', TARGET: 'ถึงเป้า', STOP: 'แตะจุดตัดขาดทุน', EXIT: 'ออกตามกติกา', EXPIRED: 'หมดเวลารอ', ENTRY_SKIPPED: 'ข้ามจุดเข้า', DATA_GAP: 'ข้อมูลขาดช่วง', AMBIGUOUS: 'ต้องตรวจลำดับราคา', SESSION_END: 'จบรอบติดตาม' };
@@ -19,8 +19,8 @@ const price = (value, market) => Number.isFinite(value)
   ? `${market === 'us' ? '$' : ''}${value.toLocaleString('en-US', { maximumFractionDigits: value < 1 ? 5 : 2 })}` : '—';
 const percent = value => Number.isFinite(value) ? `${value >= 0 ? '+' : ''}${value.toFixed(2)}%` : '—';
 
-export default function SignalResults({ onSelect, loginHref = '/account' }) {
-  const [market, setMarket] = useState('all');
+export default function SignalResults({ onSelect, loginHref = '/account', fixedMarket=null }) {
+  const [market, setMarket] = useState(fixedMarket??'all');
   const [status, setStatus] = useState('all');
   const [page, setPage] = useState(1);
   const [revision, setRevision] = useState(0);
@@ -62,9 +62,9 @@ export default function SignalResults({ onSelect, loginHref = '/account' }) {
         <article className="panel stat-card"><span className="stat-label">กำลังติดตาม / รอเข้า</span><strong className="stat-value">{(data.counts?.OPEN ?? 0) + (data.counts?.WAITING_FOR_ENTRY ?? 0)}</strong><span className="stat-note">หมดเวลารอ {data.counts?.EXPIRED ?? 0} · ต้องตรวจ {((data.counts?.REVIEW ?? 0) + (data.counts?.AMBIGUOUS ?? 0))}</span></article>
       </div>
       <div className="results-share"><button className="results-refresh" disabled={!closed} onClick={copyActualResults}>{copied ? 'คัดลอกผลงานแล้ว ✓' : 'คัดลอกผลงานไปแชร์'}</button></div>
-      <BacktestCard market={market} />
+      {['all','thai','dr','us'].includes(market)?<BacktestCard market={market}/>:<div className="results-message">ยังไม่เปิดสัญญาณและผลย้อนหลังของตลาดนี้ · กราฟและเครื่องมือวิเคราะห์ยังใช้ได้ตามฟีดที่เชื่อม</div>}
       <div className="panel history-panel">
-        <div className="history-heading"><div><h2>รายการสัญญาณจากระบบ</h2><p>แสดงครั้งละ 7 รายการ · เลือกตลาดและสถานะเพื่อดูรายละเอียด</p></div><div className="results-filters"><select value={market} aria-label="เลือกตลาด" onChange={event => { setMarket(event.target.value); setPage(1); setCopied(false); }}>{MARKETS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select><select value={status} aria-label="เลือกสถานะ" onChange={event => { setStatus(event.target.value); setPage(1); }}>{STATUSES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></div></div>
+        <div className="history-heading"><div><h2>รายการสัญญาณจากระบบ</h2><p>แสดงครั้งละ 7 รายการ · เลือกตลาดและสถานะเพื่อดูรายละเอียด</p></div><div className="results-filters"><select hidden={Boolean(fixedMarket)} value={market} aria-label="เลือกตลาด" onChange={event => { setMarket(event.target.value); setPage(1); setCopied(false); }}>{MARKETS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select><select value={status} aria-label="เลือกสถานะ" onChange={event => { setStatus(event.target.value); setPage(1); }}>{STATUSES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></div></div>
         <div className="table-wrap"><table><thead><tr><th>สถานะ</th><th>สินทรัพย์</th><th>แผนรอเข้า</th><th>ราคาเข้า</th><th>ราคาออก</th><th>ผลอ้างอิง</th><th>เข้า / ออก</th></tr></thead><tbody>{rows.map(row => {
           const side = row.plan?.side === 'SHORT' ? -1 : 1;
           const change = Number.isFinite(row.entryPrice) && row.entryPrice > 0 && Number.isFinite(row.exitPrice)
