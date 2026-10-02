@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { analyzeCandles } from '../analysis/technical.mjs';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS } from '../markets/catalog.mjs';
 
@@ -35,26 +35,28 @@ async function readSeries(symbol,timeframe,signal,feed='settrade-daily'){
 function StatusNote({ children }) { return <div className="feature-status-note">{children}</div>; }
 
 export function AmbientDepth() {
+  const surface = useRef(null);
   useEffect(() => {
+    // Native scroll timelines run without React renders; older browsers use a single passive rAF update.
+    if (CSS.supports('animation-timeline', 'scroll(root block)')) return undefined;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (reduced.matches) return undefined;
     let frame = 0;
-    const move = event => {
+    const update = () => {
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
-        const x = event.clientX / window.innerWidth - 0.5;
-        const y = event.clientY / window.innerHeight - 0.5;
-        document.documentElement.style.setProperty('--depth-x', `${(x * 13).toFixed(2)}deg`);
-        document.documentElement.style.setProperty('--depth-y', `${(-y * 11).toFixed(2)}deg`);
-        document.documentElement.style.setProperty('--glow-x', `${((x + 0.5) * 100).toFixed(1)}%`);
-        document.documentElement.style.setProperty('--glow-y', `${((y + 0.5) * 100).toFixed(1)}%`);
+        const range = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = reduced.matches || range <= 0 ? 0 : Math.min(1, Math.max(0, window.scrollY / range));
+        surface.current?.style.setProperty('--parallax-progress', String(progress));
         frame = 0;
       });
     };
-    window.addEventListener('pointermove', move, { passive: true });
-    return () => { window.removeEventListener('pointermove', move); window.cancelAnimationFrame(frame); };
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+    reduced.addEventListener('change', update);
+    update();
+    return () => { window.removeEventListener('scroll', update); window.removeEventListener('resize', update); reduced.removeEventListener('change', update); window.cancelAnimationFrame(frame); };
   }, []);
-  return <div className="ambient-depth" aria-hidden="true"><div className="ambient-depth-grid" /><div className="ambient-depth-orbit orbit-a" /><div className="ambient-depth-orbit orbit-b" /><div className="ambient-depth-point point-a" /><div className="ambient-depth-point point-b" /></div>;
+  return <div ref={surface} className="ambient-depth scroll-depth" aria-hidden="true"><div className="parallax-layer parallax-far"><div className="ambient-depth-grid" /></div><div className="parallax-layer parallax-near"><div className="ambient-depth-orbit orbit-a" /><div className="ambient-depth-orbit orbit-b" /><div className="ambient-depth-point point-a" /><div className="ambient-depth-point point-b" /></div></div>;
 }
 
 export function MarketScanner({ asset, market, favorites, timeframe, onSelect }) {

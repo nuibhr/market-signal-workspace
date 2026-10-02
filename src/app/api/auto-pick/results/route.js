@@ -16,6 +16,7 @@ export async function GET(request) {
     const result = signalResults({
       market: params.get('market') ?? 'all',
       status: params.get('status') ?? 'all',
+      scope: params.get('scope') ?? 'history',
       page: params.get('page') ?? 1,
       pageSize: 7,
     });

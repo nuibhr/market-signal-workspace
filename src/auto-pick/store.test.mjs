@@ -7,7 +7,7 @@ import { join } from 'node:path';
 test('signal ledger links recorded entries, exits, and events without counting unentered plans', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'nugaom-signal-results-'));
   process.env.DATABASE_PATH = join(directory, 'test.sqlite');
-  const { createSignal, saveAdvance, signalForSession, signalResults, heartbeatWorker, workerProcessHealth, claimRun, finishRun, recordScanProgress, scanCoverage } = await import('./store.mjs');
+  const { createSignal, saveAdvance, signalForSession, signalResults, signalPerformance, heartbeatWorker, workerProcessHealth, claimRun, finishRun, recordScanProgress, scanCoverage } = await import('./store.mjs');
   const { sharedDatabase } = await import('../membership/store.mjs');
   try {
     const plan = { id: 'test-plan', side: 'LONG', entry: 100, stopLoss: 98, tp1: 104 };
@@ -48,6 +48,38 @@ test('signal ledger links recorded entries, exits, and events without counting u
     const health = workerProcessHealth();
     assert.equal(health.status, 'running');
     assert.equal(workerProcessHealth(Date.parse(health.lastSeenAt) + 301_000).status, 'offline');
+
+    // Closing order decides the window, including exits at a loss. Old records remain in full history.
+    for (let index = 0; index < 103; index += 1) {
+      const signal = createSignal({ market: 'thai', symbol: `REC${index}`, sessionDay: '2026-10-01', plan, source: 'TEST OHLC' });
+      saveAdvance({ ...signal, status: index % 2 ? 'TARGET' : index === 102 ? 'EXIT' : 'STOP',
+        entryPrice: 100, enteredAt: '2026-10-01T03:00:00.000Z', exitPrice: index % 2 ? 104 : 98,
+        exitedAt: new Date(Date.parse('2026-10-01T03:01:00.000Z') + index * 60_000).toISOString() }, []);
+    }
+    const invalid = createSignal({ market: 'thai', symbol: 'INVALID', sessionDay: '2026-10-02', plan, source: 'TEST OHLC' });
+    saveAdvance({ ...invalid, status: 'TARGET', entryPrice: 100, exitPrice: 200,
+      enteredAt: '2026-10-02T04:00:00.000Z', exitedAt: '2026-10-02T03:00:00.000Z' }, []);
+    const review = createSignal({ market: 'thai', symbol: 'REVIEW', sessionDay: '2026-10-02', plan, source: 'TEST OHLC' });
+    saveAdvance({ ...review, status: 'AMBIGUOUS', entryPrice: 100, exitPrice: 104,
+      enteredAt: '2026-10-02T03:00:00.000Z', exitedAt: '2026-10-02T04:00:00.000Z' }, []);
+    const recent = signalResults({ market: 'thai', scope: 'closed' });
+    assert.equal(recent.total, 100);
+    assert.equal(recent.signals.length, 7);
+    assert.equal(recent.summary.closed, 100);
+    assert.equal(recent.summary.wins, 50);
+    assert.equal(recent.summary.losses, 50);
+    assert.equal(recent.summary.winRate, 50);
+    assert.equal(recent.summary.averageReturnPercent, 1);
+    assert.equal(recent.summary.averageR, .5);
+    assert.equal(recent.recentTrades[0].symbol, 'REC102');
+    assert.equal(recent.recentTrades.at(-1).symbol, 'REC3');
+    assert.equal(recent.recentTrades[0].status, 'EXIT');
+    assert.deepEqual(recent.recentTrades, signalPerformance('thai').recentTrades);
+    assert.equal(signalResults({ market: 'thai', scope: 'closed', status: 'STOP' }).summary.losses, 50);
+    assert.equal(signalResults({ market: 'thai', scope: 'history' }).total, 107);
+    assert.equal(signalForSession('thai', 'TEST', '2026-09-30').exitPrice, 104);
+    const empty = signalResults({market:'dr',scope:'closed'});
+    assert.equal(empty.total,0);assert.equal(empty.summary.winRate,null);
   } finally {
     sharedDatabase().close();
     rmSync(directory, { recursive: true, force: true });

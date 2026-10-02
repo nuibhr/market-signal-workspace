@@ -262,8 +262,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     if (id === 'account' || id === 'membership') { window.location.href = '/account'; return; }
     setActiveNav(id);
     if (id === 'analysis-tools') { setPopup('scanner'); return; }
-    const selector = { overview: '#section-overview', daily: '#section-daily', autopick: '#section-auto-pick', favorites: '.favorite-strip', watchlist: '.live-market-watch', signals: '#section-trade-plan', results: '#section-results' }[id];
-    if (selector) { document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); setPopup(null); }
+    const selector = { overview: '#section-overview', daily: '#section-daily', autopick: '#section-auto-pick', favorites: '.favorite-strip', watchlist: '#section-watchlist', signals: '#section-trade-plan', results: '#section-results' }[id];
+    if (selector) { document.querySelector(selector)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); setPopup(null); }
     else setPopup(id);
   }
 
@@ -531,7 +531,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
               <AnalysisRail chartOnly={Boolean(liveSeries?.chartOnly)} asset={asset} analysis={analysis} tradePlan={tradePlan} tradePlanState={hasSettradeConnection && timeframe === '1d' && (liveState === 'loading' || planContextState === 'loading') ? 'loading' : planContextState} aiState={currentAnalysis ? aiState : 'idle'} aiResult={currentAiResult} sourceState={liveState} barsCount={hasRealBars ? liveSeries.bars.length : 0} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} timeframeId={timeframe} freshness={liveSeries?.freshness} currentPrice={hasRealQuote && !hasTfexConnection ? marketQuote?.price : hasRealBars ? liveSeries.quote?.price ?? liveSeries.bars.at(-1)?.close : null} sourceLabel={hasRealQuote ? marketQuote.source : sourceLabel} onOpenAutomation={() => navigateTo('autopick')} />
 
-            <LiveMarketWatch market={market} asset={asset} favorites={favorites} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} quoteState={quoteState} analysis={analysis} freshness={liveSeries?.freshness} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenVolume={() => setPopup('volume')} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory('all'); setPopup('search'); }} />
+            <LiveMarketWatch market={market} asset={asset} favorites={favorites} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} series={hasRealBars ? liveSeries : null} analysis={analysis} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory('all'); setPopup('search'); }} />
           </section>
 
           <SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} />

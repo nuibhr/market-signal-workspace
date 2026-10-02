@@ -1,4 +1,3 @@
-import { refreshNextBacktest } from '../src/auto-pick/backtest-summary.mjs';
 import { runThaiAutoPick, runDrAutoPick, runUsAutoPick, autoPickReadiness } from '../src/auto-pick/runner.mjs';
 import { heartbeatWorker, reconcileWatchPlans } from '../src/auto-pick/store.mjs';
 
@@ -33,7 +32,6 @@ if (!initialReadiness.enabled || !process.env.AUTO_PICK_RUN_SECRET || process.en
       heartbeatWorker();
     }
     reconcileWatchPlans([...enabled]);
-    try { await refreshNextBacktest(); } catch { process.stderr.write("Historical summary refresh unavailable.\n"); }
     // Wake frequently so sleep/wake and clock changes cannot leave an old timer pending.
     await new Promise(resolve => setTimeout(resolve, 30_000));
   }

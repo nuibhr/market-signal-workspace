@@ -11,7 +11,7 @@ import { ALL_ASSETS } from '../markets/catalog.mjs';
 // Keep every destination in one map so desktop and mobile expose the same tools.
 const GROUPS = [
   { id: 'today', label: 'เริ่มวันนี้', icon: Compass, items: [['overview', 'หน้าต้อนรับ', LayoutDashboard], ['daily', 'สำรวจวันนี้', Radar], ['autopick', 'จังหวะที่ระบบพบ', Bell]] },
-  { id: 'explore', label: 'สำรวจราคา', icon: CandlestickChart, items: [['watchlist', 'รายการที่ติดตาม', Star], ['search', 'ค้นหาสินทรัพย์', Search], ['chart', 'กราฟและตัวชี้วัด', CandlestickChart], ['analysis-tools', 'ชุดสแกนเชิงลึก', Activity], ['signals', 'แผนจากกราฟ', Sparkles]] },
+  { id: 'explore', label: 'สำรวจราคา', icon: CandlestickChart, items: [['watchlist', 'มุมโฟกัส', Star], ['search', 'ค้นหาสินทรัพย์', Search], ['chart', 'กราฟและตัวชี้วัด', CandlestickChart], ['analysis-tools', 'ชุดสแกนเชิงลึก', Activity], ['signals', 'แผนจากกราฟ', Sparkles]] },
   { id: 'context', label: 'ก่อนตัดสินใจ', icon: Newspaper, items: [['news', 'ข่าวไทยและสหรัฐฯ', Newspaper], ['calendar', 'วันข่าวเศรษฐกิจ', CalendarDays], ['dividends', 'ปันผลและ XD', CalendarDays], ['news-guide', 'อ่านข่าวอย่างไร', BookOpen]] },
   { id: 'plan', label: 'ผลสัญญาณ', icon: Wallet, items: [['results', 'ผลงานสัญญาณ', ChartNoAxesCombined], ['financial', 'คำนวณความเสี่ยง', Gauge]] },
   { id: 'more', label: 'เพิ่มเติม', icon: CircleHelp, items: [['learn', 'วิธีเริ่มใช้', GraduationCap], ['roadmap', 'สถานะระบบ', Compass]] },
@@ -126,7 +126,7 @@ export function RoadmapPanel({ onOpen }) {
     ['พร้อมตั้งค่า', 'บัญชี LINE และสิทธิสมาชิก', 'ทดลอง 14 วัน ตรวจพอร์ต และต่ออายุผ่านแอดมิน · รอค่า LINE และฐานข้อมูลถาวร', 'account'],
     ['ขั้นถัดไป', 'ชำระเงินอัตโนมัติ', 'ปัจจุบันแอดมินตรวจและอนุมัติการต่ออายุ · ระบบชำระเงินอัตโนมัติยังไม่เชื่อม', 'account'],
     ['นำร่อง', 'แจ้งเตือนในเว็บ', 'บันทึกเหตุการณ์เข้า/TP/SL และแสดงขณะเปิดเว็บ · ต้องยืนยันความเสถียรและการอ่านย้อนหลัง', 'autopick'],
-    ['รอผลจริง', 'ผลงานสัญญาณ', 'อ่านราคาเข้า/ออกจาก AutoPick และไม่นับแผนหมดเวลาเป็นไม้ชนะ · ยังไม่มีไม้ที่เข้าและปิดผลพอแสดงสถิติ', 'results'],
+    ['บันทึกผล', 'ผลงานสัญญาณ', 'สรุป 100 ไม้ที่ปิดล่าสุดจากราคาเข้า/ออกที่บันทึกไว้ · ไม้รอเข้าและข้อมูลไม่ครบไม่นับเป็นชนะหรือแพ้', 'results'],
     ['บางส่วน', 'ข่าว ปฏิทินเศรษฐกิจ และ XD', 'ข่าวไทย/สหรัฐฯ จาก MarketDX · วันประกาศและตัวเลขสหรัฐฯ จาก FRED · XD เปิดดูต้นทาง SET', 'calendar'],
     ['รอข้อมูล', 'TFEX · Forex AutoPick', 'TFEX มีกราฟ OHLC แล้ว แต่ยังต้องยืนยันสัญญานำและกติกาความเสี่ยง · Forex รอฟีด bid/ask กับแท่งจริง', 'autopick'],
     ['ขั้นถัดไป', 'ช่องคุยกับทีมและชุมชน', 'ซ่อนหน้าจอสนทนา DEMO แล้ว · ต้องมีระบบส่งข้อความและทีมรับจริงก่อนเปิดเมนู', 'learn'],

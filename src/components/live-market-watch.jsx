@@ -1,87 +1,98 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { ALL_ASSETS } from '../markets/catalog.mjs';
+import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Focus, Radar, RefreshCw, Search, Star } from 'lucide-react';
+import { MARKET_ASSETS } from '../markets/catalog.mjs';
 import { formatQuotePrice } from '../markets/quote-format.mjs';
 
-function shortTime(value) {
-  if (!value) return 'ไม่ทราบเวลาแหล่งข้อมูล';
-  const date = new Date(value);
-  return Number.isNaN(date.valueOf()) ? 'ไม่ทราบเวลาแหล่งข้อมูล'
-    : date.toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
-}
+const PAGE_SIZE = 6;
+const positivePrice = value => Number.isFinite(value) && value > 0;
+const shortTime = value => {
+  const date = value ? new Date(value) : null;
+  const dateOnly = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  return date && !Number.isNaN(date.valueOf()) ? date.toLocaleString('th-TH', { timeZone: dateOnly ? 'UTC' : 'Asia/Bangkok', day: '2-digit', month: 'short', ...(dateOnly ? {} : {hour: '2-digit', minute: '2-digit'}) }) : 'ต้นทางไม่ระบุเวลา';
+};
+const changeLabel = value => Number.isFinite(value) ? `${value >= 0 ? '+' : ''}${value.toFixed(2)}%` : '—';
 
-function compactVolume(value) {
-  return typeof value === 'number' && Number.isFinite(value)
-    ? new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value) : '—';
-}
-
-export default function LiveMarketWatch({ market, asset, favorites, selectedQuote, quoteState = 'idle', analysis, freshness, timeframe = '1D', onSelect, onToggleFavorite, onOpenSearch, onOpenVolume, onOpenScanner, onRefreshQuote }) {
+export default function LiveMarketWatch({ market, asset, favorites, selectedQuote, series, analysis, timeframe = '1D', onSelect, onToggleFavorite, onOpenSearch, onOpenScanner, onRefreshQuote }) {
   const [tab, setTab] = useState('market');
   const [query, setQuery] = useState('');
-  const [section, setSection] = useState('all');
+  const [page, setPage] = useState(1);
   const [quotes, setQuotes] = useState({});
   const [watchState, setWatchState] = useState('idle');
-  const [receivedAt, setReceivedAt] = useState(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
-  const marketAssets = useMemo(() => market.sections.flatMap(item => item.assets), [market]);
-  const favoriteAssets = ALL_ASSETS.filter(item => favorites.includes(item.symbol));
-  const allRows = tab === 'favorites' ? favoriteAssets : marketAssets;
-  const rows = allRows.filter(item => (tab === 'favorites' || section === 'all' || item.sectionId === section)
-    && `${item.symbol} ${item.name} ${item.theme ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()))
+  const marketAssets = MARKET_ASSETS[market.id] ?? [];
+  const favoriteAssets = marketAssets.filter(item => favorites.includes(item.symbol));
+  const rows = (tab === 'favorites' ? favoriteAssets : marketAssets)
+    .filter(item => `${item.symbol} ${item.name}`.toLowerCase().includes(query.trim().toLowerCase()))
     .sort((left, right) => Number(right.instrumentId === asset.instrumentId) - Number(left.instrumentId === asset.instrumentId));
-  const quoteSymbols = [asset, ...rows.filter(item => favorites.includes(item.symbol)), ...rows]
-    .filter(item => item.feed === 'settrade-daily' || item.feed === 'tfex-quote')
-    .map(item => item.symbol)
-    .filter((symbol, index, all) => all.indexOf(symbol) === index)
-    .slice(0, 6)
-    .join(',');
-  const quoteSelected = (asset.feed === 'fmp-quote' || asset.feed === 'tfex-quote') && selectedQuote?.price > 0;
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, pages);
+  const visible = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const quoteSymbols = visible.filter(item => ['settrade-daily','tfex-quote'].includes(item.feed)).map(item => item.symbol).join(',');
+  const lastBar = series?.bars?.at(-1);
+  const focusQuote = positivePrice(selectedQuote?.price) ? selectedQuote : positivePrice(lastBar?.close)
+    ? { price: lastBar.close, observedAt: series.latestTime ?? series.latestDay, source: series.source, historical: true } : null;
+  const isHistorical = Boolean(focusQuote?.historical || !selectedQuote?.price && series?.chartOnly);
+  const support = analysis?.support;
+  const resistance = analysis?.resistance;
+  const current = focusQuote?.price;
+  const hasRange = positivePrice(current) && positivePrice(support) && positivePrice(resistance) && support < resistance;
+  const location = hasRange ? Math.max(0, Math.min(100, (current - support) / (resistance - support) * 100)) : null;
+  const toSupport = hasRange ? (current - support) / current * 100 : null;
+  const toResistance = hasRange ? (resistance - current) / current * 100 : null;
 
-  useEffect(() => { setSection('all'); setQuery(''); setTab('market'); }, [market.id]);
-
+  useEffect(() => { setPage(1); }, [asset.instrumentId]);
+  useEffect(() => { setPage(1); setTab('market'); setQuery(''); setQuotes({}); }, [market.id]);
   useEffect(() => {
     if (!quoteSymbols) { setWatchState('no-feed'); return undefined; }
     const controller = new AbortController();
-    const tfex = market.id === 'tfex';
+    let loading = false;
     async function refresh() {
-      setWatchState(current => current === 'available' ? 'refreshing' : 'loading');
+      if (loading) return;
+      loading = true;
+      setWatchState('loading');
       try {
-        const route = tfex ? '/api/tfex/quotes' : '/api/market-watch';
-        const response = await fetch(`${route}?symbols=${encodeURIComponent(quoteSymbols)}`, { cache: 'no-store', signal: controller.signal });
+        const response = await fetch(`${market.id === 'tfex' ? '/api/tfex/quotes' : '/api/market-watch'}?symbols=${encodeURIComponent(quoteSymbols)}`, { cache: 'no-store', signal: controller.signal });
         const payload = await response.json();
-        if (!response.ok || !Array.isArray(payload.quotes)) throw new Error(payload.code ?? 'SOURCE_UNAVAILABLE');
-        setQuotes(current => ({ ...current, ...Object.fromEntries(payload.quotes.map(quote => [quote.symbol, quote])) }));
-        setReceivedAt(payload.receivedAt);
+        if (!response.ok || !Array.isArray(payload.quotes)) throw new Error('SOURCE_UNAVAILABLE');
+        if (controller.signal.aborted) return;
+        setQuotes(currentQuotes => ({ ...currentQuotes, ...Object.fromEntries(payload.quotes.map(quote => [quote.symbol, quote])) }));
         setWatchState(payload.status === 'available' ? 'available' : 'unavailable');
-      } catch (error) {
-        if (error.name !== 'AbortError') setWatchState('unavailable');
-      }
+      } catch {
+        if (!controller.signal.aborted) {
+          setQuotes(currentQuotes => ({ ...currentQuotes, ...Object.fromEntries(quoteSymbols.split(',').map(symbol => [symbol, { status: 'unavailable' }])) }));
+          setWatchState('unavailable');
+        }
+      } finally { loading = false; }
     }
     refresh();
-    const interval = window.setInterval(refresh, 60_000);
-    return () => { controller.abort(); window.clearInterval(interval); };
+    const timer = window.setInterval(refresh, 60_000);
+    return () => { controller.abort(); window.clearInterval(timer); };
   }, [market.id, quoteSymbols, refreshNonce]);
 
-  return <aside id="section-watchlist" className="watch-strip panel live-market-watch" aria-label="กระดานราคาที่ติดตาม">
-    <div className="live-watch-top"><span className="live-watch-kicker"><i /> NUGAOM / MARKET BOARD</span><button onClick={onOpenSearch} aria-label="ค้นหาสินทรัพย์ทุกตลาด" title="ค้นหาสินทรัพย์ทุกตลาด">⌕</button></div>
-    <div className="live-watch-title"><div><h2>กระดานราคาที่ติดตาม</h2><p>{market.label} · {marketAssets.length} รายการ</p></div><span className={watchState === 'available' || watchState === 'refreshing' || quoteSelected ? 'watch-source active' : 'watch-source'}>{watchState === 'loading' || quoteState === 'loading' ? 'กำลังโหลด' : market.id === 'tfex' && (watchState === 'available' || watchState === 'refreshing') ? 'TFEX quote' : watchState === 'available' || watchState === 'refreshing' ? 'ราคาล่าสุด' : quoteSelected ? asset.feed === 'tfex-quote' ? 'TFEX quote' : 'ราคา FMP' : 'รอข้อมูล'}</span></div>
-    <div className="watch-feature-links"><button onClick={onOpenVolume}>◒ Volume Pulse ↗</button><button onClick={onOpenScanner}>◈ Scanner ↗</button></div>
-    <div className="live-watch-tabs" role="tablist" aria-label="หมวด Market Watch">
-      {[['market', 'ภาพรวม'], ['levels', 'ระดับราคา'], ['favorites', `รายการโปรด ${favorites.length}`]].map(([key, label]) => <button key={key} role="tab" aria-selected={tab === key} className={tab === key ? 'selected' : ''} onClick={() => setTab(key)}>{label}</button>)}
+  return <aside id="section-watchlist" className="panel focus-board" aria-label="มุมโฟกัสตลาด">
+    <header className="focus-heading"><div><span className="eyebrow"><Focus size={14}/> YOUR MARKET FOCUS</span><h2>มุมโฟกัส</h2><p>จับตาตัวที่สนใจ แล้วเปิดกราฟต่อได้ทันที</p></div><button className="focus-search-button" onClick={onOpenSearch}><Search size={16}/>ค้นหาและเพิ่ม</button></header>
+    <div className="focus-layout">
+      <article className="focus-asset">
+        <div className="focus-asset-heading"><div><small>{market.label} · ตัวที่เลือก</small><h3>{asset.symbol}</h3><span>{asset.name !== asset.symbol ? asset.name : asset.sectionId}</span></div><button onClick={() => onToggleFavorite(asset.symbol)} aria-label={`${favorites.includes(asset.symbol) ? 'เลิกติดตาม' : 'ติดตาม'} ${asset.symbol}`} aria-pressed={favorites.includes(asset.symbol)}><Star size={20} fill={favorites.includes(asset.symbol) ? 'currentColor' : 'none'}/></button></div>
+        <div className="focus-price"><strong>{formatQuotePrice(current, asset)}</strong><span className={focusQuote?.changePercent < 0 ? 'negative' : 'positive'}>{changeLabel(focusQuote?.changePercent)}</span></div>
+        <p className="focus-source">{focusQuote ? `${isHistorical ? `แท่งปิด ${timeframe}` : 'ราคาอ้างอิงล่าสุด'} · ${focusQuote.source ?? series?.source ?? 'ผู้ให้บริการราคา'} · ${shortTime(focusQuote.observedAt)}` : 'ยังไม่มีราคาอ้างอิงของตัวที่เลือก'}</p>
+        {analysis && <span className={`focus-trend ${analysis.trend}`}>{analysis.trend === 'up' ? 'แนวโน้มขึ้น' : analysis.trend === 'down' ? 'แนวโน้มลง' : 'แกว่งในกรอบ'} · กราฟ {timeframe}</span>}
+        {hasRange ? <div className="focus-range"><div><span>แนวรับ <b>{formatQuotePrice(support, asset)}</b></span><span>แนวต้าน <b>{formatQuotePrice(resistance, asset)}</b></span></div><div className="focus-range-track"><i style={{ left: `${location}%` }} /></div><p>{toSupport < 0 ? 'ราคาต่ำกว่าแนวรับ' : toResistance < 0 ? 'ราคาเหนือแนวต้าน' : `ห่างแนวรับ ${toSupport.toFixed(2)}% · ระยะถึงแนวต้าน ${toResistance.toFixed(2)}%`}</p><small>ตำแหน่งราคาอ้างอิงบนกรอบวิเคราะห์ · ไม่ใช่สัญญาณเข้า</small></div> : <p className="focus-unavailable">{analysis ? 'ยังไม่มีกรอบราคาที่ครบสำหรับแสดงระยะ' : 'เปิดกราฟที่มีข้อมูลเพื่อดูแนวโน้มและระยะถึงแนวรับ–แนวต้าน'}</p>}
+        <button className="focus-analyze" onClick={onOpenScanner}><Radar size={16}/>เปิดสแกนเชิงลึก</button>
+      </article>
+      <div className="focus-list">
+        <div className="focus-list-controls"><div><button aria-pressed={tab === 'market'} onClick={() => {setTab('market');setPage(1);}}>เลือกในตลาด</button><button aria-pressed={tab === 'favorites'} onClick={() => {setTab('favorites');setPage(1);}}>ติดตามไว้ {favoriteAssets.length}</button></div><button className="focus-refresh" aria-label="รีเฟรชมุมโฟกัส" disabled={watchState === 'loading'} onClick={() => {setRefreshNonce(value => value + 1);onRefreshQuote?.();}}><RefreshCw size={16}/></button></div>
+        <label className="focus-query"><Search size={16}/><input aria-label="ค้นหาในมุมโฟกัส" value={query} onChange={event => {setQuery(event.target.value);setPage(1);}} placeholder={`ค้นหา ${market.label} เช่น ${marketAssets[0]?.symbol ?? ''}`}/></label>
+        <div className="focus-rows" aria-busy={watchState === 'loading'}>{visible.map(item => {
+          const selected = item.instrumentId === asset.instrumentId;
+          const quote = selected && focusQuote ? focusQuote : quotes[item.symbol]?.status === 'available' ? quotes[item.symbol] : null;
+          return <div className={selected ? 'focus-row selected' : 'focus-row'} key={item.instrumentId}><button className="focus-row-main" onClick={() => onSelect(item)}><span><b>{item.symbol}</b><small>{item.name !== item.symbol ? item.name : item.sectionId}</small></span><span><b>{formatQuotePrice(quote?.price, item)}</b><small className={quote?.changePercent < 0 ? 'negative' : ''}>{Number.isFinite(quote?.changePercent) ? changeLabel(quote.changePercent) : selected && isHistorical ? 'แท่งปิด' : quote ? shortTime(quote.observedAt) : 'เปิดกราฟเพื่อดูข้อมูล'}</small></span></button><button className="focus-pin" onClick={() => onToggleFavorite(item.symbol)} aria-pressed={favorites.includes(item.symbol)} aria-label={`${favorites.includes(item.symbol) ? 'เลิกติดตาม' : 'ติดตาม'} ${item.symbol} ในรายการ`}><Star size={16} fill={favorites.includes(item.symbol) ? 'currentColor' : 'none'}/></button></div>;
+        })}{!visible.length && <div className="focus-empty"><Star size={24}/><b>{tab === 'favorites' && !query ? 'เริ่มด้วยตัวที่คุณสนใจ' : 'ไม่พบรายการ'}</b><p>{tab === 'favorites' && !query ? 'กดดาวข้างชื่อหุ้น รายการนี้จะเก็บเฉพาะตลาดที่เปิดอยู่' : 'ลองเปลี่ยนคำค้น'}</p></div>}</div>
+        <footer className="focus-pagination"><span>{rows.length ? `${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, rows.length)} จาก ${rows.length} ตัว` : 'ยังไม่มีรายการ'} · หน้า {safePage}/{pages}</span><div><button aria-label="มุมโฟกัสหน้าก่อน" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}><ChevronLeft size={17}/></button><button aria-label="มุมโฟกัสหน้าถัดไป" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)}><ChevronRight size={17}/></button></div></footer>
+        <small className="focus-list-note">{quoteSymbols ? watchState === 'unavailable' ? 'รับราคาชุดนี้ไม่ได้ · เปิดกราฟหรือรีเฟรชใหม่' : 'อ่านราคาเฉพาะ 6 ตัวในหน้านี้ · รีเฟรชทุก 60 วินาที' : 'เลือกตัวที่ต้องการเพื่อเปิดกราฟ · ไม่โหลดราคาทั้งตลาดพร้อมกัน'}</small>
+      </div>
     </div>
-    {tab === 'levels' ? <div className="live-watch-levels"><div className="watch-level-symbol"><span>{asset.symbol}</span><small>{freshness === 'recent' ? `แท่ง ${timeframe} ล่าสุด` : 'รอข้อมูลปัจจุบัน'}</small></div>{analysis ? <><div className="watch-level-grid"><div><small>แนวรับ</small><strong>{formatQuotePrice(analysis.support, asset)}</strong></div><div><small>แนวต้าน</small><strong>{formatQuotePrice(analysis.resistance, asset)}</strong></div></div><div className="watch-level-events">{freshness === 'recent' ? analysis.events.map(event => <span key={event.label}>{event.label}</span>) : <span>ข้อมูลเก่า · พักการสแกน</span>}</div><p>จุดสแกนของ symbol ที่เลือก · คำนวณจากแท่งจริง {timeframe}</p></> : <div className="watch-level-empty">ยังไม่มีแท่งจริงเพียงพอสำหรับแนวรับ แนวต้าน และจุดสแกน</div>}</div> : <>
-      <label className="live-watch-search"><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder={tab === 'favorites' ? 'ค้นหาในคู่โปรด' : `ค้นหาใน ${market.label}`} /></label>
-      {tab === 'market' && market.sections.length > 1 && <div className="live-watch-sections"><button className={section === 'all' ? 'selected' : ''} onClick={() => setSection('all')}>ทั้งหมด {marketAssets.length}</button>{market.sections.map(item => <button key={item.id} className={section === item.id ? 'selected' : ''} onClick={() => setSection(item.id)}>{item.id === 'MAI_INITIAL' ? 'mai' : item.id === 'US_STOCKS' ? 'หุ้นสหรัฐฯ' : item.id === 'US_ETFS' ? 'ETF' : item.id} {item.assets.length}</button>)}</div>}
-      <div className="live-watch-status"><span>{rows.length} รายการ · {market.id === 'us' || market.id === 'forex' ? 'เปิดตัวที่ต้องการเพื่อโหลดราคา quote' : market.id === 'tfex' ? `อ่าน TFEX quote ${quoteSymbols ? quoteSymbols.split(',').length : 0} สัญญา · เวลาแหล่งข้อมูลอาจไม่ระบุ` : `ติดตามราคา ${quoteSymbols ? quoteSymbols.split(',').length : 0} ตัวต่อรอบ`}</span><button onClick={() => quoteSymbols ? setRefreshNonce(value => value + 1) : onRefreshQuote?.()} disabled={quoteSymbols ? watchState === 'loading' : asset.feed !== 'fmp-quote' && asset.feed !== 'tfex-quote' || quoteState === 'loading'} aria-label="รีเฟรช Market Watch" title="รีเฟรชราคาที่ติดตาม">↻</button></div>
-      <div className="live-watch-rows" aria-busy={watchState === 'loading'}>{watchState === 'loading' && tab === 'market' && !query ? <div className="watch-skeleton-list" aria-label="กำลังโหลดรายการราคา">{Array.from({ length: 6 }, (_, index) => <div className="watch-skeleton-row" key={index}><span><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /></span><span><i className="ui-skeleton-line" /><i className="ui-skeleton-line" /></span></div>)}</div> : rows.map(item => {
-        const fallback = item.symbol === asset.symbol && selectedQuote?.price ? { ...selectedQuote, status: 'available' } : null;
-        const quote = quotes[item.symbol]?.status === 'available' ? quotes[item.symbol] : fallback;
-        const change = quote?.changePercent;
-        const selected = item.instrumentId === asset.instrumentId;
-        return <div className={selected ? 'live-watch-row selected' : 'live-watch-row'} key={item.instrumentId}><button className="watch-row-main" onClick={() => onSelect(item)}><span className="watch-row-symbol"><strong>{item.symbol}</strong><small>{item.name === item.symbol ? item.sectionId : item.name}</small></span><span className="watch-row-price"><strong>{quote ? formatQuotePrice(quote.price, item) : '—'}</strong><small className={typeof change === 'number' ? change >= 0 ? 'positive' : 'negative' : ''}>{typeof change === 'number' ? `${change >= 0 ? '+' : ''}${change.toFixed(2)}%` : item.feed === 'settrade-daily' || item.feed === 'fmp-quote' || item.feed === 'tfex-quote' ? 'เลือกเพื่อโหลด' : 'รอฟีดราคา'}</small></span></button><button className="watch-row-favorite" onClick={() => onToggleFavorite(item.symbol)} aria-label={`${favorites.includes(item.symbol) ? 'เอาออกจาก' : 'เพิ่มใน'}คู่โปรด ${item.symbol}`} aria-pressed={favorites.includes(item.symbol)}>{favorites.includes(item.symbol) ? '★' : '☆'}</button>{selected && quote && <div className="watch-row-extra"><span>H <b>{formatQuotePrice(quote.high, item)}</b></span><span>L <b>{formatQuotePrice(quote.low, item)}</b></span><span>VOL <b>{compactVolume(quote.volume)}</b></span>{item.feed === 'tfex-quote' && <span>OI <b>{compactVolume(quote.openInterest)}</b></span>}<small>{quote.observedAt ? `เวลา quote ${shortTime(quote.observedAt)}` : item.feed === 'tfex-quote' ? `เวลา source ไม่ระบุ · รับ ${shortTime(quote.receivedAt)}` : 'ผู้ให้บริการไม่ระบุเวลา quote'}</small></div>}</div>;
-      })}{watchState !== 'loading' && rows.length === 0 && <div className="watch-level-empty">{tab === 'favorites' ? 'ยังไม่มีคู่โปรด กดดาวในรายการตลาดเพื่อเพิ่ม' : 'ไม่พบ symbol ในหมวดนี้'}</div>}</div>
-      <div className="live-watch-foot"><span>{watchState === 'available' || watchState === 'refreshing' ? market.id === 'tfex' ? `TFEX Open API · เวลา quote จากต้นทางไม่ระบุ · แท่ง OHLC มีเวลาแท่ง · รับ ${shortTime(receivedAt)} · รีเฟรชทุก 60 วินาที` : `Settrade snapshot · รับจาก API ${shortTime(receivedAt)} · เรียกใหม่ทุก 60 วินาที` : quoteSelected ? `${selectedQuote.source} · เวลาแหล่งข้อมูล ${shortTime(selectedQuote.observedAt)} · โหลดเมื่อเลือก` : watchState === 'loading' ? 'กำลังรับราคา snapshot' : market.id === 'us' || market.id === 'forex' ? 'เลือกสินทรัพย์เพื่อเรียก FMP quote' : market.id === 'tfex' ? 'กราฟ TFEX อ่านแท่ง OHLC จริงได้ · AutoPick รอการยืนยันสัญญานำและวันหมดอายุ' : 'หมวดนี้ยังไม่มีฟีดราคาที่เชื่อมต่อ'}</span><button onClick={onOpenSearch}>ทุกตลาด ↗</button></div>
-    </>}
   </aside>;
 }

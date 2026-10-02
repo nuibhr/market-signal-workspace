@@ -6,6 +6,7 @@ import { THAI_ORB_RULE_VERSION } from './thai-orb.mjs';
 import { DR80_SYMBOLS, MAI_INITIAL_SYMBOLS, SET100_SYMBOLS } from '../markets/catalog.mjs';
 import { NASDAQ100_SYMBOLS } from '../markets/nasdaq-100.mjs';
 import { usEodSession } from '../market-data/fmp-us.mjs';
+import { PERFORMANCE_WINDOW, recordedOutcome, summarizeRecordedTrades } from './signal-performance.mjs';
 
 let ready = false;
 function database() {
@@ -36,6 +37,8 @@ function database() {
     );
     CREATE INDEX IF NOT EXISTS auto_pick_events_recent ON auto_pick_events(created_at DESC);
     CREATE INDEX IF NOT EXISTS auto_pick_signals_status ON auto_pick_signals(status,market);
+    CREATE INDEX IF NOT EXISTS auto_pick_signals_closed ON auto_pick_signals(market,exited_at DESC,id DESC)
+      WHERE status IN ('TARGET','STOP','EXIT');
     CREATE TABLE IF NOT EXISTS auto_pick_scan_progress (
       market TEXT NOT NULL, session_key TEXT NOT NULL, symbol TEXT NOT NULL,
       state TEXT NOT NULL, reason TEXT, rule_version TEXT, attempts INTEGER NOT NULL DEFAULT 0,
@@ -214,19 +217,48 @@ export function signalFeed() {
 }
 
 /** Every published scanner signal, including picks that never entered. Prices are OHLC references, not fills. */
-export function signalResults({ market = 'all', status = 'all', page = 1, pageSize = 7 } = {}) {
+export function signalPerformance(market = 'all') {
   const db = database();
+  const specific = ['thai', 'dr', 'us', 'tfex', 'forex'].includes(market);
+  // Select by closure time, not publication time. Invalid / unresolved records never replace a valid trade.
+  const trades = [];
+  const query = db.prepare(`SELECT * FROM auto_pick_signals
+    WHERE status IN ('TARGET','STOP','EXIT') AND entry_price>0 AND exit_price>0
+      AND entered_at IS NOT NULL AND exited_at IS NOT NULL ${specific ? 'AND market=?' : ''}
+    ORDER BY exited_at DESC,id DESC`);
+  for (const row of query.iterate(...(specific ? [market] : []))) {
+    let signal;
+    try { signal = parse(row); } catch { continue; }
+    const result = recordedOutcome(signal);
+    if (!result) continue;
+    trades.push({ id: signal.id, symbol: signal.symbol, market: signal.market, status: signal.status,
+      entryPrice: signal.entryPrice, exitPrice: signal.exitPrice, enteredAt: signal.enteredAt,
+      exitedAt: signal.exitedAt, ...result });
+    if (trades.length === PERFORMANCE_WINDOW) break;
+  }
+  return { summary: summarizeRecordedTrades(trades), recentTrades: trades };
+}
+
+export function signalResults({ market = 'all', status = 'all', scope = 'history', page = 1, pageSize = 7 } = {}) {
+  const db = database();
+  const performance = signalPerformance(market);
   const markets = new Set(['thai', 'dr', 'us', 'tfex', 'forex']);
   const statuses = new Set(['WAITING_FOR_ENTRY', 'OPEN', 'TARGET', 'STOP', 'EXIT', 'EXPIRED', 'REVIEW', 'AMBIGUOUS']);
   const where = [];
   const params = [];
   if (markets.has(market)) { where.push('market=?'); params.push(market); }
   if (statuses.has(status)) { where.push('status=?'); params.push(status); }
+  if (scope === 'closed') {
+    if (performance.recentTrades.length) {
+      where.push(`id IN (${performance.recentTrades.map(() => '?').join(',')})`);
+      params.push(...performance.recentTrades.map(row => row.id));
+    } else where.push('0=1');
+  }
   const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const safePage = Math.max(1, Math.min(100_000, Number.parseInt(page, 10) || 1));
   const safeSize = Math.max(1, Math.min(100, Number.parseInt(pageSize, 10) || 7));
   const total = db.prepare(`SELECT COUNT(*) AS count FROM auto_pick_signals ${clause}`).get(...params).count;
-  const signals = db.prepare(`SELECT * FROM auto_pick_signals ${clause} ORDER BY published_at DESC,id DESC LIMIT ? OFFSET ?`)
+  const signals = db.prepare(`SELECT * FROM auto_pick_signals ${clause} ORDER BY ${scope === 'closed' ? 'exited_at' : 'published_at'} DESC,id DESC LIMIT ? OFFSET ?`)
     .all(...params, safeSize, (safePage - 1) * safeSize).map(parse);
   if (signals.length) {
     const placeholders = signals.map(() => '?').join(',');
@@ -242,31 +274,11 @@ export function signalResults({ market = 'all', status = 'all', page = 1, pageSi
   const marketParams = markets.has(market) ? [market] : [];
   const counts = Object.fromEntries(db.prepare(`SELECT status,COUNT(*) AS count FROM auto_pick_signals ${marketClause} GROUP BY status`).all(...marketParams)
     .map(row => [row.status, row.count]));
-  const settled = db.prepare(`SELECT status,entry_price AS entryPrice,exit_price AS exitPrice,plan_json AS planJson
-    FROM auto_pick_signals WHERE status IN ('TARGET','STOP','EXIT')
-      AND entry_price > 0 AND exit_price > 0 AND entered_at IS NOT NULL AND exited_at IS NOT NULL
-      ${markets.has(market) ? 'AND market=?' : ''}`).all(...marketParams);
-  const results = settled.map(row => {
-    const plan = JSON.parse(row.planJson);
-    const direction = plan?.side === 'SHORT' ? -1 : 1;
-    const returnPercent = direction * (row.exitPrice - row.entryPrice) / row.entryPrice * 100;
-    const risk = Math.abs(row.entryPrice - Number(plan?.stopLoss));
-    const rMultiple = Number.isFinite(risk) && risk > 0 ? direction * (row.exitPrice - row.entryPrice) / risk : null;
-    return { returnPercent, rMultiple };
-  });
-  const actual = db.prepare(`SELECT SUM(CASE WHEN entry_price>0 AND entered_at IS NOT NULL THEN 1 ELSE 0 END) AS entered, MIN(published_at) AS oldest, MAX(updated_at) AS latest FROM auto_pick_signals ${marketClause}`).get(...marketParams);
-  const wins = results.filter(row => row.returnPercent > 0).length;
-  const losses = results.filter(row => row.returnPercent < 0).length;
+  const actual = db.prepare(`SELECT SUM(CASE WHEN entry_price>0 AND entered_at IS NOT NULL THEN 1 ELSE 0 END) AS entered FROM auto_pick_signals ${marketClause}`).get(...marketParams);
   return {
-    signals, total, page: safePage, pageSize: safeSize, counts,
-    summary: {
-      entered: actual.entered ?? 0, from: actual.oldest ?? null, to: actual.latest ?? null,
-      closed: results.length, wins, losses, flat: results.length - wins - losses,
-      winRate: results.length ? wins / results.length * 100 : null,
-      averageReturnPercent: results.length ? results.reduce((sum, row) => sum + row.returnPercent, 0) / results.length : null,
-      averageR: results.some(row => row.rMultiple !== null)
-        ? results.filter(row => row.rMultiple !== null).reduce((sum, row) => sum + row.rMultiple, 0) / results.filter(row => row.rMultiple !== null).length : null,
-    },
+    signals, total, page: safePage, pageSize: safeSize, counts, scope: scope === 'closed' ? 'closed' : 'history',
+    recentTrades: performance.recentTrades,
+    summary: { ...performance.summary, entered: actual.entered ?? 0 },
   };
 }
 
