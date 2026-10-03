@@ -30,7 +30,7 @@ export async function GET(){
  const rows=db().prepare('SELECT market,symbol,cost,quantity FROM customer_holdings WHERE member_id=? ORDER BY updated_at DESC').all(m.id);const results=[];
  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok'}).format(new Date());
  for(const row of rows){try{
-  let series;if(row.market==='us')series=await getUsDailyBars(row.symbol);else{
+  let series;if(row.market==='us')series=await getUsDailyBars(row.symbol,{assetKind:ALL_ASSETS.find(a=>a.id==='us'&&a.symbol===row.symbol)?.sectionId==='US_ETFS'?'etf':'stock'});else{
    if(process.env.NODE_ENV==='production'&&process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED!=='true')throw Error('RIGHTS');
    series=await client.getCandles(row.symbol,'1d',250);}
   const bars=series.bars.filter(b=>b.time<today);const analysis=analyzeCandles(bars);

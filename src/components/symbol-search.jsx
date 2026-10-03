@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ALL_ASSETS, MARKET_GROUPS } from '../markets/catalog.mjs';
+import UsAssetTabs from './us-asset-tabs.jsx';
 
 export default function SymbolSearch({ onSelect,marketId=null }) {
   const rootRef = useRef(null);
@@ -11,7 +12,7 @@ export default function SymbolSearch({ onSelect,marketId=null }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const matches = useMemo(() => {
     const term = query.trim().toUpperCase();
-    return ALL_ASSETS.filter(item => (category === 'all' || item.id === category)
+    return ALL_ASSETS.filter(item => (category === 'all' || item.id === category || item.sectionId===category)
       && (!term || `${item.symbol} ${item.name} ${item.sectionId}`.toUpperCase().includes(term)));
   }, [query, category]);
   const visible = matches;
@@ -59,8 +60,9 @@ export default function SymbolSearch({ onSelect,marketId=null }) {
     /><kbd>⌘ K</kbd></label>
     {open && <div className="symbol-search-popover" id="symbol-search-results" role="listbox" aria-label="ผลการค้นหาสินทรัพย์">
       <div className="symbol-search-categories"><button className={category === 'all' ? 'selected' : ''} onClick={() => { setCategory('all'); setActiveIndex(0); }}>ทั้งหมด <small>{ALL_ASSETS.length}</small></button>{MARKET_GROUPS.map(group => <button key={group.id} className={category === group.id ? 'selected' : ''} onClick={() => { setCategory(group.id); setActiveIndex(0); }}>{group.label} <small>{group.sections.reduce((sum, section) => sum + section.assets.length, 0)}</small></button>)}</div>
+      {['us','US_STOCKS','US_ETFS'].includes(category)&&<UsAssetTabs value={category==='us'?'all':category==='US_ETFS'?'etf':'stock'} showAll onChange={value=>{setCategory(value==='all'?'us':value==='etf'?'US_ETFS':'US_STOCKS');setActiveIndex(0);}}/>}
       <div className="symbol-search-summary">{matches.length} SYMBOLS · {query.trim() ? `ผลลัพธ์สำหรับ “${query.trim()}”` : 'เลือกหมวดหรือพิมพ์ชื่อย่อ'}</div>
-      <div className="symbol-search-results">{visible.map((item, index) => <div key={item.instrumentId}>{(index === 0 || visible[index - 1].id !== item.id) && <div className="symbol-result-group">{MARKET_GROUPS.find(group => group.id === item.id)?.label} <small>{matchedCounts[item.id]} รายการ</small></div>}<button role="option" aria-selected={index === activeIndex} className={index === activeIndex ? 'active' : ''} onMouseEnter={() => setActiveIndex(index)} onClick={() => select(item)}><span><strong>{item.symbol}</strong><small>{item.name === item.symbol ? item.sectionId : item.name}</small></span><span><em>{MARKET_GROUPS.find(group => group.id === item.id)?.label}</em><small>{item.feed === 'settrade-daily' ? 'Settrade OHLC · ขอเมื่อเลือก' : item.feed === 'tfex-quote' ? 'TFEX OHLC · ขอเมื่อเลือก' : item.id === 'us' ? 'FMP EOD · สิทธิบางตัวยังไม่ครบ' : item.id === 'forex' ? 'FMP quote · ยังไม่มีกราฟ' : 'รอฟีดราคา'}</small></span></button></div>)}{visible.length === 0 && <p className="empty-state">ไม่พบ symbol นี้ในรายการที่กำหนด</p>}</div>
+      <div className="symbol-search-results">{visible.map((item, index) => <div key={item.instrumentId}>{(index === 0 || visible[index - 1].id !== item.id) && <div className="symbol-result-group">{MARKET_GROUPS.find(group => group.id === item.id)?.label} <small>{matchedCounts[item.id]} รายการ</small></div>}<button role="option" aria-selected={index === activeIndex} className={index === activeIndex ? 'active' : ''} onMouseEnter={() => setActiveIndex(index)} onClick={() => select(item)}><span><strong>{item.symbol}</strong><small>{item.name === item.symbol ? item.sectionId : item.name}</small></span><span><em>{MARKET_GROUPS.find(group => group.id === item.id)?.label}</em><small>{item.feed === 'settrade-daily' ? 'Settrade OHLC · ขอเมื่อเลือก' : item.feed === 'tfex-quote' ? 'TFEX OHLC · ขอเมื่อเลือก' : item.id === 'us' ? 'ราคาปิดรายวัน · FMP / Yahoo' : item.id === 'forex' ? 'FMP quote · ยังไม่มีกราฟ' : 'รอฟีดราคา'}</small></span></button></div>)}{visible.length === 0 && <p className="empty-state">ไม่พบ symbol นี้ในรายการที่กำหนด</p>}</div>
       {category === 'thai' && <div className="symbol-search-more">mai 50 เป็นรายชื่อเริ่มต้น; ยังไม่ยืนยันอันดับตาม Market Cap</div>}
     </div>}
   </div>;

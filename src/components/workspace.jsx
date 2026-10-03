@@ -11,6 +11,7 @@ import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS, TFEX_SYMBOLS } from '../marke
 import { formatQuotePrice } from '../markets/quote-format.mjs';
 import { analyzeCandles } from '../analysis/technical.mjs';
 import SymbolSearch from './symbol-search.jsx';
+import UsAssetTabs from './us-asset-tabs.jsx';
 import AnalysisRail from './analysis-rail.jsx';
 import LiveMarketWatch from './live-market-watch.jsx';
 import ChartToolbox from './chart-toolbox.jsx';
@@ -101,6 +102,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [reloadNonce, setReloadNonce] = useState(0);
   const lastAutoRefreshRef = useRef(0);
   const [favorites, setFavorites] = useState([]);
+  const [favoriteNotice,setFavoriteNotice]=useState('');
+  const [favoritesOpenRequest,setFavoritesOpenRequest]=useState(0);
   const [popup, setPopup] = useState(null);
   const modalRef = useRef(null);
   const popupTriggerRef = useRef(null);
@@ -143,9 +146,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const tradePlan = planContext?.instrumentId === asset.instrumentId ? planContext.plan : null;
   const currentAnalysis = Boolean(analysis) && liveSeries?.freshness === 'recent' && !liveSeries?.chartOnly;
   const currentAiResult = currentAnalysis && aiResult?.symbol === asset.symbol && aiResult.timeframe === timeframe && aiResult.latestDay === liveSeries?.latestDay && aiResult.latestTime === (liveSeries?.latestTime ?? null) ? aiResult : null;
-  const favoriteAssets = ALL_ASSETS.filter((item, index, all) => item.id===marketId && favorites.includes(item.symbol) && all.findIndex(candidate => candidate.symbol === item.symbol) === index);
-  const searchResults = ALL_ASSETS.filter(item => (symbolCategory === 'all' || item.id === symbolCategory)
-    && (!symbolQuery.trim() || `${item.symbol} ${item.name} ${item.sectionId}`.toLowerCase().includes(symbolQuery.trim().toLowerCase())));
+  const favoriteAssets = useMemo(()=>MARKET_ASSETS[marketId].filter(item=>favorites.includes(item.symbol)),[marketId,favorites]);
+  const searchResults = useMemo(()=>ALL_ASSETS.filter(item => (symbolCategory === 'all' || item.id === symbolCategory || item.sectionId===symbolCategory)
+    && (!symbolQuery.trim() || `${item.symbol} ${item.name} ${item.sectionId}`.toLowerCase().includes(symbolQuery.trim().toLowerCase()))),[symbolCategory,symbolQuery]);
   const sourceLabel = hasRealBars ? liveSeries.source : hasCandleConnection ? liveState === 'loading' ? `กำลังเชื่อม ${hasSettradeConnection ? 'Settrade' : hasTfexConnection ? 'TFEX Open API' : asset.id === 'forex' ? 'Yahoo History' : 'FMP / Yahoo History'}` : 'ฟีดแท่งราคาไม่พร้อม' : hasQuoteConnection ? hasRealQuote ? marketQuote.source : quoteState === 'loading' ? 'กำลังอ่านราคา' : 'ฟีดราคาไม่พร้อม' : 'ยังไม่เชื่อมฟีด';
   const loginHref = !rights?.authenticated && accountConfigured ? '/api/auth/line/start' : '/account';
   useEffect(() => {
@@ -161,7 +164,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     if (id === 'account' || id === 'membership') { window.location.href = '/account'; return; }
     setActiveNav(id);
     if (id === 'analysis-tools') { setPopup('scanner'); return; }
-    const selector = { overview: '#section-overview', daily: '#section-daily', autopick: '#section-auto-pick', favorites: '.favorite-strip', watchlist: '#section-watchlist', signals: '#section-trade-plan', results: '#section-results' }[id];
+    if(id==='favorites')setFavoritesOpenRequest(value=>value+1);
+    const selector = { overview: '#section-overview', daily: '#section-daily', autopick: '#section-auto-pick', favorites: '#section-watchlist', watchlist: '#section-watchlist', signals: '#section-trade-plan', results: '#section-results' }[id];
     if (selector) { document.querySelector(selector)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); setPopup(null); }
     else setPopup(id);
   }
@@ -324,17 +328,20 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   useEffect(() => {
     try {
       const stored = JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? window.localStorage.getItem('nova-favorites') ?? '[]');
-      if (Array.isArray(stored)) setFavorites(stored.filter(item => typeof item === 'string'));
+      if (Array.isArray(stored)) setFavorites([...new Set(stored.filter(item => typeof item === 'string'&&ALL_ASSETS.some(a=>a.symbol===item)))]);
     } catch { /* Favorites remain usable without storage. */ }
   }, []);
 
   function toggleFavorite(symbol) {
-    setFavorites(current => {
-      const next = current.includes(symbol) ? current.filter(item => item !== symbol) : [...current, symbol];
-      try { window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next)); } catch { /* Local storage is optional. */ }
-      return next;
-    });
+    const saved=favorites.includes(symbol),next=saved?favorites.filter(item=>item!==symbol):[...favorites,symbol];
+    setFavorites(next);
+    try { window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next));
+      setFavoriteNotice(saved?`นำ ${symbol} ออกจากหุ้นโปรดแล้ว`:`บันทึก ${symbol} แล้ว · เปิดที่หุ้นโปรดเพื่อดูราคาและแนวโน้ม`);
+    } catch { setFavoriteNotice(`อัปเดตรายการ ${symbol} แล้ว · เบราว์เซอร์นี้เก็บรายการถาวรไม่ได้`); }
   }
+
+  useEffect(()=>{if(!favoriteNotice)return;const timer=window.setTimeout(()=>setFavoriteNotice(''),4500);return()=>window.clearTimeout(timer);},[favoriteNotice]);
+  useEffect(()=>{const sync=event=>{if(event.key!==FAVORITES_STORAGE_KEY)return;try{const value=JSON.parse(event.newValue||'[]');if(Array.isArray(value))setFavorites([...new Set(value.filter(s=>typeof s==='string'&&ALL_ASSETS.some(a=>a.symbol===s)))]);}catch{}};window.addEventListener('storage',sync);return()=>window.removeEventListener('storage',sync);},[]);
 
   function toggleIndicator(key) {
     setIndicators(current => ({ ...current, [key]: !current[key] }));
@@ -408,7 +415,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
           <div className={`workspace-ticker ${hasRealBars || hasRealQuote ? 'has-live-source' : 'has-preview-source'}`}><span className="ticker-symbol" aria-hidden="true">{hasRealBars || hasRealQuote ? '◉' : '◇'}</span><span className="ticker-copy"><strong>{hasRealBars ? `ข้อมูล ${asset.symbol} พร้อมอ่าน` : hasRealQuote ? `รับราคา quote ของ ${asset.symbol} แล้ว` : `กำลังดู ${asset.symbol} ในโหมดพรีวิว`}</strong><small>{hasRealBars ? `${sourceLabel} · ${TIMEFRAME_LABELS[timeframe]} ล่าสุด ${latestBarLabel}` : hasRealQuote ? hasTfexConnection ? marketQuote.observedAt ? `TFEX Open API · quote ${formatLatestBar({ timeframe: '15m', latestTime: marketQuote.observedAt })} · ยังไม่ใช้วิเคราะห์` : `TFEX Open API · เวลา source ไม่ระบุ · รับ ${formatQuoteReceipt(marketQuote.receivedAt)} · ยังไม่ใช้วิเคราะห์` : `${sourceLabel} · ยังไม่มีแท่งใช้คำนวณ` : `${sourceLabel} · ยังไม่มีแท่งใช้คำนวณ`}</small></span><span className={hasRealBars ? 'ticker-state live' : 'ticker-state'}>{hasRealBars ? liveSeries.chartOnly ? 'HISTORY' : 'REAL OHLC' : hasRealQuote ? 'QUOTE ONLY' : 'PREVIEW'}</span></div>
 
-          <div className="favorite-strip"><span>★ &nbsp;คู่โปรด</span>{favoriteAssets.length ? favoriteAssets.map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}>{item.symbol}</button>) : <small>กดดาวใน Watchlist เพื่อเก็บสินทรัพย์ที่ดูบ่อย</small>}<button className="favorite-toggle" aria-pressed={favorites.includes(asset.symbol)} onClick={() => toggleFavorite(asset.symbol)}>{favorites.includes(asset.symbol) ? '★ บันทึกแล้ว' : '☆ ปักหมุดคู่นี้'}</button></div>
+          {marketId==='us'&&<section className="us-catalog-switch" aria-label="เลือกหุ้นหรือ ETF"><UsAssetTabs value={asset.sectionId==='US_ETFS'?'etf':'stock'} onChange={kind=>{const section=kind==='etf'?'US_ETFS':'US_STOCKS';if(asset.sectionId!==section)selectAsset(MARKET_ASSETS.us.find(a=>a.sectionId===section));}}/><span>{asset.sectionId==='US_ETFS'?'ETF · กราฟและคะแนนเทคนิค · ยังไม่มีสัญญาณอัตโนมัติ':'หุ้น · สแกน AutoPick ทั้ง 500 ตัวหลังตลาดปิด'}</span></section>}
+          <div className="favorite-strip"><span>★ หุ้นโปรด</span>{favoriteAssets.length ? favoriteAssets.slice(0,8).map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}>{item.symbol}{item.sectionId==='US_ETFS'&&<small> ETF</small>}</button>) : <small>เก็บตัวที่สนใจ แล้วติดตามราคาและแนวโน้มต่อได้</small>}<button className="favorite-overview" onClick={()=>navigateTo('favorites')}>ดูหุ้นโปรด ({favoriteAssets.length})</button><button className="favorite-toggle" aria-label={`${favorites.includes(asset.symbol)?'เลิกติดตาม':'ติดตาม'} ${asset.symbol} จากกราฟ`} aria-pressed={favorites.includes(asset.symbol)} onClick={() => toggleFavorite(asset.symbol)}>{favorites.includes(asset.symbol) ? '★ บันทึกแล้ว' : '☆ เพิ่มหุ้นโปรด'}</button></div>
 
 
 
@@ -431,7 +439,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
               <AnalysisRail chartOnly={Boolean(liveSeries?.chartOnly)} asset={asset} analysis={analysis} tradePlan={tradePlan} tradePlanState={hasSettradeConnection && timeframe === '1d' && (liveState === 'loading' || planContextState === 'loading') ? 'loading' : planContextState} aiState={currentAnalysis ? aiState : 'idle'} aiResult={currentAiResult} sourceState={liveState} barsCount={hasRealBars ? liveSeries.bars.length : 0} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} timeframeId={timeframe} freshness={liveSeries?.freshness} currentPrice={hasRealQuote && !hasTfexConnection ? marketQuote?.price : hasRealBars ? liveSeries.quote?.price ?? liveSeries.bars.at(-1)?.close : null} sourceLabel={hasRealQuote ? marketQuote.source : sourceLabel} onOpenAutomation={() => navigateTo('autopick')} />
 
-            <LiveMarketWatch market={market} asset={asset} favorites={favorites} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} series={hasRealBars ? liveSeries : null} analysis={analysis} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory('all'); setPopup('search'); }} />
+            <LiveMarketWatch market={market} asset={asset} favorites={favorites} favoritesOpenRequest={favoritesOpenRequest} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} series={hasRealBars ? liveSeries : null} analysis={analysis} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory(marketId); setPopup('search'); }} />
           </section>
 
           <SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} />
@@ -440,6 +448,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
       </main>
 
       <NugaomAssistant activeSymbol={asset.symbol} />
+      {favoriteNotice&&<div className="favorite-notice" role="status"><span>★</span>{favoriteNotice}<button onClick={()=>navigateTo('favorites')}>ดูรายการ</button><button aria-label="ปิดข้อความหุ้นโปรด" onClick={()=>setFavoriteNotice('')}>×</button></div>}
 
       {popup && <div className="modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setPopup(null); }}>
         <section ref={modalRef} tabIndex={-1} className={`modal-card ${popup === 'chart' ? 'chart-modal' : ''} ${FEATURE_ITEMS.some(([key]) => key === popup) ? 'feature-modal' : ''}`} role="dialog" aria-modal="true" aria-labelledby="popup-title">
@@ -458,8 +467,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           {popup === 'search' && <>
             <label className="modal-search"><span>⌕</span><input autoFocus value={symbolQuery} onChange={event => setSymbolQuery(event.target.value)} placeholder="ค้นหา PTT, AAPL80, EUR/USD, S50, GO, SVF…" /></label>
             <div className="modal-market-pills"><button className={symbolCategory === 'all' ? 'selected' : ''} onClick={() => setSymbolCategory('all')}>ทั้งหมด <small>{ALL_ASSETS.length}</small></button>{MARKETS.map(item => <button key={item.id} className={symbolCategory === item.id ? 'selected' : ''} onClick={() => setSymbolCategory(item.id)}>{item.label} <small>{MARKET_ASSETS[item.id].length}</small></button>)}</div>
+            {['us','US_STOCKS','US_ETFS'].includes(symbolCategory)&&<UsAssetTabs value={symbolCategory==='us'?'all':symbolCategory==='US_ETFS'?'etf':'stock'} showAll onChange={value=>setSymbolCategory(value==='all'?'us':value==='etf'?'US_ETFS':'US_STOCKS')}/>}
             <div className="modal-search-count">พบ {searchResults.length} symbols · เลือกแล้วกราฟกับแผงวิเคราะห์จะเปลี่ยนตาม</div>
-            <div className="asset-results">{searchResults.map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}><span><strong>{item.symbol}</strong><small>{item.name === item.symbol ? displaySection(item.sectionId) : `${item.name} · ${displaySection(item.sectionId)}`}</small></span><span className="asset-result-price">{item.symbol === asset.symbol && hasRealBars ? displayedPrice : item.symbol === asset.symbol && hasRealQuote ? displayedPrice : item.feed === 'settrade-daily' ? 'OHLC' : '—'}<small>{item.feed === 'settrade-daily' ? 'Settrade เมื่อเลือก' : item.feed === 'tfex-quote' ? 'TFEX quote เมื่อเลือก' : item.feed === 'fmp-quote' ? 'FMP เมื่อเลือก' : 'รอฟีดราคา'}</small></span></button>)}{searchResults.length === 0 && <p className="empty-state">ไม่พบสินทรัพย์ในรายการที่กำหนด</p>}</div>
+            <div className="asset-results">{searchResults.map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}><span><strong>{item.symbol}</strong><small>{item.name === item.symbol ? displaySection(item.sectionId) : `${item.name} · ${displaySection(item.sectionId)}`}</small></span><span className="asset-result-price">{item.symbol === asset.symbol && hasRealBars ? displayedPrice : item.symbol === asset.symbol && hasRealQuote ? displayedPrice : item.feed === 'settrade-daily' ? 'OHLC' : '—'}<small>{item.feed === 'settrade-daily' ? 'Settrade เมื่อเลือก' : item.feed === 'tfex-quote' ? 'TFEX quote เมื่อเลือก' : item.id === 'us' ? 'กราฟรายวัน เมื่อเลือก' : item.feed === 'fmp-quote' ? 'FMP เมื่อเลือก' : 'รอฟีดราคา'}</small></span></button>)}{searchResults.length === 0 && <p className="empty-state">ไม่พบสินทรัพย์ในรายการที่กำหนด</p>}</div>
             <p className="modal-footnote">SET100: snapshot 2026 H2 · DR80: snapshot 25 ก.ย. 2026 · mai 50: รายชื่อเริ่มต้น ยังไม่ยืนยันอันดับ Market Cap</p>
           </>}
           {popup === 'chart' && <><CandlestickChart symbol={asset.symbol} timeframe={timeframe} bars={displayBars} analysis={analysis} indicators={chartIndicators} chartStyle={chartStyle} chartRange={chartRange} loading={hasCandleConnection && liveState === 'loading'} unavailable={hasCandleConnection && liveState === 'unavailable'} source={sourceLabel} /><p className="modal-footnote">{hasRealBars ? `แท่ง ${TIMEFRAME_LABELS[timeframe]} จริง ${liveSeries.bars.length.toLocaleString('th-TH')} แท่งจาก ${sourceLabel} · ล่าสุด ${latestBarLabel}` : hasCandleConnection ? 'ยังแสดงแท่งจริงไม่ได้' : 'ยังไม่มีกราฟจากราคาแท่งจริง'}</p></>}

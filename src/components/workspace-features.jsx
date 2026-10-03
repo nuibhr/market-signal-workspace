@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import UsAssetTabs from './us-asset-tabs.jsx';
 import { analyzeCandles } from '../analysis/technical.mjs';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS } from '../markets/catalog.mjs';
 
@@ -61,6 +62,7 @@ export function AmbientDepth() {
 
 export function MarketScanner({ asset, market, favorites, timeframe, onSelect }) {
   const [category, setCategory] = useState(market.id);
+  const [usKind,setUsKind]=useState(asset.sectionId==='US_ETFS'?'etf':'stock');
   const [query, setQuery] = useState('');
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState('loading');
@@ -72,9 +74,10 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
     const matched = query.trim() ? list.filter(item => `${item.symbol} ${item.name}`.toLowerCase().includes(query.trim().toLowerCase())) : list;
     const preferred = [asset, ...ALL_ASSETS.filter(item => favorites.includes(item.symbol)), ...matched]
       .filter(item => item.id === category && ['settrade-daily','tfex-quote','fmp-quote'].includes(item.feed)
+        && (category!=='us'||(item.sectionId==='US_ETFS'?'etf':'stock')===usKind)
         && (!query.trim() || `${item.symbol} ${item.name}`.toLowerCase().includes(query.trim().toLowerCase())));
     return preferred.filter((item, index, all) => all.findIndex(entry => entry.symbol === item.symbol) === index).slice(0, 6);
-  }, [asset, category, favorites, query]);
+  }, [asset, category, favorites, query,usKind]);
   const symbols = candidates.map(item => item.symbol).join(',');
   const conditions = useMemo(() => {
     const counts = new Map();
@@ -106,9 +109,9 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
 
   return <div className="feature-body scanner-view">
     <div className="feature-intro"><div><span className="feature-kicker">REGIME SCANNER / RULE ENGINE</span><p>อ่านแนวโน้มของสินทรัพย์ที่เลือกจากแท่ง {timeframe.toUpperCase()} · กราฟสำรองไม่ใช้ยืนยัน AutoPick</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ สแกนอีกครั้ง</button></div>
-    <div className="feature-market-tabs">{MARKET_GROUPS.filter(group=>group.id===market.id).map(group => <button key={group.id} className={category === group.id ? 'selected' : ''} onClick={() => { setCategory(group.id); setQuery(''); setExpanded(''); setConditionFilter(''); }}>{group.label}</button>)}</div>
+    <div className="feature-market-tabs">{market.id==='us'?<UsAssetTabs value={usKind} onChange={value=>{setUsKind(value);setQuery('');setExpanded('');setConditionFilter('');}}/>:MARKET_GROUPS.filter(group=>group.id===market.id).map(group => <button key={group.id} className={category === group.id ? 'selected' : ''} onClick={() => { setCategory(group.id); setQuery(''); setExpanded(''); setConditionFilter(''); }}>{group.label}</button>)}</div>
     <div className="scanner-controls"><label><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder={`ค้นหาใน ${MARKET_GROUPS.find(item => item.id === category)?.label ?? ''}`} /></label><span>{state === 'loading' ? 'กำลังสแกน…' : `ตรวจ ${candidates.length} symbols`}</span></div>
-    <StatusNote>สแกนสูงสุด 6 ตัวต่อครั้งจากรายการที่เห็นด้วยฟีดของตลาดนี้ · หน้า AutoPick แยกต่างหากจะตรวจทั้งจักรวาลตามรอบตลาด · ไม่มีอัตราชนะที่ยังไม่ได้วัด</StatusNote>
+    <StatusNote>สแกนสูงสุด 6 ตัวต่อครั้งจากรายการที่เห็น · {market.id==='us'&&usKind==='etf'?'ETF ใช้อ่านภาพเทคนิค ยังไม่รวมสัญญาณ AutoPick':'AutoPick ตรวจเฉพาะรายชื่อที่เปิดใช้งานตามรอบตลาด'} · ไม่มีอัตราชนะที่ยังไม่ได้วัด</StatusNote>
     {conditions.length > 0 && <div className="scanner-condition-chips"><strong>เงื่อนไขที่พบ</strong><button className={!conditionFilter ? 'selected' : ''} onClick={() => setConditionFilter('')}>ทั้งหมด {candidates.length}</button>{conditions.map(([label, count]) => <button key={label} className={conditionFilter === label ? 'selected' : ''} onClick={() => setConditionFilter(label)}>{label} <b>{count}</b></button>)}</div>}
     <div className="scanner-table-wrap" aria-busy={state === 'loading'}><table className="scanner-table"><thead><tr><th>ASSET</th><th>STRUCTURE</th><th>RSI 14</th><th>PRICE</th><th>CONDITIONS</th><th aria-label="รายละเอียด" /></tr></thead><tbody>{state === 'loading' ? candidates.map(item => <tr className="scanner-skeleton-row" key={item.symbol}><td><strong>{item.symbol}</strong><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td /></tr>) : visibleCandidates.map(item => {
       const series = results[item.symbol];

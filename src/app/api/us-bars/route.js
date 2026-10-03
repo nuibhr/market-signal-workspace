@@ -17,11 +17,12 @@ export async function GET(request) {
     return Response.json({status:'unavailable',code:'DISPLAY_RIGHTS_NOT_CONFIRMED'}, {status:503,headers:HEADERS});
   try {
     // The chart, scanner and holdings use the same validated closed daily bars.
-    const series = await getUsDailyBars(symbol);
+    const isEtf = asset.sectionId === 'US_ETFS';
+    const series = await getUsDailyBars(symbol, {assetKind:isEtf?'etf':'stock'});
     const assessment = assessDailySeries(series);
     return Response.json({ ...series, status:'available', instrumentId:asset.instrumentId, market:'US',
-      latestTime:null, freshness:assessment.freshness, signalEligible:assessment.signalEligible, quote:null,
-      live:false, signalMode:'EOD_CLOSED_CANDLE',
+      latestTime:null, freshness:assessment.freshness, signalEligible:!isEtf&&assessment.signalEligible, quote:null,
+      live:false, signalMode:isEtf?'ETF_TECHNICAL_REVIEW':'EOD_CLOSED_CANDLE',
       excludedCurrentDay:series.latestDay !== newYorkParts().day }, {headers:HEADERS});
   } catch (error) {
     const code = ['SOURCE_NOT_CONFIGURED','PLAN_REQUIRED','RATE_LIMITED','BARS_UNAVAILABLE','INVALID_RESPONSE','DISPLAY_RIGHTS_NOT_CONFIRMED'].includes(error?.code) ? error.code : 'SOURCE_UNAVAILABLE';

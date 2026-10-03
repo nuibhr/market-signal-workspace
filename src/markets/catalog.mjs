@@ -2,9 +2,9 @@
 // SET100: official 2026 H2 constituent snapshot used by the previous scanner.
 // mai: user's 50-name initial list; market-cap ranking is still unverified.
 // DR80: KTB's 2026-08-14 list plus the 28 new KTB DRs listed 2026-09-09.
-import { US_WATCHLIST as PREVIOUS_US_WATCHLIST } from './us-watchlist.mjs';
 import { US_LIQUID_STOCKS } from './us-liquid-500.mjs';
-const US_WATCHLIST = [...US_LIQUID_STOCKS, ...PREVIOUS_US_WATCHLIST.filter(item => item.kind === 'etf')];
+import { US_VERIFIED_ETFS } from './us-etfs.mjs';
+const US_WATCHLIST = [...US_LIQUID_STOCKS, ...US_VERIFIED_ETFS];
 import { TFEX_CONTRACTS, TFEX_SYMBOLS } from './tfex-contracts.mjs';
 
 export { TFEX_SYMBOLS };
