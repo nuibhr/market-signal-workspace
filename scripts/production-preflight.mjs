@@ -12,7 +12,7 @@ check('Absolute database path on confirmed persistent server', isAbsolute(proces
 check('Worker authentication secret configured', process.env.AUTO_PICK_RUN_SECRET?.length >= 32);
 check('Encrypted backup key configured', /^[a-f0-9]{64}$/i.test(process.env.BACKUP_ENCRYPTION_KEY ?? ''));
 if (process.env.AUTO_PICK_ENABLED === 'true' || process.env.AUTO_PICK_DR_ENABLED === 'true') check('SET/DR display permission confirmed', process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED === 'true');
-if (process.env.AUTO_PICK_US_ENABLED === 'true') check('US display permission confirmed', process.env.FMP_DISPLAY_RIGHTS_CONFIRMED === 'true');
+if (process.env.AUTO_PICK_US_ENABLED === 'true') check('US display permission confirmed', process.env.YAHOO_EOD_DISPLAY_RIGHTS_CONFIRMED === 'true' || Boolean(process.env.FMP_API_KEY && process.env.FMP_DISPLAY_RIGHTS_CONFIRMED === 'true'));
 if (process.env.MARKETDX_API_KEY) check('News display permission confirmed', process.env.MARKETDX_PUBLIC_DISPLAY_RIGHTS_CONFIRMED === 'true');
 if (process.env.FRED_API_KEY) check('Macro series display permission confirmed', process.env.FRED_PUBLIC_DISPLAY_RIGHTS_CONFIRMED === 'true');
 for (const result of checks) process.stdout.write(`${result.passed ? 'PASS' : 'BLOCKED'} ${result.name}\n`);

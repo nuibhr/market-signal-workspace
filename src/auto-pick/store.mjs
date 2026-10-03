@@ -4,7 +4,7 @@ import { thaiSession } from './engine.mjs';
 import { drSession, DR_ORB_RULE_VERSION } from './dr-orb.mjs';
 import { THAI_ORB_RULE_VERSION } from './thai-orb.mjs';
 import { DR80_SYMBOLS, MAI_INITIAL_SYMBOLS, SET100_SYMBOLS } from '../markets/catalog.mjs';
-import { NASDAQ100_SYMBOLS } from '../markets/nasdaq-100.mjs';
+import { US_SCAN_SYMBOLS, US_UNIVERSE_VERSION, usScanSlot } from '../markets/us-universe.mjs';
 import { usEodSession } from '../market-data/fmp-us.mjs';
 import { PERFORMANCE_WINDOW, recordedOutcome, summarizeRecordedTrades } from './signal-performance.mjs';
 
@@ -336,13 +336,13 @@ function usScannerHealth(now) {
   const { day } = session;
   const db = database();
   const fullRun = db.prepare(`SELECT id,status,scanned,finished_at AS finishedAt FROM auto_pick_runs
-    WHERE market='us' AND slot NOT LIKE '%:wait:%' ORDER BY started_at DESC LIMIT 1`).get();
+    WHERE market='us' AND slot LIKE ? AND slot NOT LIKE '%:wait:%' ORDER BY started_at DESC LIMIT 1`).get(`%:${US_UNIVERSE_VERSION}`);
   const planRequired = fullRun ? db.prepare("SELECT COUNT(*) AS count FROM auto_pick_decisions WHERE run_id=? AND reason='PLAN_REQUIRED'").get(fullRun.id)?.count ?? 0 : 0;
-  const scanUnverified = !fullRun || fullRun.status !== 'COMPLETE' || fullRun.scanned < NASDAQ100_SYMBOLS.length;
+  const scanUnverified = !fullRun || fullRun.status !== 'COMPLETE' || fullRun.scanned < US_SCAN_SYMBOLS.length;
   const lastFullRunAt = fullRun?.finishedAt ?? null;
   const verification = { scanUnverified, planRequired, lastFullRunAt };
   const row = db.prepare(`SELECT id,status,slot,started_at,finished_at,error_code FROM auto_pick_runs
-    WHERE market='us' AND slot=?`).get(day) ?? db.prepare(`SELECT id,status,slot,started_at,finished_at,error_code FROM auto_pick_runs
+    WHERE market='us' AND slot=?`).get(usScanSlot(day)) ?? db.prepare(`SELECT id,status,slot,started_at,finished_at,error_code FROM auto_pick_runs
     WHERE market='us' ORDER BY started_at DESC LIMIT 1`).get();
   if (!row) return { status: session.scanWindow ? 'awaiting-first-run' : 'outside-session', lastRunAt: null, ...verification };
   const lastRunAt = row.finished_at ?? row.started_at;
@@ -353,7 +353,7 @@ function usScannerHealth(now) {
     return { status: session.afterDeadline ? 'eod-data-delayed' : 'awaiting-eod-data', lastRunAt, ...verification };
   if (row.slot.startsWith(`${day}:wait:`) && row.status === 'FAILED')
     return { status: 'degraded', lastRunAt, errorCode: row.error_code, ...verification };
-  if (row.slot !== day || !Number.isFinite(ageMinutes) || ageMinutes < -2)
+  if (row.slot !== usScanSlot(day) || !Number.isFinite(ageMinutes) || ageMinutes < -2)
     return { status: session.afterDeadline ? 'missed-candidate-window' : 'awaiting-first-run', lastRunAt, ...verification };
   if (row.status === 'FAILED') {
     return { status: 'degraded', lastRunAt,

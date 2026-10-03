@@ -1,9 +1,10 @@
 import { archiveCandles } from './history-store.mjs';
 import { SET100_SYMBOLS, MAI_INITIAL_SYMBOLS, DR80_SYMBOLS, US_STOCKS } from '../markets/catalog.mjs';
-import { NASDAQ100_AS_OF, NASDAQ100_SYMBOLS } from '../markets/nasdaq-100.mjs';
+import { US_SCAN_SYMBOLS, US_UNIVERSE_METADATA, usScanSlot } from '../markets/us-universe.mjs';
 import { completedCandles } from '../analysis/pivots.mjs';
 import { createSettradeClient } from '../market-data/settrade.mjs';
-import { getFmpDailyBars, usEodSession } from '../market-data/fmp-us.mjs';
+import { usEodSession } from '../market-data/fmp-us.mjs';
+import { getUsDailyBars, usEodRights } from '../market-data/us-eod.mjs';
 import { advancePick, bangkokParts, thaiSession } from './engine.mjs';
 import { advanceThaiOrbPick, buildThaiOrbPlan, THAI_ORB_RULE_VERSION } from './thai-orb.mjs';
 import { advanceDrOrbPick, buildDrOrbPlan, DR_ORB_RULE_VERSION, drSession } from './dr-orb.mjs';
@@ -34,7 +35,7 @@ export function thaiScanSymbols() {
 }
 
 export function usScanSymbols() {
-  return NASDAQ100_SYMBOLS.filter(symbol => US_STOCK_SET.has(symbol));
+  return US_SCAN_SYMBOLS.filter(symbol => US_STOCK_SET.has(symbol));
 }
 
 export function autoPickReadiness() {
@@ -46,13 +47,13 @@ export function autoPickReadiness() {
   const drReady = process.env.AUTO_PICK_DR_ENABLED === 'true' && storageReady && client.configuration.configured
     && drScanSymbols().length > 0 && (!production || process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED === 'true') && workerSecretReady;
   const usSymbols = usScanSymbols();
-  const usRightsReady = !production || process.env.FMP_DISPLAY_RIGHTS_CONFIRMED === 'true';
-  const usReady = process.env.AUTO_PICK_US_ENABLED === 'true' && storageReady && Boolean(process.env.FMP_API_KEY?.trim())
-    && usRightsReady && usSymbols.length === NASDAQ100_SYMBOLS.length && workerSecretReady;
+  const usRights = usEodRights();
+  const usRightsReady = usRights.yahoo || usRights.fmp && Boolean(process.env.FMP_API_KEY?.trim());
+  const usReady = process.env.AUTO_PICK_US_ENABLED === 'true' && storageReady
+    && usRightsReady && usSymbols.length === US_SCAN_SYMBOLS.length && workerSecretReady;
   const usReason = !storageReady ? 'ต้องใช้เซิร์ฟเวอร์และฐานข้อมูลถาวร'
-    : !process.env.FMP_API_KEY?.trim() ? 'ยังไม่ได้ตั้งค่า FMP_API_KEY'
-      : !usRightsReady ? 'ยังไม่ยืนยันสิทธิแสดง/จัดเก็บข้อมูล FMP ใน production'
-          : usSymbols.length !== NASDAQ100_SYMBOLS.length ? `รายชื่อ Nasdaq-100 ใน watchlist ยังไม่ครบ (${usSymbols.length}/${NASDAQ100_SYMBOLS.length})`
+    : !usRightsReady ? 'ยังไม่ยืนยันสิทธิข้อมูล FMP หรือ Yahoo EOD สำหรับ production'
+          : usSymbols.length !== US_SCAN_SYMBOLS.length ? `รายชื่อหุ้นในชุดสแกนยังไม่ครบ (${usSymbols.length}/${US_SCAN_SYMBOLS.length})`
             : process.env.AUTO_PICK_US_ENABLED !== 'true' ? 'ยังไม่เปิด AUTO_PICK_US_ENABLED'
               : !workerSecretReady ? 'ยังไม่ได้ตั้งค่า secret สำหรับ worker (อย่างน้อย 32 ตัวอักษร)' : null;
   return {
@@ -74,9 +75,9 @@ export function autoPickReadiness() {
         mode: 'DR ทุกตัวในรายการ · กลางคืนเฉพาะที่ quote ยืนยัน · ต้องตรวจ ask' },
       { id: 'tfex', label: 'TFEX', status: 'blocked', reason: 'กราฟและซีรีส์ Z พร้อมดู แต่ยังไม่เปิดสัญญาณก่อนยืนยันสัญญานำ สภาพคล่อง และกติกาความเสี่ยงแต่ละสินค้า', source: 'TFEX Open API · OHLC chart only' },
       { id: 'forex', label: 'Forex · 19 สินค้า', status: 'blocked', reason: 'ต้องมีฟีดแท่งและราคา bid/ask จากโบรกเกอร์พร้อมสิทธิใช้งาน', source: 'ยังไม่พร้อม' },
-      { id: 'us', label: 'หุ้นอเมริกา · Nasdaq-100', status: usReady ? 'active' : 'blocked',
-        reason: usReason, universe: usSymbols, source: 'Nasdaq snapshot 22 มิ.ย. 2026 · FMP EOD 1D',
-        timeframe: '1d', mode: 'สแกนหลังตลาดปิด · ยืนยัน ENTRY/TP/SL จากแท่งรายวัน', snapshotDate: NASDAQ100_AS_OF },
+      { id: 'us', label: `หุ้นอเมริกา · ${usSymbols.length} ตัว`, status: usReady ? 'active' : 'blocked',
+        reason: usReason, universe: usSymbols, source: 'หุ้นสภาพคล่องสูง 3 เดือน · FMP / Yahoo EOD 1D',
+        timeframe: '1d', mode: 'สแกนหลังตลาดปิด · ยืนยัน ENTRY/TP/SL จากแท่งรายวัน', snapshotDate: US_UNIVERSE_METADATA.asOf },
     ],
   };
 }
@@ -249,10 +250,11 @@ export async function runUsAutoPick(now = Date.now()) {
   requireReady('us');
   const session = usEodSession(now);
   if (!session.scanWindow) return { status: 'outside-session', day: session.day };
-  if (runForSlot('us', session.day)?.status === 'COMPLETE') return { status: 'already-run', day: session.day };
+  const scanSlot = usScanSlot(session.day);
+  if (runForSlot('us', scanSlot)?.status === 'COMPLETE') return { status: 'already-run', day: session.day };
 
   let firstBars;
-  try { firstBars = await getFmpDailyBars('AAPL', { now }); }
+  try { firstBars = await getUsDailyBars('AAPL', { now }); }
   catch (error) {
     const slot = `${session.day}:wait:${Math.floor(now / 900_000)}`;
     const runId = claimRun('us', slot);
@@ -267,7 +269,7 @@ export async function runUsAutoPick(now = Date.now()) {
     return { status: 'waiting-eod', day: session.day, latestDay: firstBars.latestDay };
   }
 
-  const runId = claimRun('us', session.day, { retryFailed: true });
+  const runId = claimRun('us', scanSlot, { retryFailed: true });
   if (!runId) return { status: 'already-run', day: session.day };
   let scanned = 0;
   let candidates = 0;
@@ -276,10 +278,11 @@ export async function runUsAutoPick(now = Date.now()) {
   const barsBySymbol = new Map([['AAPL', firstBars]]);
   try {
     const active = activeSignals('us');
+    const activeSymbols = new Set(active.map(pick => pick.symbol));
     // Monitor existing plans before spending the bounded budget on new candidates.
     for (const pick of active) {
       try {
-        const series = barsBySymbol.get(pick.symbol) ?? await getFmpDailyBars(pick.symbol, { now });
+        const series = barsBySymbol.get(pick.symbol) ?? await getUsDailyBars(pick.symbol, { now });
         barsBySymbol.set(pick.symbol, series);
         archiveCandles(pick.symbol, '1d', series);
         const advanced = advanceUsEodPick(pick, series.bars);
@@ -289,25 +292,25 @@ export async function runUsAutoPick(now = Date.now()) {
     }
     const deadline = Date.now() + SCAN_BUDGET_MS;
     let published = 0;
-    for (const symbol of scanCoverage('us', session.day, symbols).pending) {
+    for (const symbol of scanCoverage('us', scanSlot, symbols).pending) {
       if (Date.now() >= deadline) break;
       scanned += 1;
       try {
-        const series = barsBySymbol.get(symbol) ?? await getFmpDailyBars(symbol, { now });
+        const series = barsBySymbol.get(symbol) ?? await getUsDailyBars(symbol, { now });
         barsBySymbol.set(symbol, series);
         archiveCandles(symbol, '1d', series);
         if (series.latestDay !== session.day) {
           recordDecision(runId, symbol, null, 'NO_CURRENT_D1_BAR');
-          recordScanProgress('us', session.day, symbol, 'retry', 'NO_CURRENT_D1_BAR');
+          recordScanProgress('us', scanSlot, symbol, 'retry', 'NO_CURRENT_D1_BAR');
           continue;
         }
-        if (signalForSession('us', symbol, session.day) || activeSignals('us').some(pick => pick.symbol === symbol)) {
-          recordScanProgress('us', session.day, symbol, 'done', 'ACTIVE_PLAN_EXISTS');
+        if (signalForSession('us', symbol, session.day) || activeSymbols.has(symbol)) {
+          recordScanProgress('us', scanSlot, symbol, 'done', 'ACTIVE_PLAN_EXISTS');
           continue;
         }
-        const plan = buildUsEodPlan({ symbol, instrumentId: `NASDAQ100:${symbol}`, bars: series.bars });
+        const plan = buildUsEodPlan({ symbol, instrumentId: `US_STOCKS:${symbol}`, bars: series.bars });
         recordDecision(runId, symbol, plan);
-        recordScanProgress('us', session.day, symbol, 'done', plan.code ?? null);
+        recordScanProgress('us', scanSlot, symbol, 'done', plan.code ?? null);
         if (plan.tradeAllowed) {
           candidates += 1;
           if (createSignal({ market: 'us', symbol, sessionDay: session.day, plan, source: series.source })) published += 1;
@@ -315,11 +318,11 @@ export async function runUsAutoPick(now = Date.now()) {
       } catch (error) {
         const code = error?.code ?? 'SOURCE_UNAVAILABLE';
         recordDecision(runId, symbol, null, code);
-        recordScanProgress('us', session.day, symbol, code === 'PLAN_REQUIRED' ? 'unavailable' : 'retry', code);
+        recordScanProgress('us', scanSlot, symbol, code === 'PLAN_REQUIRED' ? 'unavailable' : 'retry', code);
         errors.push(`${symbol}:${code}`);
       }
     }
-    const coverage = scanCoverage('us', session.day, symbols);
+    const coverage = scanCoverage('us', scanSlot, symbols);
     const errorCode = errors.length || coverage.unavailable ? 'PARTIAL_SOURCE_UNAVAILABLE' : coverage.remaining ? 'SCAN_IN_PROGRESS' : null;
     finishRun(runId, { scanned: coverage.done, candidates, errorCode });
     return { status: errorCode ? 'partial' : 'complete', day: session.day, scanned, candidates,

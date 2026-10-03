@@ -1,4 +1,5 @@
 import { customerFeed } from '../../../auto-pick/customer-view.mjs';
+import { usScanSlot } from '../../../markets/us-universe.mjs';
 import { usEodSession } from '../../../market-data/fmp-us.mjs';
 import { autoPickReadiness } from '../../../auto-pick/runner.mjs';
 import { scanCoverage, scannerHealth, signalFeed, workerProcessHealth } from '../../../auto-pick/store.mjs';
@@ -28,7 +29,7 @@ export async function GET() {
     coverage = {
       thai: scanCoverage('thai', thaiSession(now).day, thai?.universe ?? [], now),
       dr: scanCoverage('dr', drSession(now).key, dr?.universe ?? [], now),
-      us: scanCoverage('us', usEodSession(now).day, rawReadiness.markets.find(market => market.id === 'us')?.universe ?? [], now),
+      us: scanCoverage('us', usScanSlot(usEodSession(now).day), rawReadiness.markets.find(market => market.id === 'us')?.universe ?? [], now),
     };
     for (const [id, item] of Object.entries(coverage)) coverage[id] = Object.fromEntries(['expected','done','ineligible','unavailable','remaining'].map(key=>[key,item[key]]));
   } catch { coverage = {}; }

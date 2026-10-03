@@ -19,5 +19,11 @@ export default function WebullSdkStatus({ data }) {
     <p>{data.environment === 'sandbox'
       ? 'เป็นผลจากระบบทดสอบ ยังไม่ใช้ยิงสัญญาณลูกค้า และไม่ได้เปิดสตรีมค้างไว้'
       : 'ยังไม่เชื่อมเข้าระบบสัญญาณลูกค้า ผลตรวจนี้ไม่ใช่สถานะสตรีมที่รันต่อเนื่อง'}</p>
+    {data.production?.checkedAt && <p>Production ตรวจเมื่อ {date(data.production.checkedAt)} · {data.production.status === 'unauthorized'
+      ? 'คีย์ยังเข้าระบบจริงไม่ได้ (401)'
+      : data.production.status === 'data-verified' ? 'อ่านราคาและแท่งผ่าน · ยังต้องยืนยันฟีดสดและสิทธิแสดงให้ลูกค้า'
+        : data.production.status === 'approval-required' ? 'ต้องยืนยันการเข้าถึงในแอป Webull' : 'ยังอ่านข้อมูลจริงไม่ผ่าน'}</p>}
+    <a href="https://developer.webull.com/apis/docs/market-data-api/subscribe-quotes/" target="_blank" rel="noopener noreferrer">วิธีเปิดสิทธิ OpenAPI Market Data ↗</a>
+    {data.environment === 'sandbox' && <a className="account-secondary" href="/admin/webull">เปิดห้องทดลองกราฟและสแกนหุ้นสหรัฐฯ 500 ตัว →</a>}
   </article>;
 }

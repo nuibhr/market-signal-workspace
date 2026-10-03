@@ -1,4 +1,6 @@
-# Nasdaq-100 AutoPick · EOD pilot
+# US AutoPick · EOD pilot
+
+> Current update 3 October 2026: the scanner now uses 500 data-verified liquid stocks with FMP / Yahoo closed daily candles. See [current universe and verification](./us-liquid-universe.md). The Nasdaq-100 coverage and provider setup below document the previous rollout.
 
 > อัปเดต 29 ก.ย. 2026: กติกาใหม่ `us-eod-breakout-v0.2-unvalidated` อยู่ใน [กติกาสแกนตามข้อมูลที่ระบบมี](scanner-rules-2026-09-29.md). แผน v0.1 ที่บันทึกไว้ยังถูกติดตามตามข้อมูลในแผนนั้นจนจบสถานะ รายละเอียดกติกาด้านล่างเป็นประวัติของ v0.1
 

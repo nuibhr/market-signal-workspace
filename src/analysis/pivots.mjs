@@ -1,4 +1,4 @@
-const FRAME_SECONDS = { '15m': 900, '1h': 3600, '4h': 14_400 };
+const FRAME_SECONDS = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '4h': 14_400 };
 
 function bangkokDay(now) {
   const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(now));

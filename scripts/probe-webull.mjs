@@ -16,6 +16,13 @@ const mode = ['probe', 'stream', 'matrix'].includes(args[0]) ? args.shift() : 'p
 // Isolate it from other providers' credentials and from browser/server startup.
 const env = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
   ['PATH', 'HOME', 'LANG', 'SSL_CERT_FILE'].includes(key) || key.startsWith('WEBULL_')));
+const regionOption = args.indexOf('--region'), environmentOption = args.indexOf('--environment');
+if (regionOption >= 0) env.WEBULL_REGION_ID = args[regionOption + 1];
+if (environmentOption >= 0) env.WEBULL_ENVIRONMENT = args[environmentOption + 1];
+const region = env.WEBULL_REGION_ID || 'us', environment = env.WEBULL_ENVIRONMENT || 'sandbox';
+if (!['us', 'th'].includes(region) || !['prod', 'sandbox'].includes(environment)) {
+  console.error('Invalid Webull diagnostic environment.'); process.exit(1);
+}
 env.PYTHONUNBUFFERED = '1';
 const child = spawn(python, [`${root}scripts/webull-market-data.py`, mode, ...args], {
   cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'], shell: false,
@@ -61,13 +68,14 @@ child.on('close', async code => {
   try {
     const directory = `${root}data/webull/reports`;
     await mkdir(directory, { recursive: true, mode: 0o700 });
-    const target = `${directory}/${mode}.json`;
+    // A Production check must not overwrite the working Sandbox evidence.
+    const suffix = regionOption >= 0 || environmentOption >= 0 ? `-${region}-${environment}` : '';
+    const target = `${directory}/${mode}${suffix}.json`;
     const temporary = `${target}.${process.pid}.tmp`;
     await writeFile(temporary, JSON.stringify({ checkedAt: new Date().toISOString(),
       success: code === 0, mode, records,
       credentialScope: createHash('sha256').update(JSON.stringify([
-        process.env.WEBULL_APP_KEY || '', process.env.WEBULL_APP_SECRET || '',
-        process.env.WEBULL_REGION_ID || 'us', process.env.WEBULL_ENVIRONMENT || 'sandbox',
+        env.WEBULL_APP_KEY || '', env.WEBULL_APP_SECRET || '', region, environment,
       ])).digest('hex'),
     }, null, 2), { mode: 0o600 });
     await rename(temporary, target);

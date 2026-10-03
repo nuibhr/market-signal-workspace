@@ -18,7 +18,7 @@ export function replayThreeMonths({ symbol, market, daily, intraday = [], now = 
       evaluated++;
       if (pick) { pick = advanceUsEodPick(pick,bars).pick;
         if (!['OPEN','WAITING_FOR_ENTRY'].includes(pick.status)) { trades.push(pick); pick = null; } }
-      if (!pick) { const plan = buildUsEodPlan({symbol,instrumentId:`NASDAQ100:${symbol}`,bars});
+      if (!pick) { const plan = buildUsEodPlan({symbol,instrumentId:`US_STOCKS:${symbol}`,bars});
         if (plan.tradeAllowed) { plans++; pick = {plan,status:'WAITING_FOR_ENTRY',sessionDay:day,publishedAt:`${day}T23:59:59Z`}; } }
     }
     if (pick) trades.push(pick);

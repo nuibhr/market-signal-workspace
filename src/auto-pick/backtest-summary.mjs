@@ -1,5 +1,5 @@
 import { createSettradeClient } from '../market-data/settrade.mjs';
-import { getFmpDailyBars } from '../market-data/fmp-us.mjs';
+import { getUsDailyBars } from '../market-data/us-eod.mjs';
 import { archiveCandles } from './history-store.mjs';
 import { sharedDatabase } from '../membership/store.mjs';
 import { historicalCandles } from './history-store.mjs';
@@ -8,12 +8,12 @@ import { THAI_ORB_RULE_VERSION } from './thai-orb.mjs';
 import { DR_ORB_RULE_VERSION } from './dr-orb.mjs';
 import { US_EOD_RULE_VERSION } from './us-engine.mjs';
 import { SET100_SYMBOLS, MAI_INITIAL_SYMBOLS, DR80_SYMBOLS, US_STOCKS } from '../markets/catalog.mjs';
-import { NASDAQ100_SYMBOLS } from '../markets/nasdaq-100.mjs';
+import { US_SCAN_SYMBOLS } from '../markets/us-universe.mjs';
 
 const historyClient = createSettradeClient();
 const versions = { thai: THAI_ORB_RULE_VERSION, dr: DR_ORB_RULE_VERSION, us: US_EOD_RULE_VERSION };
 const usSet = new Set(US_STOCKS.map(item => item.symbol));
-const universes = { thai: [...new Set([...SET100_SYMBOLS, ...MAI_INITIAL_SYMBOLS])], dr: [...new Set(DR80_SYMBOLS)], us: NASDAQ100_SYMBOLS.filter(symbol => usSet.has(symbol)) };
+const universes = { thai: [...new Set([...SET100_SYMBOLS, ...MAI_INITIAL_SYMBOLS])], dr: [...new Set(DR80_SYMBOLS)], us: US_SCAN_SYMBOLS.filter(symbol => usSet.has(symbol)) };
 function database() {
   const db = sharedDatabase();
   db.exec(`CREATE TABLE IF NOT EXISTS historical_replay_summaries(
@@ -45,7 +45,7 @@ export async function refreshNextBacktest(now = Date.now()) {
   const displayAllowed = process.env.NODE_ENV !== 'production' || process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED === 'true';
   try {
     if (market === 'us') {
-      const series = await getFmpDailyBars(symbol, {now}); archiveCandles(symbol,'1d',series);
+      const series = await getUsDailyBars(symbol, {now}); archiveCandles(symbol,'1d',series);
     } else if (displayAllowed && historyClient.configuration.configured) {
       const dailySeries = await historyClient.getCandles(symbol,'1d',1000);
       archiveCandles(symbol,'1d',dailySeries);

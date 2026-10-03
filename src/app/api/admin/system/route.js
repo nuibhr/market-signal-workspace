@@ -1,4 +1,5 @@
 import { usEodSession } from '../../../../market-data/fmp-us.mjs';
+import { usScanSlot } from '../../../../markets/us-universe.mjs';
 import { currentMember, privateHeaders } from '../../../../membership/server.mjs';
 import { isAdmin } from '../../../../membership/store.mjs';
 import { autoPickReadiness } from '../../../../auto-pick/runner.mjs';
@@ -19,7 +20,7 @@ export async function GET() {
     const markets = readiness.markets.map(({ universe, ...market }) => ({ ...market, universeCount: universe?.length ?? 0 }));
     const coverage = {};
     for (const market of readiness.markets.filter(item => ['thai', 'dr', 'us'].includes(item.id))) {
-      const key = market.id === 'thai' ? thaiSession(now).day : market.id === 'dr' ? drSession(now).key : usEodSession(now).day;
+      const key = market.id === 'thai' ? thaiSession(now).day : market.id === 'dr' ? drSession(now).key : usScanSlot(usEodSession(now).day);
       const { pending, unresolved, ...summary } = scanCoverage(market.id, key, market.universe ?? [], now);
       coverage[market.id] = { ...summary, sessionKey: key, retrySymbols: unresolved };
     }

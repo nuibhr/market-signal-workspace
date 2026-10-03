@@ -18,25 +18,33 @@ export async function webullSdkHealth() {
   const base = { region, environment, configured, signalEligible: false };
   if (!configured) return { ...base, status: 'not-configured' };
   if (!['us', 'th'].includes(region) || !['prod', 'sandbox'].includes(environment)) return { ...base, status: 'invalid-config' };
-  async function evidence(mode) {
+  async function evidence(mode, targetEnvironment = environment, name = mode) {
     try {
-      const path = resolve(`data/webull/reports/${mode}.json`);
+      const path = resolve(`data/webull/reports/${name}.json`);
       if ((await stat(path)).size > 64_000) return null;
       const data = JSON.parse(await readFile(path, 'utf8'));
-      if (data.credentialScope !== scope || data.mode !== mode || !timestamp(data.checkedAt) || !Array.isArray(data.records)) return null;
-      const config = data.records.find(row => row.stage === 'config' && row.region === region && row.environment === environment);
+      const targetScope = targetEnvironment === environment ? scope : createHash('sha256').update(JSON.stringify([
+        process.env.WEBULL_APP_KEY || '', process.env.WEBULL_APP_SECRET || '', region, targetEnvironment,
+      ])).digest('hex');
+      if (data.credentialScope !== targetScope || data.mode !== mode || !timestamp(data.checkedAt) || !Array.isArray(data.records)) return null;
+      const config = data.records.find(row => row.stage === 'config' && row.region === region && row.environment === targetEnvironment);
       if (!config) return null;
       return data;
     } catch { return null; }
   }
-  const [http, mqtt] = await Promise.all([evidence('probe'), evidence('stream')]);
+  const [http, mqtt, prod] = await Promise.all([evidence('probe'), evidence('stream'), evidence('probe', 'prod', `probe-${region}-prod`)]);
+  const prodConfig = prod?.records.find(row => row.stage === 'config');
+  const production = { checkedAt: prod?.checkedAt ?? null,
+    status: !prod ? 'not-checked' : prod.success ? 'data-verified' : prodConfig?.httpStatus === 401 ? 'unauthorized'
+      : prodConfig?.twoFactorRequired ? 'approval-required' : 'unavailable',
+    httpStatus: prodConfig?.httpStatus ?? null };
   const snapshot = http?.records.find(row => row.stage === 'snapshot' && row.status === 'available' && row.environment === environment);
   const bars = http?.records.find(row => row.stage === 'bars' && row.status === 'available' && row.environment === environment);
   const stream = mqtt?.records.find(row => row.stage === 'stream-summary' && row.environment === environment && row.region === region);
   const httpOk = http?.success === true && positive(snapshot?.price) && positive(bars?.closedValidBars);
   const streamOk = mqtt?.success === true && stream?.status === 'available' && positive(stream.pricedMessages);
   const status = httpOk && streamOk ? 'verified' : httpOk || streamOk ? 'partial' : http || mqtt ? 'failed' : 'not-checked';
-  return { ...base, status,
+  return { ...base, status, production,
     snapshot: positive(snapshot?.price) ? { symbol: snapshot.symbol, price: snapshot.price,
       observedAt: timestamp(snapshot.observedAt), checkedAt: http.checkedAt, responseMs: snapshot.responseMs } : null,
     bars: positive(bars?.closedValidBars) ? { symbol: bars.symbol, count: bars.closedValidBars,

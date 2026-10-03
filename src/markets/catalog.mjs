@@ -2,7 +2,9 @@
 // SET100: official 2026 H2 constituent snapshot used by the previous scanner.
 // mai: user's 50-name initial list; market-cap ranking is still unverified.
 // DR80: KTB's 2026-08-14 list plus the 28 new KTB DRs listed 2026-09-09.
-import { US_WATCHLIST } from './us-watchlist.mjs';
+import { US_WATCHLIST as PREVIOUS_US_WATCHLIST } from './us-watchlist.mjs';
+import { US_LIQUID_STOCKS } from './us-liquid-500.mjs';
+const US_WATCHLIST = [...US_LIQUID_STOCKS, ...PREVIOUS_US_WATCHLIST.filter(item => item.kind === 'etf')];
 import { TFEX_CONTRACTS, TFEX_SYMBOLS } from './tfex-contracts.mjs';
 
 export { TFEX_SYMBOLS };
@@ -75,7 +77,7 @@ const GROUPS = [
     { id: 'TFEX', label: 'TFEX · เดือนสัญญาใกล้และถัดไป', symbols: TFEX_SYMBOLS },
   ] },
   { id: 'us', label: 'หุ้นอเมริกา', detail: `หุ้น ${US_STOCKS.length} · ETF ${US_ETFS.length}`, sections: [
-    { id: 'US_STOCKS', label: `หุ้นสหรัฐฯ · watchlist ${US_STOCKS.length}`, symbols: US_STOCKS.map(item => item.symbol) },
+    { id: 'US_STOCKS', label: `หุ้นสภาพคล่องสูง · ${US_STOCKS.length} ตัว`, symbols: US_STOCKS.map(item => item.symbol) },
     { id: 'US_ETFS', label: `ETF · watchlist ${US_ETFS.length}`, symbols: US_ETFS.map(item => item.symbol) },
   ] },
   { id: 'forex', label: 'Forex', detail: 'คู่เงิน · โลหะสปอต', sections: [
@@ -97,6 +99,7 @@ export const MARKET_GROUPS = GROUPS.map(group => ({
         : group.id === 'tfex' ? TFEX_CONTRACTS.find(item => item.symbol === symbol)?.name ?? symbol
           : DISPLAY_NAMES[symbol] ?? symbol,
       theme: group.id === 'us' ? US_WATCHLIST.find(item => item.symbol === symbol)?.theme ?? null : null,
+      popularityRank: group.id === 'us' ? US_WATCHLIST.find(item => item.symbol === symbol)?.popularityRank ?? null : null,
       price: '—',
       change: '—',
       source: group.id === 'tfex' ? 'TFEX Open API' : '—',

@@ -14,7 +14,7 @@ const WORKER_LABELS = { healthy: 'สแกนตามเวลา', running: '
   stuck: 'รอบสแกนค้าง', 'not-running': 'worker ไม่ทำงาน', 'awaiting-first-run': 'รอรอบสแกนแรก',
   'outside-session': 'นอกเวลาตลาด', 'missed-candidate-window': 'พลาดรอบคัดหุ้นเช้า',
   'candidate-degraded': 'รอบคัดหุ้นมีปัญหาข้อมูล', unavailable: 'อ่านสถานะ worker ไม่ได้',
-  'awaiting-eod-data': 'รอแท่งปิดจาก FMP', 'eod-data-delayed': 'แท่งปิดจาก FMP มาช้า' };
+  'awaiting-eod-data': 'รอข้อมูลแท่งรายวันปิด', 'eod-data-delayed': 'ข้อมูลแท่งรายวันมาช้า' };
 const LABELS = { PICK_READY: 'ระบบจับตา · รอยืนยัน', ENTRY: 'เข้าเงื่อนไขราคา', TARGET: 'ถึงเป้า TP1',
   STOP: 'ถึงจุดตัดขาดทุน', EXIT: 'จบแผนตามเงื่อนไข', AMBIGUOUS: 'ต้องตรวจผล', DATA_GAP: 'ข้อมูลขาดช่วง', SESSION_END: 'จบช่วงติดตาม · ต้องตรวจผล', EXPIRED: 'หมดเวลารอเข้า', ENTRY_SKIPPED: 'ราคาเลยจุดเข้า' };
 const fmt = (value, market = '') => typeof value === 'number' && Number.isFinite(value)
@@ -129,7 +129,8 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   const events = (state?.events ?? []).filter(e=>!marketId||e.market===marketId);
   const decisions = state?.decisions ?? [];
   const outcomes = (marketId?state?.marketOutcomes?.[marketId]:state?.outcomes) ?? {};
-  const lastRun = state?.runs?.[0];
+  const lastRunAt = (marketId ? [workers[marketId]?.lastRunAt] : Object.values(workers).map(item => item?.lastRunAt))
+    .filter(Boolean).sort().at(-1);
   const statusLabel = market => market.id === 'us' && workers.us?.scanUnverified
     ? `ฟีด FMP ใช้ไม่ได้ ${workers.us.planRequired} ตัว` : WORKER_LABELS[workers[market.id]?.status] ?? 'รอรอบสแกน';
   const workerSummary = activeMarkets.map(market => `${market.id === 'us' ? 'สหรัฐฯ' : market.id === 'thai' ? 'หุ้นไทย' : market.label}: ${statusLabel(market)}`).join(' · ');
@@ -148,13 +149,13 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
       <small>{market.universeCount ?? 0} ตัว</small>
       {coverage[market.id] && <small>รอบนี้ตรวจ {coverage[market.id].done + coverage[market.id].ineligible + coverage[market.id].unavailable}/{coverage[market.id].expected} · ไม่พร้อมตามช่วง/ไม่มีแท่ง {coverage[market.id].ineligible} · ฟีดไม่พร้อม {coverage[market.id].unavailable} · รอตรวจ/ลองใหม่ {coverage[market.id].remaining}</small>}
     </div>)}</div>
-    {shelvedMarkets.length > 0 && <details className="auto-pick-shelved-markets"><summary>ตลาดที่ยังสแกนไม่ครบหรือยังไม่เปิด {shelvedMarkets.length} หมวด</summary><div>{shelvedMarkets.map(market => <article key={market.id}><strong>{market.label}</strong><span>{market.id === 'us' && workers.us?.scanUnverified ? `รอบเต็มล่าสุดยังไม่ผ่าน: ${workers.us.planRequired ? `สิทธิ FMP ไม่ครอบคลุม ${workers.us.planRequired} ตัว` : 'ยังไม่มีข้อมูลยืนยันครบ Nasdaq-100'} · ตรวจรอบใหม่ก่อนเปิดแสดง` : market.reason ?? 'รอข้อมูลราคาและกติกาสแกนที่ยืนยันแล้ว'}</span></article>)}</div></details>}
+    {shelvedMarkets.length > 0 && <details className="auto-pick-shelved-markets"><summary>ตลาดที่ยังสแกนไม่ครบหรือยังไม่เปิด {shelvedMarkets.length} หมวด</summary><div>{shelvedMarkets.map(market => <article key={market.id}><strong>{market.label}</strong><span>{market.id === 'us' && workers.us?.scanUnverified ? `รอบเต็มล่าสุดยังไม่ผ่าน: ${workers.us.planRequired ? `สิทธิ FMP ไม่ครอบคลุม ${workers.us.planRequired} ตัว` : 'ยังไม่มีรอบสแกนยืนยันครบชุดหุ้นสหรัฐฯ'} · ตรวจรอบใหม่ก่อนเปิดแสดง` : market.reason ?? 'รอข้อมูลราคาและกติกาสแกนที่ยืนยันแล้ว'}</span></article>)}</div></details>}
     {!state && !error && <div className="auto-pick-empty">กำลังอ่านสถานะระบบ…</div>}
     {error && <div className="auto-pick-empty">อ่านสถานะสัญญาณจากเซิร์ฟเวอร์ไม่ได้</div>}
     {state?.status === 'membership-required' && <div className="auto-pick-empty"><ShieldCheck size={18} /><span>เข้าสู่ระบบ LINE และแจ้งเลขพอร์ตเพื่อรับสิทธิทดลองใช้ฟรี 14 วัน</span><a href="/account">บัญชีของฉัน ↗</a></div>}
     {state?.status === 'available' && <>
       <div className="auto-pick-outcomes"><span><b>{outcomes.WAITING_FOR_ENTRY ?? 0}</b> รอเข้า</span><span><b>{outcomes.OPEN ?? 0}</b> ติดตามอยู่</span><span><b>{outcomes.EXPIRED ?? 0}</b> หมดเวลารอเข้า</span><span><b>{outcomes.TARGET ?? 0}</b> ถึง TP1</span><span><b>{outcomes.STOP ?? 0}</b> ถึง SL</span><span><b>{outcomes.EXIT ?? 0}</b> จบตามแผน</span><span><b>{(outcomes.AMBIGUOUS ?? 0) + (outcomes.REVIEW ?? 0)}</b> รอตรวจ</span></div>
-      <div className="auto-pick-section-title"><strong>ระบบจับตาวันนี้ · แยกจากรายการโปรดของคุณ</strong><span>{lastRun ? `${lastRun.scanned ? `ตรวจ ${lastRun.scanned} ตัว · ผ่าน ${lastRun.candidates} ตัว` : 'รอบติดตามแผน'} · ${at(lastRun.finishedAt ?? lastRun.startedAt)}${lastRun.status === 'FAILED' ? ' · ฟีดบางส่วนมีปัญหา' : ''}` : 'ยังไม่มีรอบสแกน'}</span></div>
+      <div className="auto-pick-section-title"><strong>ระบบจับตาวันนี้ · แยกจากรายการโปรดของคุณ</strong><span>{lastRunAt ? `รอบล่าสุด ${at(lastRunAt)}` : 'ยังไม่มีรอบสแกน'}</span></div>
       {marketId!=='dr'&&(signals.length ? <div className="auto-pick-signal-list">{signals.slice(0, 7).map(signal => <article key={signal.id} className="auto-pick-signal">
         <div><strong>{signal.symbol} <small>{signal.plan?.side === 'LONG' ? 'LONG' : 'SHORT'}</small></strong><span>{signal.status === 'WAITING_FOR_ENTRY' ? signal.market === 'us' ? 'รอปิดทะลุจุดยืนยัน · D1' : 'รอยืนยันราคาเข้า' : signal.status === 'OPEN' ? 'เข้าเงื่อนไขแล้ว · ติดตามอยู่' : signal.status === 'TARGET' ? 'ถึง TP1' : signal.status === 'STOP' ? 'ถึง SL' : signal.status === 'EXIT' ? 'จบตามเงื่อนไข' : signal.status === 'EXPIRED' ? 'หมดเวลารอเข้า' : 'ตรวจผลเพิ่มเติม'}</span></div>
         <div className="auto-pick-levels"><span>{signal.entryPrice == null ? 'แผนรอเข้า' : 'เข้าอ้างอิง'} <b>{fmt(signal.entryPrice ?? signal.plan?.entry, signal.market)}</b></span><span>TP1 <b>{fmt(signal.plan?.tp1, signal.market)}</b></span><span>SL <b>{fmt(signal.plan?.stopLoss, signal.market)}</b></span></div>

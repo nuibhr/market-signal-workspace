@@ -11,6 +11,8 @@
     "probe:forex": "node scripts/probe-forex.mjs",
     "probe:webull": "node --env-file=.env.local scripts/probe-webull.mjs",
     "probe:webull-stream": "node --env-file=.env.local scripts/probe-webull.mjs stream",
+    "scan:webull-lab": "node --env-file=.env.local scripts/scan-webull.mjs",
+    "universe:us": "node --env-file=.env.local scripts/build-us-universe.mjs",
     "autopick:worker": "node --env-file=.env.local scripts/auto-pick-worker.mjs",
     "probe:autopick": "node --env-file=.env.local scripts/probe-auto-pick.mjs",
     "test:market-data": "node --test src/market-data/*.test.mjs",

@@ -14,6 +14,7 @@ import SymbolSearch from './symbol-search.jsx';
 import AnalysisRail from './analysis-rail.jsx';
 import LiveMarketWatch from './live-market-watch.jsx';
 import ChartToolbox from './chart-toolbox.jsx';
+import CandlestickChart from './candlestick-chart.jsx';
 import { AmbientDepth, MarketScanner, MultiTimeframe, VolumePulse, NewsGuide, NewsFeedState } from './workspace-features.jsx';
 import { WorkspaceSidebar, DailyDesk, FinancialCheck, LearningPanel, RoadmapPanel, CalendarPanel, DividendCalendarPanel } from './workspace-hub.jsx';
 import NugaomAssistant from './nugaom-assistant.jsx';
@@ -63,108 +64,6 @@ function formatHistoryStart(bar, timeframe) {
   return new Date(bar.time * 1000).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function CandlestickChart({ symbol, timeframe = '1d', bars = null, analysis = null, indicators = {}, chartStyle = 'candles', chartRange = 'recent', loading = false, source = 'ตลาด' }) {
-  const containerRef = useRef(null);
-  const candles = useMemo(() => bars ?? [], [bars]);
-
-  useEffect(() => {
-    let chart;
-    let cancelled = false;
-    let observer;
-
-    async function mountChart() {
-      if (!containerRef.current) return;
-      const { createChart, CandlestickSeries, HistogramSeries, LineSeries, ColorType, LineStyle, TickMarkType } = await import('lightweight-charts');
-      if (cancelled || !containerRef.current) return;
-
-      const container = containerRef.current;
-      const thaiIntraday = Boolean(bars && timeframe !== '1d');
-      const clock = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', hour12: false });
-      const day = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short' });
-      const fullTime = new Intl.DateTimeFormat('th-TH', { timeZone: 'Asia/Bangkok', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
-      chart = createChart(container, {
-        width: container.clientWidth,
-        height: 355,
-        layout: { background: { type: ColorType.Solid, color: '#09111d' }, textColor: '#8291a8', fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif', fontSize: 11 },
-        grid: { vertLines: { color: '#172334' }, horzLines: { color: '#172334' } },
-        crosshair: { vertLine: { color: '#47c8bd', labelBackgroundColor: '#16323a' }, horzLine: { color: '#47c8bd', labelBackgroundColor: '#16323a' } },
-        rightPriceScale: { borderColor: '#223047', scaleMargins: { top: 0.08, bottom: 0.22 } },
-        timeScale: { borderColor: '#223047', timeVisible: true, secondsVisible: false, rightOffset: 3,
-          ...(thaiIntraday ? { tickMarkFormatter: (time, type) => {
-            if (typeof time !== 'number') return null;
-            const date = new Date(time * 1000);
-            return type === TickMarkType.Time || type === TickMarkType.TimeWithSeconds ? clock.format(date)
-              : type === TickMarkType.Year ? new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', year: 'numeric' }).format(date) : day.format(date);
-          } } : {}) },
-        localization: { locale: 'en-US', ...(thaiIntraday ? { timeFormatter: time => typeof time === 'number' ? fullTime.format(new Date(time * 1000)) : String(time) } : {}) },
-      });
-      const precision = symbol.includes('/') ? symbol.endsWith('/JPY') ? 3 : 5 : (candles.at(-1)?.close ?? 1) < 1 ? 4 : 2;
-      const priceFormat = { type: 'price', precision, minMove: 10 ** -precision };
-      const series = chartStyle === 'line'
-        ? chart.addSeries(LineSeries, { color: '#6bdac3', lineWidth: 2, priceFormat })
-        : chart.addSeries(CandlestickSeries, {
-          upColor: '#53d6aa', downColor: '#fa7185', borderUpColor: '#53d6aa', borderDownColor: '#fa7185', wickUpColor: '#53d6aa', wickDownColor: '#fa7185',
-          priceFormat,
-        });
-      series.setData(chartStyle === 'line' ? candles.map(bar => ({ time: bar.time, value: bar.close })) : candles);
-      if (indicators.volume) {
-        const volume = chart.addSeries(HistogramSeries, {
-          priceFormat: { type: 'volume' },
-          priceScaleId: 'volume',
-          lastValueVisible: false,
-          priceLineVisible: false,
-        });
-        volume.setData(candles.map(bar => ({ time: bar.time, value: bar.volume, color: bar.close >= bar.open ? '#53d6aa4d' : '#fa71854d' })));
-        chart.priceScale('volume').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
-      }
-      if (analysis && bars) {
-        const addOverlay = (data, color, width = 1) => {
-          const overlay = chart.addSeries(LineSeries, { color, lineWidth: width, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
-          overlay.setData(data);
-        };
-        if (indicators.ema20) addOverlay(analysis.ema20Series, '#f0bc72', 2);
-        if (indicators.ema50) addOverlay(analysis.ema50Series, '#9e91f5', 2);
-        if (indicators.sma20) addOverlay(analysis.sma20Series, '#7daaf4', 2);
-        if (indicators.vwap && analysis.vwapSeries?.length) addOverlay(analysis.vwapSeries, '#f8ca62', 2);
-        if (indicators.donchian) {
-          addOverlay(analysis.donchianUpperSeries, '#ee93b8');
-          addOverlay(analysis.donchianLowerSeries, '#ee93b8');
-        }
-        if (indicators.bollinger) {
-          addOverlay(analysis.bollingerUpperSeries, '#7091e7');
-          addOverlay(analysis.bollingerLowerSeries, '#7091e7');
-        }
-        if (indicators.levels) {
-          const pivot = analysis.levels?.pivots?.standard;
-          if (pivot) for (const key of ['s3','s2','s1','pivot','r1','r2','r3']) {
-            if (Number.isFinite(pivot[key]) && pivot[key] > 0) series.createPriceLine({ price: pivot[key], color: key.startsWith('s') ? '#55cba9' : key.startsWith('r') ? '#f1ad73' : '#b6a5e8', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: key === 'pivot' ? 'P' : key.toUpperCase() });
-          }
-          const rr = analysis.levels?.rrPlan;
-          if (rr) for (const [title, price, color] of [['SL · ATR', rr.stop, '#fa7185'], ['TP · 2R', rr.target, '#7daaf4']]) series.createPriceLine({ price, color, lineWidth: 2, lineStyle: LineStyle.Dotted, axisLabelVisible: true, title });
-        }
-      }
-      if (candles.length) {
-        if (chartRange === 'all') chart.timeScale().fitContent();
-        else chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, candles.length - 90), to: candles.length + 3 });
-      }
-
-      observer = new ResizeObserver(entries => {
-        const width = entries[0]?.contentRect.width;
-        if (width) chart?.applyOptions({ width });
-      });
-      observer.observe(container);
-    }
-
-    mountChart();
-    return () => {
-      cancelled = true;
-      observer?.disconnect();
-      chart?.remove();
-    };
-  }, [candles, analysis, bars, indicators, timeframe, chartStyle, chartRange, symbol]);
-
-  return <div className="chart-surface"><div ref={containerRef} className="chart-canvas" aria-label={`${bars ? 'Market' : 'Unavailable'} ${TIMEFRAME_LABELS[timeframe]} ${chartStyle === 'line' ? 'line' : 'candlestick'} chart for ${symbol}`} />{loading ? <div className="chart-loading-skeleton" aria-busy="true" aria-label={`กำลังโหลดกราฟ ${symbol} ${TIMEFRAME_LABELS[timeframe]}`}><div className="chart-skeleton-head"><span className="ui-skeleton-line" /><span className="ui-skeleton-line" /></div><div className="chart-skeleton-grid">{Array.from({ length: 18 }, (_, index) => <i key={index} style={{ '--bar-height': `${36 + ((index * 19) % 50)}%`, '--bar-offset': `${(index * 13) % 31}%` }} />)}</div><span className="chart-skeleton-caption">กำลังอ่านแท่ง {TIMEFRAME_LABELS[timeframe]} จาก {source}…</span></div> : !bars && <div className="chart-empty"><strong>ยังไม่มีแท่งราคาสำหรับกราฟนี้</strong><span>เลือกสินทรัพย์อื่น หรือรอเชื่อมแหล่งข้อมูลราคา</span></div>}</div>;
-}
 
 function MarketSparkline({ bars }) {
   if (bars.length < 2) return null;
@@ -524,6 +423,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               {hasTfexConnection && <div className="tfex-quote-note">กราฟใช้แท่ง OHLCV ที่มีเวลาแท่งจาก TFEX Open API · เวลา quote ล่าสุดอาจไม่ระบุ · AutoPick ยังรอยืนยันสัญญานำ วันหมดอายุ และความเสี่ยงต่อสัญญา</div>}
               <div className="ohlc-strip"><span>O <b>{latestBar ? formatQuotePrice(latestBar.open,asset) : '—'}</b></span><span>H <b>{latestBar ? formatQuotePrice(latestBar.high,asset) : '—'}</b></span><span>L <b>{latestBar ? formatQuotePrice(latestBar.low,asset) : '—'}</b></span><span>C <b>{latestBar ? formatQuotePrice(latestBar.close,asset) : '—'}</b></span><span>V <b>{latestBar && asset.id!=='forex' ? displayNumber(latestBar.volume, 0) : '—'}</b></span><span className="source-time">{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} · ${latestBarLabel}` : hasTfexConnection ? 'กำลังรอ TFEX OHLC' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>
               {analysis && <div className="chart-monitor-summary"><span>SUP <b>{formatQuotePrice(analysis.support,asset)}</b></span><span>RES <b>{formatQuotePrice(analysis.resistance,asset)}</b></span><span>RSI 14 <b>{displayNumber(analysis.rsi14, 1)}</b></span><span>MACD <b>{displayNumber(analysis.macdHistogram, 3)}</b></span></div>}
+              {liveSeries?.signalMode==='EOD_CLOSED_CANDLE'&&<div className="history-feed-note">ข้อมูลรายวันหลังตลาดปิด · ใช้แท่งปิดสแกนและติดตามสัญญาณ · ราคานี้ไม่ใช่ราคาซื้อขายแบบเรียลไทม์</div>}
               {liveSeries?.chartOnly&&<div className="history-feed-note">Yahoo Finance · กราฟย้อนหลังจาก {liveSeries.sourceTicker} · แท่งปิดแล้ว · ไม่ใช้กราฟสำรองนี้ยืนยัน AutoPick{asset.id==='forex'&&' · ไม่มี Volume รวมของตลาด'}</div>}
               {hasRealBars && <div className="chart-freshness">ข้อมูลแท่ง {TIMEFRAME_LABELS[timeframe]} จาก {sourceLabel} · แท่งล่าสุด {latestBarLabel} · เซิร์ฟเวอร์รับข้อมูล {formatQuoteReceipt(liveSeries.receivedAt)} · {liveSeries.freshness === 'recent' ? 'ข้อมูลตามรอบตลาดล่าสุด' : 'ข้อมูลย้อนหลังเก่า'} · แสดงเฉพาะแท่งปิดแล้ว · โหลดผ่านเว็บ {chartLoadMs == null ? '—' : `${chartLoadMs} ms`} (ไม่ใช่ความหน่วงราคาตลาด) {!liveSeries.chartOnly&&hasSettradeConnection?' · รีเฟรชหลังรอบ 15 นาทีขณะเปิดหน้านี้':''}</div>}
               <ChartToolbox chartOnly={Boolean(liveSeries?.chartOnly)} asset={asset} bars={displayBars} analysis={analysis} tradePlan={tradePlan} freshness={liveSeries?.freshness} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} indicators={chartIndicators} onToggleIndicator={toggleIndicator} onOpenAutomation={() => navigateTo('autopick')} />
@@ -535,7 +435,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           </section>
 
           <SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} />
-          <footer className="page-footer"><span>Nugaom AI Pick · MARKET SIGNAL WORKSPACE</span><span>Settrade · FMP EOD · Yahoo History สำหรับกราฟสำรอง · ผลสัญญาณอ้างอิงราคาแท่ง ไม่ใช่ fill</span></footer>
+          <footer className="page-footer"><span>Nugaom AI Pick · MARKET SIGNAL WORKSPACE</span><span>Settrade · FMP / Yahoo EOD สำหรับหุ้นสหรัฐฯ · ผลสัญญาณอ้างอิงราคาแท่ง ไม่ใช่ fill</span></footer>
         </div>
       </main>
 
