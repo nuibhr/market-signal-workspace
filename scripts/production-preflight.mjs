@@ -8,9 +8,12 @@ check('Public HTTPS origin and exact LINE callback', origin?.protocol === 'https
 check('LINE credentials configured', process.env.LINE_CHANNEL_ID && process.env.LINE_CHANNEL_SECRET);
 check('Session and portfolio secrets are independent', process.env.SESSION_SECRET?.length >= 32 && process.env.PORTFOLIO_HASH_SECRET?.length >= 32 && process.env.SESSION_SECRET !== process.env.PORTFOLIO_HASH_SECRET);
 check('Administrator LINE IDs configured', process.env.ADMIN_LINE_IDS?.split(',').every(v => /^U[a-f0-9]{32}$/i.test(v.trim())));
-check('Absolute database path on confirmed persistent server', isAbsolute(process.env.DATABASE_PATH ?? '') && process.env.AUTO_PICK_PERSISTENT_SERVER_CONFIRMED === 'true');
+const storageMode=process.env.STORAGE_PROVIDER||'sqlite';
+check('Permanent storage configured (Worker D1 or persistent SQLite)', storageMode==='d1'
+  || storageMode==='sqlite'&&isAbsolute(process.env.DATABASE_PATH??'')&&process.env.AUTO_PICK_PERSISTENT_SERVER_CONFIRMED==='true');
 check('Worker authentication secret configured', process.env.AUTO_PICK_RUN_SECRET?.length >= 32);
 check('Encrypted backup key configured', /^[a-f0-9]{64}$/i.test(process.env.BACKUP_ENCRYPTION_KEY ?? ''));
+check('Offsite backup recovery confirmed', process.env.BACKUP_RECOVERY_CONFIRMED==='true');
 if (process.env.AUTO_PICK_ENABLED === 'true' || process.env.AUTO_PICK_DR_ENABLED === 'true') check('SET/DR display permission confirmed', process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED === 'true');
 if (process.env.AUTO_PICK_US_ENABLED === 'true') check('US display permission confirmed', process.env.YAHOO_EOD_DISPLAY_RIGHTS_CONFIRMED === 'true' || Boolean(process.env.FMP_API_KEY && process.env.FMP_DISPLAY_RIGHTS_CONFIRMED === 'true'));
 if (process.env.MARKETDX_API_KEY) check('News display permission confirmed', process.env.MARKETDX_PUBLIC_DISPLAY_RIGHTS_CONFIRMED === 'true');

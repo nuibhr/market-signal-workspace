@@ -106,6 +106,7 @@ export async function listAdminMembers() {
     FROM members m LEFT JOIN ai_credit_accounts c ON c.member_id=m.id WHERE m.portfolio_hash IS NOT NULL ORDER BY CASE m.portfolio_status WHEN 'pending' THEN 0 ELSE 1 END,m.updated_at DESC LIMIT 100`);
 }
 export async function verifyPortfolio(admin,memberId,numberInput) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
   const number=normalizePortfolio(numberInput);
   await mutateMember(memberId,admin.id,'portfolio_verified',member=>{
     if(!member.portfolio_hash||member.portfolio_hash!==portfolioDigest(member.broker,number))throw new Error('PORTFOLIO_MISMATCH');
@@ -113,6 +114,7 @@ export async function verifyPortfolio(admin,memberId,numberInput) {
   });
 }
 export async function rejectPortfolio(admin,memberId) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
   await mutateMember(memberId,admin.id,'portfolio_rejected',member=>{
     if(member.portfolio_status!=='pending')throw new Error('REQUEST_UNAVAILABLE');
     return {set:"broker=NULL,portfolio_hash=NULL,portfolio_last4=NULL,portfolio_status='missing',portfolio_submitted_at=NULL",params:[]};
@@ -124,15 +126,42 @@ function monthEnd(member) {
   return new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+1,Math.min(start.getUTCDate(),lastDay),
     start.getUTCHours(),start.getUTCMinutes(),start.getUTCSeconds(),start.getUTCMilliseconds())).toISOString();
 }
-export async function issueCode(admin,memberId) {
-  const code=`NUG-${randomBytes(12).toString('hex').toUpperCase()}`,hash=digest(code),now=new Date().toISOString();
+function adminRequestId(value) {
+  const id=value??token();
+  if(typeof id!=='string'||!/^[-_a-zA-Z0-9]{16,100}$/.test(id))throw new Error('INVALID_REQUEST_ID');
+  return id;
+}
+export async function issueCode(admin,memberId,requestId) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
+  const request=adminRequestId(requestId);
+  // The same acknowledged request returns the same code without storing its plaintext.
+  const code=`NUG-${createHmac('sha256',process.env.SESSION_SECRET).update(`monthly-code:${admin.id}:${memberId}:${request}`).digest('hex').slice(0,24).toUpperCase()}`;
+  const hash=digest(code),now=new Date().toISOString();
   const result=await storage.batch([
-    op(`INSERT INTO monthly_codes (code_hash,member_id,created_by,created_at,expires_at)
+    op(`INSERT OR IGNORE INTO monthly_codes (code_hash,member_id,created_by,created_at,expires_at)
       SELECT ?,id,?,?,? FROM members WHERE id=? AND portfolio_status='verified'`,hash,admin.id,now,new Date(Date.now()+30*DAY).toISOString(),memberId),
-    op(`INSERT INTO membership_events SELECT ?,member_id,?,'code_issued',?,NULL FROM monthly_codes WHERE code_hash=?`,token(),admin.id,now,hash),
+    op(`INSERT OR IGNORE INTO membership_events SELECT ?,member_id,?,'code_issued',created_at,NULL FROM monthly_codes WHERE code_hash=?`,
+      `code-issued:${hash}`,admin.id,hash),
+    op('SELECT member_id,expires_at,redeemed_at,revoked_at FROM monthly_codes WHERE code_hash=?',hash),
   ]);
-  if(!result[0].changes)throw new Error('PORTFOLIO_NOT_VERIFIED');
+  const record=result[2].results[0];
+  if(!record||record.member_id!==memberId)throw new Error('PORTFOLIO_NOT_VERIFIED');
+  if(record.redeemed_at||record.revoked_at||record.expires_at<=now)throw new Error('CODE_UNAVAILABLE');
   return code;
+}
+export async function revokeCode(admin,memberId,codeId) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
+  if(typeof codeId!=='string'||!/^[a-f0-9]{64}$/.test(codeId))throw new Error('INVALID_CODE');
+  const now=new Date().toISOString();
+  const result=await storage.batch([
+    op(`UPDATE monthly_codes SET revoked_at=?,revoked_by=?,expires_at=?
+      WHERE code_hash=? AND member_id=? AND redeemed_at IS NULL AND revoked_at IS NULL AND expires_at>?`,
+      now,admin.id,now,codeId,memberId,now),
+    op(`INSERT OR IGNORE INTO membership_events SELECT ?,member_id,?,'code_revoked',?,NULL
+      FROM monthly_codes WHERE code_hash=? AND member_id=? AND revoked_at=? AND revoked_by=?`,
+      `code-revoked:${codeId}`,admin.id,now,codeId,memberId,now,admin.id),
+  ]);
+  if(!result[0].changes)throw new Error('CODE_UNAVAILABLE');
 }
 export async function redeemCode(member,codeInput) {
   const code=String(codeInput??'').trim().toUpperCase();
@@ -168,7 +197,9 @@ export async function listRenewals() {
   return storage.all(`SELECT r.id,r.member_id,r.created_at,m.display_name,m.broker,m.portfolio_last4
     FROM renewal_requests r JOIN members m ON m.id=r.member_id WHERE r.status='pending' ORDER BY r.created_at LIMIT 100`);
 }
-export async function approveRenewal(admin,requestId) {
+export async function approveRenewal(admin,requestId,reference='') {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
+  if(typeof reference!=='string'||reference.length>160)throw new Error('INVALID_NOTE');
   for(let attempt=0;attempt<4;attempt++) {
     const request=await storage.first("SELECT * FROM renewal_requests WHERE id=? AND status='pending'",requestId);
     if(!request)throw new Error('REQUEST_UNAVAILABLE');
@@ -180,13 +211,14 @@ export async function approveRenewal(admin,requestId) {
         AND EXISTS(SELECT 1 FROM members WHERE id=? AND portfolio_status='verified' AND version=?)`,now,admin.id,mutation,requestId,member.id,member.version),
       op(`UPDATE members SET subscription_ends_at=?,updated_at=?,version=version+1,mutation_key=? WHERE id=? AND version=?
         AND EXISTS(SELECT 1 FROM renewal_requests WHERE id=? AND resolution_token=?)`,endsAt,now,mutation,member.id,member.version,requestId,mutation),
-      audit(member.id,admin.id,'renewal_approved',endsAt,mutation),
+      audit(member.id,admin.id,'renewal_approved',JSON.stringify({subscriptionEndsAt:endsAt,reference:reference.trim()}),mutation),
     ]);
     if(result[0].changes&&result[1].changes)return endsAt;
   }
   throw new Error('REQUEST_UNAVAILABLE');
 }
 export async function rejectRenewal(admin,requestId) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
   const mutation=token(),now=new Date().toISOString();
   const result=await storage.batch([
     op("UPDATE renewal_requests SET status='rejected',resolved_at=?,resolved_by=?,resolution_token=? WHERE id=? AND status='pending'",now,admin.id,mutation,requestId),
@@ -266,14 +298,21 @@ export async function releaseAiQuestion(member,requestId,reservationToken) {
   if(reservationToken)await storage.run("DELETE FROM ai_questions WHERE id=? AND member_id=? AND status='pending' AND reservation_token=?",requestId,member.id,reservationToken);
   return aiQuota(member);
 }
-export async function grantAiCredits(admin,memberId,amount) {
+export async function grantAiCredits(admin,memberId,amount,requestId,note='') {
   if(!isAdmin(admin))throw new Error('FORBIDDEN');
   if(!Number.isInteger(amount)||amount<1||amount>1000)throw new Error('INVALID_CREDIT_AMOUNT');
+  if(typeof note!=='string'||note.length>200)throw new Error('INVALID_NOTE');
+  note=note.trim();
+  const id=digest(`credit-grant:${admin.id}:${adminRequestId(requestId)}`);
   if(!await memberById(memberId))throw new Error('REQUEST_UNAVAILABLE');
   const result=await storage.batch([
-    op('INSERT INTO ai_credit_accounts (member_id,balance) VALUES (?,?) ON CONFLICT(member_id) DO UPDATE SET balance=balance+excluded.balance',memberId,amount),
-    op(`INSERT INTO ai_credit_events SELECT ?,member_id,?,?,balance,'admin-grant',? FROM ai_credit_accounts WHERE member_id=?`,token(),admin.id,amount,new Date().toISOString(),memberId),
+    op(`INSERT OR IGNORE INTO admin_credit_grants(id,actor_id,member_id,amount,note,created_at)
+      VALUES(?,?,?,?,?,?)`,id,admin.id,memberId,amount,note,new Date().toISOString()),
+    op('SELECT actor_id,member_id,amount,note,applied FROM admin_credit_grants WHERE id=?',id),
     op('SELECT balance FROM ai_credit_accounts WHERE member_id=?',memberId),
   ]);
+  const grant=result[1].results[0];
+  if(!grant||grant.actor_id!==admin.id||grant.member_id!==memberId||grant.amount!==amount||grant.note!==note||grant.applied!==1)
+    throw new Error('INVALID_REQUEST_ID');
   return result[2].results[0].balance;
 }

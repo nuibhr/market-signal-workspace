@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, chmodSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { BASE_SCHEMA, D1_SAFETY_SCHEMA, D1_IMPORT_SAFETY } from './schema.mjs';
+import { BASE_SCHEMA, D1_SAFETY_SCHEMA, D1_IMPORT_SAFETY, ADMIN_OPERATIONS_SCHEMA } from './schema.mjs';
 
 let database;
 
@@ -101,7 +101,7 @@ function db() {
   database.exec('CREATE INDEX IF NOT EXISTS ai_questions_conversation ON ai_questions(member_id,conversation_id,created_at)');
   database.exec(BASE_SCHEMA);
   database.exec('CREATE TABLE IF NOT EXISTS storage_migrations(version INTEGER PRIMARY KEY,applied_at TEXT NOT NULL)');
-  for (const [version,sql] of [[2,D1_SAFETY_SCHEMA],[3,D1_IMPORT_SAFETY]]) {
+  for (const [version,sql] of [[2,D1_SAFETY_SCHEMA],[3,D1_IMPORT_SAFETY],[4,ADMIN_OPERATIONS_SCHEMA]]) {
     if (database.prepare('SELECT version FROM storage_migrations WHERE version=?').get(version)) continue;
     database.exec('BEGIN IMMEDIATE');
     try { database.exec(sql);database.prepare('INSERT INTO storage_migrations VALUES(?,?)').run(version,new Date().toISOString());database.exec('COMMIT'); }

@@ -21,10 +21,10 @@ export function sameOrigin(request) {
 }
 export function errorResponse(error) {
   const known = new Set(['INVALID_PORTFOLIO', 'INVALID_BROKER', 'PORTFOLIO_ALREADY_USED', 'PORTFOLIO_CHANGE_REQUIRES_ADMIN',
-    'PAYLOAD_TOO_LARGE', 'INVALID_JSON', 'CONTENT_TYPE_REQUIRED', 'PORTFOLIO_NOT_VERIFIED', 'PORTFOLIO_MISMATCH', 'CODE_UNAVAILABLE', 'INVALID_CODE', 'REQUEST_UNAVAILABLE', 'INVALID_CREDIT_AMOUNT']);
+    'PAYLOAD_TOO_LARGE', 'INVALID_JSON', 'CONTENT_TYPE_REQUIRED', 'PORTFOLIO_NOT_VERIFIED', 'PORTFOLIO_MISMATCH', 'CODE_UNAVAILABLE', 'INVALID_CODE', 'REQUEST_UNAVAILABLE', 'INVALID_CREDIT_AMOUNT', 'INVALID_REQUEST_ID', 'INVALID_NOTE', 'FORBIDDEN']);
   const raw = error instanceof Error ? error.message : '';
   const code = known.has(raw) ? raw : 'UNEXPECTED_ERROR';
-  const status = code === 'UNEXPECTED_ERROR' ? 500 : code === 'PAYLOAD_TOO_LARGE' ? 413 : code === 'CONTENT_TYPE_REQUIRED' ? 415 : 400;
+  const status = code === 'UNEXPECTED_ERROR' ? 500 : code === 'FORBIDDEN' ? 403 : code === 'PAYLOAD_TOO_LARGE' ? 413 : code === 'CONTENT_TYPE_REQUIRED' ? 415 : 400;
   return Response.json({ error: code }, { status, headers: privateHeaders });
 }
 

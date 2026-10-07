@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { sqliteDatabase } from '../src/storage/sqlite.mjs';
 import { backupDatabase } from '../src/security/backup.mjs';
 const tables=['members','ai_credit_accounts','ai_credit_events','ai_conversations','ai_questions','sessions','line_oauth_flows',
-  'monthly_codes','renewal_requests','membership_events','customer_preferences','customer_favorites','customer_holdings','customer_daily_reports',
+  'monthly_codes','renewal_requests','membership_events','admin_credit_grants','customer_preferences','customer_favorites','customer_holdings','customer_daily_reports',
   'auto_pick_runs','auto_pick_signals','auto_pick_events','auto_pick_decisions','auto_pick_scan_progress','auto_pick_worker_heartbeat',
   'scanner_candles','historical_replay_summaries','request_limits'];
 const directory=resolve(process.env.D1_MIGRATION_DIR||'data/d1-migration');

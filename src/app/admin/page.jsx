@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { currentMember } from '../../membership/server.mjs';
 import { isAdmin } from '../../membership/store.mjs';
-import AdminPage from '../../components/admin-page.jsx';
+import AdminConsole from '../../components/admin-console.jsx';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,5 +11,5 @@ export default async function Page() {
   const member = await currentMember();
   if (!member) redirect('/account');
   if (!isAdmin(member)) notFound();
-  return <AdminPage />;
+  return <AdminConsole />;
 }
