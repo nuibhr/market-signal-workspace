@@ -1,8 +1,14 @@
 import { storage, operation as op } from '../storage/database.mjs';
 export async function archiveCandles(symbol,timeframe,series) {
-  const previous=new Map((await storage.all('SELECT time,bar_json,source FROM scanner_candles WHERE symbol=? AND timeframe=?',symbol,timeframe)).map(row=>[row.time,row]));
+  if (!series.bars.length) return;
+  const incoming=series.bars.map(bar=>({time:String(bar.time),json:JSON.stringify(bar)}));
+  // Match the requested timestamps through the composite primary key. A growing archive
+  // must not increase D1 reads when the scanner asks for the same recent candle window.
+  const previous=new Map((await storage.all(`SELECT time,bar_json,source FROM scanner_candles
+    WHERE symbol=? AND timeframe=? AND time IN (SELECT value FROM json_each(?))`,
+    symbol,timeframe,JSON.stringify(incoming.map(bar=>bar.time)))).map(row=>[row.time,row]));
   const source=series.source??null;
-  const changed=series.bars.map(bar=>({time:String(bar.time),json:JSON.stringify(bar)})).filter(bar=>{
+  const changed=incoming.filter(bar=>{
     const old=previous.get(bar.time);return !old||old.bar_json!==bar.json||old.source!==source;
   });
   const sql=`INSERT INTO scanner_candles VALUES(?,?,?,?,?) ON CONFLICT(symbol,timeframe,time) DO UPDATE SET bar_json=excluded.bar_json,source=excluded.source
