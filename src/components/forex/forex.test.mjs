@@ -1,0 +1,171 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { FOREX_SYMBOLS } from "../../markets/catalog.mjs";
+import {
+  BROKERS,
+  SUPPORTED_BROKERS,
+  getSupportedBroker,
+  GUEST_CONNECTION,
+  CONNECTION_STATES,
+} from "./brokers.mjs";
+import {
+  FOREX_CATEGORIES,
+  STARTER_SNAPSHOT,
+  STARTER_UNIVERSE,
+  filterUniverse,
+  resolveInitialInstrument,
+} from "./symbol-universe.mjs";
+
+const root = new URL("../../../", import.meta.url);
+const baseline = "cf74b0d7e4b5e255ba7646e4b3b6ec48dd79a82e";
+
+test("guest universe preserves exactly the existing 19 symbols, without invented broker metadata", () => {
+  assert.equal(STARTER_UNIVERSE.length, 19);
+  assert.deepEqual(
+    STARTER_UNIVERSE.map((item) => item.display_symbol),
+    FOREX_SYMBOLS,
+  );
+  assert.equal(new Set(STARTER_UNIVERSE.map((item) => item.id)).size, 19);
+  assert.equal(STARTER_SNAPSHOT.source, "starter");
+  assert.equal(STARTER_SNAPSHOT.synced_at, null);
+  const unknownFields = [
+    "broker_id",
+    "server",
+    "broker_symbol",
+    "digits",
+    "point",
+    "contract_size",
+    "volume_min",
+    "volume_max",
+    "volume_step",
+    "currency_margin",
+    "trade_mode",
+    "session",
+  ];
+  for (const item of STARTER_UNIVERSE) {
+    for (const field of unknownFields)
+      assert.equal(item[field], null, `${item.id}: ${field}`);
+    assert.equal(item.canonical_symbol, item.display_symbol.replace("/", ""));
+    assert.equal(item.currency_base, item.display_symbol.split("/")[0]);
+    assert.equal(item.currency_profit, item.display_symbol.split("/")[1]);
+  }
+});
+
+test("all nine categories exist and only actual fallback members have counts", () => {
+  assert.deepEqual(
+    FOREX_CATEGORIES.map((item) => item.id),
+    [
+      "fx",
+      "metals",
+      "indices",
+      "energy",
+      "commodities",
+      "crypto_cfds",
+      "share_cfds",
+      "etfs",
+      "bonds",
+    ],
+  );
+  assert.equal(filterUniverse(STARTER_UNIVERSE, { category: "fx" }).length, 17);
+  assert.equal(
+    filterUniverse(STARTER_UNIVERSE, { category: "metals" }).length,
+    2,
+  );
+  for (const category of FOREX_CATEGORIES.slice(2)) {
+    assert.deepEqual(
+      filterUniverse(STARTER_UNIVERSE, { category: category.id }),
+      [],
+    );
+  }
+});
+
+test("search, category and favorite filters compose; exact broker suffixes remain searchable", () => {
+  assert.equal(
+    filterUniverse(STARTER_UNIVERSE, { query: " eurusd " })[0].display_symbol,
+    "EUR/USD",
+  );
+  assert.equal(
+    filterUniverse(STARTER_UNIVERSE, { query: "gold", category: "metals" })[0]
+      .display_symbol,
+    "XAU/USD",
+  );
+  assert.equal(
+    filterUniverse(STARTER_UNIVERSE, { query: "gold", category: "fx" }).length,
+    0,
+  );
+  assert.deepEqual(filterUniverse(STARTER_UNIVERSE, { favorites: [] }), []);
+  assert.equal(
+    filterUniverse(STARTER_UNIVERSE, {
+      query: "usd",
+      favorites: ["starter:XAU/USD"],
+    }).length,
+    1,
+  );
+  const future = {
+    ...STARTER_UNIVERSE[0],
+    id: "mt5:vantage:verified-server:EURUSD.a",
+    source: "mt5",
+    broker_symbol: "EURUSD.a",
+  };
+  assert.deepEqual(filterUniverse([future], { query: "eurusd.a" }), [future]);
+});
+
+test("deep links resolve the fallback universe and invalid input safely defaults", () => {
+  assert.equal(resolveInitialInstrument("XAU/USD").canonical_symbol, "XAUUSD");
+  assert.equal(resolveInitialInstrument("GBPUSD").display_symbol, "GBP/USD");
+  assert.equal(resolveInitialInstrument("unknown").display_symbol, "EUR/USD");
+  assert.equal(resolveInitialInstrument(null).display_symbol, "EUR/USD");
+});
+
+test("only Vantage is supported; all connection states are contracts with no active connector", () => {
+  assert.deepEqual(
+    SUPPORTED_BROKERS.map((item) => item.id),
+    ["vantage"],
+  );
+  assert.equal(getSupportedBroker("other"), null);
+  assert.equal(getSupportedBroker("vantage"), BROKERS.vantage);
+  assert.equal(BROKERS.vantage.connectionAvailable, false);
+  assert.deepEqual(BROKERS.vantage.verifiedServers, []);
+  assert.equal(GUEST_CONNECTION.status, "disconnected");
+  assert.deepEqual(Object.keys(CONNECTION_STATES), [
+    "disconnected",
+    "connecting",
+    "connected",
+    "syncing",
+    "ready",
+    "stale",
+    "error",
+    "unsupported",
+  ]);
+});
+
+test("only /forex changes; every protected tracked source and deployment file matches baseline", () => {
+  const changed = execFileSync(
+    "git",
+    ["diff", "--name-only", baseline, "--", "src", "deploy"],
+    { cwd: root, encoding: "utf8" },
+  )
+    .trim()
+    .split("\n")
+    .filter(Boolean);
+  assert.deepEqual(
+    changed.filter(
+      (path) =>
+        path !== "src/app/forex/page.jsx" &&
+        !path.startsWith("src/components/forex/"),
+    ),
+    [],
+  );
+  for (const market of ["thai", "dr", "tfex", "us"]) {
+    const path = `src/app/${market}/page.jsx`;
+    const expected = execFileSync("git", ["show", `${baseline}:${path}`], {
+      cwd: root,
+    });
+    assert.deepEqual(readFileSync(new URL(path, root)), expected);
+  }
+  const route = readFileSync(new URL("src/app/forex/page.jsx", root), "utf8");
+  assert.match(route, /import ForexWorkspace from/);
+  assert.doesNotMatch(route, /components\/workspace\.jsx/);
+});
