@@ -19,7 +19,13 @@
     "test:market-data": "node --test src/market-data/*.test.mjs",
     "backup:database": "node --env-file=.env.local scripts/backup-database.mjs",
     "check:production": "node --env-file=.env.local scripts/production-preflight.mjs",
-    "backtest:refresh": "node --env-file=.env.local scripts/refresh-backtest-summaries.mjs"
+    "backtest:refresh": "node --env-file=.env.local scripts/refresh-backtest-summaries.mjs",
+    "d1:schema:local": "wrangler d1 migrations apply DB --config deploy/cloudflare/wrangler.local.jsonc --local",
+    "d1:schema:remote": "wrangler d1 migrations apply DB --config deploy/cloudflare/wrangler.remote.jsonc --remote",
+    "d1:prepare": "node --env-file=.env.local scripts/d1-migrate.mjs prepare",
+    "d1:import": "node --env-file=.env.local scripts/d1-migrate.mjs import deploy/cloudflare/wrangler.remote.jsonc",
+    "d1:verify": "node --env-file=.env.local scripts/d1-migrate.mjs verify deploy/cloudflare/wrangler.remote.jsonc",
+    "d1:unchanged": "node --env-file=.env.local scripts/d1-migrate.mjs unchanged"
   },
   "engines": {
     "node": ">=22.13"
@@ -30,6 +36,11 @@
     "next": "^16.3.6",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "yahoo-finance2": "^4.0.2"
+    "yahoo-finance2": "^4.0.2",
+    "wrangler": "4.147.0"
+  },
+  "overrides": {
+    "sharp": "0.35.5",
+    "source-map-js": "1.2.2"
   }
 }

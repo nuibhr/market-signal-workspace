@@ -23,7 +23,7 @@ export async function GET(request) {
   if (params.get('error')) return accountRedirect(request, 'cancelled');
   const raw = request.cookies.get(OAUTH_COOKIE)?.value;
   let flow;
-  try { flow = consumeLineFlow(raw); } catch { return accountRedirect(request, 'failed'); }
+  try { flow = (await consumeLineFlow(raw)); } catch { return accountRedirect(request, 'failed'); }
   if (!flow || !equal(params.get('state'), flow.state) || !flow.verifier || !flow.nonce || !Number.isFinite(flow.expires_at) || flow.expires_at <= Date.now() || !params.get('code')) {
     return accountRedirect(request, 'failed');
   }
@@ -43,8 +43,8 @@ export async function GET(request) {
     if (!verified.ok) return accountRedirect(request, 'failed');
     const identity = await verified.json();
     if (typeof identity.sub !== 'string' || !/^U[a-f0-9]{32}$/i.test(identity.sub) || identity.nonce !== flow.nonce || !Number.isFinite(identity.exp) || identity.exp * 1000 <= Date.now() || identity.iss !== 'https://access.line.me' || identity.aud !== process.env.LINE_CHANNEL_ID) return accountRedirect(request, 'failed');
-    const member = upsertLineMember({ lineId: identity.sub, displayName: typeof identity.name === 'string' ? identity.name : 'สมาชิก LINE', pictureUrl: typeof identity.picture === 'string' && identity.picture.startsWith('https://') ? identity.picture : null });
-    const session = createSession(member.id);
+    const member = (await upsertLineMember({ lineId: identity.sub, displayName: typeof identity.name === 'string' ? identity.name : 'สมาชิก LINE', pictureUrl: typeof identity.picture === 'string' && identity.picture.startsWith('https://') ? identity.picture : null }));
+    const session = (await createSession(member.id));
     const response = accountRedirect(request, 'ok');
     response.cookies.set(SESSION_COOKIE, session.value, { httpOnly: true, secure: secureCookie(request),
       sameSite: 'lax', path: '/', expires: new Date(session.expiresAt) });

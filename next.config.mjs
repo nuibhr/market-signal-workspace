@@ -7,6 +7,7 @@ const headers = [
 ];
 export default {
   poweredByHeader: false,
+  serverExternalPackages: ['wrangler'],
   distDir: process.env.NUGAOM_REVIEW_MODE === 'true' ? '.next-review' : '.next',
   // Local databases, SDK runtimes and diagnostics are runtime state, not release files.
   outputFileTracingExcludes: { '/*': ['./data/**/*'] },

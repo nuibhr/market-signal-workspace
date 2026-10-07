@@ -16,10 +16,10 @@ export async function GET() {
   const readiness = {enabled:rawReadiness.enabled, markets:rawReadiness.markets.map(m=>({id:m.id,label:m.label,status:m.status,universeCount:m.universe?.length??0}))};
   const rights = membershipFor(await currentMember());
   let workers;
-  try { workers = { thai: scannerHealth(), dr: scannerHealth(Date.now(), 'dr'), us: scannerHealth(Date.now(), 'us') }; }
+  try { workers = { thai: (await scannerHealth()), dr: (await scannerHealth(Date.now(), 'dr')), us: (await scannerHealth(Date.now(), 'us')) }; }
   catch { workers = Object.fromEntries(['thai', 'dr', 'us'].map(market => [market, { status: 'unavailable', lastRunAt: null }])); }
   let workerProcess;
-  try { workerProcess = workerProcessHealth(); }
+  try { workerProcess = (await workerProcessHealth()); }
   catch { workerProcess = { status: 'unavailable', lastSeenAt: null }; }
   let coverage = {};
   try {
@@ -27,9 +27,9 @@ export async function GET() {
     const thai = rawReadiness.markets.find(market => market.id === 'thai');
     const dr = rawReadiness.markets.find(market => market.id === 'dr');
     coverage = {
-      thai: scanCoverage('thai', thaiSession(now).day, thai?.universe ?? [], now),
-      dr: scanCoverage('dr', drSession(now).key, dr?.universe ?? [], now),
-      us: scanCoverage('us', usScanSlot(usEodSession(now).day), rawReadiness.markets.find(market => market.id === 'us')?.universe ?? [], now),
+      thai: (await scanCoverage('thai', thaiSession(now).day, thai?.universe ?? [], now)),
+      dr: (await scanCoverage('dr', drSession(now).key, dr?.universe ?? [], now)),
+      us: (await scanCoverage('us', usScanSlot(usEodSession(now).day), rawReadiness.markets.find(market => market.id === 'us')?.universe ?? [], now)),
     };
     for (const [id, item] of Object.entries(coverage)) coverage[id] = Object.fromEntries(['expected','done','ineligible','unavailable','remaining'].map(key=>[key,item[key]]));
   } catch { coverage = {}; }
@@ -37,7 +37,7 @@ export async function GET() {
     return Response.json({ status: 'membership-required', readiness, workers, worker: workers.thai, workerProcess, coverage, signals: [], events: [], runs: [] }, { headers: privateHeaders });
   }
   try {
-    return Response.json({ status: 'available', readiness, workers, worker: workers.thai, workerProcess, coverage, ...customerFeed(signalFeed()) }, { headers: privateHeaders });
+    return Response.json({ status: 'available', readiness, workers, worker: workers.thai, workerProcess, coverage, ...customerFeed((await signalFeed())) }, { headers: privateHeaders });
   } catch {
     return Response.json({ status: 'unavailable', code: 'SIGNAL_STORE_UNAVAILABLE', readiness }, { status: 503, headers: privateHeaders });
   }

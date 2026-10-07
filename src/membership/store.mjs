@@ -1,110 +1,6 @@
-import { DatabaseSync } from 'node:sqlite';
 import { createHash, createHmac, randomBytes } from 'node:crypto';
-import { mkdirSync, chmodSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-
+import { storage, operation as op } from '../storage/database.mjs';
 const DAY = 86_400_000;
-let database;
-
-function db() {
-  if (database) return database;
-  const path = resolve(/* turbopackIgnore: true */ process.cwd(), process.env.DATABASE_PATH || './data/nugaom.sqlite');
-  mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
-  database = new DatabaseSync(path);
-  database.exec(`PRAGMA busy_timeout=5000;
-    PRAGMA journal_mode=WAL;
-    PRAGMA foreign_keys=ON;
-    CREATE TABLE IF NOT EXISTS members (
-      id TEXT PRIMARY KEY,
-      line_id TEXT NOT NULL UNIQUE,
-      display_name TEXT NOT NULL,
-      picture_url TEXT,
-      broker TEXT,
-      portfolio_hash TEXT UNIQUE,
-      portfolio_last4 TEXT,
-      portfolio_status TEXT NOT NULL DEFAULT 'missing',
-      portfolio_submitted_at TEXT,
-      portfolio_verified_at TEXT,
-      trial_started_at TEXT,
-      trial_ends_at TEXT,
-      subscription_ends_at TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS line_oauth_flows (
-      token_hash TEXT PRIMARY KEY, state TEXT NOT NULL, nonce TEXT NOT NULL, verifier TEXT NOT NULL, expires_at INTEGER NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS sessions (
-      token_hash TEXT PRIMARY KEY,
-      member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-      expires_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS monthly_codes (
-      code_hash TEXT PRIMARY KEY,
-      member_id TEXT NOT NULL REFERENCES members(id),
-      created_by TEXT NOT NULL REFERENCES members(id),
-      created_at TEXT NOT NULL,
-      expires_at TEXT NOT NULL,
-      redeemed_at TEXT
-    );
-    CREATE TABLE IF NOT EXISTS renewal_requests (
-      id TEXT PRIMARY KEY,
-      member_id TEXT NOT NULL REFERENCES members(id),
-      status TEXT NOT NULL DEFAULT 'pending',
-      created_at TEXT NOT NULL,
-      resolved_at TEXT,
-      resolved_by TEXT REFERENCES members(id)
-    );
-    CREATE TABLE IF NOT EXISTS membership_events (
-      id TEXT PRIMARY KEY,
-      member_id TEXT NOT NULL REFERENCES members(id),
-      actor_id TEXT REFERENCES members(id),
-      event_type TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      details TEXT
-    );
-    CREATE TABLE IF NOT EXISTS ai_credit_accounts (
-      member_id TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
-      balance INTEGER NOT NULL DEFAULT 0 CHECK(balance >= 0)
-    );
-    CREATE TABLE IF NOT EXISTS ai_credit_events (
-      id TEXT PRIMARY KEY,
-      member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-      actor_id TEXT REFERENCES members(id),
-      amount INTEGER NOT NULL,
-      balance_after INTEGER NOT NULL,
-      reason TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS ai_questions (
-      id TEXT PRIMARY KEY,
-      member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-      conversation_id TEXT,
-      question_text TEXT,
-      day_key TEXT NOT NULL,
-      charge_type TEXT NOT NULL CHECK(charge_type IN ('free','credit')),
-      status TEXT NOT NULL CHECK(status IN ('pending','completed')),
-      created_at TEXT NOT NULL,
-      response_json TEXT
-    );
-    CREATE TABLE IF NOT EXISTS ai_conversations (
-      id TEXT PRIMARY KEY,
-      member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-      chat_id TEXT NOT NULL,
-      checkpoint_id TEXT,
-      updated_at TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS ai_questions_member_day ON ai_questions(member_id,day_key,status);`);
-  const questionColumns = new Set(database.prepare('PRAGMA table_info(ai_questions)').all().map(column => column.name));
-  if (!questionColumns.has('conversation_id')) database.exec('ALTER TABLE ai_questions ADD COLUMN conversation_id TEXT');
-  if (!questionColumns.has('question_text')) database.exec('ALTER TABLE ai_questions ADD COLUMN question_text TEXT');
-  database.exec('CREATE INDEX IF NOT EXISTS ai_questions_conversation ON ai_questions(member_id,conversation_id,created_at)');
-  for (const file of [path, `${path}-wal`, `${path}-shm`]) { try { chmodSync(file, 0o600); } catch { /* SQLite sidecars may not exist yet. */ } }
-  return database;
-}
-
-// Shared persistent connection for membership and the signal/event ledger.
-export function sharedDatabase() { return db(); }
 
 export function digest(value) { return createHash('sha256').update(value).digest('hex'); }
 function sessionDigest(value) { return createHmac('sha256', process.env.SESSION_SECRET).update(value).digest('hex'); }
@@ -126,164 +22,7 @@ export function normalizePortfolio(value) {
   if (!/^[A-Z0-9]{5,24}$/.test(number)) throw new Error('INVALID_PORTFOLIO');
   return number;
 }
-export function upsertLineMember({ lineId, displayName, pictureUrl }) {
-  const now = new Date().toISOString();
-  db().prepare(`INSERT INTO members (id,line_id,display_name,picture_url,created_at,updated_at)
-    VALUES (?,?,?,?,?,?) ON CONFLICT(line_id) DO UPDATE SET display_name=excluded.display_name,
-    picture_url=excluded.picture_url,updated_at=excluded.updated_at`).run(token(), lineId, displayName.slice(0, 80), pictureUrl || null, now, now);
-  return db().prepare('SELECT * FROM members WHERE line_id=?').get(lineId);
-}
-export function createLineFlow() {
-  const value = token(), state = token(), nonce = token(), verifier = token();
-  db().prepare('DELETE FROM line_oauth_flows WHERE expires_at<?').run(Date.now());
-  db().prepare('INSERT INTO line_oauth_flows VALUES(?,?,?,?,?)').run(sessionDigest(value), state, nonce, verifier, Date.now() + 600000);
-  return { value, state, nonce, verifier };
-}
-export function consumeLineFlow(value) {
-  if (typeof value !== 'string' || value.length > 100) return null;
-  return db().prepare('DELETE FROM line_oauth_flows WHERE token_hash=? RETURNING state,nonce,verifier,expires_at').get(sessionDigest(value)) ?? null;
-}
-export function createSession(memberId) {
-  db().prepare('DELETE FROM sessions WHERE expires_at<=?').run(new Date().toISOString());
-  const value = token();
-  const expiresAt = new Date(Date.now() + 30 * DAY).toISOString();
-  db().prepare('INSERT INTO sessions (token_hash,member_id,expires_at) VALUES (?,?,?)').run(sessionDigest(value), memberId, expiresAt);
-  return { value, expiresAt };
-}
-export function sessionMember(value) {
-  if (typeof value !== 'string' || value.length > 100) return null;
-  return db().prepare(`SELECT m.* FROM sessions s JOIN members m ON m.id=s.member_id
-    WHERE s.token_hash=? AND s.expires_at>?`).get(sessionDigest(value), new Date().toISOString()) || null;
-}
-export function deleteSession(value) { if (value) db().prepare('DELETE FROM sessions WHERE token_hash=?').run(sessionDigest(value)); }
 export function isAdmin(member) { return Boolean(member && process.env.ADMIN_LINE_IDS?.split(',').map(id => id.trim()).includes(member.line_id)); }
-
-function event(memberId, actorId, eventType, details = null) {
-  db().prepare('INSERT INTO membership_events VALUES (?,?,?,?,?,?)').run(token(), memberId, actorId, eventType, new Date().toISOString(), details);
-}
-function transaction(action) {
-  db().exec('BEGIN IMMEDIATE');
-  try { const result = action(); db().exec('COMMIT'); return result; }
-  catch (error) { db().exec('ROLLBACK'); throw error; }
-}
-export function submitPortfolio(member, brokerInput, numberInput) {
-  const broker = String(brokerInput ?? '').trim().replace(/\s+/g, ' ').toUpperCase();
-  if (!/^[\p{L}\p{M}\p{N} .&-]{2,40}$/u.test(broker)) throw new Error('INVALID_BROKER');
-  const number = normalizePortfolio(numberInput);
-  const hash = portfolioDigest(broker, number);
-  return transaction(() => {
-    const current = db().prepare('SELECT * FROM members WHERE id=?').get(member.id);
-    if (current.portfolio_hash && current.portfolio_hash !== hash) throw new Error('PORTFOLIO_CHANGE_REQUIRES_ADMIN');
-    const existing = db().prepare('SELECT id FROM members WHERE portfolio_hash=?').get(hash);
-    if (existing && existing.id !== member.id) throw new Error('PORTFOLIO_ALREADY_USED');
-    const now = new Date().toISOString();
-    const trialEnd = current.trial_ends_at || new Date(Date.now() + 14 * DAY).toISOString();
-    db().prepare(`UPDATE members SET broker=?,portfolio_hash=?,portfolio_last4=?,portfolio_status=CASE WHEN portfolio_status='verified' THEN 'verified' ELSE 'pending' END,
-      portfolio_submitted_at=COALESCE(portfolio_submitted_at,?),trial_started_at=COALESCE(trial_started_at,?),trial_ends_at=COALESCE(trial_ends_at,?),updated_at=? WHERE id=?`)
-      .run(broker, hash, number.slice(-4), now, now, trialEnd, now, member.id);
-    event(member.id, member.id, 'portfolio_submitted', broker);
-    return db().prepare('SELECT * FROM members WHERE id=?').get(member.id);
-  });
-}
-export function listAdminMembers() {
-  return db().prepare(`SELECT m.id,m.display_name,m.broker,m.portfolio_last4,m.portfolio_status,m.trial_ends_at,m.subscription_ends_at,m.created_at,COALESCE(c.balance,0) AS ai_credits
-    FROM members m LEFT JOIN ai_credit_accounts c ON c.member_id=m.id WHERE m.portfolio_hash IS NOT NULL ORDER BY CASE m.portfolio_status WHEN 'pending' THEN 0 ELSE 1 END,m.updated_at DESC LIMIT 100`).all();
-}
-export function verifyPortfolio(admin, memberId, numberInput) {
-  const number = normalizePortfolio(numberInput);
-  return transaction(() => {
-    const member = db().prepare('SELECT * FROM members WHERE id=?').get(memberId);
-    if (!member?.portfolio_hash || member.portfolio_hash !== portfolioDigest(member.broker, number)) throw new Error('PORTFOLIO_MISMATCH');
-    const now = new Date().toISOString();
-    db().prepare("UPDATE members SET portfolio_status='verified',portfolio_verified_at=?,updated_at=? WHERE id=?").run(now, now, memberId);
-    event(memberId, admin.id, 'portfolio_verified');
-  });
-}
-export function rejectPortfolio(admin, memberId) {
-  return transaction(() => {
-    const member = db().prepare('SELECT * FROM members WHERE id=?').get(memberId);
-    if (!member || member.portfolio_status !== 'pending') throw new Error('REQUEST_UNAVAILABLE');
-    db().prepare("UPDATE members SET broker=NULL,portfolio_hash=NULL,portfolio_last4=NULL,portfolio_status='missing',portfolio_submitted_at=NULL,updated_at=? WHERE id=?")
-      .run(new Date().toISOString(), memberId);
-    event(memberId, admin.id, 'portfolio_rejected');
-  });
-}
-function extendMonth(member) {
-  const start = member.subscription_ends_at && Date.parse(member.subscription_ends_at) > Date.now() ? new Date(member.subscription_ends_at) : new Date();
-  const lastDay = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 2, 0)).getUTCDate();
-  const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, Math.min(start.getUTCDate(), lastDay),
-    start.getUTCHours(), start.getUTCMinutes(), start.getUTCSeconds(), start.getUTCMilliseconds()));
-  db().prepare('UPDATE members SET subscription_ends_at=?,updated_at=? WHERE id=?').run(end.toISOString(), new Date().toISOString(), member.id);
-  return end.toISOString();
-}
-export function issueCode(admin, memberId) {
-  return transaction(() => {
-    const member = db().prepare('SELECT * FROM members WHERE id=?').get(memberId);
-    if (!member || member.portfolio_status !== 'verified') throw new Error('PORTFOLIO_NOT_VERIFIED');
-    const code = `NUG-${randomBytes(12).toString('hex').toUpperCase()}`;
-    const now = new Date().toISOString();
-    db().prepare('INSERT INTO monthly_codes VALUES (?,?,?,?,?,NULL)').run(digest(code), member.id, admin.id, now, new Date(Date.now() + 30 * DAY).toISOString());
-    event(member.id, admin.id, 'code_issued');
-    return code;
-  });
-}
-export function redeemCode(member, codeInput) {
-  const code = String(codeInput ?? '').trim().toUpperCase();
-  if (!/^NUG-[A-F0-9]{24}$/.test(code)) throw new Error('INVALID_CODE');
-  return transaction(() => {
-    const current = db().prepare('SELECT * FROM members WHERE id=?').get(member.id);
-    if (current.portfolio_status !== 'verified') throw new Error('PORTFOLIO_NOT_VERIFIED');
-    const record = db().prepare('SELECT * FROM monthly_codes WHERE code_hash=?').get(digest(code));
-    if (!record || record.member_id !== member.id || record.redeemed_at || record.expires_at <= new Date().toISOString()) throw new Error('CODE_UNAVAILABLE');
-    db().prepare('UPDATE monthly_codes SET redeemed_at=? WHERE code_hash=?').run(new Date().toISOString(), record.code_hash);
-    const endsAt = extendMonth(current);
-    event(member.id, member.id, 'code_redeemed', endsAt);
-    return endsAt;
-  });
-}
-export function requestRenewal(member) {
-  return transaction(() => {
-    if (member.portfolio_status !== 'verified') throw new Error('PORTFOLIO_NOT_VERIFIED');
-    const existing = db().prepare("SELECT id FROM renewal_requests WHERE member_id=? AND status='pending'").get(member.id);
-    if (existing) return existing.id;
-    const id = token();
-    db().prepare('INSERT INTO renewal_requests (id,member_id,created_at) VALUES (?,?,?)').run(id, member.id, new Date().toISOString());
-    event(member.id, member.id, 'renewal_requested');
-    return id;
-  });
-}
-export function listRenewals() {
-  return db().prepare(`SELECT r.id,r.member_id,r.created_at,m.display_name,m.broker,m.portfolio_last4
-    FROM renewal_requests r JOIN members m ON m.id=r.member_id WHERE r.status='pending' ORDER BY r.created_at LIMIT 100`).all();
-}
-export function approveRenewal(admin, requestId) {
-  return transaction(() => {
-    const request = db().prepare('SELECT * FROM renewal_requests WHERE id=? AND status=?').get(requestId, 'pending');
-    if (!request) throw new Error('REQUEST_UNAVAILABLE');
-    const member = db().prepare('SELECT * FROM members WHERE id=?').get(request.member_id);
-    if (member.portfolio_status !== 'verified') throw new Error('PORTFOLIO_NOT_VERIFIED');
-    db().prepare("UPDATE renewal_requests SET status='approved',resolved_at=?,resolved_by=? WHERE id=?").run(new Date().toISOString(), admin.id, requestId);
-    const endsAt = extendMonth(member);
-    event(member.id, admin.id, 'renewal_approved', endsAt);
-    return endsAt;
-  });
-}
-export function rejectRenewal(admin, requestId) {
-  return transaction(() => {
-    const request = db().prepare('SELECT * FROM renewal_requests WHERE id=? AND status=?').get(requestId, 'pending');
-    if (!request) throw new Error('REQUEST_UNAVAILABLE');
-    db().prepare("UPDATE renewal_requests SET status='rejected',resolved_at=?,resolved_by=? WHERE id=?").run(new Date().toISOString(), admin.id, requestId);
-    event(request.member_id, admin.id, 'renewal_rejected');
-  });
-}
-export function accountSummary(member) {
-  if (!member) return null;
-  const renewal = db().prepare("SELECT id,created_at FROM renewal_requests WHERE member_id=? AND status='pending'").get(member.id);
-  return { id: member.id, displayName: member.display_name, pictureUrl: member.picture_url,
-    broker: member.broker, portfolioLast4: member.portfolio_last4, portfolioStatus: member.portfolio_status,
-    trialStartedAt: member.trial_started_at, trialEndsAt: member.trial_ends_at,
-    subscriptionEndsAt: member.subscription_ends_at, renewalPending: Boolean(renewal), admin: isAdmin(member) };
-}
 
 const AI_FREE_DAILY = 5;
 function bangkokDay() {
@@ -291,97 +30,250 @@ function bangkokDay() {
   const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
   return `${values.year}-${values.month}-${values.day}`;
 }
-function creditBalance(memberId) {
-  return db().prepare('SELECT balance FROM ai_credit_accounts WHERE member_id=?').get(memberId)?.balance ?? 0;
+async function memberById(id) { return storage.first('SELECT * FROM members WHERE id=?', id); }
+function audit(memberId, actorId, type, details, mutation) {
+  return op(`INSERT INTO membership_events (id,member_id,actor_id,event_type,created_at,details)
+    SELECT ?,id,?,?,?,? FROM members WHERE id=? AND mutation_key=?`,
+    token(), actorId, type, new Date().toISOString(), details ?? null, memberId, mutation);
 }
-function creditChange(memberId, amount, actorId, reason) {
-  db().prepare('INSERT INTO ai_credit_accounts (member_id,balance) VALUES (?,0) ON CONFLICT(member_id) DO NOTHING').run(memberId);
-  const changed = db().prepare('UPDATE ai_credit_accounts SET balance=balance+? WHERE member_id=? AND balance+?>=0').run(amount, memberId, amount);
-  if (!changed.changes) throw new Error('INSUFFICIENT_AI_CREDITS');
-  const balance = creditBalance(memberId);
-  db().prepare('INSERT INTO ai_credit_events VALUES (?,?,?,?,?,?,?)').run(token(), memberId, actorId, amount, balance, reason, new Date().toISOString());
-  return balance;
-}
-export function aiQuota(member) {
-  if (!member) return { freeLimit: AI_FREE_DAILY, freeUsed: 0, freeRemaining: 0, credits: 0, day: bangkokDay() };
-  const day = bangkokDay();
-  const freeUsed = db().prepare("SELECT COUNT(*) AS n FROM ai_questions WHERE member_id=? AND day_key=? AND charge_type='free'").get(member.id, day).n;
-  return { freeLimit: AI_FREE_DAILY, freeUsed, freeRemaining: Math.max(0, AI_FREE_DAILY - freeUsed), credits: creditBalance(member.id), day };
-}
-export function reserveAiQuestion(member, requestId, question, conversationId) {
-  if (!/^[a-f0-9-]{36}$/i.test(requestId)) throw new Error('INVALID_REQUEST_ID');
-  if (!/^[a-f0-9-]{36}$/i.test(conversationId) || typeof question !== 'string' || question.length < 3 || question.length > 700) throw new Error('INVALID_REQUEST');
-  return transaction(() => {
-    // Reclaim interrupted provider calls so a crash cannot strand a free slot or credit.
-    const cutoff = new Date(Date.now() - 5 * 60_000).toISOString();
-    const abandoned = db().prepare("SELECT id,charge_type FROM ai_questions WHERE member_id=? AND status='pending' AND created_at<?").all(member.id, cutoff);
-    for (const item of abandoned) {
-      db().prepare('DELETE FROM ai_questions WHERE id=?').run(item.id);
-      if (item.charge_type === 'credit') creditChange(member.id, 1, null, 'interrupted-question-refund');
-    }
-    const previous = db().prepare('SELECT * FROM ai_questions WHERE id=?').get(requestId);
-    if (previous) {
-      if (previous.member_id !== member.id) throw new Error('INVALID_REQUEST_ID');
-      return { kind: previous.status === 'completed' ? 'cached' : 'pending', response: previous.response_json ? JSON.parse(previous.response_json) : null, quota: aiQuota(member) };
-    }
-    const active = db().prepare("SELECT id FROM ai_questions WHERE member_id=? AND status='pending' LIMIT 1").get(member.id);
-    if (active) throw new Error('QUESTION_IN_PROGRESS');
-    const quota = aiQuota(member);
-    const chargeType = quota.freeRemaining > 0 ? 'free' : 'credit';
-    if (chargeType === 'credit') creditChange(member.id, -1, member.id, `ai-question:${requestId}`);
-    db().prepare('INSERT INTO ai_questions (id,member_id,conversation_id,question_text,day_key,charge_type,status,created_at) VALUES (?,?,?,?,?,?,?,?)')
-      .run(requestId, member.id, conversationId, question, quota.day, chargeType, 'pending', new Date().toISOString());
-    return { kind: 'reserved', chargeType, quota: aiQuota(member) };
-  });
-}
-export function aiConversation(member, conversationId) {
-  if (!/^[a-f0-9-]{36}$/i.test(conversationId)) throw new Error('INVALID_CONVERSATION_ID');
-  const row = db().prepare('SELECT member_id,chat_id,checkpoint_id FROM ai_conversations WHERE id=?').get(conversationId);
-  if (row && row.member_id !== member.id) throw new Error('INVALID_CONVERSATION_ID');
-  return row ? { chatId: row.chat_id, checkpointId: row.checkpoint_id } : null;
-}
-export function latestAiConversation(member) {
-  if (!member) return null;
-  return db().prepare('SELECT id FROM ai_conversations WHERE member_id=? ORDER BY updated_at DESC LIMIT 1').get(member.id)?.id ?? null;
-}
-export function aiHistory(member, conversationId) {
-  if (!member || !conversationId) return [];
-  if (!/^[a-f0-9-]{36}$/i.test(conversationId)) throw new Error('INVALID_CONVERSATION_ID');
-  const rows = db().prepare("SELECT id,question_text,response_json,created_at FROM ai_questions WHERE member_id=? AND conversation_id=? AND status='completed' ORDER BY created_at DESC LIMIT 30").all(member.id, conversationId);
-  return rows.reverse().flatMap(row => {
-    if (!row.response_json || !row.question_text) return [];
-    let answer;
-    try { answer = JSON.parse(row.response_json); } catch { return []; }
-    return [{ id: `${row.id}:question`, role: 'user', text: row.question_text, at: row.created_at },
-      { id: `${row.id}:answer`, role: 'assistant', text: answer.answer, sources: answer.sources ?? [], chargeType: answer.chargeType, at: answer.generatedAt }];
-  });
-}
-export function completeAiQuestion(member, requestId, response, conversation = null) {
-  return transaction(() => {
-    if (conversation?.chatId) db().prepare(`INSERT INTO ai_conversations (id,member_id,chat_id,checkpoint_id,updated_at) VALUES (?,?,?,?,?)
-      ON CONFLICT(id) DO UPDATE SET chat_id=excluded.chat_id,checkpoint_id=excluded.checkpoint_id,updated_at=excluded.updated_at WHERE member_id=excluded.member_id`)
-      .run(conversation.id, member.id, conversation.chatId, conversation.checkpointId, new Date().toISOString());
-    const updated = db().prepare("UPDATE ai_questions SET status='completed',response_json=? WHERE id=? AND member_id=? AND status='pending'")
-      .run(JSON.stringify(response), requestId, member.id);
-    if (!updated.changes) throw new Error('REQUEST_UNAVAILABLE');
-    return aiQuota(member);
-  });
-}
-export function releaseAiQuestion(member, requestId) {
-  return transaction(() => {
-    const item = db().prepare('SELECT charge_type FROM ai_questions WHERE id=? AND member_id=? AND status=?').get(requestId, member.id, 'pending');
-    if (!item) return aiQuota(member);
-    db().prepare('DELETE FROM ai_questions WHERE id=?').run(requestId);
-    if (item.charge_type === 'credit') creditChange(member.id, 1, null, `ai-question-refund:${requestId}`);
-    return aiQuota(member);
-  });
-}
-export function grantAiCredits(admin, memberId, amount) {
-  if (!isAdmin(admin)) throw new Error('FORBIDDEN');
-  if (!Number.isInteger(amount) || amount < 1 || amount > 1000) throw new Error('INVALID_CREDIT_AMOUNT');
-  return transaction(() => {
-    const member = db().prepare('SELECT id FROM members WHERE id=?').get(memberId);
+// Read outside the transaction, then compare the version inside an atomic SQL batch.
+async function mutateMember(memberId, actorId, type, prepare) {
+  for (let attempt=0; attempt<4; attempt++) {
+    const member = await memberById(memberId);
     if (!member) throw new Error('REQUEST_UNAVAILABLE');
-    return creditChange(memberId, amount, admin.id, 'admin-grant');
+    const { set, params, details } = prepare(member);
+    const mutation=token();
+    const result=await storage.batch([
+      op(`UPDATE members SET ${set},updated_at=?,version=version+1,mutation_key=? WHERE id=? AND version=?`,
+        ...params,new Date().toISOString(),mutation,memberId,member.version),
+      audit(memberId,actorId,type,details,mutation),
+      op('SELECT * FROM members WHERE id=?',memberId),
+    ]);
+    if (result[0].changes) return result[2].results[0];
+  }
+  throw new Error('REQUEST_UNAVAILABLE');
+}
+export async function upsertLineMember({ lineId, displayName, pictureUrl }) {
+  const now=new Date().toISOString();
+  const result=await storage.batch([
+    op(`INSERT INTO members (id,line_id,display_name,picture_url,created_at,updated_at)
+      VALUES (?,?,?,?,?,?) ON CONFLICT(line_id) DO UPDATE SET display_name=excluded.display_name,
+      picture_url=excluded.picture_url,updated_at=excluded.updated_at,version=members.version+1`,
+      token(),lineId,displayName.slice(0,80),pictureUrl||null,now,now),
+    op('SELECT * FROM members WHERE line_id=?',lineId),
+  ]);
+  return result[1].results[0];
+}
+export async function createLineFlow() {
+  const value=token(),state=token(),nonce=token(),verifier=token();
+  await storage.batch([op('DELETE FROM line_oauth_flows WHERE expires_at<?',Date.now()),
+    op('INSERT INTO line_oauth_flows VALUES(?,?,?,?,?)',sessionDigest(value),state,nonce,verifier,Date.now()+600000)]);
+  return {value,state,nonce,verifier};
+}
+export async function consumeLineFlow(value) {
+  if(typeof value!=='string'||value.length>100)return null;
+  return storage.first('DELETE FROM line_oauth_flows WHERE token_hash=? RETURNING state,nonce,verifier,expires_at',sessionDigest(value));
+}
+export async function createSession(memberId) {
+  const value=token(),expiresAt=new Date(Date.now()+30*DAY).toISOString();
+  await storage.batch([op('DELETE FROM sessions WHERE expires_at<=?',new Date().toISOString()),
+    op('INSERT INTO sessions (token_hash,member_id,expires_at) VALUES (?,?,?)',sessionDigest(value),memberId,expiresAt)]);
+  return {value,expiresAt};
+}
+export async function sessionMember(value) {
+  if(typeof value!=='string'||value.length>100)return null;
+  return storage.first(`SELECT m.* FROM sessions s JOIN members m ON m.id=s.member_id
+    WHERE s.token_hash=? AND s.expires_at>?`,sessionDigest(value),new Date().toISOString());
+}
+export async function deleteSession(value) { if(value)await storage.run('DELETE FROM sessions WHERE token_hash=?',sessionDigest(value)); }
+export async function submitPortfolio(member,brokerInput,numberInput) {
+  const broker=String(brokerInput??'').trim().replace(/\s+/g,' ').toUpperCase();
+  if(!/^[\p{L}\p{M}\p{N} .&-]{2,40}$/u.test(broker))throw new Error('INVALID_BROKER');
+  const number=normalizePortfolio(numberInput),hash=portfolioDigest(broker,number);
+  try { return await mutateMember(member.id,member.id,'portfolio_submitted',current=>{
+    if(current.portfolio_hash&&current.portfolio_hash!==hash)throw new Error('PORTFOLIO_CHANGE_REQUIRES_ADMIN');
+    const now=new Date().toISOString();
+    return {set:`broker=?,portfolio_hash=?,portfolio_last4=?,portfolio_status=CASE WHEN portfolio_status='verified' THEN 'verified' ELSE 'pending' END,
+      portfolio_submitted_at=COALESCE(portfolio_submitted_at,?),trial_started_at=COALESCE(trial_started_at,?),trial_ends_at=COALESCE(trial_ends_at,?)`,
+      params:[broker,hash,number.slice(-4),now,now,new Date(Date.now()+14*DAY).toISOString()],details:broker};
+  }); } catch(error) {
+    if(String(error.message).includes('members.portfolio_hash'))throw new Error('PORTFOLIO_ALREADY_USED');
+    throw error;
+  }
+}
+export async function listAdminMembers() {
+  return storage.all(`SELECT m.id,m.display_name,m.broker,m.portfolio_last4,m.portfolio_status,m.trial_ends_at,m.subscription_ends_at,m.created_at,COALESCE(c.balance,0) AS ai_credits
+    FROM members m LEFT JOIN ai_credit_accounts c ON c.member_id=m.id WHERE m.portfolio_hash IS NOT NULL ORDER BY CASE m.portfolio_status WHEN 'pending' THEN 0 ELSE 1 END,m.updated_at DESC LIMIT 100`);
+}
+export async function verifyPortfolio(admin,memberId,numberInput) {
+  const number=normalizePortfolio(numberInput);
+  await mutateMember(memberId,admin.id,'portfolio_verified',member=>{
+    if(!member.portfolio_hash||member.portfolio_hash!==portfolioDigest(member.broker,number))throw new Error('PORTFOLIO_MISMATCH');
+    return {set:"portfolio_status='verified',portfolio_verified_at=?",params:[new Date().toISOString()]};
   });
+}
+export async function rejectPortfolio(admin,memberId) {
+  await mutateMember(memberId,admin.id,'portfolio_rejected',member=>{
+    if(member.portfolio_status!=='pending')throw new Error('REQUEST_UNAVAILABLE');
+    return {set:"broker=NULL,portfolio_hash=NULL,portfolio_last4=NULL,portfolio_status='missing',portfolio_submitted_at=NULL",params:[]};
+  });
+}
+function monthEnd(member) {
+  const start=member.subscription_ends_at&&Date.parse(member.subscription_ends_at)>Date.now()?new Date(member.subscription_ends_at):new Date();
+  const lastDay=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+2,0)).getUTCDate();
+  return new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+1,Math.min(start.getUTCDate(),lastDay),
+    start.getUTCHours(),start.getUTCMinutes(),start.getUTCSeconds(),start.getUTCMilliseconds())).toISOString();
+}
+export async function issueCode(admin,memberId) {
+  const code=`NUG-${randomBytes(12).toString('hex').toUpperCase()}`,hash=digest(code),now=new Date().toISOString();
+  const result=await storage.batch([
+    op(`INSERT INTO monthly_codes (code_hash,member_id,created_by,created_at,expires_at)
+      SELECT ?,id,?,?,? FROM members WHERE id=? AND portfolio_status='verified'`,hash,admin.id,now,new Date(Date.now()+30*DAY).toISOString(),memberId),
+    op(`INSERT INTO membership_events SELECT ?,member_id,?,'code_issued',?,NULL FROM monthly_codes WHERE code_hash=?`,token(),admin.id,now,hash),
+  ]);
+  if(!result[0].changes)throw new Error('PORTFOLIO_NOT_VERIFIED');
+  return code;
+}
+export async function redeemCode(member,codeInput) {
+  const code=String(codeInput??'').trim().toUpperCase();
+  if(!/^NUG-[A-F0-9]{24}$/.test(code))throw new Error('INVALID_CODE');
+  for(let attempt=0;attempt<4;attempt++) {
+    const current=await memberById(member.id);
+    if(current?.portfolio_status!=='verified')throw new Error('PORTFOLIO_NOT_VERIFIED');
+    const endsAt=monthEnd(current),mutation=token(),now=new Date().toISOString();
+    const result=await storage.batch([
+      op(`UPDATE monthly_codes SET redeemed_at=?,redemption_token=? WHERE code_hash=? AND member_id=? AND redeemed_at IS NULL AND expires_at>?
+        AND EXISTS(SELECT 1 FROM members WHERE id=? AND portfolio_status='verified' AND version=?)`,now,mutation,digest(code),member.id,now,member.id,current.version),
+      op(`UPDATE members SET subscription_ends_at=?,updated_at=?,version=version+1,mutation_key=? WHERE id=? AND version=?
+        AND EXISTS(SELECT 1 FROM monthly_codes WHERE code_hash=? AND redemption_token=?)`,endsAt,now,mutation,member.id,current.version,digest(code),mutation),
+      audit(member.id,member.id,'code_redeemed',endsAt,mutation),
+    ]);
+    if(result[0].changes&&result[1].changes)return endsAt;
+    const record=await storage.first('SELECT member_id,redeemed_at,expires_at FROM monthly_codes WHERE code_hash=?',digest(code));
+    if(!record||record.member_id!==member.id||record.redeemed_at||record.expires_at<=now)throw new Error('CODE_UNAVAILABLE');
+  }
+  throw new Error('REQUEST_UNAVAILABLE');
+}
+export async function requestRenewal(member) {
+  const id=token(),now=new Date().toISOString();
+  const results=await storage.batch([
+    op(`INSERT OR IGNORE INTO renewal_requests (id,member_id,created_at) SELECT ?,id,? FROM members WHERE id=? AND portfolio_status='verified'`,id,now,member.id),
+    op(`INSERT INTO membership_events SELECT ?,member_id,member_id,'renewal_requested',?,NULL FROM renewal_requests WHERE id=?`,token(),now,id),
+    op("SELECT id FROM renewal_requests WHERE member_id=? AND status='pending'",member.id),
+  ]);
+  if(!results[2].results.length)throw new Error('PORTFOLIO_NOT_VERIFIED');
+  return results[2].results[0].id;
+}
+export async function listRenewals() {
+  return storage.all(`SELECT r.id,r.member_id,r.created_at,m.display_name,m.broker,m.portfolio_last4
+    FROM renewal_requests r JOIN members m ON m.id=r.member_id WHERE r.status='pending' ORDER BY r.created_at LIMIT 100`);
+}
+export async function approveRenewal(admin,requestId) {
+  for(let attempt=0;attempt<4;attempt++) {
+    const request=await storage.first("SELECT * FROM renewal_requests WHERE id=? AND status='pending'",requestId);
+    if(!request)throw new Error('REQUEST_UNAVAILABLE');
+    const member=await memberById(request.member_id);
+    if(member?.portfolio_status!=='verified')throw new Error('PORTFOLIO_NOT_VERIFIED');
+    const endsAt=monthEnd(member),mutation=token(),now=new Date().toISOString();
+    const result=await storage.batch([
+      op(`UPDATE renewal_requests SET status='approved',resolved_at=?,resolved_by=?,resolution_token=? WHERE id=? AND status='pending'
+        AND EXISTS(SELECT 1 FROM members WHERE id=? AND portfolio_status='verified' AND version=?)`,now,admin.id,mutation,requestId,member.id,member.version),
+      op(`UPDATE members SET subscription_ends_at=?,updated_at=?,version=version+1,mutation_key=? WHERE id=? AND version=?
+        AND EXISTS(SELECT 1 FROM renewal_requests WHERE id=? AND resolution_token=?)`,endsAt,now,mutation,member.id,member.version,requestId,mutation),
+      audit(member.id,admin.id,'renewal_approved',endsAt,mutation),
+    ]);
+    if(result[0].changes&&result[1].changes)return endsAt;
+  }
+  throw new Error('REQUEST_UNAVAILABLE');
+}
+export async function rejectRenewal(admin,requestId) {
+  const mutation=token(),now=new Date().toISOString();
+  const result=await storage.batch([
+    op("UPDATE renewal_requests SET status='rejected',resolved_at=?,resolved_by=?,resolution_token=? WHERE id=? AND status='pending'",now,admin.id,mutation,requestId),
+    op(`INSERT INTO membership_events SELECT ?,member_id,?,'renewal_rejected',?,NULL FROM renewal_requests WHERE id=? AND resolution_token=?`,token(),admin.id,now,requestId,mutation),
+  ]);
+  if(!result[0].changes)throw new Error('REQUEST_UNAVAILABLE');
+}
+export async function accountSummary(member) {
+  if(!member)return null;
+  const renewal=await storage.first("SELECT id FROM renewal_requests WHERE member_id=? AND status='pending'",member.id);
+  return {id:member.id,displayName:member.display_name,pictureUrl:member.picture_url,broker:member.broker,
+    portfolioLast4:member.portfolio_last4,portfolioStatus:member.portfolio_status,trialStartedAt:member.trial_started_at,
+    trialEndsAt:member.trial_ends_at,subscriptionEndsAt:member.subscription_ends_at,renewalPending:Boolean(renewal),admin:isAdmin(member)};
+}
+export async function aiQuota(member) {
+  const day=bangkokDay();
+  if(!member)return {freeLimit:AI_FREE_DAILY,freeUsed:0,freeRemaining:0,credits:0,day};
+  const row=await storage.first(`SELECT (SELECT COUNT(*) FROM ai_questions WHERE member_id=? AND day_key=? AND charge_type='free') AS used,
+    COALESCE((SELECT balance FROM ai_credit_accounts WHERE member_id=?),0) AS credits`,member.id,day,member.id);
+  return {freeLimit:AI_FREE_DAILY,freeUsed:row.used,freeRemaining:Math.max(0,AI_FREE_DAILY-row.used),credits:row.credits,day};
+}
+export async function reserveAiQuestion(member,requestId,question,conversationId) {
+  if(!/^[a-f0-9-]{36}$/i.test(requestId))throw new Error('INVALID_REQUEST_ID');
+  if(!/^[a-f0-9-]{36}$/i.test(conversationId)||typeof question!=='string'||question.length<3||question.length>700)throw new Error('INVALID_REQUEST');
+  const reservationToken=token(),day=bangkokDay(),now=new Date().toISOString();
+  let results;
+  try { results=await storage.batch([
+    op("DELETE FROM ai_questions WHERE member_id=? AND status='pending' AND created_at<?",member.id,new Date(Date.now()-300000).toISOString()),
+    op(`INSERT INTO ai_questions (id,member_id,conversation_id,question_text,day_key,charge_type,status,created_at,reservation_token)
+      SELECT ?,?,?,?,?,CASE WHEN (SELECT COUNT(*) FROM ai_questions WHERE member_id=? AND day_key=? AND charge_type='free')<5 THEN 'free' ELSE 'credit' END,'pending',?,?
+      WHERE NOT EXISTS(SELECT 1 FROM ai_questions WHERE id=?)`,requestId,member.id,conversationId,question,day,member.id,day,now,reservationToken,requestId),
+    op('SELECT * FROM ai_questions WHERE id=?',requestId),
+  ]); } catch(error) {
+    for(const code of ['QUESTION_IN_PROGRESS','INSUFFICIENT_AI_CREDITS','FREE_QUOTA_EXHAUSTED'])if(String(error.message).includes(code))throw new Error(code);
+    throw error;
+  }
+  const previous=results[2].results[0];
+  if(!previous||previous.member_id!==member.id||previous.conversation_id!==conversationId||previous.question_text!==question)throw new Error('INVALID_REQUEST_ID');
+  return {kind:previous.reservation_token===reservationToken?'reserved':previous.status==='completed'?'cached':'pending',
+    response:previous.response_json?JSON.parse(previous.response_json):null,chargeType:previous.charge_type,
+    reservationToken:previous.reservation_token,quota:await aiQuota(member)};
+}
+export async function aiConversation(member,conversationId) {
+  if(!/^[a-f0-9-]{36}$/i.test(conversationId))throw new Error('INVALID_CONVERSATION_ID');
+  const row=await storage.first('SELECT member_id,chat_id,checkpoint_id FROM ai_conversations WHERE id=?',conversationId);
+  if(row&&row.member_id!==member.id)throw new Error('INVALID_CONVERSATION_ID');
+  return row?{chatId:row.chat_id,checkpointId:row.checkpoint_id}:null;
+}
+export async function latestAiConversation(member) {
+  if(!member)return null;
+  return (await storage.first('SELECT id FROM ai_conversations WHERE member_id=? ORDER BY updated_at DESC LIMIT 1',member.id))?.id??null;
+}
+export async function aiHistory(member,conversationId) {
+  if(!member||!conversationId)return [];
+  if(!/^[a-f0-9-]{36}$/i.test(conversationId))throw new Error('INVALID_CONVERSATION_ID');
+  const rows=await storage.all("SELECT id,question_text,response_json,created_at FROM ai_questions WHERE member_id=? AND conversation_id=? AND status='completed' ORDER BY created_at DESC LIMIT 30",member.id,conversationId);
+  return rows.reverse().flatMap(row=>{
+    if(!row.response_json||!row.question_text)return [];
+    let answer;try{answer=JSON.parse(row.response_json);}catch{return [];}
+    return [{id:`${row.id}:question`,role:'user',text:row.question_text,at:row.created_at},
+      {id:`${row.id}:answer`,role:'assistant',text:answer.answer,sources:answer.sources??[],chargeType:answer.chargeType,at:answer.generatedAt}];
+  });
+}
+export async function completeAiQuestion(member,requestId,response,conversation=null,reservationToken) {
+  if(!reservationToken)throw new Error('REQUEST_UNAVAILABLE');
+  const queries=[op("UPDATE ai_questions SET status='completed',response_json=? WHERE id=? AND member_id=? AND status='pending' AND reservation_token=?",
+    JSON.stringify(response),requestId,member.id,reservationToken)];
+  if(conversation?.chatId)queries.push(op(`INSERT INTO ai_conversations (id,member_id,chat_id,checkpoint_id,updated_at)
+    SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM ai_questions WHERE id=? AND member_id=? AND status='completed' AND reservation_token=? AND response_json=?)
+    ON CONFLICT(id) DO UPDATE SET chat_id=excluded.chat_id,checkpoint_id=excluded.checkpoint_id,updated_at=excluded.updated_at WHERE member_id=excluded.member_id`,
+    conversation.id,member.id,conversation.chatId,conversation.checkpointId??null,new Date().toISOString(),requestId,member.id,reservationToken,JSON.stringify(response)));
+  const result=await storage.batch(queries);
+  if(!result[0].changes)throw new Error('REQUEST_UNAVAILABLE');
+  return aiQuota(member);
+}
+export async function releaseAiQuestion(member,requestId,reservationToken) {
+  if(reservationToken)await storage.run("DELETE FROM ai_questions WHERE id=? AND member_id=? AND status='pending' AND reservation_token=?",requestId,member.id,reservationToken);
+  return aiQuota(member);
+}
+export async function grantAiCredits(admin,memberId,amount) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
+  if(!Number.isInteger(amount)||amount<1||amount>1000)throw new Error('INVALID_CREDIT_AMOUNT');
+  if(!await memberById(memberId))throw new Error('REQUEST_UNAVAILABLE');
+  const result=await storage.batch([
+    op('INSERT INTO ai_credit_accounts (member_id,balance) VALUES (?,?) ON CONFLICT(member_id) DO UPDATE SET balance=balance+excluded.balance',memberId,amount),
+    op(`INSERT INTO ai_credit_events SELECT ?,member_id,?,?,balance,'admin-grant',? FROM ai_credit_accounts WHERE member_id=?`,token(),admin.id,amount,new Date().toISOString(),memberId),
+    op('SELECT balance FROM ai_credit_accounts WHERE member_id=?',memberId),
+  ]);
+  return result[2].results[0].balance;
 }

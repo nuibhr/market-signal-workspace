@@ -21,13 +21,13 @@ export async function GET() {
     const coverage = {};
     for (const market of readiness.markets.filter(item => ['thai', 'dr', 'us'].includes(item.id))) {
       const key = market.id === 'thai' ? thaiSession(now).day : market.id === 'dr' ? drSession(now).key : usScanSlot(usEodSession(now).day);
-      const { pending, unresolved, ...summary } = scanCoverage(market.id, key, market.universe ?? [], now);
+      const { pending, unresolved, ...summary } = (await scanCoverage(market.id, key, market.universe ?? [], now));
       coverage[market.id] = { ...summary, sessionKey: key, retrySymbols: unresolved };
     }
-    const workers = Object.fromEntries(['thai', 'dr', 'us'].map(id => [id, scannerHealth(now, id)]));
-    const { runs, outcomes } = signalFeed();
+    const workers = Object.fromEntries(await Promise.all(['thai', 'dr', 'us'].map(async id => [id, (await scannerHealth(now, id))])));
+    const { runs, outcomes } = (await signalFeed());
     const webull = await webullSdkHealth();
-    return Response.json({ updatedAt: new Date(now).toISOString(), markets, coverage, workers, workerProcess: workerProcessHealth(now), runs, outcomes, webull }, { headers: privateHeaders });
+    return Response.json({ updatedAt: new Date(now).toISOString(), markets, coverage, workers, workerProcess: (await workerProcessHealth(now)), runs, outcomes, webull }, { headers: privateHeaders });
   } catch {
     return Response.json({ error: 'SYSTEM_STATUS_UNAVAILABLE' }, { status: 503, headers: privateHeaders });
   }

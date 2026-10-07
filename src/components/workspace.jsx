@@ -1,4 +1,5 @@
 'use client';
+import { useMemberFavorites } from './use-member-favorites.jsx';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -39,7 +40,6 @@ const FEATURE_ITEMS = [
 const FEATURE_ICONS = { scanner: Radar, 'multi-tf': Layers3, volume: Waves, news: Newspaper, 'news-guide': BookOpen };
 const ANALYSIS_FEATURE_ITEMS = FEATURE_ITEMS.slice(0, 3);
 const DEFAULT_INDICATORS = { ema20: true, ema50: false, sma20: false, bollinger: false, donchian: false, vwap: false, volume: true, levels: true };
-const FAVORITES_STORAGE_KEY = 'nugaom-ai-pick-favorites';
 const displaySection = value => value === 'US_STOCKS' ? 'หุ้นสหรัฐฯ' : value === 'US_ETFS' ? 'ETF' : value;
 
 function formatLatestBar(series) {
@@ -101,7 +101,6 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [aiResult, setAiResult] = useState(null);
   const [reloadNonce, setReloadNonce] = useState(0);
   const lastAutoRefreshRef = useRef(0);
-  const [favorites, setFavorites] = useState([]);
   const [favoriteNotice,setFavoriteNotice]=useState('');
   const [favoritesOpenRequest,setFavoritesOpenRequest]=useState(0);
   const [popup, setPopup] = useState(null);
@@ -111,6 +110,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [symbolCategory, setSymbolCategory] = useState(marketId);
   const [rights, setRights] = useState(null);
   const [memberAccount, setMemberAccount] = useState(null);
+  const [accountReady,setAccountReady]=useState(false);
+  const {favorites,toggleFavorite}=useMemberFavorites({ready:accountReady,memberId:memberAccount?.id,marketId,onNotice:setFavoriteNotice});
   const [accountConfigured, setAccountConfigured] = useState(false);
   const [marketQuote, setMarketQuote] = useState(null);
   const [quoteState, setQuoteState] = useState('idle');
@@ -155,7 +156,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     const controller = new AbortController();
     fetch('/api/membership', { cache: 'no-store', signal: controller.signal })
       .then(response => response.ok ? response.json() : null)
-      .then(payload => { if (!controller.signal.aborted) { setRights(payload?.rights ?? null); setMemberAccount(payload?.account ?? null); setAccountConfigured(Boolean(payload?.configured)); } })
+      .then(payload => { if (!controller.signal.aborted) { setRights(payload?.rights ?? null); setMemberAccount(payload?.account ?? null); setAccountConfigured(Boolean(payload?.configured)); setAccountReady(Boolean(payload)); } })
       .catch(() => {});
     return () => controller.abort();
   }, []);
@@ -325,23 +326,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     return () => { window.clearTimeout(timeout); controller.abort(); };
   }, [asset.symbol, analysis, currentAnalysis, hasSettradeConnection, liveSeries?.latestDay, liveSeries?.latestTime, timeframe, rights?.capabilities?.manualDailyScan]);
 
-  useEffect(() => {
-    try {
-      const stored = JSON.parse(window.localStorage.getItem(FAVORITES_STORAGE_KEY) ?? window.localStorage.getItem('nova-favorites') ?? '[]');
-      if (Array.isArray(stored)) setFavorites([...new Set(stored.filter(item => typeof item === 'string'&&ALL_ASSETS.some(a=>a.symbol===item)))]);
-    } catch { /* Favorites remain usable without storage. */ }
-  }, []);
-
-  function toggleFavorite(symbol) {
-    const saved=favorites.includes(symbol),next=saved?favorites.filter(item=>item!==symbol):[...favorites,symbol];
-    setFavorites(next);
-    try { window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(next));
-      setFavoriteNotice(saved?`นำ ${symbol} ออกจากหุ้นโปรดแล้ว`:`บันทึก ${symbol} แล้ว · เปิดที่หุ้นโปรดเพื่อดูราคาและแนวโน้ม`);
-    } catch { setFavoriteNotice(`อัปเดตรายการ ${symbol} แล้ว · เบราว์เซอร์นี้เก็บรายการถาวรไม่ได้`); }
-  }
-
   useEffect(()=>{if(!favoriteNotice)return;const timer=window.setTimeout(()=>setFavoriteNotice(''),4500);return()=>window.clearTimeout(timer);},[favoriteNotice]);
-  useEffect(()=>{const sync=event=>{if(event.key!==FAVORITES_STORAGE_KEY)return;try{const value=JSON.parse(event.newValue||'[]');if(Array.isArray(value))setFavorites([...new Set(value.filter(s=>typeof s==='string'&&ALL_ASSETS.some(a=>a.symbol===s)))]);}catch{}};window.addEventListener('storage',sync);return()=>window.removeEventListener('storage',sync);},[]);
+
 
   function toggleIndicator(key) {
     setIndicators(current => ({ ...current, [key]: !current[key] }));
@@ -439,7 +425,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
               <AnalysisRail chartOnly={Boolean(liveSeries?.chartOnly)} asset={asset} analysis={analysis} tradePlan={tradePlan} tradePlanState={hasSettradeConnection && timeframe === '1d' && (liveState === 'loading' || planContextState === 'loading') ? 'loading' : planContextState} aiState={currentAnalysis ? aiState : 'idle'} aiResult={currentAiResult} sourceState={liveState} barsCount={hasRealBars ? liveSeries.bars.length : 0} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} timeframeId={timeframe} freshness={liveSeries?.freshness} currentPrice={hasRealQuote && !hasTfexConnection ? marketQuote?.price : hasRealBars ? liveSeries.quote?.price ?? liveSeries.bars.at(-1)?.close : null} sourceLabel={hasRealQuote ? marketQuote.source : sourceLabel} onOpenAutomation={() => navigateTo('autopick')} />
 
-            <LiveMarketWatch market={market} asset={asset} favorites={favorites} favoritesOpenRequest={favoritesOpenRequest} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} series={hasRealBars ? liveSeries : null} analysis={analysis} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory(marketId); setPopup('search'); }} />
+            <LiveMarketWatch market={market} asset={asset} favorites={favorites} favoritesOpenRequest={favoritesOpenRequest} favoritesSynced={Boolean(memberAccount)} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} series={hasRealBars ? liveSeries : null} analysis={analysis} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory(marketId); setPopup('search'); }} />
           </section>
 
           <SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} />

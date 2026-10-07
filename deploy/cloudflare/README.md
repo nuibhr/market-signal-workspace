@@ -1,24 +1,67 @@
-# Cloudflare migration — existing Nugaom application
+# Cloudflare — แอป Nugaom เดิม
 
-Chosen target: Next.js web on Workers (OpenNext), a scheduled scanner every five minutes, D1 for members and immutable signal events. No Supabase or VPS.
+เป้าหมาย: เว็บบน Workers, สแกนทุก 5 นาทีด้วย Cron/Queues และเก็บสมาชิก/สัญญาณใน D1 ไม่ต้องมี VPS หรือ Supabase
 
-## Prepared in this change
+## ขั้นที่ 1: ฐานข้อมูล
 
-- `migrations/0001_existing_schema.sql`: existing 21-table schema only. Contains no customer records, session values, credentials or candle data.
-- Customer signal APIs now use explicit allowlists; strategy gates, versions, provider diagnostics and raw event explanations stay on the server/admin.
-- Whole-market historical replay summaries are stored persistently and updated one instrument at a time. Customer requests only read summaries.
+- สมาชิก LINE, session/OAuth, พอร์ต, เครดิต/คำถาม AI, หุ้นโปรด, สัญญาณ, ความคืบหน้าสแกน, แท่งราคา และผลย้อนหลัง ใช้ repository แบบ async ร่วมกัน
+- SQLite เดิมยังเป็นตัวหลักจนกว่าการย้าย remote และตรวจเทียบจะครบ ไม่มี silent fallback เมื่อเลือก D1
+- โค้ดรายเดือน/การอนุมัติต่ออายุใช้ version และ atomic batch เพื่อไม่ต่ออายุซ้ำเมื่อมีคำขอพร้อมกัน
+- AI ฟรี 5 คำถาม/วันตามเวลาไทย จากนั้น 1 เครดิต/คำถาม จอง/คืนเครดิตในฐานข้อมูล ใช้ reservation token ป้องกันคำขอเก่าทับคำขอใหม่
+- ราคาเข้า–ออกครั้งแรกถูกเก็บไว้ เหตุการณ์สัญญาณแก้ไข/ลบไม่ได้ งานตรวจราคาที่อ่านสถานะเก่าไม่สามารถทับสถานะใหม่
+- หุ้นโปรดเก็บตามบัญชี LINE มีการตรวจสิทธิ์/origin ข้อมูล guest นำเข้าครั้งเดียวแล้วนำออกจาก browser เพื่อไม่คัดลอกไปบัญชีถัดไป
+- แท่งราคาเดิมที่ไม่เปลี่ยนไม่ถูกเขียนซ้ำทุกครั้งที่สแกน
+- 0001 เป็น baseline เดิม, 0002 เพิ่ม atomic writes/หุ้นโปรด, 0003 ป้องกันการหักเครดิตซ้ำเมื่อนำเข้าคำตอบ AI เก่า
 
-## Required before deploying
+## สถานะ ณ 7 ต.ค. 2026
 
-The current app still uses synchronous `node:sqlite`, local disk backups and a Node process loop. The schema file is preparation, not a deployed D1 database or a finished Workers port.
+สร้าง nugaom-prod-db ใน APAC และลง schema ครบ 3 migration แล้ว
 
-1. Create Cloudflare resources under the owner's account and choose a public hostname.
-2. Introduce asynchronous D1 repositories for membership, OAuth state, rate limits, signals, scan progress, candles and replay summaries. D1 uses async APIs; do not wrap current synchronous `DatabaseSync` as if it were compatible.
-3. Replace local transaction code with D1 atomic batches/conditional updates. Credit debit, session consumption, portfolio uniqueness and signal event insertion must remain atomic.
-4. Schedule `*/5 * * * *` in UTC. Fan out bounded market/instrument batches through Queues; use D1 leases and stable event keys to prevent overlaps and duplicate alerts. One five-minute trigger cannot promise every symbol completes in that invocation.
-5. Use persistent progress/cursors for monitoring existing positions and historical replay. Separate provider errors from legitimate strategy rejections.
-6. Adapt Next.js through OpenNext and resolve native Node dependencies and filesystem assumptions. Local Ollama is not available from Workers.
-7. Store credentials as Cloudflare Secrets; use HTTPS LINE callback matching the deployed URL. Import customer data through a controlled migration, not through this schema file.
-8. Confirm end-to-end behavior before changing production origin: login/session, 14-day trial, credit accounting, scheduled scan without an open browser, notifications, immutable entry/exit results and restored backup.
+สำเนา D1 ในเครื่องตรวจจำนวนแถวและ SHA-256 ตรงกับ snapshot ทุกตาราง พร้อมตรวจ foreign keys/integrity: สัญญาณ 276, เหตุการณ์ 598, แท่งราคา 397,943 (ตัวเลขของ snapshot เปลี่ยนได้ระหว่างสแกน)
 
-Do not deploy the old `/api/auto-pick/run` behind a Cloudflare proxy and label that a serverless migration: it still depends on the Mac/VPS and local SQLite.
+บัญชีเป็น Workers Free ขณะตรวจ จึงยังไม่ย้ายข้อมูลทั้งหมดหรือสลับเว็บเป็น remote: โควตาเขียน 100,000 แถว/วันต่ำกว่าข้อมูลเดิม เจ้าของต้องอัปเกรดหรือกำหนดแผนย้ายหลายวันก่อน ขั้นนี้ยังไม่ได้ deploy เว็บหรือเปิด Cron production
+
+## โหมดฐานข้อมูล
+
+- STORAGE_PROVIDER=sqlite (default): SQLite เดิม
+- STORAGE_PROVIDER=d1-local: native D1 จำลองด้วย Wrangler เก็บใน deploy/cloudflare/.wrangler/state/v3
+- STORAGE_PROVIDER=d1-remote: native D1 ผ่าน official Wrangler development bridge ต้องมี OAuth ที่ใช้ได้ ใช้เปลี่ยนผ่านจากเว็บ Node ในเครื่อง
+- STORAGE_PROVIDER=d1: Worker ส่ง binding จริง env.DB เข้า withD1Database ครอบ request/job ถ้าไม่มี binding ให้แจ้ง unavailable
+- D1_CONFIG_PATH: เปลี่ยน path config เมื่อจำเป็น
+
+Development bridge ไม่ใช่การ deploy Workers เมื่อเว็บขึ้น Workers ให้ใช้ binding โดยตรง ห้ามส่ง OAuth ของ Wrangler ไปให้ลูกค้าหรือใส่ใน Git
+
+สิทธิ์ Wrangler ที่ใช้ในขั้นนี้: account:read, user:read, d1:write, workers_scripts:write และ offline_access ที่เพิ่มอัตโนมัติ สิทธิ์ workers:write แบบเดิมไม่พอสำหรับ preview subdomain API ในบัญชีนี้
+
+## ย้ายข้อมูลหลังบัญชีพร้อม
+
+ใช้ Node รันไฟล์ .mjs ปกติ หลีกเลี่ยง --input-type=module ซึ่งรบกวน Worker threads ของ Miniflare
+
+1. หยุด web และ scanner ทุกตัวชั่วคราว รอ AI ที่กำลังตอบให้จบ
+2. รัน npm run d1:schema:remote ตาม config ของเจ้าของ
+3. ตั้ง D1_MIGRATION_DIR เป็นโฟลเดอร์ส่วนตัวใหม่ เช่น data/d1-migration/cutover-20261007 ใช้ค่าเดียวกันทุกคำสั่งในรอบ
+4. npm run d1:prepare: สำรองเข้ารหัส, snapshot SQLite ที่สอดคล้องกัน, SQL ระบุคอลัมน์/แบ่งคำสั่งไม่เกิน 64 KB, manifest จำนวนแถวและ hash
+5. npm run d1:import: ปฏิเสธปลายทางที่มีข้อมูล นำเข้าแล้ว export กลับมาตรวจเทียบทุกตาราง ไม่มี customer payload ออก stdout
+6. npm run d1:unchanged: ต้องตรงกับ snapshot และยังไม่มี writer ทำงาน ถ้าไม่ตรงห้ามสลับ ต้องเตรียมรอบใหม่พร้อมปลายทางที่วางแผนไว้
+7. หลัง verified/unchanged จึงตั้ง .env.local เป็น STORAGE_PROVIDER=d1-remote และ D1_CONFIG_PATH=deploy/cloudflare/wrangler.remote.jsonc แล้วเปิด web/scanner
+8. ตรวจ health, บัญชี/สิทธิ์, หุ้นโปรด, พอร์ต, ผลสัญญาณ รักษา SESSION_SECRET/PORTFOLIO_HASH_SECRET เดิมเพื่อให้ session/hash ใช้ต่อได้
+
+ข้อมูล snapshot/export/raw SQL อยู่ใน data/ permission ส่วนตัวและ Git ignore หลัง remote มีการเขียนใหม่ ห้ามชี้กลับ SQLite เก่าโดยไม่ย้ายธุรกรรมหลังสลับ
+
+d1:verify ใช้ตรวจ export ซ้ำ ต้องย้าย comparison เดิมไว้ก่อนหรือใช้โฟลเดอร์ตรวจใหม่พร้อม manifest; script ปฏิเสธการเขียนทับ comparison เดิม
+
+## ขั้นต่อไปหลังฐานข้อมูล
+
+1. Cron UTC */5 * * * * ส่งงานตลาด/หุ้นย่อยเข้า Queues มี lease/stable event key และ retry/timeout แยกจากหุ้นไม่เข้าเงื่อนไข
+2. Worker entry points ใช้ D1 binding จริง ปรับ native Node/SDK/filesystem/Ollama ที่ Workers ไม่รองรับก่อน deploy
+3. เว็บ HTTPS ถาวร เก็บ credentials ใน Cloudflare Secrets และลงทะเบียน LINE callback ตรง origin
+4. ตรวจ login → สิทธิ์ 14 วัน → สแกนเมื่อไม่มี browser → เสียง/popup → ผลราคาเข้า–ออก เสียงเว็บต้องผ่านการกดอนุญาตของลูกค้า
+5. D1 Time Travel, offsite encrypted backup, ตรวจโควตาและสถิติสแกนก่อนรับลูกค้า production
+
+## อ้างอิง
+
+- [D1 batch](https://developers.cloudflare.com/d1/worker-api/d1-database/#batch): atomic writes
+- [Import/export](https://developers.cloudflare.com/d1/best-practices/import-export-data/)
+- [D1 limits](https://developers.cloudflare.com/d1/platform/limits/)
+- [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/): Free อ่าน 5 ล้าน/วัน เขียน 100,000/วัน Query ผ่าน Wrangler ก็นับโควตา
+- [Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/): Free ย้อน 7 วัน, Paid 30 วัน

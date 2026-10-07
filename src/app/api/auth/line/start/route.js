@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   if (!isConfigured()) return NextResponse.redirect(new URL('/account?auth=unavailable', authBase(request)));
-  const limited = rateLimit('line-login', 'global', 60); if (limited) return limited;
-  const { value, state, nonce, verifier } = createLineFlow();
+  const limited = (await rateLimit('line-login', 'global', 60)); if (limited) return limited;
+  const { value, state, nonce, verifier } = (await createLineFlow());
   const challenge = createHash('sha256').update(verifier).digest('base64url');
   const authorize = new URL('https://access.line.me/oauth2/v2.1/authorize');
   authorize.search = new URLSearchParams({ response_type: 'code', client_id: process.env.LINE_CHANNEL_ID,

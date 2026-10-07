@@ -82,7 +82,7 @@ export async function POST(request) {
   if (process.env.NODE_ENV === 'production') {
     return Response.json({ status: 'unavailable', code: 'LOCAL_MODEL_ONLY' }, { status: 503, headers: NO_STORE });
   }
-  const limited = rateLimit('chart-ai', member.id, 6); if (limited) return limited;
+  const limited = (await rateLimit('chart-ai', member.id, 6)); if (limited) return limited;
   let snapshot;
   try { snapshot = parseSnapshot(await readJsonBody(request,3000)); } catch (error) { return requestErrorResponse(error); }
   if (!snapshot) return Response.json({ status: 'unavailable', code: 'INVALID_INPUT' }, { status: 400, headers: NO_STORE });

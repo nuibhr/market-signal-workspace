@@ -1,0 +1,12 @@
+{
+  "name": "nugaom-storage-bridge",
+  "account_id": "84140dea513079cc7dc4166a4c71b2ee",
+  "compatibility_date": "2026-10-06",
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "nugaom-prod-db",
+    "database_id": "8d1f669c-a3b6-4231-9f00-bc97c2a0b817",
+    "migrations_dir": "migrations",
+    "remote": true
+  }]
+}

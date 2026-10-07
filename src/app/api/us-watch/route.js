@@ -34,7 +34,7 @@ export async function GET(request){
   const newReads=symbols.filter(s=>!(cache.get(s)?.expiresAt>Date.now())&&!pending.has(s)).length;
   if(pending.size+newReads>12)return Response.json({status:'unavailable',code:'SOURCE_BUSY'},{status:503,headers:{...headers,'Retry-After':'10'}});
   // Bound provider work even for anonymous browsing; shared histories deduplicate reads.
-  if(symbols.some(s=>!(cache.get(s)?.expiresAt>Date.now()))){const limited=rateLimit('us-watch-provider','global',30);if(limited)return limited;}
+  if(symbols.some(s=>!(cache.get(s)?.expiresAt>Date.now()))){const limited=(await rateLimit('us-watch-provider','global',30));if(limited)return limited;}
   const quotes=await Promise.all(symbols.map(summary));
   return Response.json({status:quotes.some(q=>q.status==='available')?'available':'unavailable',quotes,
     basis:'ราคาปิดรายวัน · คะแนนเทคนิค ไม่ใช่โอกาสชนะหรือสัญญาณซื้อ',live:false},{headers});

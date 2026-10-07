@@ -13,13 +13,13 @@ export async function GET(request) {
   }
   const params = new URL(request.url).searchParams;
   try {
-    const result = signalResults({
+    const result = (await signalResults({
       market: params.get('market') ?? 'all',
       status: params.get('status') ?? 'all',
       scope: params.get('scope') ?? 'history',
       page: params.get('page') ?? 1,
       pageSize: 7,
-    });
+    }));
     return Response.json({status:'available', ...result, signals:result.signals.map(customerSignal)}, {headers:privateHeaders});
   } catch {
     return Response.json({ status: 'unavailable', code: 'SIGNAL_STORE_UNAVAILABLE' }, { status: 503, headers: privateHeaders });

@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
-import { sharedDatabase } from '../membership/store.mjs';
+import { sharedDatabase } from '../storage/sqlite.mjs';
 const MAGIC = Buffer.from('NUGAOM01');
 function key(value) {
   if (!/^[a-f0-9]{64}$/i.test(value ?? '')) throw new Error('BACKUP_ENCRYPTION_KEY must be 64 hexadecimal characters');

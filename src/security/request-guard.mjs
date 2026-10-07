@@ -1,16 +1,13 @@
 import { createHash } from 'node:crypto';
-import { sharedDatabase } from '../membership/store.mjs';
+import { storage } from '../storage/database.mjs';
 
-let ready = false;
 let cleanedAt = 0;
-export function rateLimit(scope, identity, limit, windowMs = 60000) {
-  const db = sharedDatabase();
-  if (!ready) { db.exec('CREATE TABLE IF NOT EXISTS request_limits(bucket TEXT PRIMARY KEY, hits INTEGER NOT NULL, expires_at INTEGER NOT NULL)'); ready = true; }
+export async function rateLimit(scope, identity, limit, windowMs = 60000) {
   const now = Date.now();
-  if (now - cleanedAt > 60000) { db.prepare('DELETE FROM request_limits WHERE expires_at<?').run(now); cleanedAt = now; }
+  if (now - cleanedAt > 60000) { await storage.run('DELETE FROM request_limits WHERE expires_at<?',now); cleanedAt = now; }
   const bucket = createHash('sha256').update(`${scope}:${identity}:${Math.floor(now / windowMs)}`).digest('hex');
   const expires = (Math.floor(now / windowMs) + 1) * windowMs;
-  const result = db.prepare(`INSERT INTO request_limits VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET hits=hits+1 WHERE hits<? RETURNING hits`).get(bucket, expires, limit);
+  const result = await storage.first(`INSERT INTO request_limits VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET hits=hits+1 WHERE hits<? RETURNING hits`,bucket,expires,limit);
   return result ? null : Response.json({ error: 'RATE_LIMITED', code: 'RATE_LIMITED' }, { status: 429, headers: { 'Cache-Control': 'private, no-store', 'Retry-After': String(Math.max(1, Math.ceil((expires-now)/1000))) } });
 }
 

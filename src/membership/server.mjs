@@ -13,7 +13,7 @@ export async function currentMember() {
 }
 export async function currentAccount() {
   const member = await currentMember();
-  return { configured: isConfigured(), account: accountSummary(member), rights: membershipFor(member), aiQuota: aiQuota(member), aiConfigured: Boolean(process.env.BIGDATA_API_KEY) };
+  return { configured: isConfigured(), account: (await accountSummary(member)), rights: membershipFor(member), aiQuota: (await aiQuota(member)), aiConfigured: Boolean(process.env.BIGDATA_API_KEY) };
 }
 export function sameOrigin(request) {
   const origin = request.headers.get('origin');

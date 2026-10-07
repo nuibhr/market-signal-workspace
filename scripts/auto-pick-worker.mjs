@@ -8,13 +8,13 @@ if (!initialReadiness.enabled || !process.env.AUTO_PICK_RUN_SECRET || process.en
 } else {
   process.stdout.write(`AutoPick worker ready. Markets enabled: ${initialReadiness.markets.filter(item => item.status === 'active').map(item => item.id).join(', ')}.\n`);
   // Keep the liveness marker current while a long market scan is awaiting provider calls.
-  setInterval(() => {
-    try { heartbeatWorker(); }
+  setInterval(async () => {
+    try { (await heartbeatWorker()); }
     catch (error) { process.stderr.write(`${new Date().toISOString()} Worker heartbeat failed: ${error.message}\n`); }
   }, 30_000);
   let lastWake = Date.now();
   while (true) {
-    heartbeatWorker();
+    (await heartbeatWorker());
     const now = Date.now();
     if (now - lastWake > 120_000) process.stderr.write(`${new Date(now).toISOString()} AutoPick resumed after a ${Math.round((now - lastWake) / 60_000)}m process pause.\n`);
     lastWake = now;
@@ -29,9 +29,9 @@ if (!initialReadiness.enabled || !process.env.AUTO_PICK_RUN_SECRET || process.en
       } catch (error) {
         process.stderr.write(`${new Date().toISOString()} ${market} AutoPick run failed: ${error.message}\n`);
       }
-      heartbeatWorker();
+      (await heartbeatWorker());
     }
-    reconcileWatchPlans([...enabled]);
+    (await reconcileWatchPlans([...enabled]));
     // Wake frequently so sleep/wake and clock changes cannot leave an old timer pending.
     await new Promise(resolve => setTimeout(resolve, 30_000));
   }

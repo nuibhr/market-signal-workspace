@@ -13,12 +13,12 @@ export async function POST(request) {
   if (Number(request.headers.get('content-length') || 0) > 4096) return Response.json({ error: 'PAYLOAD_TOO_LARGE' }, { status: 413, headers: privateHeaders });
   const member = await currentMember();
   if (!member) return Response.json({ error: 'LOGIN_REQUIRED' }, { status: 401, headers: privateHeaders });
-  const limited = rateLimit('account', member.id, 12); if (limited) return limited;
+  const limited = (await rateLimit('account', member.id, 12)); if (limited) return limited;
   try {
     const body = await readJsonBody(request, 4096);
-    if (body.action === 'portfolio') submitPortfolio(member, body.broker, body.number);
-    else if (body.action === 'redeem') redeemCode(member, body.code);
-    else if (body.action === 'renewal') requestRenewal(member);
+    if (body.action === 'portfolio') (await submitPortfolio(member, body.broker, body.number));
+    else if (body.action === 'redeem') (await redeemCode(member, body.code));
+    else if (body.action === 'renewal') (await requestRenewal(member));
     else return Response.json({ error: 'INVALID_ACTION' }, { status: 400, headers: privateHeaders });
     return Response.json(await currentAccount(), { headers: privateHeaders });
   } catch (error) { return error instanceof RequestError ? requestErrorResponse(error) : errorResponse(error); }

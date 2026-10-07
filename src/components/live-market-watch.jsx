@@ -15,7 +15,7 @@ const shortTime = value => {
 };
 const changeLabel = value => Number.isFinite(value) ? `${value >= 0 ? '+' : ''}${value.toFixed(2)}%` : '—';
 
-export default function LiveMarketWatch({ market, asset, favorites, favoritesOpenRequest=0, selectedQuote, series, analysis, timeframe = '1D', onSelect, onToggleFavorite, onOpenSearch, onOpenScanner, onRefreshQuote }) {
+export default function LiveMarketWatch({ market, asset, favorites, favoritesOpenRequest=0, favoritesSynced=false, selectedQuote, series, analysis, timeframe = '1D', onSelect, onToggleFavorite, onOpenSearch, onOpenScanner, onRefreshQuote }) {
   const [tab, setTab] = useState('market');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -100,7 +100,7 @@ export default function LiveMarketWatch({ market, asset, favorites, favoritesOpe
         })}{!visible.length && <div className="focus-empty"><Star size={24}/><b>{tab === 'favorites' && !query ? 'เริ่มด้วยตัวที่คุณสนใจ' : 'ไม่พบรายการ'}</b><p>{tab === 'favorites' && !query ? 'กดดาวข้างชื่อหุ้น รายการนี้จะเก็บเฉพาะตลาดที่เปิดอยู่' : 'ลองเปลี่ยนคำค้น'}</p></div>}</div>
         <footer className="focus-pagination"><span>{rows.length ? `${(safePage - 1) * PAGE_SIZE + 1}–${Math.min(safePage * PAGE_SIZE, rows.length)} จาก ${rows.length} ตัว` : 'ยังไม่มีรายการ'} · หน้า {safePage}/{pages}</span><div><button aria-label="มุมโฟกัสหน้าก่อน" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}><ChevronLeft size={17}/></button><button aria-label="มุมโฟกัสหน้าถัดไป" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)}><ChevronRight size={17}/></button></div></footer>
         <small className="focus-list-note">{quoteSymbols ? watchState === 'unavailable' ? 'รับราคาชุดนี้ไม่ได้ · เปิดกราฟหรือรีเฟรชใหม่' : market.id==='us'?'ราคาปิดรายวัน 6 ตัวต่อหน้า · คะแนนเทคนิคไม่ใช่อัตราชนะ · ตรวจข้อมูลทุก 5 นาที':'อ่านราคาเฉพาะ 6 ตัวในหน้านี้ · รีเฟรชทุก 60 วินาที' : 'เลือกตัวที่ต้องการเพื่อเปิดกราฟ · ไม่โหลดราคาทั้งตลาดพร้อมกัน'}</small>
-        {tab==='favorites'&&<p className="focus-kind-note">บันทึกไว้ในเบราว์เซอร์นี้ · หากซื้อแล้ว ให้กรอกต้นทุนใน “หุ้นที่ฉันถือ” เพื่อดูผลตามพอร์ตของคุณ</p>}
+        {tab==='favorites'&&<p className="focus-kind-note">{favoritesSynced?'เก็บตามบัญชี LINE':'บันทึกไว้ในเบราว์เซอร์นี้'} · หากซื้อแล้ว ให้กรอกต้นทุนใน “หุ้นที่ฉันถือ” เพื่อดูผลตามพอร์ตของคุณ</p>}
       </div>
     </div>
   </aside>;

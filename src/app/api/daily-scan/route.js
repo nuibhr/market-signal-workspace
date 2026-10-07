@@ -1,5 +1,5 @@
 import { rateLimit } from '../../../security/request-guard.mjs';
-import { sharedDatabase } from '../../../membership/store.mjs';
+import { storage } from '../../../storage/database.mjs';
 import { customerSummary } from '../../../analysis/customer-summary.mjs';
 import { analyzeCandles } from '../../../analysis/technical.mjs';
 import { SETTRADE_SYMBOLS } from '../../../markets/catalog.mjs';
@@ -23,13 +23,11 @@ export async function GET(request) {
   const member = await currentMember();
   const rights = membershipFor(member);
   if (!rights.capabilities.manualDailyScan) return Response.json({ status: 'forbidden', code: 'MEMBERSHIP_REQUIRED' }, { status: 403, headers: HEADERS });
-  const db = sharedDatabase();
-  db.exec('CREATE TABLE IF NOT EXISTS customer_daily_reports(member_id TEXT PRIMARY KEY, report_json TEXT NOT NULL)');
   if (new URL(request.url).searchParams.get('saved') === '1') {
-    const row = db.prepare('SELECT report_json FROM customer_daily_reports WHERE member_id=?').get(member.id);
+    const row = (await storage.first('SELECT report_json FROM customer_daily_reports WHERE member_id=?',member.id));
     return Response.json(row ? JSON.parse(row.report_json) : { status: 'empty', results: [] }, { headers: HEADERS });
   }
-  const limited = rateLimit('daily-scan', member.id, 3); if (limited) return limited;
+  const limited = (await rateLimit('daily-scan', member.id, 3)); if (limited) return limited;
   const requested = (new URL(request.url).searchParams.get('symbols') ?? 'PTT,AOT,CPALL,KBANK,SCB,ADVANC')
     .split(',').map(symbol => symbol.trim().toUpperCase()).filter(Boolean);
   const symbols = [...new Set(requested)];
@@ -79,6 +77,6 @@ export async function GET(request) {
     }
   }
   const report = { status: 'complete', tier: rights.tier, scannedAt: new Date().toISOString(), timeframe: '1d', results };
-  db.prepare('INSERT INTO customer_daily_reports VALUES(?,?) ON CONFLICT(member_id) DO UPDATE SET report_json=excluded.report_json').run(member.id, JSON.stringify(report));
+  (await storage.run('INSERT INTO customer_daily_reports VALUES(?,?) ON CONFLICT(member_id) DO UPDATE SET report_json=excluded.report_json',member.id, JSON.stringify(report)));
   return Response.json(report, { headers: HEADERS });
 }

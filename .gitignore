@@ -20,3 +20,6 @@ webull*_sdk.log*
 
 # Isolated local acceptance-review output.
 .next-review/
+
+# Local Cloudflare emulation and account state.
+.wrangler/
