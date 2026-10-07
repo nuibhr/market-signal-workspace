@@ -43,12 +43,12 @@ export default function ConnectionPanel() {
       <button
         className={styles.primaryButton}
         disabled
-        aria-describedby="connection-note"
+        aria-describedby="mt5-connection-note"
       >
         <Cable size={16} />
         Connect Vantage MT5 · เร็ว ๆ นี้
       </button>
-      <p id="connection-note" className={styles.note}>
+      <p id="mt5-connection-note" className={styles.note}>
         การเชื่อมต่อยังไม่เปิดใช้งานในระยะนี้
         สำรวจรายการเริ่มต้นได้โดยไม่ต้องเชื่อมบัญชี
       </p>

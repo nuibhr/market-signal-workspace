@@ -1,5 +1,8 @@
-import { Search, Star, ArrowUpRight } from "lucide-react";
+import { useState } from "react";
+import { Search, Star, ListFilter, ArrowUpRight } from "lucide-react";
 import { FOREX_CATEGORIES } from "./symbol-universe.mjs";
+import { demoQuote, demoBars, formatDemoPrice } from "./terminal-demo.mjs";
+import { PanelHeading, Sparkline } from "./terminal-chart.jsx";
 import styles from "./forex-workspace.module.css";
 
 export default function InstrumentUniverse({
@@ -15,26 +18,45 @@ export default function InstrumentUniverse({
   onSelect,
   favoritesOnly,
   onFavoritesOnly,
+  preview = false,
+  compact = false,
+  onNavigate,
 }) {
+  const [ranked, setRanked] = useState(false);
+  const ordered =
+    ranked && preview
+      ? [...visible].sort(
+          (left, right) => demoQuote(right).score - demoQuote(left).score,
+        )
+      : visible;
+  const rows = compact ? ordered.slice(0, 6) : ordered;
   return (
     <section
       id="forex-universe"
       className={styles.panel}
       aria-labelledby="universe-title"
     >
-      <div className={styles.panelHeading}>
-        <div>
-          <span className={styles.eyebrow}>MARKET UNIVERSE / STARTER</span>
-          <h2 id="universe-title">สำรวจสินทรัพย์</h2>
-        </div>
-        <span className={styles.badge}>{instruments.length} symbols</span>
-      </div>
+      <PanelHeading
+        icon={ListFilter}
+        title="AI SCANNER / MARKET UNIVERSE"
+        demo={preview}
+        action={
+          compact ? (
+            <button
+              className={styles.textButton}
+              onClick={() => onNavigate("scanner")}
+            >
+              เปิด Scanner <ArrowUpRight size={12} />
+            </button>
+          ) : null
+        }
+      />
       <div className={styles.tools}>
         <label className={styles.search}>
-          <Search size={17} />
+          <Search size={15} />
           <input
             aria-label="ค้นหาสัญลักษณ์หรือชื่อสินทรัพย์"
-            placeholder="ค้นหา เช่น EURUSD, Gold…"
+            placeholder="Search symbol… EURUSD, Gold"
             value={query}
             onChange={(event) => onQuery(event.target.value)}
           />
@@ -44,7 +66,7 @@ export default function InstrumentUniverse({
           aria-pressed={favoritesOnly}
           onClick={() => onFavoritesOnly(!favoritesOnly)}
         >
-          <Star size={15} />
+          <Star size={13} />
           รายการโปรด ({favorites.length})
         </button>
       </div>
@@ -74,82 +96,121 @@ export default function InstrumentUniverse({
       <div className={styles.tableScroll}>
         <table className={styles.table}>
           <caption className={styles.srOnly}>
-            รายการเริ่มต้น ไม่มีราคา MT5 สด
+            รายการเริ่มต้น 19 สัญลักษณ์ · คะแนนและราคาที่มีเป็นข้อมูลตัวอย่าง
+            ไม่ใช่ MT5 สด
           </caption>
           <thead>
             <tr>
-              <th scope="col">
+              <th>
                 <span className={styles.srOnly}>รายการโปรด</span>★
               </th>
-              <th scope="col">Symbol / Description</th>
-              <th scope="col">Category</th>
-              <th scope="col">Bid / Ask</th>
-              <th scope="col">Source</th>
-              <th scope="col">
-                <span className={styles.srOnly}>ดูรายละเอียด</span>
+              <th>Symbol</th>
+              <th>TF</th>
+              <th>Signal</th>
+              <th>
+                <button
+                  className={styles.scoreSort}
+                  aria-label="เรียงคะแนน AI ตัวอย่าง"
+                  aria-pressed={ranked}
+                  disabled={!preview}
+                  onClick={() => setRanked((value) => !value)}
+                >
+                  AI Score {ranked ? "↓" : "↕"}
+                </button>
               </th>
+              <th>Price</th>
+              <th>Change</th>
+              <th>Trend</th>
+              <th>Setup</th>
             </tr>
           </thead>
           <tbody>
-            {visible.map((item) => (
-              <tr key={item.id} data-selected={selected.id === item.id}>
-                <td>
-                  <button
-                    className={styles.starButton}
-                    aria-label={`รายการโปรด ${item.display_symbol}`}
-                    aria-pressed={favorites.includes(item.id)}
-                    onClick={() => onFavorite(item.id)}
-                  >
-                    <Star
-                      size={16}
-                      fill={
-                        favorites.includes(item.id) ? "currentColor" : "none"
+            {rows.map((item) => {
+              const quote = preview ? demoQuote(item) : null;
+              return (
+                <tr key={item.id} data-selected={selected.id === item.id}>
+                  <td>
+                    <button
+                      className={styles.starButton}
+                      aria-label={`รายการโปรด ${item.display_symbol}`}
+                      aria-pressed={favorites.includes(item.id)}
+                      onClick={() => onFavorite(item.id)}
+                    >
+                      <Star
+                        size={13}
+                        fill={
+                          favorites.includes(item.id) ? "currentColor" : "none"
+                        }
+                      />
+                    </button>
+                  </td>
+                  <th scope="row">
+                    <button
+                      className={styles.symbolButton}
+                      onClick={() => onSelect(item)}
+                    >
+                      {item.canonical_symbol}
+                      <small>{item.description}</small>
+                    </button>
+                  </th>
+                  <td>1H</td>
+                  <td>
+                    <span
+                      className={
+                        quote?.signal === "SHORT"
+                          ? styles.shortPill
+                          : quote?.signal === "WATCH"
+                            ? styles.watchPill
+                            : styles.signalPill
                       }
+                    >
+                      {quote?.signal ?? "WAIT"}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={styles.scorePill}>
+                      {quote?.score ?? "—"}
+                    </span>
+                  </td>
+                  <td>{formatDemoPrice(item, quote?.price)}</td>
+                  <td
+                    className={
+                      quote?.change < 0 ? styles.negative : styles.positive
+                    }
+                  >
+                    {quote
+                      ? `${quote.change >= 0 ? "+" : ""}${quote.change.toFixed(2)}%`
+                      : "—"}
+                  </td>
+                  <td>
+                    <Sparkline
+                      values={
+                        preview
+                          ? demoBars(item)
+                              .slice(-15)
+                              .map((bar) => bar.close)
+                          : []
+                      }
+                      negative={quote?.change < 0}
                     />
-                  </button>
-                </td>
-                <th scope="row">
-                  <button
-                    className={styles.symbolButton}
-                    onClick={() => onSelect(item)}
-                  >
-                    {item.display_symbol}
-                    <small>{item.description}</small>
-                  </button>
-                </th>
-                <td>
-                  {FOREX_CATEGORIES.find(
-                    (category) => category.id === item.category,
-                  )?.label ?? "Unclassified"}
-                </td>
-                <td className={styles.noPrice}>— / —</td>
-                <td>
-                  <span className={styles.source}>Starter</span>
-                </td>
-                <td>
-                  <button
-                    className={styles.starButton}
-                    aria-label={`ดูรายละเอียด ${item.display_symbol}`}
-                    onClick={() => onSelect(item)}
-                  >
-                    <ArrowUpRight size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td>{quote?.setup ?? "รอฟีด"}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
       {!visible.length && (
         <div className={styles.empty}>
-          <Search size={26} />
+          <Search size={24} />
           <h3>
             {category !== "all" &&
             !instruments.some((item) => item.category === category)
               ? "หมวดนี้ยังไม่มีในรายการเริ่มต้น"
               : "ไม่พบสินทรัพย์ที่ตรงกับตัวกรอง"}
           </h3>
-          <p>รายการ Guest มีเฉพาะ FX และ Metals · หมวดอื่นรอซิงก์จาก MT5</p>
+          <p>Guest มี FX และ Metals · หมวดอื่นรอซิงก์จาก MT5</p>
           <button
             className={styles.filterButton}
             onClick={() => {
@@ -164,9 +225,10 @@ export default function InstrumentUniverse({
       )}
       <div className={styles.tableFoot}>
         <span role="status">
-          แสดง {visible.length} จาก {instruments.length} สัญลักษณ์
+          แสดง {rows.length} จาก {instruments.length} สัญลักษณ์ ·{" "}
+          {preview ? "DEMO DATA" : "STARTER / NO FEED"}
         </span>
-        <span>รายการโปรดเก็บชั่วคราวในหน้านี้</span>
+        <span>รายการโปรดเก็บชั่วคราว</span>
       </div>
     </section>
   );

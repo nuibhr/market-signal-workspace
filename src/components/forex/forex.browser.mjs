@@ -1,5 +1,4 @@
-// Run against `npm start -- --port 3100`. Use a local Playwright installation or
-// set PLAYWRIGHT_MODULE to the absolute path of its ESM entry point.
+// Run against `npm start -- --port 3100`, with Playwright or PLAYWRIGHT_MODULE.
 import assert from "node:assert/strict";
 const { chromium } = await import(
   process.env.PLAYWRIGHT_MODULE || "playwright"
@@ -13,105 +12,250 @@ const browser = await chromium.launch({
 const base = process.env.FOREX_TEST_URL || "http://localhost:3100";
 try {
   const page = await browser.newPage({
-    viewport: { width: 1440, height: 1000 },
+    viewport: { width: 1440, height: 1080 },
   });
-  const errors = [];
+  const errors = [],
+    apiRequests = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname.startsWith("/api/"))
+      apiRequests.push(request.url());
+  });
+  const navigate = async (name) => {
+    await page
+      .getByRole("navigation", { name: "Forex Command Center", exact: true })
+      .getByRole("button", { name, exact: true })
+      .click();
+  };
   const response = await page.goto(`${base}/forex?symbol=XAU%2FUSD`);
   assert.equal(response.status(), 200);
-  await page.getByRole("heading", { name: "XAU/USD", exact: true }).waitFor();
-  assert.equal(await page.locator("tbody tr").count(), 19);
+  await page.locator("canvas").first().waitFor();
+  assert.equal(
+    await page
+      .getByRole("heading", { name: "FOREX COMMAND CENTER", exact: true })
+      .count(),
+    1,
+  );
+  assert.equal(
+    await page
+      .getByRole("navigation", { name: "Forex Command Center", exact: true })
+      .getByRole("button")
+      .count(),
+    10,
+  );
+  assert.equal(
+    await page.getByRole("combobox", { name: "สินทรัพย์บนกราฟ" }).inputValue(),
+    "starter:XAU/USD",
+  );
   assert.equal(
     await page
       .getByRole("link", { name: /Forex/ })
       .getAttribute("aria-current"),
     "page",
   );
-  assert.equal(
-    await page
-      .getByRole("button", { name: /Connect Vantage MT5/ })
-      .isDisabled(),
-    true,
+  await navigate("Scanner");
+  assert.equal(await page.locator("#forex-universe tbody tr").count(), 19);
+  await page.getByRole("button", { name: "เรียงคะแนน AI ตัวอย่าง" }).click();
+  const scores = await page
+    .locator("#forex-universe tbody tr td:nth-child(5)")
+    .allTextContents();
+  assert.ok(
+    scores.every(
+      (value, index) =>
+        index === 0 || Number(scores[index - 1]) >= Number(value),
+    ),
   );
+  await page.getByRole("button", { name: "เรียงคะแนน AI ตัวอย่าง" }).click();
   await page
     .getByRole("textbox", { name: "ค้นหาสัญลักษณ์หรือชื่อสินทรัพย์" })
     .fill("gold");
-  assert.equal(await page.locator("tbody tr").count(), 1);
+  assert.equal(await page.locator("#forex-universe tbody tr").count(), 1);
   await page
     .getByRole("button", { name: "รายการโปรด XAU/USD", exact: true })
     .click();
   await page.getByRole("button", { name: /รายการโปรด \(1\)/ }).click();
-  assert.equal(await page.locator("tbody tr").count(), 1);
   await page.getByRole("button", { name: /^Indices/ }).click();
   await page
     .getByRole("heading", { name: "หมวดนี้ยังไม่มีในรายการเริ่มต้น" })
     .waitFor();
   await page.getByRole("button", { name: "ล้างตัวกรอง" }).click();
-  assert.equal(await page.locator("tbody tr").count(), 19);
+  assert.equal(await page.locator("#forex-universe tbody tr").count(), 19);
   await page
     .locator("tbody")
-    .getByRole("button", { name: /^USD\/JPY/ })
+    .getByRole("button", { name: /^USDJPY/ })
     .click();
-  await page.getByRole("heading", { name: "USD/JPY", exact: true }).waitFor();
+  assert.equal(
+    await page.getByRole("combobox", { name: "สินทรัพย์บนกราฟ" }).inputValue(),
+    "starter:USD/JPY",
+  );
+  await page.getByRole("button", { name: "4H", exact: true }).click();
+  assert.equal(
+    await page
+      .getByRole("button", { name: "4H", exact: true })
+      .getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.getByRole("button", { name: "เปลี่ยนกราฟแท่งหรือเส้น" }).click();
+  assert.equal(
+    await page
+      .getByRole("button", { name: "เปลี่ยนกราฟแท่งหรือเส้น" })
+      .getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.getByRole("button", { name: /DEMO PREVIEW/ }).click();
   await page
-    .getByRole("navigation", { name: "มุมมอง Forex" })
-    .getByRole("button", { name: "MT5 connection" })
-    .click();
-  assert.equal(await page.locator("#forex-connection").count(), 1);
+    .getByText("ยังไม่มีแท่งราคาสำหรับกราฟนี้", { exact: true })
+    .waitFor();
+  await navigate("Scanner");
+  assert.equal(await page.locator("#forex-universe tbody tr").count(), 19);
+  assert.equal(
+    await page
+      .locator("#forex-universe tbody")
+      .getByText("WAIT", { exact: true })
+      .count(),
+    19,
+  );
+  assert.equal(
+    await page
+      .locator("#forex-universe tbody")
+      .getByText("LONG", { exact: true })
+      .count(),
+    0,
+  );
+  await page.getByRole("button", { name: /GUEST \/ NO FEED/ }).click();
+  await navigate("MT5 connection");
+  const connectButtons = page.getByRole("button", {
+    name: /Connect Vantage MT5/,
+  });
+  assert.equal(await connectButtons.count(), 2);
+  for (const button of await connectButtons.all())
+    assert.equal(await button.isDisabled(), true);
   assert.equal(await page.locator("input[type=password]").count(), 0);
+  assert.equal(await page.getByText("Connected", { exact: true }).count(), 0);
+  await navigate("Risk Management");
+  await page.getByRole("button", { name: "คำนวณ Position Size" }).click();
   await page
-    .getByRole("navigation", { name: "มุมมอง Forex" })
-    .getByRole("button", { name: "Overview" })
-    .click();
-  await page.evaluate(() => window.scrollTo(0, 0));
+    .getByRole("status")
+    .getByText("0.2000 lots", { exact: true })
+    .waitFor();
+  await page
+    .getByRole("spinbutton", { name: "Stop distance (pips)" })
+    .fill("100");
+  assert.equal(await page.getByText("0.2000 lots", { exact: true }).count(), 0);
+  await page.getByRole("button", { name: "คำนวณ Position Size" }).click();
+  await page
+    .getByRole("status")
+    .getByText("0.1000 lots", { exact: true })
+    .waitFor();
+  await navigate("Trade Journal");
+  await page.getByRole("button", { name: "บันทึกแผน", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "บันทึกแผนการเทรด" })
+    .fill("ทบทวนแผนก่อนเข้าเทรด <script>example</script>");
+  await page.getByRole("button", { name: "บันทึกในหน้านี้" }).click();
+  await page
+    .getByText("ทบทวนแผนก่อนเข้าเทรด <script>example</script>", { exact: true })
+    .waitFor();
+  await navigate("AI Alerts");
+  await page.getByRole("switch", { name: "ตัวอย่าง Price alert" }).click();
+  assert.equal(
+    await page
+      .getByRole("switch", { name: "ตัวอย่าง Price alert" })
+      .getAttribute("aria-checked"),
+    "true",
+  );
+  await navigate("Trade Journal");
+  assert.equal(
+    await page
+      .getByText("ทบทวนแผนก่อนเข้าเทรด <script>example</script>", {
+        exact: true,
+      })
+      .count(),
+    1,
+  );
+  await navigate("AI Alerts");
+  assert.equal(
+    await page
+      .getByRole("switch", { name: "ตัวอย่าง Price alert" })
+      .getAttribute("aria-checked"),
+    "true",
+  );
+  await navigate("News & Calendar");
+  await page.getByRole("button", { name: "EUR", exact: true }).click();
+  assert.equal(await page.locator("tbody tr").count(), 1);
+  await navigate("Positions");
+  await page.getByRole("button", { name: "Pending", exact: true }).click();
+  await page.getByText(/ยังไม่มีข้อมูล Pending/).waitFor();
+  await navigate("AI Analysis");
+  await page.locator("canvas").first().waitFor();
+  await navigate("Overview");
+  await page.evaluate(() => scrollTo(0, 0));
   if (process.env.FOREX_SCREENSHOT_DIR)
     await page.screenshot({
-      path: `${process.env.FOREX_SCREENSHOT_DIR}/forex-desktop.png`,
+      path: `${process.env.FOREX_SCREENSHOT_DIR}/forex-terminal-overview.png`,
+      fullPage: true,
     });
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
+      () => document.documentElement.scrollWidth <= innerWidth,
     ),
     true,
   );
   assert.equal(
     await page
-      .getByRole("button", { name: "สำรวจสินทรัพย์", exact: true })
+      .getByRole("combobox", { name: "หน้าเครื่องมือ Forex" })
       .isVisible(),
     true,
   );
-  await page.evaluate(() => window.scrollTo(0, 0));
   if (process.env.FOREX_SCREENSHOT_DIR)
     await page.screenshot({
-      path: `${process.env.FOREX_SCREENSHOT_DIR}/forex-mobile.png`,
+      path: `${process.env.FOREX_SCREENSHOT_DIR}/forex-terminal-mobile.png`,
       fullPage: true,
     });
   await page
-    .getByRole("button", { name: "สำรวจสินทรัพย์", exact: true })
-    .click();
+    .getByRole("combobox", { name: "หน้าเครื่องมือ Forex" })
+    .selectOption("scanner");
   await page.getByRole("button", { name: /^Metals/ }).click();
-  assert.equal(await page.locator("tbody tr").count(), 2);
+  assert.equal(await page.locator("#forex-universe tbody tr").count(), 2);
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  await navigate("Advanced Chart");
+  await page.evaluate(() => scrollTo(0, 0));
+  if (process.env.FOREX_SCREENSHOT_DIR)
+    await page.screenshot({
+      path: `${process.env.FOREX_SCREENSHOT_DIR}/forex-terminal-chart.png`,
+    });
   await page.reload();
-  await page.getByRole("heading", { name: "XAU/USD", exact: true }).waitFor();
+  await navigate("Scanner");
   assert.equal(
     await page.getByRole("button", { name: /รายการโปรด \(0\)/ }).count(),
     1,
   );
+  await navigate("Trade Journal");
+  assert.equal(
+    await page.getByText("ยังไม่มีรายการบันทึก", { exact: true }).count(),
+    1,
+  );
   assert.deepEqual(errors, []);
-  // Route rendering smoke check. Source equality against the requested baseline
-  // is enforced separately by forex.test.mjs (including shared workspace/styles).
+  assert.deepEqual(
+    apiRequests,
+    [],
+    "Forex previews must not call auth, account, Auto Pick, MT5 or trading APIs.",
+  );
+  // Navigate from Forex to a protected route to also exercise CSS isolation.
+  await page.getByRole("link", { name: /หุ้นไทย/ }).click();
+  await page.locator(".market-workspace.market-thai").waitFor();
   for (const market of ["thai", "dr", "tfex", "us"]) {
     const result = await page.goto(`${base}/${market}`);
     assert.equal(result.status(), 200, market);
     await page.locator(`.market-workspace.market-${market}`).waitFor();
     assert.equal(
-      await page.getByRole("heading", { name: /Forex \/ CFD/ }).count(),
+      await page.getByRole("button", { name: /DEMO PREVIEW/ }).count(),
       0,
     );
   }
   console.log(
-    "PASS: desktop/mobile Forex interactions, deep link, guest reset, disabled MT5 and all four protected market routes.",
+    "PASS: ten Forex views, interactive chart, scanner, demo/guest isolation, manual risk, local journal/alerts, mobile layout, no Forex API calls, and four protected routes.",
   );
 } finally {
   await browser.close();

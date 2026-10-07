@@ -169,3 +169,88 @@ test("only /forex changes; every protected tracked source and deployment file ma
   assert.match(route, /import ForexWorkspace from/);
   assert.doesNotMatch(route, /components\/workspace\.jsx/);
 });
+
+test("presentation fixtures are explicitly demo-only and never alter the starter contract", async () => {
+  const { demoQuote, demoBars, demoIndicators } = await import(
+    "./terminal-demo.mjs"
+  );
+  for (const instrument of STARTER_UNIVERSE) {
+    const quote = demoQuote(instrument);
+    assert.equal(quote.source, "demo");
+    assert.equal(quote.as_of, "2024-10-28T12:00:00Z");
+    assert.ok(Number.isFinite(quote.price));
+    for (const timeframe of ["15m", "1h", "4h", "1d"]) {
+      const bars = demoBars(instrument, timeframe);
+      assert.equal(bars.length, 100);
+      assert.deepEqual(bars, demoBars(instrument, timeframe));
+      assert.ok(Math.abs(bars.at(-1).close - quote.price) < 1e-8);
+      for (let index = 0; index < bars.length; index++) {
+        const bar = bars[index];
+        assert.ok(bar.high >= Math.max(bar.open, bar.close));
+        assert.ok(bar.low <= Math.min(bar.open, bar.close));
+        assert.ok(bar.low > 0);
+        if (index) assert.ok(bar.time > bars[index - 1].time);
+      }
+    }
+    const indicators = demoIndicators(demoBars(instrument));
+    assert.ok(indicators.rsi.every((value) => value >= 0 && value <= 100));
+    assert.ok(indicators.macd.every(Number.isFinite));
+    assert.equal(instrument.source, "starter");
+    assert.equal(instrument.broker_symbol, null);
+    assert.equal(instrument.contract_size, null);
+  }
+});
+
+test("manual position planning validates inputs and uses supplied pip value without broker assumptions", async () => {
+  const { calculateManualRisk } = await import("./terminal-demo.mjs");
+  assert.deepEqual(
+    calculateManualRisk({
+      balance: "10000",
+      riskPercent: "1",
+      stopPips: "50",
+      pipValue: "10",
+    }),
+    { riskAmount: 100, theoreticalLots: 0.2 },
+  );
+  assert.deepEqual(
+    calculateManualRisk({
+      balance: 5000,
+      riskPercent: 2,
+      stopPips: 100,
+      pipValue: 5,
+    }),
+    { riskAmount: 100, theoreticalLots: 0.2 },
+  );
+  for (const field of ["balance", "riskPercent", "stopPips", "pipValue"]) {
+    for (const value of ["", 0, -1, NaN, Infinity, "invalid"]) {
+      assert.equal(
+        calculateManualRisk({
+          balance: 10000,
+          riskPercent: 1,
+          stopPips: 50,
+          pipValue: 10,
+          [field]: value,
+        }),
+        null,
+      );
+    }
+  }
+  assert.equal(
+    calculateManualRisk({
+      balance: 10000,
+      riskPercent: 101,
+      stopPips: 50,
+      pipValue: 10,
+    }),
+    null,
+  );
+  assert.equal(
+    calculateManualRisk({
+      balance: 1e308,
+      riskPercent: 100,
+      stopPips: 1e-308,
+      pipValue: 1e-308,
+    }),
+    null,
+  );
+});
