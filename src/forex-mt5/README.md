@@ -4,9 +4,11 @@ This adds market ingestion, authenticated pairing, and a Forex-only UI adapter. 
 
 ## Mac requirement and verification status
 
-Use the full MT5 Desktop terminal with MetaEditor/Expert Advisors. The iPhone/iPad application running on an Apple Silicon Mac cannot host this EA. The application currently found at `/Applications/MetaTrader 5.app` on the development machine is that mobile build (`DTPlatformName=iphoneos`). No compatible MetaEditor is available here.
+Use the full MT5 Desktop terminal with MetaEditor/Expert Advisors. The iPhone/iPad application running on an Apple Silicon Mac cannot host this EA. The development Mac now has the full Wine-based Desktop terminal installed.
 
-The web build, protocol/store tests, and HTTP/browser integration with **synthetic packets** are verified. `connector.mq5` has **not been compiled or exercised against an actual MT5 terminal**. Compile and review it in MetaEditor, then verify the server's symbol metadata and time offset before treating the bridge as operational. A broker-company string plus an exact server allowlist is a policy check on a trusted connector; it is not cryptographic broker attestation.
+On 2026-10-07, `connector.mq5` was compiled with the installed MetaEditor on that Mac: **0 errors, 0 warnings** (`X64 Regular`). The source and compiled EA were placed in the terminal's `MQL5/Experts/Nugaom` folder. This verifies compilation, not terminal ingestion. At the latest check, there was no active web pairing and no actual terminal packets; attachment, WebRequest configuration, symbol/spec comparison and broker clock offset still require verification in MT5.
+
+The web build, protocol/store tests, and HTTP/browser integration with **synthetic packets** are verified. A broker-company string plus an exact server allowlist is a policy check on a trusted connector; it is not cryptographic broker attestation.
 
 Official references:
 
