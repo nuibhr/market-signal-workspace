@@ -111,7 +111,8 @@ export function AiAnalysis({ instrument, preview }) {
         </div>
       </div>
       <h3>
-        {instrument.canonical_symbol} · {quote?.setup ?? "รอข้อมูลราคา"}
+        {instrument.broker_symbol ?? instrument.canonical_symbol} ·{" "}
+        {quote?.setup ?? "รอข้อมูลราคา"}
       </h3>
       <p>
         {preview
@@ -155,13 +156,28 @@ export function AiAnalysis({ instrument, preview }) {
   );
 }
 
-export function Heatmap({ instruments, onSelect, preview }) {
+export function Heatmap({
+  instruments,
+  onSelect,
+  preview,
+  quotes = {},
+  mt5 = false,
+}) {
   return (
     <section className={styles.panel}>
-      <PanelHeading icon={Globe2} title="MARKET HEATMAP" demo={preview} />
+      <PanelHeading
+        icon={Globe2}
+        title={mt5 ? "MARKET WATCH / BID" : "MARKET HEATMAP"}
+        demo={preview}
+        label={mt5 ? "MT5 / LAST QUOTES" : null}
+      />
       <div className={styles.heatmap}>
         {instruments.slice(0, 8).map((item) => {
-          const quote = preview ? demoQuote(item) : null;
+          const quote = preview
+            ? demoQuote(item)
+            : Object.hasOwn(quotes, item.broker_symbol)
+              ? quotes[item.broker_symbol]
+              : null;
           return (
             <button
               key={item.id}
@@ -170,11 +186,13 @@ export function Heatmap({ instruments, onSelect, preview }) {
               }
               onClick={() => onSelect(item)}
             >
-              <strong>{item.canonical_symbol}</strong>
+              <strong>{item.broker_symbol ?? item.canonical_symbol}</strong>
               <span>
-                {quote
-                  ? `${quote.change >= 0 ? "+" : ""}${quote.change.toFixed(2)}%`
-                  : "—"}
+                {mt5 && quote
+                  ? `${quote.price.toFixed(item.digits ?? 5)}${quote.stale ? " · STALE" : ""}`
+                  : quote?.change !== undefined
+                    ? `${quote.change >= 0 ? "+" : ""}${quote.change.toFixed(2)}%`
+                    : "—"}
               </span>
               <Sparkline
                 values={
@@ -332,7 +350,7 @@ export function AccountPanel({ preview, positionsOnly = false }) {
             <strong>Vantage MT5</strong>
             <small>รองรับ Vantage เท่านั้น</small>
           </div>
-          <span className={styles.disconnected}>ยังไม่เชื่อม</span>
+          <span className={styles.disconnected}>ยังไม่มีฟีดพอร์ต</span>
         </div>
       )}
       {!positionsOnly && (
@@ -341,7 +359,7 @@ export function AccountPanel({ preview, positionsOnly = false }) {
           disabled
           aria-describedby="connection-note"
         >
-          Connect Vantage MT5 · เร็ว ๆ นี้
+          ข้อมูลพอร์ตบัญชี · ระยะถัดไป
         </button>
       )}
       <div className={styles.chips}>
@@ -528,7 +546,9 @@ export function Journal({
   onNavigate,
 }) {
   const [formOpen, setFormOpen] = useState(false),
-    [symbol, setSymbol] = useState(instruments[0].canonical_symbol),
+    [symbol, setSymbol] = useState(
+      instruments[0].broker_symbol ?? instruments[0].canonical_symbol,
+    ),
     [note, setNote] = useState("");
   return (
     <section className={styles.panel}>
@@ -566,7 +586,9 @@ export function Journal({
               onChange={(event) => setSymbol(event.target.value)}
             >
               {instruments.map((item) => (
-                <option key={item.id}>{item.canonical_symbol}</option>
+                <option key={item.id}>
+                  {item.broker_symbol ?? item.canonical_symbol}
+                </option>
               ))}
             </select>
           </label>

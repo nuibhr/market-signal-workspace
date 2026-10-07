@@ -18,18 +18,27 @@ export default function InstrumentUniverse({
   onSelect,
   favoritesOnly,
   onFavoritesOnly,
+  quotes = {},
+  mt5 = false,
   preview = false,
   compact = false,
   onNavigate,
 }) {
   const [ranked, setRanked] = useState(false);
+  const [page, setPage] = useState(0);
   const ordered =
     ranked && preview
       ? [...visible].sort(
           (left, right) => demoQuote(right).score - demoQuote(left).score,
         )
       : visible;
-  const rows = compact ? ordered.slice(0, 6) : ordered;
+  const activePage = Math.min(
+    page,
+    Math.max(0, Math.ceil(ordered.length / 100) - 1),
+  );
+  const rows = compact
+    ? ordered.slice(0, 6)
+    : ordered.slice(activePage * 100, (activePage + 1) * 100);
   return (
     <section
       id="forex-universe"
@@ -40,6 +49,7 @@ export default function InstrumentUniverse({
         icon={ListFilter}
         title="AI SCANNER / MARKET UNIVERSE"
         demo={preview}
+        label={mt5 ? "MT5 / LAST QUOTES" : null}
         action={
           compact ? (
             <button
@@ -58,7 +68,10 @@ export default function InstrumentUniverse({
             aria-label="ค้นหาสัญลักษณ์หรือชื่อสินทรัพย์"
             placeholder="Search symbol… EURUSD, Gold"
             value={query}
-            onChange={(event) => onQuery(event.target.value)}
+            onChange={(event) => {
+              setPage(0);
+              onQuery(event.target.value);
+            }}
           />
         </label>
         <button
@@ -75,29 +88,38 @@ export default function InstrumentUniverse({
         role="group"
         aria-label="หมวดสินทรัพย์"
       >
-        {[{ id: "all", label: "All markets" }, ...FOREX_CATEGORIES].map(
-          (item) => (
-            <button
-              key={item.id}
-              aria-pressed={category === item.id}
-              onClick={() => onCategory(item.id)}
-            >
-              {item.label}
-              <small>
-                {item.id === "all"
-                  ? instruments.length
-                  : instruments.filter((symbol) => symbol.category === item.id)
-                      .length}
-              </small>
-            </button>
-          ),
-        )}
+        {[
+          { id: "all", label: "All markets" },
+          ...FOREX_CATEGORIES,
+          ...(mt5 ? [{ id: "unclassified", label: "Unclassified" }] : []),
+        ].map((item) => (
+          <button
+            key={item.id}
+            aria-pressed={category === item.id}
+            onClick={() => {
+              setPage(0);
+              onCategory(item.id);
+            }}
+          >
+            {item.label}
+            <small>
+              {item.id === "all"
+                ? instruments.length
+                : instruments.filter((symbol) =>
+                    item.id === "unclassified"
+                      ? symbol.category === null
+                      : symbol.category === item.id,
+                  ).length}
+            </small>
+          </button>
+        ))}
       </div>
       <div className={styles.tableScroll}>
         <table className={styles.table}>
           <caption className={styles.srOnly}>
-            รายการเริ่มต้น 19 สัญลักษณ์ · คะแนนและราคาที่มีเป็นข้อมูลตัวอย่าง
-            ไม่ใช่ MT5 สด
+            {mt5
+              ? "รายการสัญลักษณ์จาก MT5 · ราคา Bid ล่าสุด · ไม่มีคะแนน AI"
+              : "รายการเริ่มต้น 19 สัญลักษณ์ · คะแนนและราคาที่มีเป็นข้อมูลตัวอย่าง ไม่ใช่ MT5 สด"}
           </caption>
           <thead>
             <tr>
@@ -126,7 +148,11 @@ export default function InstrumentUniverse({
           </thead>
           <tbody>
             {rows.map((item) => {
-              const quote = preview ? demoQuote(item) : null;
+              const quote = preview
+                ? demoQuote(item)
+                : Object.hasOwn(quotes, item.broker_symbol)
+                  ? quotes[item.broker_symbol]
+                  : null;
               return (
                 <tr key={item.id} data-selected={selected.id === item.id}>
                   <td>
@@ -149,7 +175,7 @@ export default function InstrumentUniverse({
                       className={styles.symbolButton}
                       onClick={() => onSelect(item)}
                     >
-                      {item.canonical_symbol}
+                      {item.broker_symbol ?? item.canonical_symbol}
                       <small>{item.description}</small>
                     </button>
                   </th>
@@ -172,13 +198,20 @@ export default function InstrumentUniverse({
                       {quote?.score ?? "—"}
                     </span>
                   </td>
-                  <td>{formatDemoPrice(item, quote?.price)}</td>
+                  <td>
+                    {mt5 && quote
+                      ? quote.price.toFixed(item.digits ?? 5)
+                      : formatDemoPrice(item, quote?.price)}
+                    {mt5 && quote?.stale && (
+                      <small className={styles.negative}>STALE</small>
+                    )}
+                  </td>
                   <td
                     className={
                       quote?.change < 0 ? styles.negative : styles.positive
                     }
                   >
-                    {quote
+                    {quote?.change !== undefined
                       ? `${quote.change >= 0 ? "+" : ""}${quote.change.toFixed(2)}%`
                       : "—"}
                   </td>
@@ -194,7 +227,12 @@ export default function InstrumentUniverse({
                       negative={quote?.change < 0}
                     />
                   </td>
-                  <td>{quote?.setup ?? "รอฟีด"}</td>
+                  <td>
+                    {quote?.setup ??
+                      (quote
+                        ? `Spread ${quote.spread_points?.toFixed(1) ?? "—"} pts`
+                        : "รอฟีด")}
+                  </td>
                 </tr>
               );
             })}
@@ -226,9 +264,33 @@ export default function InstrumentUniverse({
       <div className={styles.tableFoot}>
         <span role="status">
           แสดง {rows.length} จาก {instruments.length} สัญลักษณ์ ·{" "}
-          {preview ? "DEMO DATA" : "STARTER / NO FEED"}
+          {mt5
+            ? "MT5 / READ ONLY"
+            : preview
+              ? "DEMO DATA"
+              : "STARTER / NO FEED"}
         </span>
-        <span>รายการโปรดเก็บชั่วคราว</span>
+        {!compact && ordered.length > 100 ? (
+          <div className={styles.bridgeActions}>
+            <button
+              disabled={activePage === 0}
+              onClick={() => setPage(activePage - 1)}
+            >
+              ก่อนหน้า
+            </button>
+            <span>
+              {activePage + 1} / {Math.ceil(ordered.length / 100)}
+            </span>
+            <button
+              disabled={(activePage + 1) * 100 >= ordered.length}
+              onClick={() => setPage(activePage + 1)}
+            >
+              ถัดไป
+            </button>
+          </div>
+        ) : (
+          <span>รายการโปรดเก็บชั่วคราว</span>
+        )}
       </div>
     </section>
   );

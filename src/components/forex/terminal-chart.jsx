@@ -5,6 +5,7 @@ import {
   Maximize2,
   Star,
 } from "lucide-react";
+import Mt5PriceChart from "./mt5-price-chart.jsx";
 import CandlestickChart from "../candlestick-chart.jsx";
 import { analyzeCandles } from "../../analysis/technical.mjs";
 import {
@@ -79,13 +80,25 @@ export default function TerminalChart({
   favorites,
   onFavorite,
   expanded = false,
+  mt5 = false,
+  chart = null,
+  quote: liveQuote = null,
+  frame: controlledFrame,
+  onFrame,
 }) {
-  const [frame, setFrame] = useState("1h");
+  const [localFrame, setLocalFrame] = useState("1h");
+  const frame = controlledFrame ?? localFrame;
+  const setFrame = onFrame ?? setLocalFrame;
+  const realBars =
+    chart?.broker_symbol === instrument.broker_symbol &&
+    chart?.timeframe === frame
+      ? chart.bars
+      : null;
   const [overlays, setOverlays] = useState(true);
   const [chartStyle, setChartStyle] = useState("candles");
   const bars = useMemo(
-    () => (preview ? demoBars(instrument, frame) : null),
-    [instrument, frame, preview],
+    () => (preview ? demoBars(instrument, frame) : realBars),
+    [instrument, frame, preview, realBars],
   );
   const analysis = useMemo(
     () => (bars ? analyzeCandles(bars, null, frame) : null),
@@ -101,8 +114,11 @@ export default function TerminalChart({
     }),
     [overlays],
   );
-  const secondary = useMemo(() => (bars ? demoIndicators(bars) : null), [bars]);
-  const quote = preview ? demoQuote(instrument) : null;
+  const secondary = useMemo(
+    () => (bars?.length >= 15 ? demoIndicators(bars) : null),
+    [bars],
+  );
+  const quote = preview ? demoQuote(instrument) : liveQuote;
   return (
     <section
       className={`${styles.panel} ${styles.chartPanel} ${expanded ? styles.expandedChart : ""}`}
@@ -112,7 +128,17 @@ export default function TerminalChart({
         <h2 id="forex-chart-title">
           <ChartIcon size={16} /> Advanced chart
         </h2>
-        <DemoBadge enabled={preview} />
+        {mt5 ? (
+          <span className={styles.demoBadge}>
+            {!bars
+              ? "MT5 / WAITING"
+              : chart?.stale
+                ? "MT5 / STALE"
+                : "MT5 / CLOSED BARS"}
+          </span>
+        ) : (
+          <DemoBadge enabled={preview} />
+        )}
       </div>
       <div className={styles.chartToolbar}>
         <select
@@ -124,7 +150,7 @@ export default function TerminalChart({
         >
           {instruments.map((item) => (
             <option key={item.id} value={item.id}>
-              {item.canonical_symbol}
+              {item.broker_symbol ?? item.canonical_symbol}
             </option>
           ))}
         </select>
@@ -148,6 +174,7 @@ export default function TerminalChart({
           className={styles.iconButton}
           aria-label="เปิดหรือปิดอินดิเคเตอร์บนกราฟ"
           aria-pressed={overlays}
+          disabled={mt5}
           onClick={() => setOverlays((value) => !value)}
         >
           <Settings2 size={16} />
@@ -175,29 +202,41 @@ export default function TerminalChart({
         </button>
       </div>
       <div className={styles.chartCaption}>
-        <strong>{instrument.canonical_symbol}</strong>
+        <strong>
+          {instrument.broker_symbol ?? instrument.canonical_symbol}
+        </strong>
         <span>
           {instrument.description} · {frame.toUpperCase()}
         </span>
         <b className={styles.positive}>
-          {formatDemoPrice(instrument, quote?.price)}
+          {mt5 && quote
+            ? quote.price.toFixed(instrument.digits ?? 5)
+            : formatDemoPrice(instrument, quote?.price)}
         </b>
       </div>
       <div className={styles.chartContainer}>
-        <CandlestickChart
-          symbol={
-            instrument.category === "metals"
-              ? instrument.canonical_symbol
-              : instrument.display_symbol
-          }
-          timeframe={frame}
-          bars={bars}
-          analysis={analysis}
-          indicators={indicators}
-          chartStyle={chartStyle}
-          source="ข้อมูลตัวอย่าง"
-          chartRange="all"
-        />
+        {mt5 && bars ? (
+          <Mt5PriceChart
+            instrument={instrument}
+            bars={bars}
+            chartStyle={chartStyle}
+          />
+        ) : (
+          <CandlestickChart
+            symbol={
+              instrument.category === "metals"
+                ? (instrument.canonical_symbol ?? instrument.display_symbol)
+                : instrument.display_symbol
+            }
+            timeframe={frame}
+            bars={bars}
+            analysis={analysis}
+            indicators={indicators}
+            chartStyle={chartStyle}
+            source={preview ? "ข้อมูลตัวอย่าง" : "ยังไม่มีแท่งกราฟ"}
+            chartRange="all"
+          />
+        )}
       </div>
       <div className={styles.indicatorPanel}>
         <span>
@@ -230,9 +269,11 @@ export default function TerminalChart({
         )}
       </div>
       <div className={styles.chartFoot}>
-        {preview
-          ? "กราฟจำลอง · 28 ต.ค. 2024 · ไม่ใช่ราคาตลาดหรือสัญญาณซื้อขายจริง"
-          : "ยังไม่เชื่อม MT5 · ไม่มีราคาและแท่งกราฟจากโบรกเกอร์"}
+        {mt5
+          ? `แท่งปิดจาก MT5 · เวลา UTC · ย้อนหลังไม่เกิน 24 ชั่วโมง · ค่า UTC offset ${chart?.utc_offset_minutes ?? "—"} นาที · ${bars?.length ?? 0} แท่ง`
+          : preview
+            ? "กราฟจำลอง · 28 ต.ค. 2024 · ไม่ใช่ราคาตลาดหรือสัญญาณซื้อขายจริง"
+            : "ยังไม่เชื่อม MT5 · ไม่มีราคาและแท่งกราฟจากโบรกเกอร์"}
         <Maximize2 size={12} />
       </div>
     </section>

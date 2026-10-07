@@ -119,14 +119,14 @@ test("deep links resolve the fallback universe and invalid input safely defaults
   assert.equal(resolveInitialInstrument(null).display_symbol, "EUR/USD");
 });
 
-test("only Vantage is supported; all connection states are contracts with no active connector", () => {
+test("only Vantage is supported; all connection states are contracts for the opt-in read-only connector", () => {
   assert.deepEqual(
     SUPPORTED_BROKERS.map((item) => item.id),
     ["vantage"],
   );
   assert.equal(getSupportedBroker("other"), null);
   assert.equal(getSupportedBroker("vantage"), BROKERS.vantage);
-  assert.equal(BROKERS.vantage.connectionAvailable, false);
+  assert.equal(BROKERS.vantage.connectionAvailable, true);
   assert.deepEqual(BROKERS.vantage.verifiedServers, []);
   assert.equal(GUEST_CONNECTION.status, "disconnected");
   assert.deepEqual(Object.keys(CONNECTION_STATES), [
@@ -154,7 +154,9 @@ test("only /forex changes; every protected tracked source and deployment file ma
     changed.filter(
       (path) =>
         path !== "src/app/forex/page.jsx" &&
-        !path.startsWith("src/components/forex/"),
+        !path.startsWith("src/components/forex/") &&
+        !path.startsWith("src/forex-mt5/") &&
+        !path.startsWith("src/app/api/forex/mt5/"),
     ),
     [],
   );

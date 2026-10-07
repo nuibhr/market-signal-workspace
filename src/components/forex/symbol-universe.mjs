@@ -88,7 +88,10 @@ export function filterUniverse(
   const term = query.trim().toLowerCase();
   return instruments.filter(
     (item) =>
-      (category === "all" || item.category === category) &&
+      (category === "all" ||
+        (category === "unclassified"
+          ? item.category === null
+          : item.category === category)) &&
       (!favorites || favorites.includes(item.id)) &&
       (!term ||
         [

@@ -1,13 +1,22 @@
-import { Cable, ShieldCheck } from "lucide-react";
-import {
-  CONNECTION_STATES,
-  GUEST_CONNECTION,
-  SUPPORTED_BROKERS,
-} from "./brokers.mjs";
+import { useState } from "react";
+import { Cable, ShieldCheck, Download, Copy } from "lucide-react";
+import { CONNECTION_STATES } from "./brokers.mjs";
 import styles from "./forex-workspace.module.css";
-
-export default function ConnectionPanel() {
-  const state = CONNECTION_STATES[GUEST_CONNECTION.status];
+export default function ConnectionPanel({ bridge }) {
+  const [key, setKey] = useState(null),
+    [copied, setCopied] = useState(false),
+    [server, setServer] = useState("");
+  const state = CONNECTION_STATES[bridge.status] ?? CONNECTION_STATES.error;
+  const selectedServer = server || bridge.capabilities.servers[0] || "";
+  const canPair =
+    bridge.capabilities.enabled && selectedServer && bridge.authorized;
+  const pair = async () => {
+    const result = await bridge.action("pair", selectedServer);
+    if (result) {
+      setKey(result);
+      setCopied(false);
+    }
+  };
   return (
     <section
       id="forex-connection"
@@ -16,7 +25,9 @@ export default function ConnectionPanel() {
     >
       <div className={styles.panelHeading}>
         <div>
-          <span className={styles.eyebrow}>BROKER CONNECTION</span>
+          <span className={styles.eyebrow}>
+            READ-ONLY BROKER BRIDGE / PHASE 02
+          </span>
           <h2 id="connection-title">Vantage MT5</h2>
         </div>
         <Cable size={22} />
@@ -25,36 +36,176 @@ export default function ConnectionPanel() {
         <span className={styles.dot} />
         <strong>{state.label}</strong>
       </div>
-      <p>{state.detail} · ยังไม่มีราคาและสเปรดจากบัญชีโบรกเกอร์</p>
+      <p>{state.detail}</p>
       <dl className={styles.connectionFacts}>
         <div>
-          <dt>โบรกเกอร์ที่รองรับ</dt>
-          <dd>{SUPPORTED_BROKERS.map((broker) => broker.name).join(", ")}</dd>
+          <dt>โบรกเกอร์</dt>
+          <dd>Vantage · {bridge.company ?? "รอข้อมูลจาก Terminal"}</dd>
         </div>
         <div>
-          <dt>แพลตฟอร์ม</dt>
-          <dd>MetaTrader 5</dd>
+          <dt>Server</dt>
+          <dd>{bridge.server ?? "ยังไม่ได้จับคู่"}</dd>
+        </div>
+        <div>
+          <dt>สินทรัพย์ที่ซิงก์</dt>
+          <dd>{bridge.snapshot?.instruments.length ?? "—"}</dd>
         </div>
         <div>
           <dt>ซิงก์ล่าสุด</dt>
-          <dd>ยังไม่มี</dd>
+          <dd>
+            {bridge.last_sync_at
+              ? new Date(bridge.last_sync_at).toLocaleString("th-TH")
+              : "ยังไม่มี"}
+          </dd>
         </div>
       </dl>
-      <button
-        className={styles.primaryButton}
-        disabled
-        aria-describedby="mt5-connection-note"
-      >
-        <Cable size={16} />
-        Connect Vantage MT5 · เร็ว ๆ นี้
-      </button>
-      <p id="mt5-connection-note" className={styles.note}>
-        การเชื่อมต่อยังไม่เปิดใช้งานในระยะนี้
-        สำรวจรายการเริ่มต้นได้โดยไม่ต้องเชื่อมบัญชี
-      </p>
+      <label className={styles.bridgeField}>
+        Vantage Server
+        <select
+          aria-label="Vantage Server"
+          value={selectedServer}
+          onChange={(event) => setServer(event.target.value)}
+          disabled={bridge.busy}
+        >
+          {!bridge.capabilities.servers.length && (
+            <option value="">ยังไม่ได้กำหนด Server</option>
+          )}
+          {bridge.capabilities.servers.map((value) => (
+            <option key={value}>{value}</option>
+          ))}
+        </select>
+      </label>
+      {!bridge.authorized && bridge.capabilities.local && (
+        <button
+          className={styles.secondaryButton}
+          disabled={bridge.busy}
+          onClick={() => bridge.action("local-session")}
+        >
+          เริ่มเชื่อมต่อบนเครื่องนี้
+        </button>
+      )}
+      {!bridge.authorized &&
+        !bridge.capabilities.local &&
+        bridge.capabilities.enabled && (
+          <p className={styles.note}>
+            เข้าสู่ระบบด้วย LINE ตามปกติก่อนสร้างกุญแจจับคู่
+          </p>
+        )}
+      <div className={styles.bridgeActions}>
+        <button
+          className={styles.primaryButton}
+          disabled={!canPair || bridge.busy}
+          onClick={pair}
+        >
+          <Cable size={16} />{" "}
+          {bridge.busy ? "กำลังดำเนินการ…" : "สร้างกุญแจเชื่อม Vantage MT5"}
+        </button>
+        <a className={styles.secondaryButton} href="/api/forex/mt5/connector">
+          <Download size={16} /> ดาวน์โหลด Connector EA
+        </a>
+      </div>
+      {key && (
+        <div className={styles.pairingKey}>
+          <strong>
+            กุญแจแสดงครั้งเดียว · หมดอายุ{" "}
+            {new Date(key.expires_at).toLocaleDateString("th-TH")}
+          </strong>
+          <label>
+            BridgeToken{" "}
+            <input
+              aria-label="BridgeToken สำหรับ EA"
+              value={key.token}
+              readOnly
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </label>
+          <button
+            className={styles.secondaryButton}
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(key.token);
+                setCopied(true);
+              } catch {
+                setCopied(false);
+              }
+            }}
+          >
+            <Copy size={14} />
+            {copied ? "คัดลอกแล้ว" : "คัดลอกกุญแจ"}
+          </button>
+          <p>
+            ใช้เฉพาะ EA ของคุณ กุญแจนี้อนุญาตส่งข้อมูลตลาดเข้าระบบ
+            และไม่ใช่รหัสผ่านบัญชี MT5
+          </p>
+          <button className={styles.textButton} onClick={() => setKey(null)}>
+            ซ่อนกุญแจ
+          </button>
+        </div>
+      )}
+      {bridge.status !== "disconnected" && (
+        <button
+          className={styles.textButton}
+          disabled={bridge.busy}
+          onClick={async () => {
+            if (await bridge.action("revoke")) setKey(null);
+          }}
+        >
+          ยกเลิกกุญแจและลบข้อมูลการเชื่อมต่อนี้
+        </button>
+      )}
+      {bridge.error && (
+        <p role="alert" className={styles.negative}>
+          {bridge.error}
+        </p>
+      )}
+      {!bridge.capabilities.enabled && (
+        <p className={styles.note}>
+          ระบบรับข้อมูลยังไม่ได้เปิดใช้งาน · ใช้ Guest 19 สัญลักษณ์หรือทดลอง
+          Demo ได้
+        </p>
+      )}
+      <ol className={styles.bridgeSteps}>
+        <li>
+          ใช้{" "}
+          <a
+            href="https://www.metatrader5.com/en/terminal/help/start_advanced/install_mac"
+            target="_blank"
+            rel="noreferrer"
+          >
+            MT5 Desktop สำหรับ Mac
+          </a>{" "}
+          รุ่นที่มี MetaEditor และ Expert Advisors (แอป iPhone/iPad บน Mac ใช้
+          EA ไม่ได้)
+        </li>
+        <li>
+          เปิดไฟล์ Connector ใน MetaEditor แล้ว Compile จากนั้นเพิ่ม EA
+          บนกราฟบัญชี Vantage
+        </li>
+        <li>
+          ใน Tools → Options → Expert Advisors อนุญาต WebRequest ไปยัง URL
+          ของเว็บนี้
+        </li>
+        <li>
+          กรอก Endpoint เป็น{" "}
+          <code>
+            {typeof window !== "undefined"
+              ? window.location.origin
+              : "URL ของเว็บ"}
+            /api/forex/mt5
+          </code>{" "}
+          พร้อม BridgeToken และ ExpectedServer
+        </li>
+        <li>
+          ยืนยันค่า ServerUtcOffsetMinutes ให้ตรงกับนาฬิกา Server
+          ก่อนเปิดราคาหรือกราฟ หากยังไม่ระบุจะซิงก์เฉพาะรายการสินทรัพย์
+        </li>
+      </ol>
       <div className={styles.readOnly}>
         <ShieldCheck size={17} />
-        <span>ไม่มีการรับรหัสผ่านหรือส่งคำสั่งซื้อขาย</span>
+        <span>
+          อ่านตลาดเท่านั้น · ไม่มีรหัสผ่าน MT5 ข้อมูลพอร์ต หรือคำสั่งซื้อขาย
+        </span>
       </div>
     </section>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -17,6 +17,7 @@ import {
   Wallet,
 } from "lucide-react";
 import MarketNavigation from "../market-navigation.jsx";
+import useMt5Connection from "./use-mt5-connection.jsx";
 import ConnectionPanel from "./connection-panel.jsx";
 import InstrumentUniverse from "./instrument-universe.jsx";
 import TerminalChart, { DemoBadge } from "./terminal-chart.jsx";
@@ -62,7 +63,7 @@ const SECTIONS = [
     id: "connection",
     label: "MT5 connection",
     icon: Cable,
-    description: "เตรียมเชื่อมบัญชี Vantage และซิงก์สินทรัพย์จาก MT5",
+    description: "เชื่อม Vantage และซิงก์ข้อมูลตลาดแบบอ่านอย่างเดียวจาก MT5",
   },
   {
     id: "positions",
@@ -112,14 +113,30 @@ const METRICS = [
 
 export default function ForexWorkspace({ initialSymbol = null }) {
   const [section, setSection] = useState("overview");
-  const [preview, setPreview] = useState(true);
+  const [demoPreview, setPreview] = useState(true);
+  const [frame, setFrame] = useState("1h");
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("all");
   const [favorites, setFavorites] = useState([]),
     [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [selected, setSelected] = useState(() =>
+  const [selection, setSelected] = useState(() =>
     resolveInitialInstrument(initialSymbol ?? "XAU/USD"),
   );
+  const bridge = useMt5Connection(selection.broker_symbol, frame);
+  const hasMt5 = Boolean(bridge.snapshot?.instruments.length);
+  const universe = hasMt5 ? bridge.snapshot.instruments : STARTER_UNIVERSE;
+  const selected =
+    universe.find((item) => item.id === selection.id) ??
+    universe.find(
+      (item) =>
+        item.canonical_symbol &&
+        item.canonical_symbol === selection.canonical_symbol,
+    ) ??
+    universe[0];
+  const preview = demoPreview && !hasMt5;
+  useEffect(() => {
+    if (hasMt5 && selection.id !== selected.id) setSelected(selected);
+  }, [hasMt5, selection.id, selected]);
   const [entries, setEntries] = useState([]);
   const [alertSettings, setAlertSettings] = useState({
     Price: false,
@@ -129,12 +146,12 @@ export default function ForexWorkspace({ initialSymbol = null }) {
   });
   const visible = useMemo(
     () =>
-      filterUniverse(STARTER_UNIVERSE, {
+      filterUniverse(universe, {
         query,
         category,
         favorites: favoritesOnly ? favorites : null,
       }),
-    [query, category, favorites, favoritesOnly],
+    [universe, query, category, favorites, favoritesOnly],
   );
   const toggleFavorite = (id) =>
     setFavorites((items) =>
@@ -146,7 +163,7 @@ export default function ForexWorkspace({ initialSymbol = null }) {
   };
   const current = SECTIONS.find((item) => item.id === section);
   const scannerProps = {
-    instruments: STARTER_UNIVERSE,
+    instruments: universe,
     visible,
     query,
     onQuery: setQuery,
@@ -159,13 +176,22 @@ export default function ForexWorkspace({ initialSymbol = null }) {
     favoritesOnly,
     onFavoritesOnly: setFavoritesOnly,
     preview,
+    quotes: bridge.quotes,
+    mt5: hasMt5,
     onNavigate: setSection,
   };
   const chartProps = {
     instrument: selected,
-    instruments: STARTER_UNIVERSE,
+    instruments: universe,
     onSelect: setSelected,
     preview,
+    frame,
+    onFrame: setFrame,
+    quote: Object.hasOwn(bridge.quotes, selected.broker_symbol)
+      ? bridge.quotes[selected.broker_symbol]
+      : null,
+    chart: bridge.chart,
+    mt5: hasMt5,
     favorites,
     onFavorite: toggleFavorite,
   };
@@ -202,11 +228,15 @@ export default function ForexWorkspace({ initialSymbol = null }) {
           <span className={styles.brokerLogo}>V</span>
           <div>
             <strong>Vantage MT5</strong>
-            <small>ยังไม่เชื่อมบัญชี</small>
+            <small>
+              {hasMt5
+                ? `${universe.length} symbols · ${bridge.status}`
+                : "ยังไม่เชื่อมบัญชี"}
+            </small>
           </div>
           <span className={styles.dot} />
         </div>
-        <span className={styles.sidebarCopyright}>FOREX / CFD · PHASE 01</span>
+        <span className={styles.sidebarCopyright}>FOREX / CFD · PHASE 02</span>
       </aside>
       <main id="forex-content" className={styles.main} tabIndex={-1}>
         <header className={styles.topbar}>
@@ -224,20 +254,31 @@ export default function ForexWorkspace({ initialSymbol = null }) {
           </label>
           <div className={styles.ticker}>
             {tickerSymbols.map((symbol) => {
-              const item = STARTER_UNIVERSE.find(
+              const item = universe.find(
                   (asset) => asset.canonical_symbol === symbol,
                 ),
-                quote = preview ? demoQuote(item) : null;
+                quote = item
+                  ? preview
+                    ? demoQuote(item)
+                    : Object.hasOwn(bridge.quotes, item.broker_symbol)
+                      ? bridge.quotes[item.broker_symbol]
+                      : null
+                  : null;
+              if (!item) return null;
               return (
                 <button key={symbol} onClick={() => focusAsset(item)}>
                   <strong>{symbol}</strong>
-                  <span>{formatDemoPrice(item, quote?.price)}</span>
+                  <span>
+                    {hasMt5 && quote
+                      ? quote.price.toFixed(item.digits ?? 5)
+                      : formatDemoPrice(item, quote?.price)}
+                  </span>
                   <b
                     className={
                       quote?.change < 0 ? styles.negative : styles.positive
                     }
                   >
-                    {quote
+                    {quote?.change !== undefined
                       ? `${quote.change >= 0 ? "+" : ""}${quote.change.toFixed(2)}%`
                       : "—"}
                   </b>
@@ -246,7 +287,11 @@ export default function ForexWorkspace({ initialSymbol = null }) {
             })}
           </div>
           <div className={styles.topActions}>
-            <DemoBadge enabled={preview} />
+            {hasMt5 ? (
+              <span className={styles.demoBadge}>MT5 / READ ONLY</span>
+            ) : (
+              <DemoBadge enabled={preview} />
+            )}
             <button
               className={styles.iconButton}
               aria-label="เปิดการแจ้งเตือน Forex"
@@ -264,16 +309,26 @@ export default function ForexWorkspace({ initialSymbol = null }) {
           <div className={styles.modeBar}>
             <span>
               <i className={styles.dot} />
-              <strong>MT5 ยังไม่เชื่อม</strong> ·{" "}
-              {preview
-                ? "ข้อมูลตัวอย่างสำหรับทดลองหน้าจอ ไม่มีราคา บัญชี หรือสัญญาณจริง"
-                : "Guest mode · รายการเริ่มต้น 19 สัญลักษณ์ ไม่มีฟีดราคา"}
+              <strong>
+                {hasMt5 ? `Vantage MT5 · ${bridge.status}` : "MT5 ยังไม่เชื่อม"}
+              </strong>{" "}
+              ·{" "}
+              {hasMt5
+                ? `${universe.length} สินทรัพย์จาก ${bridge.server} · ราคาบางตัวอาจขาดช่วง · ยังไม่มีข้อมูลพอร์ตหรือ AI จริง`
+                : preview
+                  ? "ข้อมูลตัวอย่างสำหรับทดลองหน้าจอ ไม่มีราคา บัญชี หรือสัญญาณจริง"
+                  : "Guest mode · รายการเริ่มต้น 19 สัญลักษณ์ ไม่มีฟีดราคา"}
             </span>
             <button
               aria-pressed={preview}
+              disabled={hasMt5}
               onClick={() => setPreview((value) => !value)}
             >
-              {preview ? "DEMO PREVIEW" : "GUEST / NO FEED"}{" "}
+              {hasMt5
+                ? "MT5 / READ ONLY"
+                : preview
+                  ? "DEMO PREVIEW"
+                  : "GUEST / NO FEED"}{" "}
               <span className={styles.modeToggle}>
                 <i />
               </span>
@@ -307,12 +362,13 @@ export default function ForexWorkspace({ initialSymbol = null }) {
                   </span>
                   <h1>FOREX COMMAND CENTER</h1>
                   <p>
-                    สแกน · วิเคราะห์ · ติดตามตลาด · เตรียมเชื่อม Vantage MT5
+                    สแกน · วิเคราะห์ · ติดตามตลาด · เชื่อม Vantage MT5
                   </p>
                   <div>
                     <span>
                       <i className={styles.greenDot} />
-                      19 starter symbols
+                      {universe.length}{" "}
+                      {hasMt5 ? "broker symbols" : "starter symbols"}
                     </span>
                     <span>9 asset categories</span>
                     <span>Vantage only</span>
@@ -347,15 +403,28 @@ export default function ForexWorkspace({ initialSymbol = null }) {
                 </svg>
                 <div className={styles.heroSession}>
                   <span>
-                    MARKET STATUS <DemoBadge enabled={preview} />
+                    MARKET STATUS{" "}
+                    {hasMt5 ? (
+                      <span className={styles.demoBadge}>
+                        MT5 / {bridge.status.toUpperCase()}
+                      </span>
+                    ) : (
+                      <DemoBadge enabled={preview} />
+                    )}
                   </span>
                   <strong>
-                    {preview ? "New York Session" : "Waiting for MT5"}
+                    {preview
+                      ? "New York Session"
+                      : hasMt5
+                        ? "Vantage Market Universe"
+                        : "Waiting for MT5"}
                   </strong>
                   <small>
                     {preview
                       ? "ตัวอย่างภาพรวมช่วงตลาด"
-                      : "ยังไม่มีข้อมูลจากโบรกเกอร์"}
+                      : hasMt5
+                        ? "ข้อมูลพอร์ตและเวลาตลาดยังไม่เปิดใช้งาน"
+                        : "ยังไม่มีข้อมูลจากโบรกเกอร์"}
                   </small>
                   <i>
                     <b style={{ width: preview ? "72%" : "0%" }} />
@@ -386,23 +455,27 @@ export default function ForexWorkspace({ initialSymbol = null }) {
                     >
                       {preview ? value : "—"}
                     </strong>
-                    <small>{preview ? note : "รอเชื่อม MT5"}</small>
+                    <small>{preview ? note : "ยังไม่มีฟีดบัญชี"}</small>
                   </div>
                 ))}
               </div>
-              <Opportunities
-                instruments={STARTER_UNIVERSE}
-                onSelect={setSelected}
-                onNavigate={setSection}
-                preview={preview}
-              />
+              {!hasMt5 && (
+                <Opportunities
+                  instruments={universe}
+                  onSelect={setSelected}
+                  onNavigate={setSection}
+                  preview={preview}
+                />
+              )}
               <div className={styles.chartGrid}>
                 <TerminalChart {...chartProps} />
                 <AiAnalysis instrument={selected} preview={preview} />
               </div>
               <div className={styles.threeColumns}>
                 <Heatmap
-                  instruments={STARTER_UNIVERSE}
+                  quotes={bridge.quotes}
+                  mt5={hasMt5}
+                  instruments={universe}
                   onSelect={focusAsset}
                   preview={preview}
                 />
@@ -410,13 +483,17 @@ export default function ForexWorkspace({ initialSymbol = null }) {
                 <Calendar preview={preview} compact />
               </div>
               <div className={styles.twoColumns}>
-                <InstrumentUniverse {...scannerProps} compact />
+                {hasMt5 ? (
+                  <ConnectionPanel bridge={bridge} />
+                ) : (
+                  <InstrumentUniverse {...scannerProps} compact />
+                )}
                 <AccountPanel preview={preview} />
               </div>
               <div className={styles.threeColumns}>
                 <RiskPanel preview={preview} compact />
                 <Journal
-                  instruments={STARTER_UNIVERSE}
+                  instruments={universe}
                   entries={entries}
                   onAdd={(entry) => setEntries((values) => [entry, ...values])}
                   compact
@@ -463,8 +540,9 @@ export default function ForexWorkspace({ initialSymbol = null }) {
                   <InstrumentUniverse {...scannerProps} />
                   <div className={styles.scannerFoot}>
                     <ShieldCheck size={14} />
-                    Universe เริ่มต้น FX 17 · Metals 2 · หมวดอื่นจะซิงก์จากบัญชี
-                    Vantage ในอนาคต
+                    {hasMt5
+                      ? `Universe จาก ${bridge.server} · ชื่อและสเปกตาม Terminal · ไม่มีคะแนน AI จำลองในโหมด MT5`
+                      : "Universe เริ่มต้น FX 17 · Metals 2 · หมวดอื่นรอซิงก์จาก Vantage"}
                   </div>
                 </>
               )}
@@ -476,7 +554,7 @@ export default function ForexWorkspace({ initialSymbol = null }) {
               )}
               {section === "connection" && (
                 <div className={styles.connectionGrid}>
-                  <ConnectionPanel />
+                  <ConnectionPanel bridge={bridge} />
                   <AccountPanel preview={preview} />
                 </div>
               )}
@@ -489,7 +567,9 @@ export default function ForexWorkspace({ initialSymbol = null }) {
                   <div className={styles.stack}>
                     <Sessions preview={preview} />
                     <Heatmap
-                      instruments={STARTER_UNIVERSE}
+                      quotes={bridge.quotes}
+                      mt5={hasMt5}
+                      instruments={universe}
                       onSelect={focusAsset}
                       preview={preview}
                     />
@@ -504,7 +584,7 @@ export default function ForexWorkspace({ initialSymbol = null }) {
               )}
               {section === "journal" && (
                 <Journal
-                  instruments={STARTER_UNIVERSE}
+                  instruments={universe}
                   entries={entries}
                   onAdd={(entry) => setEntries((values) => [entry, ...values])}
                 />
@@ -518,8 +598,12 @@ export default function ForexWorkspace({ initialSymbol = null }) {
           <footer className={styles.footer}>
             <span>NUGAOM / FOREX & CFD DESK</span>
             <span>
-              {preview ? "DEMO DATA · NOT LIVE" : "GUEST / FALLBACK"} ·
-              ไม่มีการส่งคำสั่งซื้อขาย
+              {hasMt5
+                ? "MT5 / READ ONLY"
+                : preview
+                  ? "DEMO DATA · NOT LIVE"
+                  : "GUEST / FALLBACK"}{" "}
+              · ไม่มีการส่งคำสั่งซื้อขาย
             </span>
           </footer>
         </div>

@@ -1,0 +1,93 @@
+"use client";
+import { useCallback, useEffect, useState } from "react";
+const initial = {
+  status: "disconnected",
+  capabilities: { enabled: false, servers: [], local: false },
+  authorized: false,
+  snapshot: null,
+  quotes: {},
+  chart: null,
+};
+export default function useMt5Connection(symbol, frame) {
+  const [data, setData] = useState(initial),
+    [error, setError] = useState(null),
+    [busy, setBusy] = useState(false);
+  const refresh = useCallback(
+    async (signal) => {
+      const params = new URLSearchParams();
+      if (symbol) params.set("symbol", symbol);
+      if (frame) params.set("frame", frame);
+      const response = await fetch(`/api/forex/mt5?${params}`, {
+        cache: "no-store",
+        signal,
+      });
+      if (!response.ok) throw Error("ระบบรับข้อมูลไม่พร้อม กรุณาลองอีกครั้ง");
+      const result = await response.json();
+      setData(result);
+      setError(null);
+      return result;
+    },
+    [symbol, frame],
+  );
+  useEffect(() => {
+    const controller = new AbortController();
+    let timer;
+    const poll = async () => {
+      try {
+        const result = await refresh(controller.signal);
+        if (!controller.signal.aborted && result.capabilities.enabled)
+          timer = setTimeout(poll, 5000);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        setError(error.message);
+        // Keep last snapshot visible, but never keep its quotes labelled fresh after a failed poll.
+        setData((previous) => ({
+          ...previous,
+          status: previous.snapshot ? "stale" : "error",
+          chart: previous.chart ? { ...previous.chart, stale: true } : null,
+          quotes: Object.fromEntries(
+            Object.entries(previous.quotes).map(([key, value]) => [
+              key,
+              { ...value, stale: true },
+            ]),
+          ),
+        }));
+        timer = setTimeout(poll, 10000);
+      }
+    };
+    poll();
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [refresh]);
+  const action = async (action, server) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/forex/mt5", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ...(server ? { server } : {}) }),
+      });
+      const result = await response.json();
+      if (!response.ok)
+        throw Error(
+          {
+            SIGN_IN_REQUIRED: "กรุณาเข้าสู่ระบบก่อนจับคู่",
+            BROKER_NOT_ALLOWED: "Server นี้ยังไม่อยู่ในรายการที่อนุญาต",
+            RATE_LIMITED: "สร้างกุญแจบ่อยเกินไป กรุณารอ",
+            HTTPS_REQUIRED: "การจับคู่บนเซิร์ฟเวอร์ต้องใช้ HTTPS",
+          }[result.error] || "ดำเนินการไม่สำเร็จ",
+        );
+      await refresh();
+      return result;
+    } catch (error) {
+      setError(error.message);
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { ...data, error, busy, action };
+}

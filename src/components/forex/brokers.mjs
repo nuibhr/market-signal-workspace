@@ -6,7 +6,7 @@ export const BROKERS = Object.freeze({
     name: "Vantage",
     platform: "MT5",
     supported: true,
-    connectionAvailable: false,
+    connectionAvailable: true,
     adapter: "mt5",
     verifiedServers: Object.freeze([]),
   }),
@@ -47,11 +47,11 @@ export const CONNECTION_STATES = Object.freeze({
 });
 
 /**
- * Future read-only adapter contract. No passwords, credentials or order methods.
+ * Read-only adapter contract. No passwords, credentials or order methods.
  * @typedef {Object} Mt5Connection
  * @property {keyof typeof CONNECTION_STATES} status
  * @property {string|null} broker_id
- * @property {string|null} server Terminal-reported server, verified by a future backend.
+ * @property {string|null} server Terminal-reported server, checked against the backend allowlist.
  * @property {string|null} last_seen_at ISO UTC timestamp
  * @property {string|null} last_sync_at ISO UTC timestamp
  * @property {string|null} error_code Safe machine-readable error, never raw terminal logs.

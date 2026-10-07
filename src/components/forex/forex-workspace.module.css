@@ -2305,3 +2305,61 @@
 .heatPositive {
   color: #abe7d2;
 }
+
+.bridgeField {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  color: #8ea7ba;
+  font-size: 12px;
+}
+.bridgeField select,
+.pairingKey input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #22475b;
+  border-radius: 6px;
+  background: #071723;
+  color: #d7eaf4;
+  padding: 10px;
+}
+.bridgeActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+.bridgeActions a {
+  text-decoration: none;
+}
+.bridgeSteps {
+  margin: 20px 0;
+  padding-left: 22px;
+  color: #8ea7ba;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.bridgeSteps a {
+  color: #56caff;
+}
+.bridgeSteps code {
+  overflow-wrap: anywhere;
+}
+.pairingKey {
+  border: 1px solid #148776;
+  background: #07251f;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+  display: grid;
+  gap: 12px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.pairingKey input {
+  font-family: monospace;
+}
+.pairingKey p {
+  font-size: 12px;
+}

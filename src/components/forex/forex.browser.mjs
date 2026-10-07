@@ -124,12 +124,16 @@ try {
   );
   await page.getByRole("button", { name: /GUEST \/ NO FEED/ }).click();
   await navigate("MT5 connection");
-  const connectButtons = page.getByRole("button", {
-    name: /Connect Vantage MT5/,
-  });
-  assert.equal(await connectButtons.count(), 2);
-  for (const button of await connectButtons.all())
-    assert.equal(await button.isDisabled(), true);
+  assert.equal(
+    await page
+      .getByRole("button", { name: "สร้างกุญแจเชื่อม Vantage MT5" })
+      .isDisabled(),
+    true,
+  );
+  assert.equal(
+    await page.getByRole("link", { name: "ดาวน์โหลด Connector EA" }).count(),
+    1,
+  );
   assert.equal(await page.locator("input[type=password]").count(), 0);
   assert.equal(await page.getByText("Connected", { exact: true }).count(), 0);
   await navigate("Risk Management");
@@ -238,9 +242,11 @@ try {
   );
   assert.deepEqual(errors, []);
   assert.deepEqual(
-    apiRequests,
+    apiRequests.filter(
+      (url) => !new URL(url).pathname.startsWith("/api/forex/mt5"),
+    ),
     [],
-    "Forex previews must not call auth, account, Auto Pick, MT5 or trading APIs.",
+    "Forex may call only its isolated read-only MT5 API.",
   );
   // Navigate from Forex to a protected route to also exercise CSS isolation.
   await page.getByRole("link", { name: /หุ้นไทย/ }).click();
@@ -255,7 +261,7 @@ try {
     );
   }
   console.log(
-    "PASS: ten Forex views, interactive chart, scanner, demo/guest isolation, manual risk, local journal/alerts, mobile layout, no Forex API calls, and four protected routes.",
+    "PASS: ten Forex views, interactive chart, scanner, demo/guest isolation, manual risk, local journal/alerts, mobile layout, only isolated MT5 API calls, and four protected routes.",
   );
 } finally {
   await browser.close();

@@ -107,3 +107,7 @@ checks passed. Existing market-data/security/Auto Pick suite: 28 of 29 passed.
 `whole-market replay summary reports missing work without inventing wins` expects
 392 instruments but receives 791. The same failure was reproduced on an untouched
 archive of the baseline commit; Auto Pick was not changed.
+
+## Phase 2 update
+
+Read-only Vantage market pairing, atomic broker universe sync, Bid/Ask and selected closed-bar chart ingestion are now implemented behind `FOREX_MT5_ENABLED`. See [bridge setup, Mac requirements, validation and current limitations](../../forex-mt5/README.md). The original Phase 1 descriptions below refer to the fallback/demo implementation; broker connection is no longer a placeholder when enabled. No account data, credential storage or trading is added.
