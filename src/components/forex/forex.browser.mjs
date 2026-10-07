@@ -124,11 +124,18 @@ try {
   );
   await page.getByRole("button", { name: /GUEST \/ NO FEED/ }).click();
   await navigate("MT5 connection");
+  const bridgeState = await (
+    await page.request.get(`${base}/api/forex/mt5`)
+  ).json();
   assert.equal(
     await page
       .getByRole("button", { name: "สร้างกุญแจเชื่อม Vantage MT5" })
-      .isDisabled(),
-    true,
+      .isEnabled(),
+    Boolean(
+      bridgeState.capabilities.enabled &&
+        bridgeState.capabilities.servers.length &&
+        (bridgeState.authorized || bridgeState.capabilities.local),
+    ),
   );
   assert.equal(
     await page.getByRole("link", { name: "ดาวน์โหลด Connector EA" }).count(),

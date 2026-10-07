@@ -9,7 +9,9 @@ export default function ConnectionPanel({ bridge }) {
   const state = CONNECTION_STATES[bridge.status] ?? CONNECTION_STATES.error;
   const selectedServer = server || bridge.capabilities.servers[0] || "";
   const canPair =
-    bridge.capabilities.enabled && selectedServer && bridge.authorized;
+    bridge.capabilities.enabled &&
+    selectedServer &&
+    (bridge.authorized || bridge.capabilities.local);
   const pair = async () => {
     const result = await bridge.action("pair", selectedServer);
     if (result) {
@@ -76,13 +78,12 @@ export default function ConnectionPanel({ bridge }) {
         </select>
       </label>
       {!bridge.authorized && bridge.capabilities.local && (
-        <button
-          className={styles.secondaryButton}
-          disabled={bridge.busy}
-          onClick={() => bridge.action("local-session")}
-        >
-          เริ่มเชื่อมต่อบนเครื่องนี้
-        </button>
+        <p className={styles.note}>
+          กดสร้างกุญแจได้เลย ระบบจะเริ่มการเชื่อมต่อบนเครื่องนี้ให้อัตโนมัติ
+        </p>
+      )}
+      {bridge.capabilities.enabled && !selectedServer && (
+        <p className={styles.note}>ต้องกำหนด Vantage Server ก่อนสร้างกุญแจ</p>
       )}
       {!bridge.authorized &&
         !bridge.capabilities.local &&

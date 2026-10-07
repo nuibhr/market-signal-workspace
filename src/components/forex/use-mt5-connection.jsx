@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 const initial = {
   status: "disconnected",
   capabilities: { enabled: false, servers: [], local: false },
@@ -12,6 +12,7 @@ export default function useMt5Connection(symbol, frame) {
   const [data, setData] = useState(initial),
     [error, setError] = useState(null),
     [busy, setBusy] = useState(false);
+  const actionPending = useRef(false);
   const refresh = useCallback(
     async (signal) => {
       const params = new URLSearchParams();
@@ -62,13 +63,18 @@ export default function useMt5Connection(symbol, frame) {
     };
   }, [refresh]);
   const action = async (action, server) => {
+    if (actionPending.current) return null;
+    actionPending.current = true;
     setBusy(true);
     setError(null);
-    try {
+    const post = async (requestedAction, requestedServer) => {
       const response = await fetch("/api/forex/mt5", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ...(server ? { server } : {}) }),
+        body: JSON.stringify({
+          action: requestedAction,
+          ...(requestedServer ? { server: requestedServer } : {}),
+        }),
       });
       const result = await response.json();
       if (!response.ok)
@@ -80,12 +86,26 @@ export default function useMt5Connection(symbol, frame) {
             HTTPS_REQUIRED: "การจับคู่บนเซิร์ฟเวอร์ต้องใช้ HTTPS",
           }[result.error] || "ดำเนินการไม่สำเร็จ",
         );
-      await refresh();
+      return result;
+    };
+    try {
+      // Only the development API can advertise this loopback-only session.
+      // Production pairing still requires the existing member authentication.
+      if (action === "pair" && !data.authorized && data.capabilities.local)
+        await post("local-session");
+      const result = await post(action, server);
+      try {
+        await refresh();
+      } catch {
+        // Pairing returns a one-time key: don't discard it if the status fetch fails.
+        setError("ดำเนินการแล้ว แต่โหลดสถานะไม่ได้ กรุณาเก็บกุญแจที่แสดงไว้");
+      }
       return result;
     } catch (error) {
       setError(error.message);
       return null;
     } finally {
+      actionPending.current = false;
       setBusy(false);
     }
   };

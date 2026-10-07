@@ -12,6 +12,86 @@ const browser = await chromium.launch({
 const base = process.env.FOREX_TEST_URL || "http://localhost:3100";
 let token, context, connector;
 try {
+  // Exercise failures with synthetic responses; never generate real keys here.
+  const setupContext = await browser.newContext();
+  const setupPage = await setupContext.newPage();
+  const setupState = {
+    capabilities: {
+      enabled: true,
+      servers: ["VantageMarkets-Demo"],
+      local: false,
+    },
+    authorized: false,
+    status: "disconnected",
+    snapshot: null,
+    quotes: {},
+    chart: null,
+  };
+  let failSession = true,
+    paired = false;
+  const setupActions = [];
+  await setupPage.route("**/api/forex/mt5*", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({ status: paired ? 503 : 200, json: setupState });
+      return;
+    }
+    const action = route.request().postDataJSON().action;
+    setupActions.push(action);
+    if (action === "local-session" && failSession) {
+      await route.fulfill({ status: 403, json: { error: "LOCAL_ONLY" } });
+      return;
+    }
+    if (action === "pair") paired = true;
+    await route.fulfill({
+      json:
+        action === "pair"
+          ? { token: "synthetic-ui-key", expires_at: "2026-10-14T00:00:00Z" }
+          : { ok: true },
+    });
+  });
+  const openSetup = async () => {
+    await setupPage.goto(`${base}/forex`);
+    await setupPage
+      .getByRole("navigation", { name: "Forex Command Center", exact: true })
+      .getByRole("button", { name: "MT5 connection", exact: true })
+      .click();
+  };
+  await openSetup();
+  assert.equal(
+    await setupPage
+      .getByRole("button", { name: "สร้างกุญแจเชื่อม Vantage MT5" })
+      .isDisabled(),
+    true,
+  );
+  await setupPage
+    .getByText("เข้าสู่ระบบด้วย LINE ตามปกติก่อนสร้างกุญแจจับคู่")
+    .waitFor();
+  assert.deepEqual(setupActions, []);
+  setupState.capabilities.local = true;
+  await openSetup();
+  const setupButton = setupPage.getByRole("button", {
+    name: "สร้างกุญแจเชื่อม Vantage MT5",
+  });
+  await setupButton.click();
+  await setupPage.locator("#forex-connection").getByRole("alert").waitFor();
+  assert.deepEqual(setupActions, ["local-session"]); // Don't attempt pairing after session failure.
+  assert.equal(await setupButton.isEnabled(), true);
+  failSession = false;
+  await setupButton.click();
+  await setupPage
+    .getByRole("textbox", { name: "BridgeToken สำหรับ EA" })
+    .waitFor();
+  assert.deepEqual(setupActions, ["local-session", "local-session", "pair"]);
+  assert.equal(
+    await setupPage
+      .getByRole("textbox", { name: "BridgeToken สำหรับ EA" })
+      .inputValue(),
+    "synthetic-ui-key",
+  );
+  await setupPage
+    .getByText("ดำเนินการแล้ว แต่โหลดสถานะไม่ได้ กรุณาเก็บกุญแจที่แสดงไว้")
+    .waitFor();
+  await setupContext.close();
   context = await browser.newContext({
     viewport: { width: 1440, height: 1080 },
   });
@@ -25,9 +105,6 @@ try {
       .getByRole("button", { name, exact: true })
       .click();
   await nav("MT5 connection");
-  await page
-    .getByRole("button", { name: "เริ่มเชื่อมต่อบนเครื่องนี้" })
-    .click();
   await page
     .getByRole("button", { name: "สร้างกุญแจเชื่อม Vantage MT5" })
     .click();
