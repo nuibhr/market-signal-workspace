@@ -1,5 +1,5 @@
 #property strict
-#property version "2.14"
+#property version "2.15"
 #property description "Nugaom read-only symbol/quote/candle bridge. No account credentials or order operations."
 input string Endpoint = "http://localhost:3100/api/forex/mt5";
 input bool LocalFiles = false; // Same-computer file transport; no WebRequest needed
@@ -239,7 +239,8 @@ void OnTimer() {
    if(total<=0) return;
    if(total!=universe_total || TimeGMT()-synced_at>900) needs_sync=true;
    if(needs_sync) {
-      if(next_part==0) { universe_total=total; sync_id=sequence_id+1; }
+      // A pending first chunk must keep its revision until the file acknowledgement arrives.
+      if(next_part==0 && pending_file_sequence==0) { universe_total=total; sync_id=sequence_id+1; }
       if(total!=universe_total) { next_part=0; pending_file_sequence=0; return; }
       int parts=(total+99)/100; if(parts>200) { Print("Nugaom: universe too large"); EventKillTimer(); return; }
       string rows="";

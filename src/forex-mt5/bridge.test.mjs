@@ -94,6 +94,31 @@ test("exact server allowlist and opt-in config; local shortcut is impossible in 
   assert.equal(store.view("alice", config, {}, NOW).snapshot, null);
   store.db.close();
 });
+test("a complete thirteen-part revision recovers from missing first chunk without publishing partial data", () => {
+  const { store, token } = fixture();
+  let sequence = 0;
+  const rowsFor = (part) => Array.from(
+    { length: part === 12 ? 1 : 100 },
+    (_, i) => metadata(`BROKER${part * 100 + i}.a`),
+  );
+  // Reproduce the native EA bug: the first packet's revision changed while waiting for its ACK.
+  store.ingest(token, packet(++sequence, { parts: 13, sync_id: 1, instruments: rowsFor(0) }), config, NOW);
+  for (let part = 1; part < 13; part++)
+    store.ingest(token, packet(++sequence, { parts: 13, sync_id: 2, part, instruments: rowsFor(part) }), config, NOW);
+  store.ingest(token, feed(++sequence, { quotes: [], chart: null }), config, NOW);
+  assert.equal(store.view("alice", config, {}, NOW).snapshot, null);
+  assert.equal(store.view("alice", config, {}, NOW).status, "syncing");
+  // A reloaded connector sends a stable revision; commit only after all thirteen parts arrive.
+  for (let part = 0; part < 13; part++) {
+    store.ingest(token, packet(++sequence, { parts: 13, sync_id: 3, part, instruments: rowsFor(part) }), config, NOW);
+    if (part < 12) assert.equal(store.view("alice", config, {}, NOW).snapshot, null);
+  }
+  const view = store.view("alice", config, {}, NOW);
+  assert.equal(view.status, "ready");
+  assert.equal(view.snapshot.instruments.length, 1201);
+  assert.equal(new Set(view.snapshot.instruments.map(i => i.broker_symbol)).size, 1201);
+  store.db.close();
+});
 test("atomic multipart universe and exact suffixed names/specs; filters can classify future CFDs", () => {
   const { store, token } = fixture();
   // Real EA chunks contain 100 rows, except the last chunk.
