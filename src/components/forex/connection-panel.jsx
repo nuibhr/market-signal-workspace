@@ -80,7 +80,7 @@ export default function ConnectionPanel({ bridge }) {
       </label>
       {!bridge.authorized && bridge.capabilities.local && (
         <p className={styles.note}>
-          กดสร้างกุญแจได้เลย ระบบจะเริ่มการเชื่อมต่อบนเครื่องนี้ให้อัตโนมัติ
+          เลือกวิธีเชื่อมต่อได้เลย ระบบจะเริ่มการเชื่อมต่อบนเครื่องนี้ให้อัตโนมัติ
         </p>
       )}
       {bridge.capabilities.enabled && !selectedServer && (
@@ -93,19 +93,6 @@ export default function ConnectionPanel({ bridge }) {
             เข้าสู่ระบบด้วย LINE ตามปกติก่อนสร้างกุญแจจับคู่
           </p>
         )}
-      <div className={styles.bridgeActions}>
-        <button
-          className={styles.primaryButton}
-          disabled={!canPair || bridge.busy}
-          onClick={pair}
-        >
-          <Cable size={16} />{" "}
-          {bridge.busy ? "กำลังดำเนินการ…" : "สร้างกุญแจเชื่อม Vantage MT5"}
-        </button>
-        <a className={styles.secondaryButton} href="/api/forex/mt5/connector">
-          <Download size={16} /> ดาวน์โหลด Connector EA
-        </a>
-      </div>
       {bridge.capabilities.localFiles && (
         <div className={styles.pairingKey}>
           <strong>ทางเลือกสำหรับ Mac · เชื่อมผ่านไฟล์ในเครื่อง</strong>
@@ -128,6 +115,10 @@ export default function ConnectionPanel({ bridge }) {
           </button>
           {localFile && (
             <>
+              <p>
+                คัดลอกรหัสเต็ม 32 ตัวด้านล่างไปใส่ใน EA ช่อง LocalChannel
+                ไม่ใช้กุญแจ WebRequest
+              </p>
               <label>
                 LocalChannel{" "}
                 <input
@@ -171,6 +162,23 @@ export default function ConnectionPanel({ bridge }) {
           )}
         </div>
       )}
+      <div className={styles.bridgeActions}>
+        <button
+          className={
+            bridge.capabilities.localFiles
+              ? styles.secondaryButton
+              : styles.primaryButton
+          }
+          disabled={!canPair || bridge.busy}
+          onClick={pair}
+        >
+          <Cable size={16} />{" "}
+          {bridge.busy ? "กำลังดำเนินการ…" : "สร้างกุญแจผ่าน WebRequest"}
+        </button>
+        <a className={styles.secondaryButton} href="/api/forex/mt5/connector">
+          <Download size={16} /> ดาวน์โหลด Connector EA
+        </a>
+      </div>
       {key?.token && (
         <div className={styles.pairingKey}>
           <strong>

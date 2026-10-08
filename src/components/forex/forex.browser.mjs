@@ -129,7 +129,7 @@ try {
   ).json();
   assert.equal(
     await page
-      .getByRole("button", { name: "สร้างกุญแจเชื่อม Vantage MT5" })
+      .getByRole("button", { name: "สร้างกุญแจผ่าน WebRequest" })
       .isEnabled(),
     Boolean(
       bridgeState.capabilities.enabled &&

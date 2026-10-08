@@ -59,7 +59,7 @@ try {
   await openSetup();
   assert.equal(
     await setupPage
-      .getByRole("button", { name: "สร้างกุญแจเชื่อม Vantage MT5" })
+      .getByRole("button", { name: "สร้างกุญแจผ่าน WebRequest" })
       .isDisabled(),
     true,
   );
@@ -70,7 +70,7 @@ try {
   setupState.capabilities.local = true;
   await openSetup();
   const setupButton = setupPage.getByRole("button", {
-    name: "สร้างกุญแจเชื่อม Vantage MT5",
+    name: "สร้างกุญแจผ่าน WebRequest",
   });
   await setupButton.click();
   await setupPage.locator("#forex-connection").getByRole("alert").waitFor();
@@ -105,9 +105,7 @@ try {
       .getByRole("button", { name, exact: true })
       .click();
   await nav("MT5 connection");
-  await page
-    .getByRole("button", { name: "สร้างกุญแจเชื่อม Vantage MT5" })
-    .click();
+  await page.getByRole("button", { name: "สร้างกุญแจผ่าน WebRequest" }).click();
   token = await page
     .getByRole("textbox", { name: "BridgeToken สำหรับ EA" })
     .inputValue();

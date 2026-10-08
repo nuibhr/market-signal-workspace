@@ -32,7 +32,7 @@ FOREX_MT5_LOCAL_MODE=true
 
 Server names must exactly match MT5. Do not use wildcards. The current user's confirmed demo server is `VantageMarkets-Demo`; no account login is required by this bridge.
 
-Local development: `npm run dev -- --hostname 127.0.0.1 --port 3100`. Open `http://localhost:3100/forex`, choose **MT5 connection**, click **สร้างกุญแจเชื่อม Vantage MT5** once. The UI starts the local session automatically before pairing. The development-only session is an expiring, random HttpOnly/SameSite=Strict cookie scoped to the Forex API. Keep the development server bound to loopback.
+Local development: `npm run dev -- --hostname 127.0.0.1 --port 3100`. Open `http://localhost:3100/forex`, choose **MT5 connection**, click **สร้างกุญแจผ่าน WebRequest** once. The UI starts the local session automatically before pairing. The development-only session is an expiring, random HttpOnly/SameSite=Strict cookie scoped to the Forex API. Keep the development server bound to loopback.
 
 Production: an existing signed-in LINE member is required to pair/read their connection; pairing requires HTTPS and a same-origin POST. There are no changes to membership rights or auth implementation. Local-session requests are forbidden in production. Only one active connection is retained per owner; generating a new key revokes the previous key. Tokens expire after seven days and can be revoked immediately. Only their SHA-256 hashes are stored. Never share a pairing key; it is permission to upload market data to your workspace, not a broker password. Do not include the key in a URL or terminal logs.
 
