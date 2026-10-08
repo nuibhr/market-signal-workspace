@@ -30,7 +30,7 @@ FOREX_MT5_DATABASE_PATH=data/forex-mt5.sqlite
 FOREX_MT5_LOCAL_MODE=true
 ```
 
-Server names must exactly match MT5. Do not use wildcards. The current user's confirmed demo server is `VantageMarkets-Demo`; no account login is required by this bridge.
+Server labels must exactly match the backend allowlist. The EA compares the terminal name with that approved label after trimming leading/trailing whitespace and ignoring letter case, then emits the approved label. No wildcard, substring or suffix match is allowed; Demo and Live remain distinct. The current user's confirmed demo server is `VantageMarkets-Demo`; no account login is required by this bridge.
 
 Local development: `npm run dev -- --hostname 127.0.0.1 --port 3100`. Open `http://localhost:3100/forex`, choose **MT5 connection**, click **สร้างกุญแจผ่าน WebRequest** once. The UI starts the local session automatically before pairing. The development-only session is an expiring, random HttpOnly/SameSite=Strict cookie scoped to the Forex API. Keep the development server bound to loopback.
 
@@ -51,7 +51,7 @@ Set `FOREX_MT5_LOCAL_FILES_PATH` in the ignored development environment to the *
 
 The ingestion credential is retained only in server memory; packets, acknowledgements, UI and database never contain its plaintext. Channel filenames contain no account identifier. LocalChannel is an opaque routing identifier within the operator's trusted local Files directory, not cryptographic EA attestation. File writers on that computer are trusted. The same strict Vantage/server/schema, clock, sequence, privacy, atomic-chunk and rate checks as the HTTP bridge apply. Input is limited to 512 KB, regular files, and non-symlink final paths; no broker/account credentials are read.
 
-The EA emits setup reason codes (server/company mismatch, channel length/format, transport, polling, Strategy Tester, timer) without logging a token or account identifier. On 2026-10-08 diagnostic version 2.11 and the local-file variant compiled in the installed MetaEditor with **0 errors, 0 warnings** and was installed alongside the original EA. Browser integration verifies synthetic file → API → UI ingestion, acknowledgements, owner isolation, refresh, mobile and revocation. Actual MT5 export still requires attaching the EA and confirming the terminal universe.
+Actual MT5 diagnostics showed the native server name as `  Vantagemarkets-Demo`; version 2.12 normalizes only padding/case for matching the approved `VantageMarkets-Demo` label. The EA emits setup reason codes (server/company mismatch, channel length/format, transport, polling, Strategy Tester, timer) without logging a token or account identifier. On 2026-10-08 diagnostic version 2.12 and the local-file variant compiled in the installed MetaEditor with **0 errors, 0 warnings** and was installed alongside the original EA. Browser integration verifies synthetic file → API → UI ingestion, acknowledgements, owner isolation, refresh, mobile and revocation. Actual MT5 export still requires attaching the EA and confirming the terminal universe.
 
 ## Install and verify the EA
 

@@ -371,3 +371,28 @@ test("Mac connector is an EA with timer/WebRequest and contains no credential re
     /\b(?:OrderSend|OrderSendAsync|CTrade|ACCOUNT_LOGIN|ACCOUNT_BALANCE|ACCOUNT_EQUITY|PositionsTotal|OrdersTotal|HistorySelect)\b/,
   );
 });
+
+test("backend retains exact approved server labels after EA padding/case normalization", () => {
+  assert.throws(
+    () =>
+      validatePacket(
+        packet(1, { server: "  Vantagemarkets-Demo" }),
+        config,
+        NOW,
+      ),
+    /BROKER_NOT_ALLOWED/,
+  );
+  assert.throws(
+    () =>
+      validatePacket(
+        packet(1, { server: "VantageMarkets-Live 15" }),
+        config,
+        NOW,
+      ),
+    /BROKER_NOT_ALLOWED/,
+  );
+  assert.equal(
+    validatePacket(packet(), config, NOW).server,
+    "VantageMarkets-Demo",
+  );
+});

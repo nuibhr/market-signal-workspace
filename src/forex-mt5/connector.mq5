@@ -1,5 +1,5 @@
 #property strict
-#property version "2.11"
+#property version "2.12"
 #property description "Nugaom read-only symbol/quote/candle bridge. No account credentials or order operations."
 input string Endpoint = "http://localhost:3100/api/forex/mt5";
 input bool LocalFiles = false; // Same-computer file transport; no WebRequest needed
@@ -16,6 +16,17 @@ datetime synced_at = 0;
 string requested_symbol = "", requested_frame = "1h";
 long pending_file_sequence = 0;
 
+string ServerLabel() {
+   string value=ExpectedServer;
+   StringTrimLeft(value); StringTrimRight(value);
+   return value;
+}
+bool ServerMatches() {
+   string actual=AccountInfoString(ACCOUNT_SERVER), approved=ServerLabel();
+   StringTrimLeft(actual); StringTrimRight(actual);
+   StringToLower(actual); StringToLower(approved);
+   return actual==approved; // No suffix, wildcard or substring matches; Demo and Live remain distinct.
+}
 string J(string value) {
    string out="";
    for(int i=0;i<StringLen(value);i++) {
@@ -126,7 +137,8 @@ bool ReadLocalReply() {
 }
 bool Send(string fields) {
    if(LocalFiles && pending_file_sequence>0) return ReadLocalReply();
-   string body="{\"schema_version\":1,\"broker_id\":\"vantage\",\"server\":"+J(AccountInfoString(ACCOUNT_SERVER))+
+   // Publish the approved label after checking the terminal name; backend allowlists remain exact.
+   string body="{\"schema_version\":1,\"broker_id\":\"vantage\",\"server\":"+J(ServerLabel())+
       ",\"company\":"+J(AccountInfoString(ACCOUNT_COMPANY))+",\"sent_at\":"+J(UTC())+
       ",\"sequence\":"+IntegerToString(++sequence_id)+","+fields+"}";
    if(LocalFiles) return SendLocal(body);
@@ -182,7 +194,7 @@ int InitError(string reason) {
 }
 int OnInit() {
    string company=AccountInfoString(ACCOUNT_COMPANY); StringToLower(company);
-   if(AccountInfoString(ACCOUNT_SERVER)!=ExpectedServer) {
+   if(!ServerMatches()) {
       Print("Nugaom setup: terminal server is ",AccountInfoString(ACCOUNT_SERVER));
       return InitError("SERVER_MISMATCH: select the approved Vantage server");
    }
@@ -209,7 +221,7 @@ void OnDeinit(const int reason) { EventKillTimer(); }
 void OnTimer() {
    if(!TerminalInfoInteger(TERMINAL_CONNECTED)) return;
    string company=AccountInfoString(ACCOUNT_COMPANY); StringToLower(company);
-   if(AccountInfoString(ACCOUNT_SERVER)!=ExpectedServer || StringFind(company,"vantage")<0) { EventKillTimer(); return; }
+   if(!ServerMatches() || StringFind(company,"vantage")<0) { EventKillTimer(); return; }
    int total=SymbolsTotal(false);
    if(total<=0) return;
    if(total!=universe_total || TimeGMT()-synced_at>900) needs_sync=true;
