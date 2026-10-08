@@ -1,5 +1,5 @@
 #property strict
-#property version "2.10"
+#property version "2.11"
 #property description "Nugaom read-only symbol/quote/candle bridge. No account credentials or order operations."
 input string Endpoint = "http://localhost:3100/api/forex/mt5";
 input bool LocalFiles = false; // Same-computer file transport; no WebRequest needed
@@ -176,21 +176,34 @@ string Chart() {
    return "{\"broker_symbol\":"+J(requested_symbol)+",\"timeframe\":"+J(requested_frame)+
       ",\"utc_offset_minutes\":"+IntegerToString(ServerUtcOffsetMinutes)+",\"bars\":["+rows+"]}";
 }
+int InitError(string reason) {
+   Print("Nugaom setup: ",reason);
+   return INIT_PARAMETERS_INCORRECT;
+}
 int OnInit() {
    string company=AccountInfoString(ACCOUNT_COMPANY); StringToLower(company);
-   if(AccountInfoString(ACCOUNT_SERVER)!=ExpectedServer || StringFind(company,"vantage")<0) return INIT_PARAMETERS_INCORRECT;
+   if(AccountInfoString(ACCOUNT_SERVER)!=ExpectedServer) {
+      Print("Nugaom setup: terminal server is ",AccountInfoString(ACCOUNT_SERVER));
+      return InitError("SERVER_MISMATCH: select the approved Vantage server");
+   }
+   if(StringFind(company,"vantage")<0) return InitError("COMPANY_MISMATCH: terminal must be connected to Vantage");
    if(LocalFiles) {
-      if(StringLen(LocalChannel)!=32) return INIT_PARAMETERS_INCORRECT;
-      for(int i=0;i<32;i++) if(StringFind("0123456789abcdef",StringSubstr(LocalChannel,i,1))<0) return INIT_PARAMETERS_INCORRECT;
-   } else if(StringLen(BridgeToken)!=43) return INIT_PARAMETERS_INCORRECT;
+      if(StringLen(LocalChannel)!=32) {
+         Print("Nugaom setup: LocalChannel length is ",StringLen(LocalChannel),"; expected 32");
+         return InitError("CHANNEL_LENGTH: load the local preset or copy the full channel");
+      }
+      for(int i=0;i<32;i++) if(StringFind("0123456789abcdef",StringSubstr(LocalChannel,i,1))<0) return InitError("CHANNEL_FORMAT: local channel must contain only lowercase hex characters");
+   } else if(StringLen(BridgeToken)!=43) return InitError("TOKEN_LENGTH: HTTP mode requires a pairing key; local file mode does not");
    bool secure=StringFind(Endpoint,"https://")==0;
    bool local=StringFind(Endpoint,"http://localhost:")==0 || StringFind(Endpoint,"http://127.0.0.1:")==0;
-   if(!LocalFiles && !secure && !local) return INIT_PARAMETERS_INCORRECT;
-   if(PollSeconds<5 || PollSeconds>60) return INIT_PARAMETERS_INCORRECT;
-   if(LocalFiles && MQLInfoInteger(MQL_TESTER)) return INIT_PARAMETERS_INCORRECT;
+   if(!LocalFiles && !secure && !local) return InitError("ENDPOINT_SCHEME: use HTTPS or local loopback");
+   if(PollSeconds<5 || PollSeconds>60) return InitError("POLL_SECONDS: use 5 to 60 seconds");
+   if(LocalFiles && MQLInfoInteger(MQL_TESTER)) return InitError("STRATEGY_TESTER: attach the local EA to a terminal chart");
    sequence_id=(long)TimeGMT()*1000000+(long)(GetMicrosecondCount()%1000000);
    if(MathAbs(ServerUtcOffsetMinutes)>840) Print("Nugaom: universe only; confirm broker UTC offset to enable prices/candles.");
-   EventSetTimer(PollSeconds); return INIT_SUCCEEDED;
+   if(!EventSetTimer(PollSeconds)) return InitError("TIMER_FAILED: cannot start the export timer");
+   Print("Nugaom setup: ready; read-only market export started");
+   return INIT_SUCCEEDED;
 }
 void OnDeinit(const int reason) { EventKillTimer(); }
 void OnTimer() {

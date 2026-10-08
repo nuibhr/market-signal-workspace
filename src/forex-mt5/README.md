@@ -51,7 +51,7 @@ Set `FOREX_MT5_LOCAL_FILES_PATH` in the ignored development environment to the *
 
 The ingestion credential is retained only in server memory; packets, acknowledgements, UI and database never contain its plaintext. Channel filenames contain no account identifier. LocalChannel is an opaque routing identifier within the operator's trusted local Files directory, not cryptographic EA attestation. File writers on that computer are trusted. The same strict Vantage/server/schema, clock, sequence, privacy, atomic-chunk and rate checks as the HTTP bridge apply. Input is limited to 512 KB, regular files, and non-symlink final paths; no broker/account credentials are read.
 
-On 2026-10-08 the local-file variant compiled in the installed MetaEditor with **0 errors, 0 warnings** and was installed alongside the original EA. Browser integration verifies synthetic file → API → UI ingestion, acknowledgements, owner isolation, refresh, mobile and revocation. Actual MT5 export still requires attaching the EA and confirming the terminal universe.
+The EA emits setup reason codes (server/company mismatch, channel length/format, transport, polling, Strategy Tester, timer) without logging a token or account identifier. On 2026-10-08 diagnostic version 2.11 and the local-file variant compiled in the installed MetaEditor with **0 errors, 0 warnings** and was installed alongside the original EA. Browser integration verifies synthetic file → API → UI ingestion, acknowledgements, owner isolation, refresh, mobile and revocation. Actual MT5 export still requires attaching the EA and confirming the terminal universe.
 
 ## Install and verify the EA
 
