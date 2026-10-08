@@ -1,5 +1,5 @@
 #property strict
-#property version "2.15"
+#property version "2.16"
 #property description "Nugaom read-only symbol/quote/candle bridge. No account credentials or order operations."
 input string Endpoint = "http://localhost:3100/api/forex/mt5";
 input bool LocalFiles = false; // Same-computer file transport; no WebRequest needed
@@ -214,6 +214,10 @@ bool ExportReady() {
    return state=="READY";
 }
 int OnInit() {
+   // Parameter/preset reinitialization must start a fresh universe and discard any old ACK wait.
+   sync_id=0; next_part=0; universe_total=0; needs_sync=true; synced_at=0;
+   pending_file_sequence=0; requested_symbol=""; requested_frame="1h"; terminal_state="";
+   Print("Nugaom setup: connector version 2.16; starting fresh universe");
    if(LocalFiles) {
       if(StringLen(LocalChannel)!=32) {
          Print("Nugaom setup: LocalChannel length is ",StringLen(LocalChannel),"; expected 32");
