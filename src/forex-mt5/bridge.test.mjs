@@ -87,6 +87,7 @@ test("exact server allowlist and opt-in config; local shortcut is impossible in 
     { server: "Other-Demo" },
     { server: "VantageMarkets-Demo-copy" },
     { company: "NotVantageBroker" },
+    { company: "" },
     { broker_id: "other" },
   ])
     assert.throws(() => store.ingest(token, packet(1, extra), config, NOW));

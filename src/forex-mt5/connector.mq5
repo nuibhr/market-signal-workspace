@@ -1,5 +1,5 @@
 #property strict
-#property version "2.13"
+#property version "2.14"
 #property description "Nugaom read-only symbol/quote/candle bridge. No account credentials or order operations."
 input string Endpoint = "http://localhost:3100/api/forex/mt5";
 input bool LocalFiles = false; // Same-computer file transport; no WebRequest needed
@@ -15,6 +15,7 @@ bool needs_sync = true;
 datetime synced_at = 0;
 string requested_symbol = "", requested_frame = "1h";
 long pending_file_sequence = 0;
+string terminal_state = "";
 
 string ServerLabel() {
    string value=ExpectedServer;
@@ -192,17 +193,27 @@ int InitError(string reason) {
    Print("Nugaom setup: ",reason);
    return INIT_PARAMETERS_INCORRECT;
 }
-int OnInit() {
-   string company=AccountInfoString(ACCOUNT_COMPANY); StringToLower(company);
-   if(!ServerMatches()) {
+bool ExportReady() {
+   string company=AccountInfoString(ACCOUNT_COMPANY);
+   StringTrimLeft(company); StringTrimRight(company); StringToLower(company);
+   string state="READY";
+   if(!TerminalInfoInteger(TERMINAL_CONNECTED)) state="WAITING_CONNECTION";
+   else if(company=="") state="WAITING_COMPANY";
+   else if(!ServerMatches()) state="SERVER_MISMATCH";
+   else if(StringFind(company,"vantage")<0) state="COMPANY_MISMATCH";
+   if(state!=terminal_state) {
+      terminal_state=state;
+      // Public broker labels only; never print account identifiers or credentials.
+      if(state=="SERVER_MISMATCH")
       Print("Nugaom setup: terminal server is ",AccountInfoString(ACCOUNT_SERVER));
-      return InitError("SERVER_MISMATCH: select the approved Vantage server");
+      if(state=="COMPANY_MISMATCH")
+         Print("Nugaom setup: terminal company is [",AccountInfoString(ACCOUNT_COMPANY),"]");
+      Print("Nugaom setup: ",state);
    }
-   if(StringFind(company,"vantage")<0) {
-      // Public broker label only: never print login, client name, credentials or balances.
-      Print("Nugaom setup: terminal company is [",AccountInfoString(ACCOUNT_COMPANY),"]");
-      return InitError("COMPANY_MISMATCH: terminal must be connected to Vantage");
-   }
+   if(state=="SERVER_MISMATCH" || state=="COMPANY_MISMATCH") EventKillTimer();
+   return state=="READY";
+}
+int OnInit() {
    if(LocalFiles) {
       if(StringLen(LocalChannel)!=32) {
          Print("Nugaom setup: LocalChannel length is ",StringLen(LocalChannel),"; expected 32");
@@ -218,14 +229,12 @@ int OnInit() {
    sequence_id=(long)TimeGMT()*1000000+(long)(GetMicrosecondCount()%1000000);
    if(MathAbs(ServerUtcOffsetMinutes)>840) Print("Nugaom: universe only; confirm broker UTC offset to enable prices/candles.");
    if(!EventSetTimer(PollSeconds)) return InitError("TIMER_FAILED: cannot start the export timer");
-   Print("Nugaom setup: ready; read-only market export started");
+   ExportReady(); // Empty broker metadata/disconnection must wait, never bypass identity checks.
    return INIT_SUCCEEDED;
 }
 void OnDeinit(const int reason) { EventKillTimer(); }
 void OnTimer() {
-   if(!TerminalInfoInteger(TERMINAL_CONNECTED)) return;
-   string company=AccountInfoString(ACCOUNT_COMPANY); StringToLower(company);
-   if(!ServerMatches() || StringFind(company,"vantage")<0) { EventKillTimer(); return; }
+   if(!ExportReady()) return;
    int total=SymbolsTotal(false);
    if(total<=0) return;
    if(total!=universe_total || TimeGMT()-synced_at>900) needs_sync=true;
