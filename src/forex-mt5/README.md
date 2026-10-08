@@ -38,6 +38,21 @@ Production: an existing signed-in LINE member is required to pair/read their con
 
 This is a **Node runtime with persistent SQLite storage**, separate from the shared membership database and D1. A stateless/edge deployment is not supported by this store. Production must supply a persistent volume, backups and a single shared database file for its Node processes. No D1 schema/migration or deployment configuration is modified. Do not set this database path to the existing application database.
 
+## Mac alternative: same-computer file transport
+
+If the Wine-based MT5 URL field is unusable, use the **เชื่อมผ่านไฟล์บน Mac** button in MT5 connection. This does not use WebRequest, DLLs, or trading permission. The official [MQL5 file sandbox](https://www.mql5.com/en/docs/files/fileopen) permits the EA to export files under `MQL5/Files`.
+
+Set `FOREX_MT5_LOCAL_FILES_PATH` in the ignored development environment to the **absolute** host path of the terminal's `MQL5/Files/NugaomBridge` directory. This capability is disabled in production and when local mode is off; callers cannot supply a filesystem path. The development server must remain on loopback.
+
+1. Click **เชื่อมผ่านไฟล์บน Mac** once. This replaces the owner's previous pairing and displays a `LocalChannel` identifier.
+2. Add the new EA to a chart of `VantageMarkets-Demo`, with `LocalFiles=true` and `LocalChannel` matching the web UI. `BridgeToken` may be empty. The installed `NugaomLocalFileBridge` variant defaults `LocalFiles` to true.
+3. Keep the Forex page open. Its normal polling imports the closed packet file and writes an acknowledgement before the EA advances to the next universe chunk. An atomic whole universe appears after every chunk has arrived. Quotes/candles still require a verified server UTC offset; leave `ServerUtcOffsetMinutes=10000` for metadata-only verification.
+4. Restarting the web server loses the in-memory file session. Click the file button again and replace the EA's channel. Revocation stops importing and clears the owner's connection. Pausing browser polling eventually shows STALE; this transport is deliberately tied to the open local workspace.
+
+The ingestion credential is retained only in server memory; packets, acknowledgements, UI and database never contain its plaintext. Channel filenames contain no account identifier. LocalChannel is an opaque routing identifier within the operator's trusted local Files directory, not cryptographic EA attestation. File writers on that computer are trusted. The same strict Vantage/server/schema, clock, sequence, privacy, atomic-chunk and rate checks as the HTTP bridge apply. Input is limited to 512 KB, regular files, and non-symlink final paths; no broker/account credentials are read.
+
+On 2026-10-08 the local-file variant compiled in the installed MetaEditor with **0 errors, 0 warnings** and was installed alongside the original EA. Browser integration verifies synthetic file → API → UI ingestion, acknowledgements, owner isolation, refresh, mobile and revocation. Actual MT5 export still requires attaching the EA and confirming the terminal universe.
+
 ## Install and verify the EA
 
 1. Download `/api/forex/mt5/connector` or use `connector.mq5` in this directory. Open it in MT5 Desktop's MetaEditor and compile it.
@@ -64,7 +79,7 @@ Quotes are for the requested chart symbol and up to 99 other Market Watch symbol
 ## Validation
 
 ```sh
-node --test src/components/forex/forex.test.mjs src/forex-mt5/bridge.test.mjs
+node --test src/components/forex/forex.test.mjs src/forex-mt5/bridge.test.mjs src/forex-mt5/local-files.test.mjs
 npm run build
 # With a local development server, Playwright and Chrome:
 PLAYWRIGHT_CHANNEL=chrome node src/components/forex/forex.browser.mjs

@@ -12,6 +12,7 @@ export default function ConnectionPanel({ bridge }) {
     bridge.capabilities.enabled &&
     selectedServer &&
     (bridge.authorized || bridge.capabilities.local);
+  const localFile = key?.channel ? key : bridge.local_file;
   const pair = async () => {
     const result = await bridge.action("pair", selectedServer);
     if (result) {
@@ -105,7 +106,72 @@ export default function ConnectionPanel({ bridge }) {
           <Download size={16} /> ดาวน์โหลด Connector EA
         </a>
       </div>
-      {key && (
+      {bridge.capabilities.localFiles && (
+        <div className={styles.pairingKey}>
+          <strong>ทางเลือกสำหรับ Mac · เชื่อมผ่านไฟล์ในเครื่อง</strong>
+          <p>
+            ใช้แทน WebRequest ได้ ไม่ต้องกรอก URL ใน MT5 เปิดหน้า Forex
+            นี้ไว้ระหว่างซิงก์
+          </p>
+          <button
+            className={styles.primaryButton}
+            disabled={!canPair || bridge.busy}
+            onClick={async () => {
+              const result = await bridge.action("local-file", selectedServer);
+              if (result) {
+                setKey(result);
+                setCopied(false);
+              }
+            }}
+          >
+            เชื่อมผ่านไฟล์บน Mac
+          </button>
+          {localFile && (
+            <>
+              <label>
+                LocalChannel{" "}
+                <input
+                  aria-label="LocalChannel สำหรับ EA"
+                  value={localFile.channel}
+                  readOnly
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+              <button
+                className={styles.secondaryButton}
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(localFile.channel);
+                    setCopied(true);
+                  } catch {
+                    setCopied(false);
+                  }
+                }}
+              >
+                <Copy size={14} />
+                {copied ? "คัดลอกแล้ว" : "คัดลอกรหัส LocalChannel"}
+              </button>
+              <p>
+                ลาก EA รุ่นใหม่ (NugaomLocalFileBridge) ลงกราฟ Demo → Inputs:
+                LocalFiles = true และ LocalChannel = รหัสด้านบน ปล่อย
+                BridgeToken ว่างได้
+              </p>
+              <p>
+                ถ้ารีสตาร์ตเว็บเซิร์ฟเวอร์ ให้กดเชื่อมใหม่และเปลี่ยน
+                LocalChannel ใน EA
+              </p>
+              {localFile.error && (
+                <p role="alert" className={styles.negative}>
+                  อ่านไฟล์ยังไม่สำเร็จ ({localFile.error}) · ตรวจว่า EA
+                  ใช้บัญชีและ Server ที่เลือก
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+      {key?.token && (
         <div className={styles.pairingKey}>
           <strong>
             กุญแจแสดงครั้งเดียว · หมดอายุ{" "}
@@ -166,6 +232,7 @@ export default function ConnectionPanel({ bridge }) {
           Demo ได้
         </p>
       )}
+      <h3>วิธีเชื่อมผ่าน WebRequest · อีกทางเลือก</h3>
       <ol className={styles.bridgeSteps}>
         <li>
           ใช้{" "}

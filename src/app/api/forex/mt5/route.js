@@ -4,6 +4,10 @@ import {
   BridgeError,
   fail,
 } from "../../../../forex-mt5/protocol.mjs";
+import {
+  localFiles,
+  localFileDirectory,
+} from "../../../../forex-mt5/local-files.mjs";
 import { storeFor } from "../../../../forex-mt5/store.mjs";
 
 export const runtime = "nodejs";
@@ -85,6 +89,11 @@ export async function GET(request) {
       enabled: config.enabled,
       servers: config.servers,
       local: config.local && loopback(request),
+      localFiles:
+        config.enabled &&
+        config.local &&
+        loopback(request) &&
+        Boolean(localFileDirectory()),
     };
     if (!config.enabled)
       return Response.json(
@@ -114,10 +123,17 @@ export async function GET(request) {
       );
     store.limit("view", owner, 120);
     const url = new URL(request.url);
+    const selection = {
+      symbol: url.searchParams.get("symbol"),
+      frame: url.searchParams.get("frame") || "1h",
+    };
+    store.view(owner, config, selection);
+    if (capabilities.localFiles) await localFiles.pump(owner, store, config);
     return Response.json(
       {
         capabilities,
         authorized: true,
+        local_file: capabilities.localFiles ? localFiles.state(owner) : null,
         ...store.view(owner, config, {
           symbol: url.searchParams.get("symbol"),
           frame: url.searchParams.get("frame") || "1h",
@@ -166,6 +182,25 @@ export async function POST(request) {
     }
     const owner = await ownerFor(request, store, config);
     fail(owner, "SIGN_IN_REQUIRED", 401);
+    if (body.action === "local-file") {
+      fail(
+        config.local && loopback(request) && localFileDirectory(),
+        "FORBIDDEN",
+        403,
+      );
+      const pairing = store.pair(owner, body.server, config);
+      try {
+        const result = await localFiles.start(
+          owner,
+          pairing,
+          localFileDirectory(),
+        );
+        return Response.json(result, { status: 201, headers });
+      } catch (error) {
+        store.revoke(owner);
+        throw error;
+      }
+    }
     if (body.action === "pair") {
       fail(
         new URL(process.env.APP_ORIGIN || request.url).protocol === "https:" ||
@@ -173,13 +208,16 @@ export async function POST(request) {
         "HTTPS_REQUIRED",
         403,
       );
-      return Response.json(store.pair(owner, body.server, config), {
+      const pairing = store.pair(owner, body.server, config);
+      localFiles.stop(owner);
+      return Response.json(pairing, {
         status: 201,
         headers,
       });
     }
     fail(body.action === "revoke");
     store.revoke(owner);
+    localFiles.stop(owner);
     return Response.json({ revoked: true }, { headers });
   } catch (error) {
     return errorResponse(error);

@@ -1,7 +1,9 @@
 #property strict
-#property version "2.00"
+#property version "2.10"
 #property description "Nugaom read-only symbol/quote/candle bridge. No account credentials or order operations."
 input string Endpoint = "http://localhost:3100/api/forex/mt5";
+input bool LocalFiles = false; // Same-computer file transport; no WebRequest needed
+input string LocalChannel = ""; // 32 hex characters shown by the local web UI
 input string BridgeToken = ""; // One-time pairing key, never an MT5 password
 input string ExpectedServer = "VantageMarkets-Demo";
 input int ServerUtcOffsetMinutes = 10000; // Must confirm broker clock offset; 10000 disables prices/bars
@@ -12,6 +14,7 @@ int next_part = 0, universe_total = 0;
 bool needs_sync = true;
 datetime synced_at = 0;
 string requested_symbol = "", requested_frame = "1h";
+long pending_file_sequence = 0;
 
 string J(string value) {
    string out="";
@@ -94,10 +97,39 @@ string Unhex(string value) {
    }
    return CharArrayToString(bytes,0,ArraySize(bytes),CP_UTF8);
 }
+bool SendLocal(string body) {
+   string prefix="NugaomBridge\\"+LocalChannel;
+   string temporary=prefix+".packet.tmp", target=prefix+".packet.json";
+   int handle=FileOpen(temporary,FILE_WRITE|FILE_TXT|FILE_ANSI,0,CP_UTF8);
+   if(handle==INVALID_HANDLE) { Print("Nugaom: cannot write local packet / ",GetLastError()); return false; }
+   uint written=FileWriteString(handle,body); FileFlush(handle); FileClose(handle);
+   if(written==0 || !FileMove(temporary,0,target,FILE_REWRITE)) return false;
+   pending_file_sequence=sequence_id;
+   return false; // Advance the universe only after the web server acknowledges this packet.
+}
+bool ReadLocalReply() {
+   int handle=FileOpen("NugaomBridge\\"+LocalChannel+".reply.json",FILE_READ|FILE_TXT|FILE_ANSI|FILE_SHARE_READ,0,CP_UTF8);
+   if(handle==INVALID_HANDLE) return false;
+   string response=FileReadString(handle); FileClose(handle);
+   if(ReadField(response,"sequence")!=IntegerToString(pending_file_sequence)) return false;
+   pending_file_sequence=0;
+   string status=ReadField(response,"status");
+   if(status!="200") {
+      Print("Nugaom: local file packet rejected / ",status);
+      if(status=="401" || status=="403" || status=="409") EventKillTimer();
+      return false;
+   }
+   string wanted=Unhex(ReadField(response,"requested_symbol_hex")), frame=ReadField(response,"requested_frame");
+   if(wanted!="") requested_symbol=wanted;
+   if(frame=="15m" || frame=="1h" || frame=="4h" || frame=="1d") requested_frame=frame;
+   return true;
+}
 bool Send(string fields) {
+   if(LocalFiles && pending_file_sequence>0) return ReadLocalReply();
    string body="{\"schema_version\":1,\"broker_id\":\"vantage\",\"server\":"+J(AccountInfoString(ACCOUNT_SERVER))+
       ",\"company\":"+J(AccountInfoString(ACCOUNT_COMPANY))+",\"sent_at\":"+J(UTC())+
       ",\"sequence\":"+IntegerToString(++sequence_id)+","+fields+"}";
+   if(LocalFiles) return SendLocal(body);
    char data[],result[]; string response_headers;
    int size=StringToCharArray(body,data,0,WHOLE_ARRAY,CP_UTF8); ArrayResize(data,size-1);
    ResetLastError();
@@ -146,11 +178,16 @@ string Chart() {
 }
 int OnInit() {
    string company=AccountInfoString(ACCOUNT_COMPANY); StringToLower(company);
-   if(AccountInfoString(ACCOUNT_SERVER)!=ExpectedServer || StringFind(company,"vantage")<0 || StringLen(BridgeToken)!=43) return INIT_PARAMETERS_INCORRECT;
+   if(AccountInfoString(ACCOUNT_SERVER)!=ExpectedServer || StringFind(company,"vantage")<0) return INIT_PARAMETERS_INCORRECT;
+   if(LocalFiles) {
+      if(StringLen(LocalChannel)!=32) return INIT_PARAMETERS_INCORRECT;
+      for(int i=0;i<32;i++) if(StringFind("0123456789abcdef",StringSubstr(LocalChannel,i,1))<0) return INIT_PARAMETERS_INCORRECT;
+   } else if(StringLen(BridgeToken)!=43) return INIT_PARAMETERS_INCORRECT;
    bool secure=StringFind(Endpoint,"https://")==0;
    bool local=StringFind(Endpoint,"http://localhost:")==0 || StringFind(Endpoint,"http://127.0.0.1:")==0;
-   if(!secure && !local) return INIT_PARAMETERS_INCORRECT;
+   if(!LocalFiles && !secure && !local) return INIT_PARAMETERS_INCORRECT;
    if(PollSeconds<5 || PollSeconds>60) return INIT_PARAMETERS_INCORRECT;
+   if(LocalFiles && MQLInfoInteger(MQL_TESTER)) return INIT_PARAMETERS_INCORRECT;
    sequence_id=(long)TimeGMT()*1000000+(long)(GetMicrosecondCount()%1000000);
    if(MathAbs(ServerUtcOffsetMinutes)>840) Print("Nugaom: universe only; confirm broker UTC offset to enable prices/candles.");
    EventSetTimer(PollSeconds); return INIT_SUCCEEDED;
@@ -165,7 +202,7 @@ void OnTimer() {
    if(total!=universe_total || TimeGMT()-synced_at>900) needs_sync=true;
    if(needs_sync) {
       if(next_part==0) { universe_total=total; sync_id=sequence_id+1; }
-      if(total!=universe_total) { next_part=0; return; }
+      if(total!=universe_total) { next_part=0; pending_file_sequence=0; return; }
       int parts=(total+99)/100; if(parts>200) { Print("Nugaom: universe too large"); EventKillTimer(); return; }
       string rows="";
       for(int index=next_part*100;index<MathMin(total,(next_part+1)*100);index++) {

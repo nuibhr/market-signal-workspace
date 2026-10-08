@@ -91,7 +91,11 @@ export default function useMt5Connection(symbol, frame) {
     try {
       // Only the development API can advertise this loopback-only session.
       // Production pairing still requires the existing member authentication.
-      if (action === "pair" && !data.authorized && data.capabilities.local)
+      if (
+        ["pair", "local-file"].includes(action) &&
+        !data.authorized &&
+        data.capabilities.local
+      )
         await post("local-session");
       const result = await post(action, server);
       try {
