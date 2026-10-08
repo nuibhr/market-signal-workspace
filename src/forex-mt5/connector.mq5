@@ -1,5 +1,5 @@
 #property strict
-#property version "2.12"
+#property version "2.13"
 #property description "Nugaom read-only symbol/quote/candle bridge. No account credentials or order operations."
 input string Endpoint = "http://localhost:3100/api/forex/mt5";
 input bool LocalFiles = false; // Same-computer file transport; no WebRequest needed
@@ -198,7 +198,11 @@ int OnInit() {
       Print("Nugaom setup: terminal server is ",AccountInfoString(ACCOUNT_SERVER));
       return InitError("SERVER_MISMATCH: select the approved Vantage server");
    }
-   if(StringFind(company,"vantage")<0) return InitError("COMPANY_MISMATCH: terminal must be connected to Vantage");
+   if(StringFind(company,"vantage")<0) {
+      // Public broker label only: never print login, client name, credentials or balances.
+      Print("Nugaom setup: terminal company is [",AccountInfoString(ACCOUNT_COMPANY),"]");
+      return InitError("COMPANY_MISMATCH: terminal must be connected to Vantage");
+   }
    if(LocalFiles) {
       if(StringLen(LocalChannel)!=32) {
          Print("Nugaom setup: LocalChannel length is ",StringLen(LocalChannel),"; expected 32");
