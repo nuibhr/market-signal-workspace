@@ -23,3 +23,6 @@ webull*_sdk.log*
 
 # Local Cloudflare emulation and account state.
 .wrangler/
+.open-next/
+.dev.vars
+.dev.vars.*

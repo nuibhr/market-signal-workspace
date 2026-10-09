@@ -6,6 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "cloud:build": "node scripts/cloud-build.mjs",
+    "cloud:deploy:web": "wrangler deploy --config wrangler.jsonc",
+    "cloud:deploy:scanner": "wrangler deploy --config deploy/cloudflare/wrangler.scanner.jsonc",
+    "cloud:secrets:web": "node --env-file=.env.local scripts/cloud-secrets.mjs web",
+    "cloud:secrets:scanner": "node --env-file=.env.local scripts/cloud-secrets.mjs scanner",
+    "cloud:check": "node scripts/cloud-check.mjs",
     "probe:settrade": "node scripts/probe-settrade.mjs",
     "probe:binance-spot": "node scripts/probe-binance-spot.mjs",
     "probe:forex": "node scripts/probe-forex.mjs",
@@ -31,13 +37,14 @@
     "node": ">=22.13"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.9",
     "lightweight-charts": "^5.2.1",
     "lucide-react": "^1.48.0",
-    "next": "^16.3.6",
+    "next": "^16.3.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "yahoo-finance2": "^4.0.2",
-    "wrangler": "4.147.0"
+    "wrangler": "4.147.0",
+    "yahoo-finance2": "^4.0.2"
   },
   "overrides": {
     "sharp": "0.35.5",

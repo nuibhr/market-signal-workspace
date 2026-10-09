@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nugaom-ai-pick",
+  "account_id": "84140dea513079cc7dc4166a4c71b2ee",
+  "main": "deploy/cloudflare/web-worker.mjs",
+  "compatibility_date": "2026-10-07",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "alias": {"wrangler":"./deploy/cloudflare/development-bridge-unavailable.mjs","node:sqlite":"./deploy/cloudflare/node-sqlite-unavailable.mjs","sqlite":"./deploy/cloudflare/node-sqlite-unavailable.mjs"},
+  "assets": {"directory": ".open-next/assets", "binding": "ASSETS"},
+  "services": [{"binding": "WORKER_SELF_REFERENCE", "service": "nugaom-ai-pick"}],
+  "d1_databases": [{"binding": "DB", "database_name": "nugaom-prod-db", "database_id": "8d1f669c-a3b6-4231-9f00-bc97c2a0b817", "migrations_dir": "deploy/cloudflare/migrations"}],
+  "vars": {"STORAGE_PROVIDER": "d1", "LAUNCH_MAINTENANCE": "true", "NODE_ENV": "production", "AUTO_PICK_RUNTIME": "cloudflare", "AUTO_PICK_SCHEDULE_MINUTES": "5", "APP_ORIGIN": "https://nugaom-ai-pick.nuibhr1.workers.dev", "LINE_REDIRECT_URI": "https://nugaom-ai-pick.nuibhr1.workers.dev/api/auth/line/callback"},
+  "observability": {"enabled": true, "head_sampling_rate": 1}
+}

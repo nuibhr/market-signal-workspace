@@ -1,0 +1,86 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {randomUUID} from 'node:crypto';
+
+test('native D1 preserves LINE profile, 14-day trial, monthly renewal, credits and signal outcomes',async()=>{
+  const directory=mkdtempSync(join(tmpdir(),'nugaom-membership-d1-'));
+  const configPath=join(directory,'wrangler.json');
+  writeFileSync(configPath,JSON.stringify({name:'nugaom-membership-fixture',compatibility_date:'2026-10-07',
+    d1_databases:[{binding:'DB',database_name:'fixture',database_id:'00000000-0000-0000-0000-000000000000',migrations_dir:resolve('deploy/cloudflare/migrations')}]}));
+  const result=spawnSync(process.execPath,['node_modules/wrangler/bin/wrangler.js','d1','migrations','apply','DB','--local','--config',configPath],{encoding:'utf8',env:{...process.env,WRANGLER_SEND_METRICS:'false'}});
+  assert.equal(result.status,0,'Fixture D1 schema applies');
+  process.env.SESSION_SECRET='fixture-session-'.repeat(5);
+  process.env.PORTFOLIO_HASH_SECRET='fixture-portfolio-'.repeat(5);
+  process.env.ADMIN_LINE_IDS='U'+'a'.repeat(32);
+  const {getPlatformProxy}=await import('wrangler');
+  const proxy=await getPlatformProxy({configPath,persist:{path:join(directory,'.wrangler/state/v3')}});
+  const {withD1Database,storage}=await import('../storage/database.mjs');
+  const member=await import('./store.mjs');
+  const {membershipFor}=await import('./rights.mjs');
+  try{await withD1Database(proxy.env.DB,async()=>{
+    const admin=await member.upsertLineMember({lineId:process.env.ADMIN_LINE_IDS,displayName:'Fixture admin'});
+    let customer=await member.upsertLineMember({lineId:'U'+'b'.repeat(32),displayName:'Fixture customer',pictureUrl:'https://example.com/avatar.png'});
+    assert.equal(membershipFor(customer).tier,'onboarding');
+    customer=await member.submitPortfolio(customer,'FIXTURE','12345678');
+    assert.equal(Date.parse(customer.trial_ends_at)-Date.parse(customer.trial_started_at),14*86400000);
+    const trialEnd=customer.trial_ends_at;
+    customer=await member.submitPortfolio(customer,'FIXTURE','12345678');
+    assert.equal(customer.trial_ends_at,trialEnd,'Repeated submission never resets the trial');
+    const summary=await member.accountSummary(customer);
+    assert.equal(summary.displayName,'Fixture customer');assert.equal(summary.pictureUrl,'https://example.com/avatar.png');
+    assert.equal(summary.portfolioLast4,'5678');assert.equal(summary.portfolio_hash,undefined);
+    await assert.rejects(member.issueCode(customer,customer.id,'fixture-request-0001'),{message:'FORBIDDEN'});
+    await assert.rejects(member.issueCode(admin,customer.id,'fixture-request-0001'),{message:'PORTFOLIO_NOT_VERIFIED'});
+    await member.verifyPortfolio(admin,customer.id,'12345678');
+    customer=await storage.first('SELECT * FROM members WHERE id=?',customer.id);
+    const code=await member.issueCode(admin,customer.id,'fixture-request-0001');
+    assert.equal(await member.issueCode(admin,customer.id,'fixture-request-0001'),code,'Admin retry returns the same code');
+    const endsAt=await member.redeemCode(customer,code);
+    await assert.rejects(member.redeemCode(customer,code),{message:'CODE_UNAVAILABLE'});
+    customer=await storage.first('SELECT * FROM members WHERE id=?',customer.id);
+    assert.equal(membershipFor(customer).tier,'subscriber');
+    const request=await member.requestRenewal(customer);
+    assert.equal(await member.requestRenewal(customer),request);
+    const extended=await member.approveRenewal(admin,request,'fixture payment reference');
+    assert.ok(Date.parse(extended)>Date.parse(endsAt));
+    await assert.rejects(member.approveRenewal(admin,request),{message:'REQUEST_UNAVAILABLE'});
+    const session=await member.createSession(customer.id);
+    assert.equal((await member.sessionMember(session.value)).id,customer.id);
+    assert.equal(await member.sessionMember('forged'),null);
+    await member.deleteSession(session.value);assert.equal(await member.sessionMember(session.value),null);
+    const conversation=randomUUID();
+    for(let i=0;i<5;i++){
+      const id=randomUUID(),r=await member.reserveAiQuestion(customer,id,'Fixture question',conversation);
+      assert.equal(r.chargeType,'free');await member.completeAiQuestion(customer,id,{answer:'fixture'},null,r.reservationToken);
+    }
+    await assert.rejects(member.reserveAiQuestion(customer,randomUUID(),'Fixture question',conversation),{message:'INSUFFICIENT_AI_CREDITS'});
+    await member.grantAiCredits(admin,customer.id,2,'fixture-credit-grant-0001');
+    await member.grantAiCredits(admin,customer.id,2,'fixture-credit-grant-0001');
+    const paidId=randomUUID(),paid=await member.reserveAiQuestion(customer,paidId,'Fixture question',conversation);
+    assert.equal(paid.chargeType,'credit');assert.equal((await member.aiQuota(customer)).credits,1);
+    await member.releaseAiQuestion(customer,paidId,paid.reservationToken);
+    assert.equal((await member.aiQuota(customer)).credits,2,'Interrupted answer refunds its credit');
+    await storage.run('UPDATE members SET trial_ends_at=?,subscription_ends_at=NULL WHERE id=?',new Date(Date.now()-1).toISOString(),customer.id);
+    assert.equal(membershipFor(await storage.first('SELECT * FROM members WHERE id=?',customer.id)).tier,'expired');
+    const ledger=await import('../auto-pick/store.mjs');
+    const {announcementFor}=await import('../auto-pick/announcements.mjs');
+    const plan={id:'fixture-plan',side:'LONG',entry:100,stopLoss:98,tp1:104};
+    const signal=await ledger.createSignal({market:'thai',symbol:'PTT',sessionDay:'2026-10-09',plan,source:'FIXTURE'});
+    assert.equal(signal.status,'WAITING_FOR_ENTRY');
+    const open={...signal,status:'OPEN',entryPrice:100.2,enteredAt:new Date().toISOString()};
+    await ledger.saveAdvance(open,[{type:'ENTRY',barTime:1791516600,price:100.2}]);
+    await ledger.saveAdvance(open,[{type:'ENTRY',barTime:1791516600,price:100.2}]);
+    const entered=await ledger.signalForSession('thai','PTT','2026-10-09');
+    const closed={...entered,status:'TARGET',exitPrice:104,exitedAt:new Date().toISOString()};
+    await ledger.saveAdvance(closed,[{type:'TARGET',barTime:1791517500,price:104}]);
+    const recorded=await ledger.signalForSession('thai','PTT','2026-10-09');
+    assert.equal(recorded.entryPrice,100.2);assert.equal(recorded.exitPrice,104);
+    assert.equal((await storage.first("SELECT COUNT(*) AS n FROM auto_pick_events WHERE event_type='ENTRY'")).n,1);
+    assert.equal((await ledger.signalResults({market:'thai'})).total,1);
+    assert.match(announcementFor({type:'ENTRY',market:'thai',symbol:'PTT',price:recorded.entryPrice,tp1:104,stopLoss:98}).text,/100.2/);
+  });}finally{await proxy.dispose();rmSync(directory,{recursive:true,force:true});}
+});

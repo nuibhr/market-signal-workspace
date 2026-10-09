@@ -25,17 +25,18 @@ export async function heartbeatWorker() {
 export async function workerProcessHealth(now = Date.now()) {
   const lastSeenAt = (await storage.first('SELECT last_seen_at AS lastSeenAt FROM auto_pick_worker_heartbeat WHERE id=1'))?.lastSeenAt ?? null;
   const age = lastSeenAt ? now - Date.parse(lastSeenAt) : Infinity;
-  return { status: Number.isFinite(age) && age >= 0 && age <= 300_000 ? 'running' : 'offline', lastSeenAt };
+  const intervalMinutes=process.env.AUTO_PICK_RUNTIME==='cloudflare'?5:1;
+  return { status: Number.isFinite(age) && age >= 0 && age <= (intervalMinutes===5?420_000:300_000) ? 'running' : 'offline', lastSeenAt, intervalMinutes };
 }
 
-export async function claimRun(market, slot, { retryFailed = false } = {}) {
+export async function claimRun(market, slot, { retryFailed = false, staleMs = 900_000 } = {}) {
   const id = hash(`${market}:${slot}`);
   const result = (await storage.run(`INSERT OR IGNORE INTO auto_pick_runs
     (id,market,slot,status,started_at) VALUES (?,?,?,?,?)`,id, market, slot, 'RUNNING', new Date().toISOString()));
   if (result.changes) return id;
   if (retryFailed) {
     const retry = (await storage.run(`UPDATE auto_pick_runs SET status='RUNNING',started_at=?,finished_at=NULL,error_code=NULL
-      WHERE id=? AND ((status='FAILED' AND finished_at<?) OR (status='RUNNING' AND started_at<?))`,new Date().toISOString(), id, new Date(Date.now()-60_000).toISOString(), new Date(Date.now()-900_000).toISOString()));
+      WHERE id=? AND ((status='FAILED' AND finished_at<?) OR (status='RUNNING' AND started_at<?))`,new Date().toISOString(), id, new Date(Date.now()-60_000).toISOString(), new Date(Date.now()-staleMs).toISOString()));
     if (retry.changes) return id;
   }
   return null;

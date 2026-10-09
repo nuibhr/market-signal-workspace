@@ -12,15 +12,17 @@ import { advanceUsEodPick, buildUsEodPlan } from './us-engine.mjs';
 import { activeSignals, claimRun, createSignal, finishRun, recordDecision, recordScanProgress, runForSlot, saveAdvance, scanCoverage, signalForSession } from './store.mjs';
 
 let nextSourceRequestAt = 0;
-const sourceClient = createSettradeClient({ fetcher: async (url, options) => {
+let sourceClient;
+function getSourceClient(){return sourceClient??=createSettradeClient({ fetcher: async (url, options) => {
   const scheduledAt = Math.max(Date.now(), nextSourceRequestAt);
   nextSourceRequestAt = scheduledAt + 400;
   if (scheduledAt > Date.now()) await new Promise(resolve => setTimeout(resolve, scheduledAt - Date.now()));
   const response = await fetch(url, options);
   if (response.status === 429) nextSourceRequestAt = Math.max(nextSourceRequestAt, Date.now() + 10_000);
   return response;
-} });
-const client = { ...sourceClient, async getCandles(...args) { const series = await sourceClient.getCandles(...args); (await archiveCandles(args[0], args[1] ?? '1d', series)); return series; } };
+} });}
+const client = {get configuration(){return getSourceClient().configuration;},login:(...args)=>getSourceClient().login(...args),getQuote:(...args)=>getSourceClient().getQuote(...args),
+  async getCandles(...args) { const series = await getSourceClient().getCandles(...args); (await archiveCandles(args[0], args[1] ?? '1d', series)); return series; } };
 const SCAN_DAILY_BARS = 250;
 const SCAN_INTRADAY_BARS = 120;
 const SCAN_BUDGET_MS = 20_000;
@@ -40,7 +42,7 @@ export function usScanSymbols() {
 
 export function autoPickReadiness() {
   const production = process.env.NODE_ENV === 'production';
-  const storageReady = !production || process.env.AUTO_PICK_PERSISTENT_SERVER_CONFIRMED === 'true';
+  const storageReady = !production || process.env.STORAGE_PROVIDER==='d1' || process.env.AUTO_PICK_PERSISTENT_SERVER_CONFIRMED === 'true';
   const workerSecretReady = Boolean(process.env.AUTO_PICK_RUN_SECRET && process.env.AUTO_PICK_RUN_SECRET.length >= 32);
   const thaiReady = process.env.AUTO_PICK_ENABLED === 'true' && storageReady && client.configuration.configured
     && (!production || process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED === 'true') && workerSecretReady;
@@ -104,21 +106,21 @@ async function settleMissingSessionData(market, key, symbols, reasons) {
   }
 }
 
-export async function runThaiAutoPick(now = Date.now()) {
+export async function runThaiAutoPick(now = Date.now(), task = {}) {
   requireReady('thai');
   const session = thaiSession(now);
   if (!session.monitorWindow) return { status: 'outside-session', day: session.day };
   if (!session.candidateWindow && session.minutes >= 675)
-    (await settleMissingSessionData('thai', session.day, thaiScanSymbols(), ['NO_CURRENT_SESSION_CANDLE', 'OPENING_BAR_UNAVAILABLE']));
-  const slot = `${new Date(Math.floor(now / 60_000) * 60_000).toISOString()}:${THAI_ORB_RULE_VERSION}`;
-  const runId = (await claimRun('thai', slot));
+    (await settleMissingSessionData('thai', session.day, task.symbols??thaiScanSymbols(), ['NO_CURRENT_SESSION_CANDLE', 'OPENING_BAR_UNAVAILABLE']));
+  const slot = task.id??`${new Date(Math.floor(now / 60_000) * 60_000).toISOString()}:${THAI_ORB_RULE_VERSION}`;
+  const runId = (await claimRun('thai', slot,{retryFailed:Boolean(task.id),staleMs:task.id?180000:900000}));
   if (!runId) return { status: 'already-run', slot };
   let scanned = 0;
   let candidates = 0;
   const errors = [];
   try {
     await client.login();
-    for (const pick of (await activeSignals('thai'))) {
+    for (const pick of (await activeSignals('thai')).filter(pick=>!task.symbols||task.symbols.includes(pick.symbol))) {
       try {
         const fifteen = await client.getCandles(pick.symbol, '15m');
         const advanced = pick.plan?.setupType === 'OPENING_RANGE_BREAKOUT'
@@ -128,8 +130,8 @@ export async function runThaiAutoPick(now = Date.now()) {
       } catch { errors.push(`${pick.symbol}:MONITOR_SOURCE_UNAVAILABLE`); }
     }
     if (session.candidateWindow) {
-      const deadline = Date.now() + SCAN_BUDGET_MS;
-      const pending = (await scanCoverage('thai', session.day, thaiScanSymbols())).pending;
+      const deadline = Date.now() + (task.budgetMs??SCAN_BUDGET_MS);
+      const pending = (await scanCoverage('thai', session.day, task.symbols??thaiScanSymbols())).pending;
       for (const symbol of pending) {
         if (Date.now() >= deadline) break;
         if ((await signalForSession('thai', symbol, session.day))) {
@@ -170,21 +172,21 @@ export async function runThaiAutoPick(now = Date.now()) {
   }
 }
 
-export async function runDrAutoPick(now = Date.now()) {
+export async function runDrAutoPick(now = Date.now(), task = {}) {
   requireReady('dr');
   const session = drSession(now);
   if (!session.monitorWindow) return { status: 'outside-session', session: session.key };
   if (!session.candidateWindow || now / 1000 >= session.openingEnd + 3600)
-    (await settleMissingSessionData('dr', session.key, drScanSymbols(), ['DR_SESSION_NOT_CONFIRMED', 'NO_FRESH_DR_CANDLE', 'OPENING_BAR_UNAVAILABLE']));
-  const slot = `${new Date(Math.floor(now / 60_000) * 60_000).toISOString()}:${DR_ORB_RULE_VERSION}`;
-  const runId = (await claimRun('dr', slot));
+    (await settleMissingSessionData('dr', session.key, task.symbols??drScanSymbols(), ['DR_SESSION_NOT_CONFIRMED', 'NO_FRESH_DR_CANDLE', 'OPENING_BAR_UNAVAILABLE']));
+  const slot = task.id??`${new Date(Math.floor(now / 60_000) * 60_000).toISOString()}:${DR_ORB_RULE_VERSION}`;
+  const runId = (await claimRun('dr', slot,{retryFailed:Boolean(task.id),staleMs:task.id?180000:900000}));
   if (!runId) return { status: 'already-run', slot };
   let scanned = 0;
   let candidates = 0;
   const errors = [];
   try {
     await client.login();
-    for (const pick of (await activeSignals('dr'))) {
+    for (const pick of (await activeSignals('dr')).filter(pick=>!task.symbols||task.symbols.includes(pick.symbol))) {
       try {
         const [fifteen, quote] = await Promise.all([client.getCandles(pick.symbol, '15m'), client.getQuote(pick.symbol)]);
         const advanced = advanceDrOrbPick(pick, fifteen.bars, quote, now);
@@ -192,8 +194,8 @@ export async function runDrAutoPick(now = Date.now()) {
       } catch { errors.push(`${pick.symbol}:MONITOR_SOURCE_UNAVAILABLE`); }
     }
     if (session.candidateWindow) {
-      const deadline = Date.now() + SCAN_BUDGET_MS;
-      const pending = (await scanCoverage('dr', session.key, drScanSymbols())).pending;
+      const deadline = Date.now() + (task.budgetMs??SCAN_BUDGET_MS);
+      const pending = (await scanCoverage('dr', session.key, task.symbols??drScanSymbols())).pending;
       for (const symbol of pending) {
         if (Date.now() >= deadline) break;
         if ((await signalForSession('dr', symbol, session.key))) {
@@ -246,12 +248,12 @@ export async function runDrAutoPick(now = Date.now()) {
   }
 }
 
-export async function runUsAutoPick(now = Date.now()) {
+export async function runUsAutoPick(now = Date.now(), task = {}) {
   requireReady('us');
   const session = usEodSession(now);
   if (!session.scanWindow) return { status: 'outside-session', day: session.day };
   const scanSlot = usScanSlot(session.day);
-  if ((await runForSlot('us', scanSlot))?.status === 'COMPLETE') return { status: 'already-run', day: session.day };
+  if (!task.id&&(await runForSlot('us', scanSlot))?.status === 'COMPLETE') return { status: 'already-run', day: session.day };
 
   let firstBars;
   try { firstBars = await getUsDailyBars('AAPL', { now }); }
@@ -269,15 +271,15 @@ export async function runUsAutoPick(now = Date.now()) {
     return { status: 'waiting-eod', day: session.day, latestDay: firstBars.latestDay };
   }
 
-  const runId = (await claimRun('us', scanSlot, { retryFailed: true }));
+  const runId = (await claimRun('us', task.id??scanSlot, { retryFailed: true }));
   if (!runId) return { status: 'already-run', day: session.day };
   let scanned = 0;
   let candidates = 0;
   const errors = [];
-  const symbols = usScanSymbols();
+  const symbols = task.symbols??usScanSymbols();
   const barsBySymbol = new Map([['AAPL', firstBars]]);
   try {
-    const active = (await activeSignals('us'));
+    const active = (await activeSignals('us')).filter(pick=>!task.symbols||task.symbols.includes(pick.symbol));
     const activeSymbols = new Set(active.map(pick => pick.symbol));
     // Monitor existing plans before spending the bounded budget on new candidates.
     for (const pick of active) {
@@ -290,7 +292,7 @@ export async function runUsAutoPick(now = Date.now()) {
           (await saveAdvance(advanced.pick, advanced.events));
       } catch (error) { errors.push(`${pick.symbol}:MONITOR_${error?.code ?? 'SOURCE_UNAVAILABLE'}`); }
     }
-    const deadline = Date.now() + SCAN_BUDGET_MS;
+    const deadline = Date.now() + (task.budgetMs??SCAN_BUDGET_MS);
     let published = 0;
     for (const symbol of (await scanCoverage('us', scanSlot, symbols)).pending) {
       if (Date.now() >= deadline) break;

@@ -7,8 +7,16 @@ const headers = [
 ];
 export default {
   poweredByHeader: false,
-  serverExternalPackages: ['wrangler'],
+  images: { unoptimized: true },
+  serverExternalPackages: process.env.NUGAOM_CLOUD_BUILD==='true' ? [] : ['wrangler'],
   distDir: process.env.NUGAOM_REVIEW_MODE === 'true' ? '.next-review' : '.next',
+  webpack(config) {
+    if(process.env.NUGAOM_CLOUD_BUILD==='true'){
+      config.resolve.alias['node:sqlite']=new URL('./deploy/cloudflare/node-sqlite-unavailable.mjs',import.meta.url).pathname;
+      config.resolve.alias.wrangler=new URL('./deploy/cloudflare/development-bridge-unavailable.mjs',import.meta.url).pathname;
+    }
+    return config;
+  },
   // Local databases, SDK runtimes and diagnostics are runtime state, not release files.
   outputFileTracingExcludes: { '/*': ['./data/**/*'] },
   outputFileTracingIncludes: { '/api/admin/webull': [

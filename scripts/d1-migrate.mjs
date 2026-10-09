@@ -9,7 +9,7 @@ import { backupDatabase } from '../src/security/backup.mjs';
 const tables=['members','ai_credit_accounts','ai_credit_events','ai_conversations','ai_questions','sessions','line_oauth_flows',
   'monthly_codes','renewal_requests','membership_events','admin_credit_grants','customer_preferences','customer_favorites','customer_holdings','customer_daily_reports',
   'auto_pick_runs','auto_pick_signals','auto_pick_events','auto_pick_decisions','auto_pick_scan_progress','auto_pick_worker_heartbeat',
-  'scanner_candles','historical_replay_summaries','request_limits'];
+  'scanner_candles','historical_replay_summaries','request_limits','scanner_jobs','provider_cache','cloud_scanner_state'];
 const directory=resolve(process.env.D1_MIGRATION_DIR||'data/d1-migration');
 const quoteName=value=>'"'+value.replaceAll('"','""')+'"';
 function literal(value) {
@@ -70,6 +70,11 @@ function prepare() {
 }
 async function importAndVerify(configPath,local) {
   if(!configPath)throw new Error('D1_CONFIG_REQUIRED');
+  const report=JSON.parse(readFileSync(join(directory,'manifest.json'),'utf8'));
+  // The free allowance also counts index writes. Do not start a large import
+  // that can strand a half-migrated customer database on a free account.
+  const rowCount=Object.values(report.tables).reduce((sum,table)=>sum+table.count,0);
+  if(!local&&rowCount>25000&&process.env.D1_PAID_PLAN_CONFIRMED!=='true')throw new Error('PAID_PLAN_REQUIRED_FOR_LARGE_IMPORT: confirm billing before transferring the snapshot');
   const {getPlatformProxy}=await import('wrangler');
   const target=await getPlatformProxy({configPath,remoteBindings:!local,persist:{path:resolve(dirname(configPath),'.wrangler/state/v3')}});
   try {
@@ -78,7 +83,6 @@ async function importAndVerify(configPath,local) {
       if(row.n)throw new Error('DESTINATION_NOT_EMPTY:'+name);
     }
   }finally{await target.dispose();}
-  const report=JSON.parse(readFileSync(join(directory,'manifest.json'),'utf8'));
   const flags=['--config',configPath,local?'--local':'--remote'];
   wrangler(['d1','execute','DB',...flags,'--file',join(directory,'import.sql'),'--yes']);
   await verify(configPath,local,report);

@@ -5,9 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { BellRing, ChartNoAxesCombined, Clock3, Radar, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { ALL_ASSETS } from '../markets/catalog.mjs';
-import { ANNOUNCEMENT_TYPES, SPOKEN_TYPES, announcementFor } from '../auto-pick/announcements.mjs';
-
-const SEEN_KEY = 'nugaom-autopick-last-event';
+import { SPOKEN_TYPES, announcementFor } from '../auto-pick/announcements.mjs';
+import { claimAnnouncements } from '../auto-pick/notification-cursor.mjs';
 const VOICE_KEY = 'nugaom-autopick-voice-enabled';
 const WORKER_LABELS = { healthy: 'สแกนตามเวลา', running: 'กำลังสแกน', degraded: 'ข้อมูลบางส่วนมีปัญหา',
   'scanning-incomplete': 'กำลังตรวจให้ครบ',
@@ -47,6 +46,7 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const spokenId = useRef(null);
+  const eventCursor = useRef({seen:null});
   const alert = alerts[0] ?? null;
 
   useEffect(() => {
@@ -64,26 +64,18 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
         if (!response.ok) { setError(true); return; }
         setState(data); setError(false);
         if (data.status !== 'available' || !data.events?.length) return;
-        const newest = data.events[0].id;
-        let seen = null;
-        try { seen = window.localStorage.getItem(SEEN_KEY); } catch { /* Storage is optional. */ }
-        if (seen && seen !== newest) {
-          const index = data.events.findIndex(item => item.id === seen);
-          const unseen = (index < 0 ? data.events.slice(0, 1) : data.events.slice(0, index))
-            .filter(item => ANNOUNCEMENT_TYPES.has(item.type) && Date.now() - Date.parse(item.createdAt) < 30 * 60_000
-              && (item.market === 'us' || !item.barTime || Date.now() - (item.barTime + 900) * 1000 < 30 * 60_000)).reverse();
-          if (unseen.length) {
-            const priority = unseen.filter(item => item.type !== 'PICK_READY');
-            const latestWatch = unseen.filter(item => item.type === 'PICK_READY').at(-1);
-            setAlerts(current => [...priority, ...current, ...(latestWatch ? [latestWatch] : [])].slice(0, 12));
-          }
-        }
-        try { window.localStorage.setItem(SEEN_KEY, newest); } catch { /* Storage is optional. */ }
+        let browserStorage;
+        try{browserStorage=window.localStorage;}catch{/* Use the per-tab cursor in private browsing. */}
+        const fresh=await claimAnnouncements(data.events,{storage:browserStorage,locks:navigator.locks,
+          memory:eventCursor.current,visible:()=>!stopped&&document.visibilityState==='visible'});
+        if(!stopped&&fresh.length)setAlerts(current=>[...current,...fresh].slice(0,12));
       } catch { if (!stopped) setError(true); }
     }
     refresh();
     const interval = window.setInterval(refresh, 30_000);
-    return () => { stopped = true; window.clearInterval(interval); };
+    const onVisible=()=>{if(document.visibilityState==='visible')refresh();};
+    document.addEventListener('visibilitychange',onVisible);
+    return () => { stopped = true; window.clearInterval(interval); document.removeEventListener('visibilitychange',onVisible); };
   }, []);
 
   useEffect(() => {
@@ -121,6 +113,7 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   const worker = state?.worker;
   const workers = state?.workers ?? { thai: worker };
   const workerProcess = state?.workerProcess;
+  const scheduleMinutes = workerProcess?.intervalMinutes ?? 1;
   const processRunning = workerProcess?.status === 'running';
   const activeMarkets = readiness.filter(market => market.status === 'active'
     && !(market.id === 'us' && workers.us?.scanUnverified));
@@ -137,7 +130,7 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   const workerLabel = WORKER_LABELS[worker?.status] ?? 'กำลังตรวจสถานะ worker';
   const badgeLabel = activeMarkets.length ? workerProcess?.status === 'offline' ? 'ตัวสแกนหยุดทำงาน' : activeMarkets.map(statusLabel).join(' · ') : 'รอเปิดสแกน';
   return <section id="section-auto-pick" className="auto-pick-board" aria-labelledby="auto-pick-title">
-    <div className="auto-pick-head"><span className="hub-heading-icon"><Radar size={22} /></span><div><span className="eyebrow">NUGAOM / AUTOPICK</span><h2 id="auto-pick-title">จังหวะที่ระบบพบ</h2><p>คัดแผนด้วยกติกา แจ้งเมื่อมีหุ้นเข้ารายการจับตา ยืนยันจุดเข้า แตะ TP1 หรือ SL จากแท่งราคาจริง</p></div><span className="auto-pick-badge"><BellRing size={15} /> {badgeLabel}</span></div>
+    <div className="auto-pick-head"><span className="hub-heading-icon"><Radar size={22} /></span><div><span className="eyebrow">NUGAOM / AUTOPICK</span><h2 id="auto-pick-title">จังหวะที่ระบบพบ</h2><p>ตรวจตามรอบทุก {scheduleMinutes} นาที · แจ้งจุดเข้า เป้าหมาย และตัดขาดทุนเมื่อแท่งราคายืนยัน · หุ้นสหรัฐฯ ใช้แท่งรายวันปิด</p></div><span className="auto-pick-badge"><BellRing size={15} /> {badgeLabel}</span></div>
     {activeMarkets.length > 0 && <div className={`auto-pick-worker ${processRunning && activeMarkets.every(market => ['healthy', 'running', 'outside-session', 'awaiting-first-run'].includes(workers[market.id]?.status)) ? 'healthy' : ''}`}><strong>{processRunning ? 'ตัวสแกนทำงานอยู่' : workerProcess?.status === 'offline' ? 'ไม่พบตัวสแกนทำงาน' : 'ยังอ่านสถานะตัวสแกนไม่ได้'} · {workerSummary || workerLabel}</strong><span>{activeMarkets.map(market => workers[market.id]?.lastRunAt ? `${market.label} รอบล่าสุด ${at(workers[market.id].lastRunAt)}` : `${market.label} ยังไม่มีรอบที่บันทึกไว้`).join(' · ')} · {workerProcess?.lastSeenAt ? `อัปเดตระบบล่าสุด ${at(workerProcess.lastSeenAt)}` : 'รออัปเดตสถานะ'}</span></div>}
     <div className="auto-pick-voice"><div><strong>น้องนักออมเล่าเหตุการณ์</strong><span>ป๊อปอัปทำงานขณะเปิดเว็บ · ใช้เสียงจากอุปกรณ์ และเลือกเสียงภาษาไทยเมื่อมี</span></div><div className="auto-pick-voice-actions"><button type="button" className="auto-pick-preview" onClick={previewAnnouncement}>ลองฟังสัญญาณเข้า DR</button><button type="button" aria-pressed={voiceEnabled} onClick={toggleVoice} disabled={!speechSupported}>{voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}{!speechSupported ? 'อุปกรณ์ไม่รองรับเสียง' : voiceEnabled ? 'เปิดเสียงแล้ว' : 'เปิดเสียงแจ้งเตือน'}</button></div></div>
     {marketId==='dr'&&['available','membership-required'].includes(state?.status)&&<DrTracker signals={signals} events={events} onSelect={onSelect}/>}

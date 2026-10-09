@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { cloudCacheGet, cloudCachePut, cloudStorage } from './cloud-cache.mjs';
 const BASE = 'https://financialmodelingprep.com/stable/historical-price-eod/full';
 const cache = new Map();
 const pending = new Map();
@@ -72,10 +73,11 @@ async function loadFmpDailyBars(symbol, { now = Date.now(), apiKey = process.env
   const cacheKey = `${createHash('sha256').update(apiKey).digest('hex')}:${symbol}:${marketDay}:${allowCurrentDay ? 'closed' : 'intraday'}`;
   const hit = cache.get(cacheKey);
   if (fetcher === fetch && hit?.expiresAt > Date.now()) return hit.data;
+  if(fetcher===fetch){const cloudHit=await cloudCacheGet(cacheKey);if(validStored(cloudHit,symbol,marketDay,allowCurrentDay))return cloudHit;}
   const storedPath = resolve(process.cwd(), 'data', 'us-eod', createHash('sha256').update(cacheKey).digest('hex') + '.json');
   if (fetcher === fetch) {
     try {
-      if ((await stat(storedPath)).size < 100_000) {
+      if (!cloudStorage() && (await stat(storedPath)).size < 100_000) {
         const stored = JSON.parse(await readFile(storedPath, 'utf8'));
         if (stored.cacheKey === cacheKey && stored.expiresAt > Date.now() && validStored(stored.data, symbol, marketDay, allowCurrentDay)) {
           cache.set(cacheKey, {data:stored.data, expiresAt:Date.now()+TTL_MS}); return stored.data;
@@ -122,11 +124,13 @@ async function loadFmpDailyBars(symbol, { now = Date.now(), apiKey = process.env
     receivedAt: new Date().toISOString(), latestDay: bars.at(-1).time, bars };
   if (fetcher === fetch) {
     cache.set(cacheKey, { data, expiresAt: Date.now() + TTL_MS });
+    await cloudCachePut(cacheKey,data,allowCurrentDay?6*3600000:300000);
     try {
-      await mkdir(resolve(process.cwd(),'data','us-eod'), {recursive:true,mode:0o700});
+      if(!cloudStorage()){await mkdir(resolve(process.cwd(),'data','us-eod'), {recursive:true,mode:0o700});
       const temporary = `${storedPath}.${process.pid}.tmp`;
       await writeFile(temporary, JSON.stringify({cacheKey,data,expiresAt:Date.now()+(allowCurrentDay?6*3600000:300000)}), {mode:0o600});
       await rename(temporary,storedPath);
+      }
     } catch { /* Provider data remains available when cache storage is read-only. */ }
   }
   if (cache.size > 750) cache.delete(cache.keys().next().value);

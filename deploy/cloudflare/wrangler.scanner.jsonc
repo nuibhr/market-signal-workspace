@@ -1,0 +1,18 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "nugaom-autoscan",
+  "account_id": "84140dea513079cc7dc4166a4c71b2ee",
+  "main": "scanner-worker.mjs",
+  "compatibility_date": "2026-10-07",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": false,
+  "triggers": {"crons": ["*/5 * * * *"]},
+  "d1_databases": [{"binding":"DB","database_name":"nugaom-prod-db","database_id":"8d1f669c-a3b6-4231-9f00-bc97c2a0b817","migrations_dir":"migrations"}],
+  "queues": {
+    "producers": [{"binding":"SCAN_QUEUE","queue":"nugaom-scan-jobs"}],
+    "consumers": [{"queue":"nugaom-scan-jobs","max_batch_size":1,"max_batch_timeout":1,"max_retries":5,"retry_delay":60,"max_concurrency":1,"dead_letter_queue":"nugaom-scan-failed"}]
+  },
+  "alias": {"node:sqlite":"./node-sqlite-unavailable.mjs","wrangler":"./development-bridge-unavailable.mjs","@opennextjs/cloudflare":"./development-bridge-unavailable.mjs"},
+  "vars": {"STORAGE_PROVIDER":"d1","NODE_ENV":"production","SCANNER_ENABLED":"false","AUTO_PICK_RUNTIME":"cloudflare","AUTO_PICK_SCHEDULE_MINUTES":"5"},
+  "observability":{"enabled":true,"head_sampling_rate":1}
+}
