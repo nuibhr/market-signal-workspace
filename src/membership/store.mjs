@@ -231,7 +231,7 @@ export async function accountSummary(member) {
   const renewal=await storage.first("SELECT id FROM renewal_requests WHERE member_id=? AND status='pending'",member.id);
   return {id:member.id,displayName:member.display_name,pictureUrl:member.picture_url,broker:member.broker,
     portfolioLast4:member.portfolio_last4,portfolioStatus:member.portfolio_status,trialStartedAt:member.trial_started_at,
-    trialEndsAt:member.trial_ends_at,subscriptionEndsAt:member.subscription_ends_at,renewalPending:Boolean(renewal),admin:isAdmin(member)};
+    trialEndsAt:member.trial_ends_at,subscriptionEndsAt:member.subscription_ends_at,renewalPending:Boolean(renewal),admin:isAdmin(member),coach:Boolean(await storage.first('SELECT id FROM coach_portfolios WHERE owner_id=? LIMIT 1',member.id))};
 }
 export async function aiQuota(member) {
   const day=bangkokDay();

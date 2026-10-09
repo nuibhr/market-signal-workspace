@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, BadgeCheck, CalendarClock, Check, CircleAlert, Clock3, Fingerprint, LayoutDashboard, LockKeyhole, LogOut, ShieldCheck, Sparkles, UserRound, Wallet } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BadgeCheck, CalendarClock, Check, CircleAlert, Clock3, Fingerprint, LayoutDashboard, LockKeyhole, LogOut, ShieldCheck, Sparkles, UserRound, Users, Wallet } from 'lucide-react';
 import MemberAvatar from './member-avatar.jsx';
 import { AiCreditsPanel } from './ai-credits-panel.jsx';
 
@@ -72,7 +72,7 @@ export default function AccountPage() {
   return <div className="account-page">
     <header className="account-topbar"><a href="/" className="account-brand"><span><Image src="/nugaom-mascot.png" width={38} height={38} alt="" /></span><span><strong>Nugaom AI Pick</strong><small>MEMBER CENTER</small></span></a><a className="account-back" href="/"><ArrowLeft size={16} /> กลับแดชบอร์ด</a></header>
     <div className="account-hero"><div className="account-hero-inner"><span className="account-kicker">YOUR ACCOUNT / สิทธิสมาชิก</span><h1>สวัสดี, <em>{account?.displayName || 'นักลงทุน'}</em></h1><p>จัดการบัญชีหุ้น สิทธิทดลอง และการต่ออายุในที่เดียว</p></div></div>
-    <div className="account-layout"><aside className="account-nav"><span className="account-nav-label">บัญชีของคุณ</span>{nav.map(([id, label, Icon]) => <button key={id} className={section === id ? 'selected' : ''} onClick={() => { setSection(id); setError(''); setMessage(''); }}><Icon size={17} />{label}{id === 'renewal' && rights?.tier === 'expired' && <i>!</i>}</button>)}{account?.admin && <a className="account-admin-link" href="/admin"><ShieldCheck size={17} />หลังบ้านผู้ดูแล</a>}{account && <button onClick={logout} disabled={busy}><LogOut size={17} />ออกจากระบบ</button>}<div className="account-nav-help"><LockKeyhole size={16} /><span>การสแกนแบบสมาชิกตรวจสิทธิบนเซิร์ฟเวอร์ทุกครั้ง</span></div></aside>
+    <div className="account-layout"><aside className="account-nav"><span className="account-nav-label">บัญชีของคุณ</span>{nav.map(([id, label, Icon]) => <button key={id} className={section === id ? 'selected' : ''} onClick={() => { setSection(id); setError(''); setMessage(''); }}><Icon size={17} />{label}{id === 'renewal' && rights?.tier === 'expired' && <i>!</i>}</button>)}<a className="account-admin-link" href="/coaches"><Users size={17} />ติดตามพอร์ตโค้ช</a>{account?.coach && <a className="account-admin-link" href="/coach"><Users size={17} />พอร์ตจำลองของฉัน</a>}{account?.admin && <a className="account-admin-link" href="/admin"><ShieldCheck size={17} />หลังบ้านผู้ดูแล</a>}{account && <button onClick={logout} disabled={busy}><LogOut size={17} />ออกจากระบบ</button>}<div className="account-nav-help"><LockKeyhole size={16} /><span>การสแกนแบบสมาชิกตรวจสิทธิบนเซิร์ฟเวอร์ทุกครั้ง</span></div></aside>
     <main className="account-main" aria-live="polite">
       {loading ? <div className="account-card account-skeleton"><span /><span /><span /></div> : <>
         {error && <div className="account-alert error" role="alert"><CircleAlert size={17} />{error}</div>}

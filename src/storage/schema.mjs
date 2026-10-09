@@ -7,3 +7,55 @@ export const ADMIN_OPERATIONS_SCHEMA="-- Admin operations are additive. Imported
 
 export const CLOUD_SCANNER_SCHEMA="CREATE TABLE scanner_jobs (\n  id TEXT PRIMARY KEY,market TEXT NOT NULL,session_key TEXT NOT NULL,slot TEXT NOT NULL,\n  payload_json TEXT NOT NULL,state TEXT NOT NULL DEFAULT 'pending',attempts INTEGER NOT NULL DEFAULT 0,\n  available_at INTEGER NOT NULL,lease_until INTEGER,lease_token TEXT,last_enqueued_at INTEGER,\n  error_code TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL\n);\nCREATE INDEX scanner_jobs_dispatch ON scanner_jobs(state,available_at,lease_until);\nCREATE INDEX scanner_jobs_market ON scanner_jobs(market,updated_at DESC);\nCREATE TABLE provider_cache (id TEXT PRIMARY KEY,payload_json TEXT NOT NULL,expires_at INTEGER NOT NULL);\nCREATE INDEX provider_cache_expiry ON provider_cache(expires_at);\nCREATE TABLE cloud_scanner_state (id INTEGER PRIMARY KEY CHECK(id=1),last_scheduled_at TEXT,last_consumed_at TEXT,cron TEXT,dispatch_count INTEGER NOT NULL DEFAULT 0);\n";
 export const CLOUD_SCANNER_PRIORITY_SCHEMA="ALTER TABLE scanner_jobs ADD COLUMN priority INTEGER NOT NULL DEFAULT 1;\nCREATE INDEX scanner_jobs_priority ON scanner_jobs(priority,created_at,id);\n";
+
+export const COACH_PORTFOLIO_SCHEMA = `
+CREATE TABLE coach_portfolios (
+  id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL REFERENCES members(id),
+  name TEXT NOT NULL,
+  currency TEXT NOT NULL CHECK(currency IN ('THB','USD')),
+  initial_minor INTEGER NOT NULL CHECK(initial_minor > 0),
+  cash_minor INTEGER NOT NULL CHECK(cash_minor >= 0),
+  published INTEGER NOT NULL DEFAULT 0 CHECK(published IN (0,1)),
+  active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)),
+  version INTEGER NOT NULL DEFAULT 0,
+  last_operation TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(owner_id,currency)
+);
+CREATE TABLE coach_trades (
+  id TEXT PRIMARY KEY,
+  portfolio_id TEXT NOT NULL REFERENCES coach_portfolios(id),
+  symbol TEXT NOT NULL,
+  market TEXT NOT NULL CHECK(market IN ('thai','dr','us')),
+  quantity INTEGER NOT NULL CHECK(quantity > 0),
+  entry_micro INTEGER NOT NULL CHECK(entry_micro > 0),
+  entry_fee_minor INTEGER NOT NULL CHECK(entry_fee_minor >= 0),
+  cost_minor INTEGER NOT NULL CHECK(cost_minor > 0),
+  entry_note TEXT NOT NULL,
+  opened_at TEXT NOT NULL,
+  entry_actor TEXT NOT NULL REFERENCES members(id),
+  exit_micro INTEGER,
+  exit_fee_minor INTEGER,
+  proceeds_minor INTEGER,
+  pnl_minor INTEGER,
+  exit_note TEXT,
+  closed_at TEXT,
+  exit_actor TEXT REFERENCES members(id),
+  CHECK((closed_at IS NULL AND exit_micro IS NULL AND pnl_minor IS NULL) OR
+        (closed_at IS NOT NULL AND exit_micro > 0 AND exit_fee_minor >= 0 AND proceeds_minor >= 0 AND pnl_minor IS NOT NULL))
+);
+CREATE INDEX coach_trades_history ON coach_trades(portfolio_id,opened_at DESC,id);
+CREATE INDEX coach_trades_closed ON coach_trades(portfolio_id,closed_at,id);
+CREATE INDEX coach_portfolios_public ON coach_portfolios(published,active,created_at DESC);
+CREATE TABLE coach_operations (
+  id TEXT PRIMARY KEY,
+  portfolio_id TEXT NOT NULL REFERENCES coach_portfolios(id),
+  actor_id TEXT NOT NULL REFERENCES members(id),
+  payload_hash TEXT NOT NULL,
+  action TEXT NOT NULL,
+  trade_id TEXT,
+  created_at TEXT NOT NULL
+);
+`;

@@ -1,0 +1,6 @@
+import Link from 'next/link';
+import Image from 'next/image';
+import { ArrowLeft } from 'lucide-react';
+export default function CoachPageShell({children,management=false}){
+  return <div className="account-page coach-page"><header className="account-topbar"><Link className="account-brand" href="/"><span><Image src="/nugaom-mascot.png" width={38} height={38} alt=""/></span><span><strong>Nugaom AI Pick</strong><small>ห้องพอร์ตโค้ช</small></span></Link><Link className="account-back" href="/account"><ArrowLeft size={16}/>บัญชีของฉัน</Link></header><div className="account-hero"><div className="account-hero-inner"><span className="account-kicker">COACH PORTFOLIOS · PAPER TRADE</span><h1>{management?'บันทึกแผนของโค้ช':'ติดตามโค้ช'} <em>ดูทุกไม้พร้อมผลงาน</em></h1><p>พอร์ตจำลองที่เปิดเผยราคาเข้า–ออกและประวัติผลลัพธ์</p></div></div><main className="coach-page-main"><nav className="coach-toolbar"><Link className="account-secondary" href="/coaches">พอร์ตโค้ชทั้งหมด</Link><Link className="account-secondary" href="/coach">จัดการพอร์ตของฉัน</Link><Link className="account-secondary" href="/thai">กลับหน้าตลาด</Link></nav>{children}</main><footer className="account-footer"><span>© 2026 Nugaom AI Pick</span><span>พอร์ตจำลองของโค้ช · ไม่ส่งคำสั่งซื้อขาย</span></footer></div>;
+}
