@@ -38,4 +38,8 @@ POST ตรวจ LINE session, เจ้าของ/แอดมิน, Origin
 
 ## สถานะ release
 
-Production build ผ่านแล้ว ฟีเจอร์ยังต้องลองกับบัญชี LINE ของโค้ชจริงก่อนเปิดรับลูกค้า ไม่มีผลชนะจำลองใส่มาให้ ไม่มีการเปลี่ยน maintenance mode หรือเปิด scanner อัตโนมัติจากงานนี้
+Production build ผ่านแล้ว Apply migration 0007 ทั้ง SQLite ในเครื่องและ D1 บน Cloudflare แล้ว Deploy เว็บ version bd27ab8c-7260-4637-9c84-14bab93574a4 วันที่ 9 ตุลาคม 2026
+
+อ่านหน้า `/coaches` และ public API ผ่าน review header ได้ HTTP 200, พอร์ตที่เผยแพร่ 0 รายการ, API own โดยไม่มี session ได้ 403 เว็บภายนอกยัง maintenance HTTP 503 ไม่เปิด scanner จากงานนี้ `.env.local` ไม่มีการแก้ไข
+
+ยังต้องลองการสร้างพอร์ต เข้าไม้ ปิดไม้ และยอดเงินด้วยบัญชี LINE ของโค้ชจริงก่อนเปิดรับลูกค้า ไม่มีผลชนะจำลองใส่มาให้
