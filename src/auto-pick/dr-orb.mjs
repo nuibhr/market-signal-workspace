@@ -102,6 +102,9 @@ export function advanceDrOrbPick(pick, fifteenMinuteBars, quote, now = Date.now(
   const sessionLabel = plan.features.session === 'night' ? 'ภาคค่ำ' : 'ภาคเช้า';
   if (next.status === 'WAITING_FOR_ENTRY') {
     for (const bar of bars.filter(item => item.time >= plan.features.openingEnd && item.time > (next.lastChecked15m ?? 0))) {
+      const previousChecked = next.lastChecked15m ?? Math.max(plan.features.openingEnd - 900,
+        Math.floor(Date.parse(pick.publishedAt) / 900_000) * 900 - 900);
+      if (bar.time - previousChecked > 900) next.plan = { ...next.plan, monitoringIncomplete: true };
       next.lastChecked15m = bar.time;
       if (bar.time >= plan.features.entryEnd) break;
       const closeAt = (bar.time + 900) * 1000;

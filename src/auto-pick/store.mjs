@@ -142,7 +142,7 @@ export async function signalFeed() {
     events: (await storage.all(`SELECT e.id,e.pick_id AS pickId,e.event_type AS type,e.bar_time AS barTime,e.bar_day AS barDay,
       e.price,e.detail,e.created_at AS createdAt,s.market,s.symbol,s.plan_json AS planJson
       FROM auto_pick_events e JOIN auto_pick_signals s ON s.id=e.pick_id
-      ORDER BY e.created_at DESC LIMIT 50`)).map(({ planJson, ...row }) => {
+      ORDER BY e.created_at DESC,e.rowid DESC LIMIT 50`)).map(({ planJson, ...row }) => {
         const plan = JSON.parse(planJson);
         return { ...row, entryCeiling: plan?.features?.maxChase ?? null, stopLoss: plan?.stopLoss ?? null,
           tp1: plan?.tp1 ?? null, session: plan?.features?.session ?? null };
@@ -299,7 +299,6 @@ async function usScannerHealth(now) {
 
 // Hide terminal watch plans from today's feed, retaining an immutable audit trail.
 export async function reconcileWatchPlans(enabledMarkets, now = Date.now()) {
-  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(now));
   for (const row of (await storage.all("SELECT * FROM auto_pick_signals WHERE status IN ('WAITING_FOR_ENTRY','EXPIRED') AND entry_price IS NULL AND market IN ('thai','dr')"))) {
     const pick = parse(row);
     const disabled = !enabledMarkets.includes(pick.market);
@@ -313,6 +312,18 @@ export async function reconcileWatchPlans(enabledMarkets, now = Date.now()) {
     (await saveAdvance({ ...pick, status: verified ? 'EXPIRED' : 'REVIEW' }, [{ type: verified ? 'EXPIRED' : 'DATA_GAP',
       detail: disabled ? 'ตลาดนี้ปิดการติดตาม ยุติรายการเฝ้าเดิม ไม่สรุปว่าพลาดเงื่อนไข' : verified
         ? 'ตรวจแท่งครบถึงเส้นตายแล้ว ไม่เข้าเงื่อนไข' : 'หมดหน้าต่างเข้า แต่ติดตามแท่งไม่ครบ ไม่สามารถยืนยันว่าไม่เข้าเงื่อนไข', price: null }]));
+  }
+  // If a process missed the final bars, an old intraday entry must not stay "OPEN"
+  // forever. Preserve its entry, leave exit unknown, and exclude it from win/loss.
+  for (const row of await storage.all("SELECT * FROM auto_pick_signals WHERE status='OPEN' AND market IN ('thai','dr')")) {
+    const pick = parse(row);
+    const disabled = !enabledMarkets.includes(pick.market);
+    const deadline = pick.market === 'thai' ? Date.parse(`${pick.sessionDay}T12:45:00+07:00`)
+      : (pick.plan?.features?.sessionEnd ?? Infinity) * 1000 + 30 * 60_000;
+    if (!disabled && now < deadline) continue;
+    await saveAdvance({ ...pick, status: 'REVIEW' }, [{ type: disabled ? 'DATA_GAP' : 'SESSION_END', price: null,
+      detail: disabled ? 'หยุดติดตามตลาดนี้หลังเข้าแล้ว ยังไม่ทราบราคาออก ต้องตรวจผล'
+        : 'จบภาคตลาดและพ้นเวลารอข้อมูลแล้ว ยังไม่ทราบราคาออก ต้องตรวจผล ไม่สรุปกำไรหรือขาดทุน' }]);
   }
   (await storage.run("UPDATE auto_pick_runs SET status='FAILED',error_code='WORKER_INTERRUPTED',finished_at=? WHERE status='RUNNING' AND started_at<?",new Date(now).toISOString(), new Date(now - 10 * 60000).toISOString()));
 }

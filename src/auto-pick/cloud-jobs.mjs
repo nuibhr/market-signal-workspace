@@ -25,7 +25,7 @@ async function scheduleScans(queue,now=Date.now(),cron='*/5 * * * *'){
   if(!queue?.sendBatch)throw Error('SCANNER_QUEUE_REQUIRED');
   await heartbeatWorker();
   const enabled=readiness().markets.filter(m=>m.status==='active').map(m=>m.id);
-  await reconcileWatchPlans(enabled);
+  await reconcileWatchPlans(enabled,now);
   const bucket=new Date(Math.floor(now/300000)*300000).toISOString();
   // Expired jobs must not occupy the queue ahead of today's monitoring work.
   const windows=new Map();

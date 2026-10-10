@@ -113,6 +113,9 @@ export function advanceThaiOrbPick(pick, fifteenMinuteBars, now = Date.now()) {
       && bar.time > (next.lastChecked15m ?? 0));
     for (const bar of fresh) {
       const minute = bangkokParts(bar.time * 1000).minutes;
+      const previousChecked = next.lastChecked15m ?? Math.max(plan.referenceCandles.fifteenMinuteTimestamp,
+        Math.floor(Date.parse(pick.publishedAt) / 900_000) * 900 - 900);
+      if (bar.time - previousChecked > 900) next.plan = { ...next.plan, monitoringIncomplete: true };
       next.lastChecked15m = bar.time;
       if (minute >= 675) break;
       const barClosedAt = (bar.time + 900) * 1000;

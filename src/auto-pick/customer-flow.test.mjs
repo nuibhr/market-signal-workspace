@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {advanceThaiOrbPick}from './thai-orb.mjs';
 import {announcementFor,SPOKEN_TYPES}from './announcements.mjs';
 import {advanceUsEodPick}from './us-engine.mjs';
+import {advanceDrOrbPick}from './dr-orb.mjs';
 import {customerSummary}from '../analysis/customer-summary.mjs';
 const time=s=>Date.parse(`2026-10-01T${s}:00+07:00`)/1000;
 const opening={time:time('10:00'),open:100,high:100.1,low:99.8,close:100,volume:10000};
@@ -41,4 +42,33 @@ test('US D1 watch expires after the next trading day without confirmation',()=>{
  const us={status:'WAITING_FOR_ENTRY',sessionDay:'2026-09-29',plan:{tradeAllowed:true,timeframe:'1d',entry:101,stopLoss:98,tp1:108,trigger:{price:101},referenceCandles:{dailyDay:'2026-09-29'},maxEntryBars:7}};
  const bars=[{time:'2026-09-29',open:100,high:100,low:99,close:100},{time:'2026-09-30',open:100,high:100,low:99,close:100}];
  assert.equal(advanceUsEodPick(us,bars).pick.status,'EXPIRED');
+});
+
+test('Thai waiting plan with a fresh final bar but missing intervening bars needs review',()=>{
+ const waiting={...pick,plan:{...plan,entry:110}};
+ const last={...confirm,time:time('11:15')};
+ const result=advanceThaiOrbPick(waiting,[opening,last],time('11:30')*1000);
+ assert.equal(result.pick.status,'REVIEW');
+ assert.equal(result.events.at(-1).type,'DATA_GAP');
+});
+
+test('DR waiting plan cannot claim no entry when only the final monitoring bar exists',()=>{
+ const waiting={...pick,market:'dr',publishedAt:new Date(time('10:30')*1000).toISOString(),plan:{...plan,
+  setupType:'DR_ORB_15M',entry:110,features:{session:'day',openingStart:time('10:00'),openingEnd:time('10:30'),
+   entryEnd:time('11:30'),sessionEnd:time('12:30'),minEntryBarValue:100000,maxChase:110}}};
+ const last={...confirm,time:time('11:15')};
+ const result=advanceDrOrbPick(waiting,[opening,last],{marketStatus:'day',price:100.2},time('11:30')*1000);
+ assert.equal(result.pick.status,'REVIEW');
+ assert.equal(result.events.at(-1).type,'DATA_GAP');
+});
+
+test('complete timely monitoring still expires a Thai plan that never meets entry conditions',()=>{
+ let waiting={...pick,plan:{...plan,entry:110}};
+ const bars=[opening];
+ for(let index=1;index<=5;index++){
+  const bar={...confirm,time:opening.time+index*900};bars.push(bar);
+  waiting=advanceThaiOrbPick(waiting,bars,(bar.time+900)*1000).pick;
+ }
+ assert.equal(waiting.status,'EXPIRED');
+ assert.equal(Boolean(waiting.plan.monitoringIncomplete),false);
 });

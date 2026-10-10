@@ -7,6 +7,7 @@ import { BellRing, ChartNoAxesCombined, Clock3, Radar, ShieldCheck, Volume2, Vol
 import { ALL_ASSETS } from '../markets/catalog.mjs';
 import { SPOKEN_TYPES, announcementFor } from '../auto-pick/announcements.mjs';
 import { claimAnnouncements } from '../auto-pick/notification-cursor.mjs';
+import { createSignalSpeaker } from '../auto-pick/speech.mjs';
 const VOICE_KEY = 'nugaom-autopick-voice-enabled';
 const WORKER_LABELS = { healthy: 'สแกนตามเวลา', running: 'กำลังสแกน', degraded: 'ข้อมูลบางส่วนมีปัญหา',
   'scanning-incomplete': 'กำลังตรวจให้ครบ',
@@ -27,31 +28,25 @@ const observedAt = item => item.barTime
   : item.createdAt;
 const eventDateLabel = item => item.market === 'us' && item.barDay ? `แท่ง D1 ปิด ${item.barDay} · New York` : at(observedAt(item));
 
-function speak(text) {
-  if (!text || !('speechSynthesis' in window) || typeof window.SpeechSynthesisUtterance !== 'function') return;
-  const synthesis = window.speechSynthesis;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'th-TH';
-  utterance.rate = 0.9;
-  utterance.pitch = 1.03;
-  utterance.voice = synthesis.getVoices().find(voice => voice.lang.toLowerCase().startsWith('th')) || null;
-  synthesis.cancel();
-  synthesis.speak(utterance);
-}
-
 export default function AutoPickBoard({ onSelect, marketId=null }) {
   const [state, setState] = useState(null);
   const [error, setError] = useState(false);
   const [alerts, setAlerts] = useState([]);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [speechState, setSpeechState] = useState('idle');
+  const speaker = useRef(null);
   const spokenId = useRef(null);
   const eventCursor = useRef({seen:null});
   const alert = alerts[0] ?? null;
 
   useEffect(() => {
-    setSpeechSupported('speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function');
+    let mounted = true;
+    const adapter = createSignalSpeaker(window, value => { if (mounted) setSpeechState(value); });
+    speaker.current = adapter;
+    setSpeechSupported(adapter.supported);
     try { setVoiceEnabled(window.localStorage.getItem(VOICE_KEY) === 'true'); } catch { /* Private browsing may disable storage. */ }
+    return () => { mounted = false; adapter.stop(); };
   }, []);
 
   useEffect(() => {
@@ -68,7 +63,7 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
         try{browserStorage=window.localStorage;}catch{/* Use the per-tab cursor in private browsing. */}
         const fresh=await claimAnnouncements(data.events,{storage:browserStorage,locks:navigator.locks,
           memory:eventCursor.current,visible:()=>!stopped&&document.visibilityState==='visible'});
-        if(!stopped&&fresh.length)setAlerts(current=>[...current,...fresh].slice(0,12));
+        if(!stopped&&fresh.length)setAlerts(current=>[...current,...fresh]);
       } catch { if (!stopped) setError(true); }
     }
     refresh();
@@ -87,25 +82,25 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   useEffect(() => {
     if (!alert || spokenId.current === alert.id) return;
     spokenId.current = alert.id;
-    if (voiceEnabled && document.visibilityState === 'visible' && SPOKEN_TYPES.has(alert.type)) speak(announcementFor(alert).text);
+    if ((voiceEnabled || alert.demo) && document.visibilityState === 'visible' && SPOKEN_TYPES.has(alert.type)) speaker.current?.play(announcementFor(alert).text);
   }, [alert, voiceEnabled]);
 
   function toggleVoice() {
-    const next = !voiceEnabled;
+    const next = speechState === 'blocked' || speechState === 'failed' ? true : !voiceEnabled;
     setVoiceEnabled(next);
     try { window.localStorage.setItem(VOICE_KEY, String(next)); } catch { /* Voice still works for this page. */ }
     if (next) {
       spokenId.current = alert?.id ?? null;
-      speak('เปิดเสียงแจ้งเตือนจากน้องนักออมแล้ว');
-    } else if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      speaker.current?.play(alert && SPOKEN_TYPES.has(alert.type) ? announcementFor(alert).text : 'เปิดเสียงแจ้งเตือนจากน้องนักออมแล้ว');
+    } else speaker.current?.stop();
   }
 
   function previewAnnouncement() {
     const demo = { id: `preview-${Date.now()}`, type: 'ENTRY', symbol: 'NVDA80', market: 'dr', session: 'night',
       price: 39, entryCeiling: 39, tp1: 40.5, stopLoss: 38.25, createdAt: new Date().toISOString(), demo: true };
-    spokenId.current = demo.id;
     setAlerts(current => [...current, demo]);
-    if (speechSupported) speak(announcementFor(demo).text);
+    // A preview must not cut off a live signal that is already being presented.
+    if (!alert) { spokenId.current = demo.id; speaker.current?.play(announcementFor(demo).text); }
   }
 
   const readiness = (state?.readiness?.markets ?? []).filter(m=>!marketId||m.id===marketId);
@@ -132,7 +127,7 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   return <section id="section-auto-pick" className="auto-pick-board" aria-labelledby="auto-pick-title">
     <div className="auto-pick-head"><span className="hub-heading-icon"><Radar size={22} /></span><div><span className="eyebrow">NUGAOM / AUTOPICK</span><h2 id="auto-pick-title">จังหวะที่ระบบพบ</h2><p>ตรวจตามรอบทุก {scheduleMinutes} นาที · แจ้งจุดเข้า เป้าหมาย และตัดขาดทุนเมื่อแท่งราคายืนยัน · หุ้นสหรัฐฯ ใช้แท่งรายวันปิด</p></div><span className="auto-pick-badge"><BellRing size={15} /> {badgeLabel}</span></div>
     {activeMarkets.length > 0 && <div className={`auto-pick-worker ${processRunning && activeMarkets.every(market => ['healthy', 'running', 'outside-session', 'awaiting-first-run'].includes(workers[market.id]?.status)) ? 'healthy' : ''}`}><strong>{processRunning ? 'ตัวสแกนทำงานอยู่' : workerProcess?.status === 'offline' ? 'ไม่พบตัวสแกนทำงาน' : 'ยังอ่านสถานะตัวสแกนไม่ได้'} · {workerSummary || workerLabel}</strong><span>{activeMarkets.map(market => workers[market.id]?.lastRunAt ? `${market.label} รอบล่าสุด ${at(workers[market.id].lastRunAt)}` : `${market.label} ยังไม่มีรอบที่บันทึกไว้`).join(' · ')} · {workerProcess?.lastSeenAt ? `อัปเดตระบบล่าสุด ${at(workerProcess.lastSeenAt)}` : 'รออัปเดตสถานะ'}</span></div>}
-    <div className="auto-pick-voice"><div><strong>น้องนักออมเล่าเหตุการณ์</strong><span>ป๊อปอัปทำงานขณะเปิดเว็บ · ใช้เสียงจากอุปกรณ์ และเลือกเสียงภาษาไทยเมื่อมี</span></div><div className="auto-pick-voice-actions"><button type="button" className="auto-pick-preview" onClick={previewAnnouncement}>ลองฟังสัญญาณเข้า DR</button><button type="button" aria-pressed={voiceEnabled} onClick={toggleVoice} disabled={!speechSupported}>{voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}{!speechSupported ? 'อุปกรณ์ไม่รองรับเสียง' : voiceEnabled ? 'เปิดเสียงแล้ว' : 'เปิดเสียงแจ้งเตือน'}</button></div></div>
+    <div className="auto-pick-voice"><div><strong>น้องนักออมเล่าเหตุการณ์</strong><span>ป๊อปอัปทำงานขณะเปิดเว็บ · ใช้เสียงจากอุปกรณ์ และเลือกเสียงภาษาไทยเมื่อมี</span>{speechState === 'blocked' || speechState === 'failed' ? <span role="status">{speechState === 'blocked' ? 'เบราว์เซอร์ยังไม่อนุญาตเสียง กดเปิดเสียงอีกครั้ง' : 'เล่นเสียงไม่สำเร็จ กดลองฟังอีกครั้ง'} · ป๊อปอัปยังแสดงตามปกติ</span> : speechState === 'speaking' ? <span role="status">กำลังอ่านการแจ้งเตือน…</span> : null}</div><div className="auto-pick-voice-actions"><button type="button" className="auto-pick-preview" onClick={previewAnnouncement}>ลองฟังสัญญาณเข้า DR</button><button type="button" aria-pressed={voiceEnabled} onClick={toggleVoice} disabled={!speechSupported}>{voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}{!speechSupported ? 'อุปกรณ์ไม่รองรับเสียง' : speechState === 'blocked' || speechState === 'failed' ? 'เปิดเสียงอีกครั้ง' : voiceEnabled ? 'เปิดเสียงแล้ว' : 'เปิดเสียงแจ้งเตือน'}</button></div></div>
     {marketId==='dr'&&['available','membership-required'].includes(state?.status)&&<DrTracker signals={signals} events={events} onSelect={onSelect}/>}
     <div className="auto-pick-markets">{activeMarkets.map(market => <div className="auto-pick-market active" key={market.id}>
       <strong>{market.label}</strong><span>{workerProcess?.status === 'offline' ? 'ตัวสแกนหยุดทำงาน' : coverage[market.id]
@@ -158,6 +153,6 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
       {events.length ? <div className="auto-pick-events">{events.slice(0, 7).map(item => <div key={item.id}><span className={`auto-pick-event-type ${item.type.toLowerCase()}`}>{LABELS[item.type] ?? item.type}</span><strong>{item.symbol}</strong><span>{fmt(item.price, item.market)}</span><small>{eventDateLabel(item)}</small></div>)}</div> : <div className="auto-pick-empty">ยังไม่มีเหตุการณ์สัญญาณ</div>}
     </>}
     <p className="auto-pick-disclaimer">ผลลัพธ์เป็นการติดตามแผนสมมติจาก OHLC ที่ปิดแล้ว ไม่ส่งคำสั่งซื้อขาย · หากแท่งเดียวแตะ TP และ SL หรือข้อมูลขาดช่วง ระบบจะส่งตรวจผลและไม่นับเป็นชนะ/แพ้</p>
-    {alert && <aside className={`auto-pick-toast ${announcementFor(alert).tone}`} role="status" aria-live="polite"><span className="auto-pick-toast-avatar"><Image src="/nugaom-mascot.png" alt="" width={42} height={42} /></span><div><strong>{alert.demo ? 'ตัวอย่าง · ' : ''}{announcementFor(alert).title}</strong><span>{announcementFor(alert).detail}</span><small>{alert.demo ? 'ตัวอย่างหน้าจอและเสียง · ไม่ใช่สัญญาณจากตลาด' : `ราคาอ้างอิง ${fmt(alert.price, alert.market)} · ${eventDateLabel(alert)}`}{alerts.length > 1 ? ` · อีก ${alerts.length - 1} รายการ` : ''}</small>{!alert.demo && <button className="auto-pick-toast-plan" onClick={() => {if(marketId&&alert.market!==marketId)window.location.href=`/${alert.market}?symbol=${encodeURIComponent(alert.symbol)}#section-auto-pick`;else document.getElementById('section-auto-pick')?.scrollIntoView({ behavior: 'smooth' });}}>ดูแผนและที่มาราคา ↗</button>}</div><button className="auto-pick-toast-close" onClick={() => setAlerts(current => current.slice(1))} aria-label="ปิดการแจ้งเตือน">×</button></aside>}
+    {alert && <aside className={`auto-pick-toast ${announcementFor(alert).tone}`} role="status" aria-live="polite"><span className="auto-pick-toast-avatar"><Image src="/nugaom-mascot.png" alt="" width={42} height={42} /></span><div><strong>{alert.demo ? 'ตัวอย่าง · ' : ''}{announcementFor(alert).title}</strong><span>{announcementFor(alert).detail}</span>{alert.type === 'ENTRY' && <span>เข้าอ้างอิง {fmt(alert.price, alert.market)} · TP1 {fmt(alert.tp1, alert.market)} · SL {fmt(alert.stopLoss, alert.market)}</span>}<small>{alert.demo ? 'ตัวอย่างหน้าจอและเสียง · ไม่ใช่สัญญาณจากตลาด' : `ราคาอ้างอิง ${fmt(alert.price, alert.market)} · ${eventDateLabel(alert)}`}{alerts.length > 1 ? ` · อีก ${alerts.length - 1} รายการ` : ''}</small>{speechSupported && SPOKEN_TYPES.has(alert.type) && <button className="auto-pick-toast-plan" onClick={() => speaker.current?.play(announcementFor(alert).text)}>ฟังแจ้งเตือนนี้อีกครั้ง</button>}{!alert.demo && <button className="auto-pick-toast-plan" onClick={() => {if(marketId&&alert.market!==marketId)window.location.href=`/${alert.market}?symbol=${encodeURIComponent(alert.symbol)}#section-auto-pick`;else document.getElementById('section-auto-pick')?.scrollIntoView({ behavior: 'smooth' });}}>ดูแผนและที่มาราคา ↗</button>}</div><button className="auto-pick-toast-close" onClick={() => setAlerts(current => current.slice(1))} aria-label="ปิดการแจ้งเตือน">×</button></aside>}
   </section>;
 }
