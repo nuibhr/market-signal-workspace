@@ -105,6 +105,12 @@ Migration 0007 เพิ่มพอร์ตโค้ชที่แอดม�
 
 แนวทางต่อยอด: ลูกค้าติดตั้งตัวส่งข้อมูลและจับคู่บัญชีด้วยรหัสใช้ครั้งเดียวบน LINE account; HTTPS ingest รับ snapshot แบบอ่านอย่างเดียวและแสดงเวลาอัปเดต/ขาดการเชื่อมต่อ ระบบนี้ไม่มีการส่งคำสั่งซื้อขาย ต้องแยกความยินยอมและข้อมูลบัญชีส่วนบุคคลจากราคากลาง ไม่มี broker password อยู่ใน dashboard หลังบ้าน หากลูกค้าปิด Terminal ต้องแสดงข้อมูลค้างให้ชัดเจนและไม่สร้างสัญญาณใหม่จากฟีดนั้น Cloudflare เป็นเว็บ/ที่รับข้อมูล ส่วน Terminal อยู่บนเครื่องลูกค้าหรือ VPS; ดู [MT5 bridge](../../docs/mt5-forex-bridge.md)
 
+## เว็บในเครื่องและ build Cloudflare
+
+คำสั่ง `npm run dev` และ `npm run build` ระบุ `--webpack` ให้ตรงกับ next.config ของโปรเจกต์ งาน cloud:build ใช้สำเนา node_modules จริงใน staging และ CLI จากสำเนานั้น ห้ามเปลี่ยนกลับเป็น symlink ไปยัง dependencies ของเว็บในเครื่อง เพราะ OpenNext แพตช์ไฟล์ Next.js และ trace ที่ออกนอก staging อาจเขียนทับ runtime ในเครื่องได้
+
+ก่อน build จะเก็บ checksum ของ Next server ในเครื่อง และตรวจหลัง build ทุกครั้ง การกู้คืนวันที่ 10 ตุลาคม 2026 ใช้ Next 16.3.8 ฉบับเดิมที่ตรวจ integrity ตรงกับ package-lock.json ไม่เปลี่ยนรุ่น ไม่เปลี่ยน .env.local หรือฐานข้อมูลลูกค้า ตรวจแล้วว่า cloud build สำเร็จและ Next server ในเครื่องยังมี checksum เดิม
+
 ## อ้างอิง
 
 - [D1 batch](https://developers.cloudflare.com/d1/worker-api/d1-database/#batch): atomic writes
