@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, BellRing, Bookmark, ChartNoAxesCombined, Check, ScanLine, ShieldCheck } from 'lucide-react';
-import LandingSylva from '../components/landing-sylva.jsx';
+import LandingRobot from '../components/landing-robot.jsx';
 import './landing.css';
 
 export const metadata = {
@@ -25,7 +25,7 @@ export default function HomePage() {
       <nav aria-label="เมนูหลัก"><a href="#discover">เลือกตลาด</a><a href="#how-it-works">วิธีใช้งาน</a><Link href="/thai#section-results">ผลงานสัญญาณ</Link></nav>
       <Link href="/account" className="ng-login">เข้าใช้ด้วย LINE <ArrowUpRight size={16} aria-hidden="true" /></Link>
     </header>
-    <LandingSylva />
+    <LandingRobot />
     <div className="ng-principles"><span><ScanLine size={15} /> เห็นเงื่อนไขก่อนตัดสินใจ</span><span><BellRing size={15} /> ติดตามสัญญาณผ่านเว็บ</span><span><ShieldCheck size={15} /> ทบทวนจากบันทึกเข้า–ออก</span></div>
 
     <section id="discover" className="ng-section ng-markets" tabIndex={-1} aria-labelledby="ng-markets-title">
@@ -63,6 +63,6 @@ export default function HomePage() {
       <details><summary>ผลงานสัญญาณกับพอร์ตโค้ชต่างกันอย่างไร?</summary><p>ผลงานสัญญาณนับจากรายการและราคาเข้า–ออกที่ระบบบันทึก ส่วนผลจำลองและพอร์ตโค้ชแบบ Paper Trade แสดงป้ายแยกไว้ ผลย้อนหลังไม่ได้รับประกันผลในอนาคต</p></details>
       <details><summary>เข้าสู่ระบบและเริ่มทดลองอย่างไร?</summary><p>กดเข้าใช้ด้วย LINE แล้วทำขั้นตอนในหน้าบัญชีให้ครบ ตรวจสถานะทดลองใช้ 14 วันและสิทธิสมาชิกได้จากหน้านั้น</p></details>
     </div></section>
-    <footer className="ng-footer"><div><Link href="/" className="ng-footer-brand">NUGAOM AI PICK<span>YOUR MARKET. YOUR MOMENT.</span></Link><div><Link href="/markets">เลือกตลาด</Link><Link href="/coaches">พอร์ตโค้ช · Paper</Link><Link href="/account">บัญชีของฉัน</Link></div></div><p>เครื่องมือช่วยวิเคราะห์ ไม่ใช่คำแนะนำในการลงทุน การลงทุนมีความเสี่ยง ผู้ใช้งานควรศึกษาข้อมูลและตัดสินใจด้วยตนเอง</p><small>© {new Date().getFullYear()} Nugaom AI Pick <span>Scene: Sylva / ThreeUI · <a href="/landing-pages/licenses/LICENSE">MIT License</a></span></small></footer>
+    <footer className="ng-footer"><div><Link href="/" className="ng-footer-brand">NUGAOM AI PICK<span>YOUR MARKET. YOUR MOMENT.</span></Link><div><Link href="/markets">เลือกตลาด</Link><Link href="/coaches">พอร์ตโค้ช · Paper</Link><Link href="/account">บัญชีของฉัน</Link></div></div><p>เครื่องมือช่วยวิเคราะห์ ไม่ใช่คำแนะนำในการลงทุน การลงทุนมีความเสี่ยง ผู้ใช้งานควรศึกษาข้อมูลและตัดสินใจด้วยตนเอง</p><small>© {new Date().getFullYear()} Nugaom AI Pick <span>3D: Nugaom / Three.js · <a href="/landing-pages/licenses/THREE-LICENSE">MIT License</a></span></small></footer>
   </main>;
 }

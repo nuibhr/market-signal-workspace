@@ -24,13 +24,5 @@ export default {
     './src/analysis/technical.mjs', './src/analysis/pivots.mjs', './src/analysis/chart-levels.mjs',
     './src/analysis/us-candles.mjs', './src/markets/us-liquid-500.mjs', './src/markets/us-universe.mjs',
   ] },
-  async headers() { return [
-    { source: '/:path*', headers },
-    // The authored hero is embedded by our own landing page only.
-    { source: '/landing-pages/inner-green-3d.html', headers: [
-      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-      { key: 'Content-Security-Policy', value: "object-src 'none'; base-uri 'self'; frame-ancestors 'self'" },
-      { key: 'X-Robots-Tag', value: 'noindex' },
-    ] },
-  ]; },
+  async headers() { return [{ source: '/:path*', headers }]; },
 };
