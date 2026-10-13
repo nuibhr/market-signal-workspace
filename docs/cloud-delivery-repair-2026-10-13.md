@@ -29,11 +29,21 @@ The Cloud review identified six reproducible gaps on `83b7535`. These repairs co
 - `.env.local` checksum matches the previous recorded checksum. No credential/config flags were changed and no synthetic trades were inserted into customer storage.
 - Browser rendering, reload interaction and audible speech on actual devices remain unverified by browser automation. Tests cover the delivery modules and speech adapter; they are not screenshots or live financial results.
 
+### Continuation checks on `2719a25`
+
+- Local health reports available storage and a running local scanner.
+- Anonymous GET requests to all six admin API entry points (system, memberships, member detail, signals, audit and Webull status) return 403 with `private, no-store`. The signal-event API also returns 403 without membership.
+- Anonymous same-origin admin writes return `FORBIDDEN`; a write from another origin returns `INVALID_ORIGIN`. These probes do not modify customer records.
+- `npm run cloud:check` passes its existing HTTP checks through the private review gate. The public site still returns maintenance status 503. The deployed health endpoint reports an offline scanner; HTTP availability is not evidence of active cloud scanning.
+- These checks exercise the existing deployment, which does not yet contain the repair commit or the separate community branch. No deployment, configuration flag or credential change was made.
+
 ## Separate feature branch still pending import
 
 `feat/community-sylva-landing` contains the exact Sylva landing, member rooms and private marketing/research inboxes. Its latest known commit is `d53d916`, preceded by `5d9e586`, based on `83b7535`. It exists in the earlier cloud workspace and was not pushed when that task's automatic approval review rejected the GitHub export. It is not present in this local Git object database or `origin`.
 
-The user has been asked for a ZIP/patch, or explicit authorization to message the earlier task to publish that branch to `nuibhr/market-signal-workspace`. Do not claim it was merged, rebuild it from incomplete execution logs, or replace its exact registered assets with approximations. Once available: inspect the diff, preserve these scanner repairs and migration 0007, apply the feature's additive migration 0008, and rerun the combined source/rights/storage/build checks.
+The user explicitly authorized messaging the earlier task to push only that feature branch to `nuibhr/market-signal-workspace`; the message was accepted. Subsequent status checks cannot reach the earlier `durable` cloud host, and a fresh Git fetch/list still finds only `main`. Source retrieval now requires that workspace to become available or a ZIP/patch/Git bundle from it. No further push authorization is needed for that request.
+
+Do not claim the feature was merged, rebuild it from incomplete execution logs, or replace its exact registered assets with approximations. Once available: inspect the diff, preserve these scanner repairs and migration 0007, apply the feature's additive migration 0008, and rerun the combined source/rights/storage/build checks.
 
 ## Production gates unchanged
 
