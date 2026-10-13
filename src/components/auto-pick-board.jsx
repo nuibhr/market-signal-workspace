@@ -1,15 +1,16 @@
 'use client';
 import DrTracker from './dr-tracker.jsx';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { BellRing, ChartNoAxesCombined, Clock3, Radar, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { ALL_ASSETS } from '../markets/catalog.mjs';
 import { SPOKEN_TYPES, announcementFor } from '../auto-pick/announcements.mjs';
-import { claimAnnouncements } from '../auto-pick/notification-cursor.mjs';
+import { createNotificationInbox } from '../auto-pick/notification-inbox.mjs';
 import { createSignalSpeaker } from '../auto-pick/speech.mjs';
 const VOICE_KEY = 'nugaom-autopick-voice-enabled';
 const WORKER_LABELS = { healthy: 'สแกนตามเวลา', running: 'กำลังสแกน', degraded: 'ข้อมูลบางส่วนมีปัญหา',
+  disabled: 'ยังไม่เปิดสแกนบนคลาวด์', idle: 'รอตัวประมวลผลรอบถัดไป', 'awaiting-consumer': 'กำลังรอตัวประมวลผล', offline: 'ตัวสแกนไม่ติดต่อ',
   'scanning-incomplete': 'กำลังตรวจให้ครบ',
   stuck: 'รอบสแกนค้าง', 'not-running': 'worker ไม่ทำงาน', 'awaiting-first-run': 'รอรอบสแกนแรก',
   'outside-session': 'นอกเวลาตลาด', 'missed-candidate-window': 'พลาดรอบคัดหุ้นเช้า',
@@ -35,54 +36,116 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [speechState, setSpeechState] = useState('idle');
+  const [persistenceError, setPersistenceError] = useState(false);
+  const [deliveryError, setDeliveryError] = useState(false);
   const speaker = useRef(null);
   const spokenId = useRef(null);
-  const eventCursor = useRef({seen:null});
+  const inbox = useRef(null);
+  const alertRef = useRef(null);
+  const owner = useRef(null);
   const alert = alerts[0] ?? null;
 
   useEffect(() => {
     let mounted = true;
-    const adapter = createSignalSpeaker(window, value => { if (mounted) setSpeechState(value); });
+    const adapter = createSignalSpeaker(window, (value, meta) => {
+      if (!mounted) return;
+      setSpeechState(value);
+      const item = alertRef.current;
+      if (item && !item.demo) inbox.current?.voice(item.id, meta?.reason === 'ended' ? 'ended' : value === 'idle' ? 'interrupted' : value);
+    });
     speaker.current = adapter;
     setSpeechSupported(adapter.supported);
     try { setVoiceEnabled(window.localStorage.getItem(VOICE_KEY) === 'true'); } catch { /* Private browsing may disable storage. */ }
     return () => { mounted = false; adapter.stop(); };
   }, []);
 
+  const showNext = useCallback(async () => {
+    if (alertRef.current || !inbox.current) return;
+    const target = inbox.current;
+    const next = await target.claim(document.visibilityState === 'visible');
+    if (next && inbox.current === target && document.visibilityState === 'visible' && !alertRef.current) {
+      alertRef.current = next;
+      setAlerts([next]);
+      if (['failed', 'blocked'].includes(next.deliveryVoice)) setSpeechState(next.deliveryVoice);
+    } else if (next) await target.release();
+  }, []);
+  const dismissAlert = useCallback(async id => {
+    const current = alertRef.current;
+    if (current?.id !== id) return;
+    if (speaker.current?.pending) speaker.current.stop();
+    if (!current.demo) await inbox.current?.dismiss(id);
+    alertRef.current = null;
+    setAlerts(items => items.filter(item => item.id !== id));
+    await showNext();
+  }, [showNext]);
+
+  useEffect(() => {
+    alertRef.current = alert;
+    if (alert && !alert.demo) inbox.current?.displayed(alert.id);
+    if (!alert) showNext();
+  }, [alert, showNext]);
+
   useEffect(() => {
     let stopped = false;
+    let refreshing = false;
     async function refresh() {
+      if (refreshing) return;
+      refreshing = true;
       try {
         const response = await fetch('/api/auto-pick', { cache: 'no-store' });
         const data = await response.json();
         if (stopped) return;
         if (!response.ok) { setError(true); return; }
         setState(data); setError(false);
-        if (data.status !== 'available' || !data.events?.length) return;
-        let browserStorage;
-        try{browserStorage=window.localStorage;}catch{/* Use the per-tab cursor in private browsing. */}
-        const fresh=await claimAnnouncements(data.events,{storage:browserStorage,locks:navigator.locks,
-          memory:eventCursor.current,visible:()=>!stopped&&document.visibilityState==='visible'});
-        if(!stopped&&fresh.length)setAlerts(current=>[...current,...fresh]);
+        if (data.status !== 'available' || !data.notificationScope) {
+          if (inbox.current) { await inbox.current.release(); inbox.current = null; alertRef.current = null; setAlerts([]); speaker.current?.stop(); }
+          return;
+        }
+        if (inbox.current?.scope !== data.notificationScope) {
+          if (speaker.current?.pending) speaker.current.stop();
+          await inbox.current?.release();
+          alertRef.current = null; setAlerts([]); spokenId.current = null;
+          let browserStorage;
+          try { browserStorage = window.localStorage; } catch { setPersistenceError(true); }
+          owner.current ??= window.crypto.randomUUID();
+          inbox.current = createNotificationInbox({ scope: data.notificationScope, owner: owner.current, storage: browserStorage,
+            locks: navigator.locks, onPersistenceError: () => { if (!stopped) setPersistenceError(true); } });
+        }
+        const target = inbox.current;
+        for (let page = 0; page < 4 && !stopped; page++) {
+          const snapshot = await target.snapshot();
+          if (snapshot.pending >= 400) break; // Backpressure: keep the durable cursor, never discard a page.
+          const response = await fetch(`/api/auto-pick/events${snapshot.cursor ? `?after=${encodeURIComponent(snapshot.cursor)}` : ''}`, { cache: 'no-store' });
+          const batch = await response.json();
+          if (stopped || inbox.current !== target) return;
+          if (!response.ok || batch.notificationScope !== data.notificationScope) { setDeliveryError(batch.error || 'EVENT_STORE_UNAVAILABLE'); break; }
+          if (!await target.receive(batch, snapshot.cursor)) break;
+          setDeliveryError(false);
+          if (!batch.hasMore) break;
+        }
+        if (!stopped) await showNext();
       } catch { if (!stopped) setError(true); }
+      finally { refreshing = false; }
     }
     refresh();
     const interval = window.setInterval(refresh, 30_000);
-    const onVisible=()=>{if(document.visibilityState==='visible')refresh();};
+    const onVisible=()=>{if(document.visibilityState==='visible')refresh();else if(alertRef.current&&!alertRef.current.demo){
+      speaker.current?.stop();inbox.current?.release();alertRef.current=null;setAlerts([]);
+    }};
     document.addEventListener('visibilitychange',onVisible);
-    return () => { stopped = true; window.clearInterval(interval); document.removeEventListener('visibilitychange',onVisible); };
-  }, []);
+    return () => { stopped = true; window.clearInterval(interval); document.removeEventListener('visibilitychange',onVisible); inbox.current?.release(); };
+  }, [showNext]);
 
   useEffect(() => {
     if (!alert) return undefined;
-    const timer = window.setTimeout(() => setAlerts(current => current.slice(1)), voiceEnabled && SPOKEN_TYPES.has(alert.type) ? Math.min(90000, Math.max(35000, announcementFor(alert).text.length * 120)) : 12000);
+    const timer = window.setTimeout(() => dismissAlert(alert.id), (voiceEnabled || alert.demo) && !alert.historical && SPOKEN_TYPES.has(alert.type) ? Math.min(90000, Math.max(35000, announcementFor(alert).text.length * 120)) : 12000);
     return () => window.clearTimeout(timer);
-  }, [alert?.id, voiceEnabled]);
+  }, [alert?.id, voiceEnabled, dismissAlert]);
 
   useEffect(() => {
     if (!alert || spokenId.current === alert.id) return;
     spokenId.current = alert.id;
-    if ((voiceEnabled || alert.demo) && document.visibilityState === 'visible' && SPOKEN_TYPES.has(alert.type)) speaker.current?.play(announcementFor(alert).text);
+    if ((alert.demo || voiceEnabled && !alert.historical && alert.deliveryVoice === 'pending') && document.visibilityState === 'visible' && SPOKEN_TYPES.has(alert.type)) speaker.current?.play(announcementFor(alert).text);
   }, [alert, voiceEnabled]);
 
   function toggleVoice() {
@@ -96,9 +159,11 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   }
 
   function previewAnnouncement() {
+    if (alertRef.current) return;
     const demo = { id: `preview-${Date.now()}`, type: 'ENTRY', symbol: 'NVDA80', market: 'dr', session: 'night',
       price: 39, entryCeiling: 39, tp1: 40.5, stopLoss: 38.25, createdAt: new Date().toISOString(), demo: true };
-    setAlerts(current => [...current, demo]);
+    alertRef.current = demo;
+    setAlerts([demo]);
     // A preview must not cut off a live signal that is already being presented.
     if (!alert) { spokenId.current = demo.id; speaker.current?.play(announcementFor(demo).text); }
   }
@@ -123,12 +188,14 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
     ? `ฟีด FMP ใช้ไม่ได้ ${workers.us.planRequired} ตัว` : WORKER_LABELS[workers[market.id]?.status] ?? 'รอรอบสแกน';
   const workerSummary = activeMarkets.map(market => `${market.id === 'us' ? 'สหรัฐฯ' : market.id === 'thai' ? 'หุ้นไทย' : market.label}: ${statusLabel(market)}`).join(' · ');
   const workerLabel = WORKER_LABELS[worker?.status] ?? 'กำลังตรวจสถานะ worker';
-  const badgeLabel = activeMarkets.length ? workerProcess?.status === 'offline' ? 'ตัวสแกนหยุดทำงาน' : activeMarkets.map(statusLabel).join(' · ') : 'รอเปิดสแกน';
+  const badgeLabel = activeMarkets.length ? processRunning ? activeMarkets.map(statusLabel).join(' · ') : WORKER_LABELS[workerProcess?.status] ?? 'รอตรวจตัวสแกน' : 'รอเปิดสแกน';
   return <section id="section-auto-pick" className="auto-pick-board" aria-labelledby="auto-pick-title">
     <div className="auto-pick-head"><span className="hub-heading-icon"><Radar size={22} /></span><div><span className="eyebrow">NUGAOM / AUTOPICK</span><h2 id="auto-pick-title">จังหวะที่ระบบพบ</h2><p>ตรวจตามรอบทุก {scheduleMinutes} นาที · แจ้งจุดเข้า เป้าหมาย และตัดขาดทุนเมื่อแท่งราคายืนยัน · หุ้นสหรัฐฯ ใช้แท่งรายวันปิด</p></div><span className="auto-pick-badge"><BellRing size={15} /> {badgeLabel}</span></div>
-    {activeMarkets.length > 0 && <div className={`auto-pick-worker ${processRunning && activeMarkets.every(market => ['healthy', 'running', 'outside-session', 'awaiting-first-run'].includes(workers[market.id]?.status)) ? 'healthy' : ''}`}><strong>{processRunning ? 'ตัวสแกนทำงานอยู่' : workerProcess?.status === 'offline' ? 'ไม่พบตัวสแกนทำงาน' : 'ยังอ่านสถานะตัวสแกนไม่ได้'} · {workerSummary || workerLabel}</strong><span>{activeMarkets.map(market => workers[market.id]?.lastRunAt ? `${market.label} รอบล่าสุด ${at(workers[market.id].lastRunAt)}` : `${market.label} ยังไม่มีรอบที่บันทึกไว้`).join(' · ')} · {workerProcess?.lastSeenAt ? `อัปเดตระบบล่าสุด ${at(workerProcess.lastSeenAt)}` : 'รออัปเดตสถานะ'}</span></div>}
-    <div className="auto-pick-voice"><div><strong>น้องนักออมเล่าเหตุการณ์</strong><span>ป๊อปอัปทำงานขณะเปิดเว็บ · ใช้เสียงจากอุปกรณ์ และเลือกเสียงภาษาไทยเมื่อมี</span>{speechState === 'blocked' || speechState === 'failed' ? <span role="status">{speechState === 'blocked' ? 'เบราว์เซอร์ยังไม่อนุญาตเสียง กดเปิดเสียงอีกครั้ง' : 'เล่นเสียงไม่สำเร็จ กดลองฟังอีกครั้ง'} · ป๊อปอัปยังแสดงตามปกติ</span> : speechState === 'speaking' ? <span role="status">กำลังอ่านการแจ้งเตือน…</span> : null}</div><div className="auto-pick-voice-actions"><button type="button" className="auto-pick-preview" onClick={previewAnnouncement}>ลองฟังสัญญาณเข้า DR</button><button type="button" aria-pressed={voiceEnabled} onClick={toggleVoice} disabled={!speechSupported}>{voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}{!speechSupported ? 'อุปกรณ์ไม่รองรับเสียง' : speechState === 'blocked' || speechState === 'failed' ? 'เปิดเสียงอีกครั้ง' : voiceEnabled ? 'เปิดเสียงแล้ว' : 'เปิดเสียงแจ้งเตือน'}</button></div></div>
-    {marketId==='dr'&&['available','membership-required'].includes(state?.status)&&<DrTracker signals={signals} events={events} onSelect={onSelect}/>}
+    {activeMarkets.length > 0 && <div className={`auto-pick-worker ${processRunning && activeMarkets.every(market => ['healthy', 'running', 'outside-session', 'awaiting-first-run'].includes(workers[market.id]?.status)) ? 'healthy' : ''}`}><strong>{processRunning ? 'ตัวสแกนทำงานอยู่' : WORKER_LABELS[workerProcess?.status] ?? 'ยังอ่านสถานะตัวสแกนไม่ได้'} · {workerSummary || workerLabel}</strong><span>{activeMarkets.map(market => workers[market.id]?.lastRunAt ? `${market.label} รอบล่าสุด ${at(workers[market.id].lastRunAt)}` : `${market.label} ยังไม่มีรอบที่บันทึกไว้`).join(' · ')} · {workerProcess?.lastSeenAt ? `อัปเดตระบบล่าสุด ${at(workerProcess.lastSeenAt)}` : 'รออัปเดตสถานะ'}</span></div>}
+    <div className="auto-pick-voice"><div><strong>น้องนักออมเล่าเหตุการณ์</strong><span>ป๊อปอัปทำงานขณะเปิดเว็บ · ใช้เสียงจากอุปกรณ์ และเลือกเสียงภาษาไทยเมื่อมี</span>{speechState === 'blocked' || speechState === 'failed' ? <span role="status">{speechState === 'blocked' ? 'เบราว์เซอร์ยังไม่อนุญาตเสียง กดเปิดเสียงอีกครั้ง' : 'เล่นเสียงไม่สำเร็จ กดลองฟังอีกครั้ง'} · ป๊อปอัปยังแสดงตามปกติ</span> : speechState === 'speaking' ? <span role="status">กำลังอ่านการแจ้งเตือน…</span> : null}</div><div className="auto-pick-voice-actions"><button type="button" className="auto-pick-preview" disabled={Boolean(alert)} onClick={previewAnnouncement}>ลองฟังสัญญาณเข้า DR</button><button type="button" aria-pressed={voiceEnabled} onClick={toggleVoice} disabled={!speechSupported}>{voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}{!speechSupported ? 'อุปกรณ์ไม่รองรับเสียง' : speechState === 'blocked' || speechState === 'failed' ? 'เปิดเสียงอีกครั้ง' : voiceEnabled ? 'เปิดเสียงแล้ว' : 'เปิดเสียงแจ้งเตือน'}</button></div></div>
+    {persistenceError && <p className="auto-pick-empty" role="status">อุปกรณ์ไม่อนุญาตให้เก็บแจ้งเตือน รายการยังแสดงได้ในแท็บนี้ แต่รีโหลดแล้วอาจต้องรับใหม่</p>}
+    {deliveryError && <div className="auto-pick-empty" role="status">ยังรับเหตุการณ์ใหม่ไม่ได้ รายการค้างที่เก็บไว้ยังอยู่{deliveryError === 'EVENT_CURSOR_UNAVAILABLE' && <button type="button" onClick={async () => { await inbox.current?.rebase(); setDeliveryError(false); }}>เริ่มรับใหม่จากเวลานี้ โดยเก็บรายการค้างไว้</button>}</div>}
+    {marketId==='dr' &&['available','membership-required'].includes(state?.status)&&<DrTracker signals={signals} events={events} onSelect={onSelect}/>}
     <div className="auto-pick-markets">{activeMarkets.map(market => <div className="auto-pick-market active" key={market.id}>
       <strong>{market.label}</strong><span>{workerProcess?.status === 'offline' ? 'ตัวสแกนหยุดทำงาน' : coverage[market.id]
         ? coverage[market.id].remaining > 0 ? 'อยู่ระหว่างตรวจครบชุด'
@@ -153,6 +220,6 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
       {events.length ? <div className="auto-pick-events">{events.slice(0, 7).map(item => <div key={item.id}><span className={`auto-pick-event-type ${item.type.toLowerCase()}`}>{LABELS[item.type] ?? item.type}</span><strong>{item.symbol}</strong><span>{fmt(item.price, item.market)}</span><small>{eventDateLabel(item)}</small></div>)}</div> : <div className="auto-pick-empty">ยังไม่มีเหตุการณ์สัญญาณ</div>}
     </>}
     <p className="auto-pick-disclaimer">ผลลัพธ์เป็นการติดตามแผนสมมติจาก OHLC ที่ปิดแล้ว ไม่ส่งคำสั่งซื้อขาย · หากแท่งเดียวแตะ TP และ SL หรือข้อมูลขาดช่วง ระบบจะส่งตรวจผลและไม่นับเป็นชนะ/แพ้</p>
-    {alert && <aside className={`auto-pick-toast ${announcementFor(alert).tone}`} role="status" aria-live="polite"><span className="auto-pick-toast-avatar"><Image src="/nugaom-mascot.png" alt="" width={42} height={42} /></span><div><strong>{alert.demo ? 'ตัวอย่าง · ' : ''}{announcementFor(alert).title}</strong><span>{announcementFor(alert).detail}</span>{alert.type === 'ENTRY' && <span>เข้าอ้างอิง {fmt(alert.price, alert.market)} · TP1 {fmt(alert.tp1, alert.market)} · SL {fmt(alert.stopLoss, alert.market)}</span>}<small>{alert.demo ? 'ตัวอย่างหน้าจอและเสียง · ไม่ใช่สัญญาณจากตลาด' : `ราคาอ้างอิง ${fmt(alert.price, alert.market)} · ${eventDateLabel(alert)}`}{alerts.length > 1 ? ` · อีก ${alerts.length - 1} รายการ` : ''}</small>{speechSupported && SPOKEN_TYPES.has(alert.type) && <button className="auto-pick-toast-plan" onClick={() => speaker.current?.play(announcementFor(alert).text)}>ฟังแจ้งเตือนนี้อีกครั้ง</button>}{!alert.demo && <button className="auto-pick-toast-plan" onClick={() => {if(marketId&&alert.market!==marketId)window.location.href=`/${alert.market}?symbol=${encodeURIComponent(alert.symbol)}#section-auto-pick`;else document.getElementById('section-auto-pick')?.scrollIntoView({ behavior: 'smooth' });}}>ดูแผนและที่มาราคา ↗</button>}</div><button className="auto-pick-toast-close" onClick={() => setAlerts(current => current.slice(1))} aria-label="ปิดการแจ้งเตือน">×</button></aside>}
+    {alert && <aside className={`auto-pick-toast ${announcementFor(alert).tone}`} role="status" aria-live="polite"><span className="auto-pick-toast-avatar"><Image src="/nugaom-mascot.png" alt="" width={42} height={42} /></span><div><strong>{alert.demo ? 'ตัวอย่าง · ' : alert.historical ? 'เหตุการณ์ย้อนหลัง · ' : ''}{announcementFor(alert).title}</strong><span>{alert.historical ? 'แจ้งเตือนค้างจากก่อนหน้านี้ · ดูผลในบันทึกก่อนใช้อ้างอิง' : announcementFor(alert).detail}</span>{alert.type === 'ENTRY' && <span>เข้าอ้างอิง {fmt(alert.price, alert.market)} · TP1 {fmt(alert.tp1, alert.market)} · SL {fmt(alert.stopLoss, alert.market)}</span>}<small>{alert.demo ? 'ตัวอย่างหน้าจอและเสียง · ไม่ใช่สัญญาณจากตลาด' : `ราคาอ้างอิง ${fmt(alert.price, alert.market)} · ${eventDateLabel(alert)}`}{alerts.length > 1 ? ` · อีก ${alerts.length - 1} รายการ` : ''}</small>{speechSupported && SPOKEN_TYPES.has(alert.type) && <button className="auto-pick-toast-plan" onClick={() => speaker.current?.play(announcementFor(alert).text)}>ฟังแจ้งเตือนนี้อีกครั้ง</button>}{!alert.demo && <button className="auto-pick-toast-plan" onClick={() => {if(marketId&&alert.market!==marketId)window.location.href=`/${alert.market}?symbol=${encodeURIComponent(alert.symbol)}#section-auto-pick`;else document.getElementById('section-auto-pick')?.scrollIntoView({ behavior: 'smooth' });}}>ดูแผนและที่มาราคา ↗</button>}</div><button className="auto-pick-toast-close" onClick={() => dismissAlert(alert.id)} aria-label="ปิดการแจ้งเตือน">×</button></aside>}
   </section>;
 }

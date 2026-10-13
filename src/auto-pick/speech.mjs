@@ -7,7 +7,7 @@ export function createSignalSpeaker(browser, onState = () => {}) {
     generation += 1;
     current = null;
     if (supported) browser.speechSynthesis.cancel();
-    onState('idle');
+    onState('idle', { reason: 'stopped' });
   }
   function play(text) {
     if (!supported || !text) { onState('unsupported'); return false; }
@@ -21,13 +21,13 @@ export function createSignalSpeaker(browser, onState = () => {}) {
       utterance.rate = 0.9;
       utterance.pitch = 1.03;
       utterance.voice = synthesis.getVoices().find(voice => voice.lang.toLowerCase().startsWith('th')) || null;
-      const settle = state => {
+      const settle = (state, reason) => {
         if (ticket !== generation) return;
         current = null;
-        onState(state);
+        onState(state, { reason });
       };
       utterance.onstart = () => { if (ticket === generation) onState('speaking'); };
-      utterance.onend = () => settle('idle');
+      utterance.onend = () => settle('idle', 'ended');
       utterance.onerror = event => settle(event.error === 'not-allowed' ? 'blocked' : 'failed');
       onState('starting');
       synthesis.speak(utterance);

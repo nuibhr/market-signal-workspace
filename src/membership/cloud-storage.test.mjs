@@ -82,5 +82,14 @@ test('native D1 preserves LINE profile, 14-day trial, monthly renewal, credits a
     assert.equal((await storage.first("SELECT COUNT(*) AS n FROM auto_pick_events WHERE event_type='ENTRY'")).n,1);
     assert.equal((await ledger.signalResults({market:'thai'})).total,1);
     assert.match(announcementFor({type:'ENTRY',market:'thai',symbol:'PTT',price:recorded.entryPrice,tp1:104,stopLoss:98}).text,/100.2/);
+    const {signalEventPage}=await import('../auto-pick/event-pages.mjs');
+    let cursor=(await signalEventPage()).nextCursor;
+    for(let index=0;index<120;index++)await ledger.createSignal({market:'thai',symbol:`D1EVENT${index}`,sessionDay:'2026-10-09',
+      plan:{...plan,features:{privateFormula:true}},source:'D1 FIXTURE ONLY'});
+    const received=[];let page;
+    do{page=await signalEventPage({after:cursor});received.push(...page.events);cursor=page.nextCursor;}while(page.hasMore);
+    assert.equal(received.length,120);assert.equal(new Set(received.map(item=>item.id)).size,120);
+    assert.ok(received.every(item=>!('planJson' in item)&&!('features' in item)));
+    assert.equal((await signalEventPage({after:cursor})).events.length,0);
   });}finally{await proxy.dispose();rmSync(directory,{recursive:true,force:true});}
 });

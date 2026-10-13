@@ -14,7 +14,8 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const rawReadiness = autoPickReadiness();
   const readiness = {enabled:rawReadiness.enabled, markets:rawReadiness.markets.map(m=>({id:m.id,label:m.label,status:m.status,universeCount:m.universe?.length??0}))};
-  const rights = membershipFor(await currentMember());
+  const member = await currentMember();
+  const rights = membershipFor(member);
   let workers;
   try { workers = { thai: (await scannerHealth()), dr: (await scannerHealth(Date.now(), 'dr')), us: (await scannerHealth(Date.now(), 'us')) }; }
   catch { workers = Object.fromEntries(['thai', 'dr', 'us'].map(market => [market, { status: 'unavailable', lastRunAt: null }])); }
@@ -37,7 +38,7 @@ export async function GET() {
     return Response.json({ status: 'membership-required', readiness, workers, worker: workers.thai, workerProcess, coverage, signals: [], events: [], runs: [] }, { headers: privateHeaders });
   }
   try {
-    return Response.json({ status: 'available', readiness, workers, worker: workers.thai, workerProcess, coverage, ...customerFeed((await signalFeed())) }, { headers: privateHeaders });
+    return Response.json({ status: 'available', notificationScope: member.id, readiness, workers, worker: workers.thai, workerProcess, coverage, ...customerFeed((await signalFeed())) }, { headers: privateHeaders });
   } catch {
     return Response.json({ status: 'unavailable', code: 'SIGNAL_STORE_UNAVAILABLE', readiness }, { status: 503, headers: privateHeaders });
   }

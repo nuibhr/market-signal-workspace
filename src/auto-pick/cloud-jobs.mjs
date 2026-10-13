@@ -8,6 +8,8 @@ import {usEodSession} from '../market-data/fmp-us.mjs';
 import {usScanSlot} from '../markets/us-universe.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const LEASE_MS=180000,BATCH_SIZE=4;
+export const MAX_SCAN_ATTEMPTS=5;
+export const MAX_SCAN_JOB_AGE_MS=30*60_000;
 export function marketWindow(market,now){
   if(market==='thai'){const s=thaiSession(now);return {key:s.day,monitor:s.monitorWindow,candidate:s.candidateWindow,symbols:thaiScanSymbols()};}
   if(market==='dr'){const s=drSession(now);return {key:s.key,monitor:s.monitorWindow,candidate:s.candidateWindow,symbols:drScanSymbols()};}
@@ -26,6 +28,10 @@ async function scheduleScans(queue,now=Date.now(),cron='*/5 * * * *'){
   await heartbeatWorker();
   const enabled=readiness().markets.filter(m=>m.status==='active').map(m=>m.id);
   await reconcileWatchPlans(enabled,now);
+  await storage.run(`UPDATE scanner_jobs SET state='failed',error_code=CASE WHEN attempts>=? THEN 'RETRY_EXHAUSTED' ELSE 'JOB_EXPIRED' END,
+    lease_token=NULL,lease_until=NULL,updated_at=? WHERE state IN ('pending','retry','running')
+    AND (state<>'running' OR lease_until<?) AND (attempts>=? OR created_at<?)`,
+    MAX_SCAN_ATTEMPTS,new Date(now).toISOString(),now,MAX_SCAN_ATTEMPTS,new Date(now-MAX_SCAN_JOB_AGE_MS).toISOString());
   const bucket=new Date(Math.floor(now/300000)*300000).toISOString();
   // Expired jobs must not occupy the queue ahead of today's monitoring work.
   const windows=new Map();
@@ -77,6 +83,10 @@ async function scheduleScans(queue,now=Date.now(),cron='*/5 * * * *'){
 }
 async function consumeScan(id,now=Date.now()){
   if(typeof id!=='string'||!/^[a-f0-9]{64}$/.test(id))throw Error('INVALID_SCANNER_JOB');
+  await storage.run(`UPDATE scanner_jobs SET state='failed',error_code=CASE WHEN attempts>=? THEN 'RETRY_EXHAUSTED' ELSE 'JOB_EXPIRED' END,
+    lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=? AND state IN ('pending','retry','running')
+    AND (state<>'running' OR lease_until<?) AND (attempts>=? OR created_at<?)`,
+    MAX_SCAN_ATTEMPTS,new Date(now).toISOString(),id,now,MAX_SCAN_ATTEMPTS,new Date(now-MAX_SCAN_JOB_AGE_MS).toISOString());
   const token=randomUUID(),row=await storage.first(`UPDATE scanner_jobs SET state='running',attempts=attempts+1,lease_token=?,lease_until=?,updated_at=?
     WHERE id=? AND ((state IN ('pending','retry') AND available_at<=?) OR (state='running' AND lease_until<?)) RETURNING *`,token,now+LEASE_MS,new Date(now).toISOString(),id,now,now);
   if(!row){const current=await storage.first('SELECT state FROM scanner_jobs WHERE id=?',id);return {status:current?.state==='running'?'busy':'ignored'};}
@@ -99,9 +109,10 @@ async function consumeScan(id,now=Date.now()){
     if(row.market==='us')await finishUsCoverage(Date.now());
     return {status:'done'};
   }catch(error){
-    const terminal=error.message==='INVALID_SCANNER_JOB';
+    const invalid=error.message==='INVALID_SCANNER_JOB';
+    const terminal=invalid||row.attempts>=MAX_SCAN_ATTEMPTS||now-Date.parse(row.created_at)>=MAX_SCAN_JOB_AGE_MS;
     const delay=Math.min(300000,60000*2**Math.min(3,row.attempts-1));
-    await mark(terminal?'failed':'retry',terminal?'INVALID_SCANNER_JOB':'SOURCE_RETRY',delay);
+    await mark(terminal?'failed':'retry',invalid?'INVALID_SCANNER_JOB':row.attempts>=MAX_SCAN_ATTEMPTS?'RETRY_EXHAUSTED':terminal?'JOB_EXPIRED':'SOURCE_RETRY',delay);
     return {status:terminal?'failed':'retry',delaySeconds:Math.ceil(delay/1000)};
   }
 }

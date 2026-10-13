@@ -6,6 +6,7 @@ import { THAI_ORB_RULE_VERSION } from './thai-orb.mjs';
 import { DR80_SYMBOLS, MAI_INITIAL_SYMBOLS, SET100_SYMBOLS } from '../markets/catalog.mjs';
 import { US_SCAN_SYMBOLS, US_UNIVERSE_VERSION, usScanSlot } from '../markets/us-universe.mjs';
 import { usEodSession } from '../market-data/fmp-us.mjs';
+import { createSettradeClient } from '../market-data/settrade.mjs';
 import { PERFORMANCE_WINDOW, recordedOutcome, summarizeRecordedTrades } from './signal-performance.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex').slice(0, 32);
@@ -23,10 +24,38 @@ export async function heartbeatWorker() {
 }
 
 export async function workerProcessHealth(now = Date.now()) {
+  if (process.env.AUTO_PICK_RUNTIME === 'cloudflare') return cloudScannerProcessHealth(now);
   const lastSeenAt = (await storage.first('SELECT last_seen_at AS lastSeenAt FROM auto_pick_worker_heartbeat WHERE id=1'))?.lastSeenAt ?? null;
   const age = lastSeenAt ? now - Date.parse(lastSeenAt) : Infinity;
   const intervalMinutes=process.env.AUTO_PICK_RUNTIME==='cloudflare'?5:1;
   return { status: Number.isFinite(age) && age >= 0 && age <= (intervalMinutes===5?420_000:300_000) ? 'running' : 'offline', lastSeenAt, intervalMinutes };
+}
+
+export async function cloudScannerProcessHealth(now = Date.now()) {
+  const state = await storage.first('SELECT last_scheduled_at,last_consumed_at FROM cloud_scanner_state WHERE id=1');
+  const recent = value => { const age = now - Date.parse(value); return Number.isFinite(age) && age >= 0 && age <= 420_000; };
+  const production = process.env.NODE_ENV === 'production';
+  const secretReady = process.env.AUTO_PICK_RUN_SECRET?.length >= 32;
+  const setReady = createSettradeClient({ env: process.env }).configuration.configured
+    && (!production || process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED === 'true');
+  const usReady = !production || process.env.YAHOO_EOD_DISPLAY_RIGHTS_CONFIRMED === 'true'
+    || process.env.FMP_DISPLAY_RIGHTS_CONFIRMED === 'true' && Boolean(process.env.FMP_API_KEY?.trim());
+  const enabled = secretReady && (setReady && (process.env.AUTO_PICK_ENABLED === 'true' || process.env.AUTO_PICK_DR_ENABLED === 'true')
+    || usReady && process.env.AUTO_PICK_US_ENABLED === 'true');
+  const rows = await storage.all('SELECT state,COUNT(*) AS count FROM scanner_jobs GROUP BY state');
+  const counts = Object.fromEntries(rows.map(row => [row.state, row.count]));
+  const oldest = await storage.first("SELECT MIN(created_at) AS at FROM scanner_jobs WHERE state IN ('pending','retry','running')");
+  const failures = await storage.first("SELECT COUNT(*) AS count FROM scanner_jobs WHERE state='failed' AND updated_at>=?", new Date(now - 30 * 60_000).toISOString());
+  const pending = (counts.pending ?? 0) + (counts.retry ?? 0) + (counts.running ?? 0);
+  const scheduler = { status: !enabled ? 'disabled' : recent(state?.last_scheduled_at) ? 'running' : 'offline', lastSeenAt: state?.last_scheduled_at ?? null };
+  const consumer = { status: !state?.last_consumed_at ? 'awaiting-first-run' : recent(state.last_consumed_at) ? 'running' : pending ? 'stale' : 'idle', lastSeenAt: state?.last_consumed_at ?? null };
+  const stalled = pending > 0 && Number.isFinite(Date.parse(oldest?.at)) && now - Date.parse(oldest.at) > 15 * 60_000;
+  const status = !enabled ? 'disabled' : scheduler.status === 'offline' ? 'offline'
+    : failures.count || stalled ? 'degraded' : consumer.status === 'running' ? 'running'
+      : pending ? 'awaiting-consumer' : 'idle';
+  return { status, runtime: 'cloudflare', intervalMinutes: 5, lastSeenAt: scheduler.lastSeenAt, scheduler, consumer,
+    queue: { pending: counts.pending ?? 0, retry: counts.retry ?? 0, running: counts.running ?? 0,
+      failed: counts.failed ?? 0, recentFailures: failures.count, oldestPendingAt: oldest?.at ?? null } };
 }
 
 export async function claimRun(market, slot, { retryFailed = false, staleMs = 900_000 } = {}) {
@@ -240,7 +269,7 @@ export async function scannerHealth(now = Date.now(), market = 'thai') {
     const start = new Date(Date.parse(`${session.day}T00:00:00+07:00`)).toISOString();
     const end = new Date(Date.parse(start) + 86_400_000).toISOString();
     const candidate = (await storage.first(`SELECT status,finished_at,error_code FROM auto_pick_runs
-      WHERE market='thai' AND slot>=? AND slot<? AND scanned>0 ORDER BY slot DESC LIMIT 1`,start, end));
+      WHERE market='thai' AND started_at>=? AND started_at<? AND scanned>0 ORDER BY started_at DESC LIMIT 1`,start, end));
     if (!candidate) return { status: 'missed-candidate-window', lastRunAt };
     if (candidate.status !== 'COMPLETE') return { status: 'candidate-degraded', lastRunAt, errorCode: candidate.error_code };
   }
@@ -304,7 +333,9 @@ export async function reconcileWatchPlans(enabledMarkets, now = Date.now()) {
     const disabled = !enabledMarkets.includes(pick.market);
     const deadline = pick.market === 'thai' ? Date.parse(`${pick.sessionDay}T11:30:00+07:00`)
       : pick.market === 'dr' ? pick.plan.features.entryEnd * 1000 : Infinity;
-    if (!disabled && now < deadline) continue;
+    // Give the monitor a final attempt before reconciliation makes the plan terminal.
+    // Cloud schedules reconciliation before dispatch; its last candle may still be queued.
+    if (!disabled && now < deadline + 20 * 60_000) continue;
     const lateExpiry = pick.status === 'EXPIRED' && Date.parse(row.updated_at) > deadline + 20 * 60000;
     if (pick.status === 'EXPIRED' && !lateExpiry && (pick.lastChecked15m ?? 0) * 1000 + 900000 >= deadline) continue;
     const lastClose = (pick.lastChecked15m ?? 0) * 1000 + 900000;
@@ -320,7 +351,7 @@ export async function reconcileWatchPlans(enabledMarkets, now = Date.now()) {
     const disabled = !enabledMarkets.includes(pick.market);
     const deadline = pick.market === 'thai' ? Date.parse(`${pick.sessionDay}T12:45:00+07:00`)
       : (pick.plan?.features?.sessionEnd ?? Infinity) * 1000 + 30 * 60_000;
-    if (!disabled && now < deadline) continue;
+    if (!disabled && now < deadline + 20 * 60_000) continue;
     await saveAdvance({ ...pick, status: 'REVIEW' }, [{ type: disabled ? 'DATA_GAP' : 'SESSION_END', price: null,
       detail: disabled ? 'หยุดติดตามตลาดนี้หลังเข้าแล้ว ยังไม่ทราบราคาออก ต้องตรวจผล'
         : 'จบภาคตลาดและพ้นเวลารอข้อมูลแล้ว ยังไม่ทราบราคาออก ต้องตรวจผล ไม่สรุปกำไรหรือขาดทุน' }]);
