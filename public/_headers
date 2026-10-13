@@ -1,0 +1,6 @@
+# The self-hosted Sylva scene is the only embeddable HTML asset.
+/landing-pages/inner-green-3d.html
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: object-src 'none'; base-uri 'self'; frame-ancestors 'self'
+  X-Content-Type-Options: nosniff
+  X-Robots-Tag: noindex
