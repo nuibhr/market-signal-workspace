@@ -40,11 +40,14 @@ test('signal ledger links recorded entries, exits, and events without counting u
     (await recordScanProgress('us', '2026-10-01', 'TEST', 'done'));
     (await recordScanProgress('us', '2026-10-01', 'RETRY', 'retry', 'SOURCE_UNAVAILABLE'));
     const coverage = (await scanCoverage('us', '2026-10-01', ['TEST','RETRY','NEW'], Date.now()+61000));
-    assert.deepEqual(coverage.pending, ['RETRY','NEW']);
+    assert.deepEqual(coverage.pending, ['NEW','RETRY']);
     assert.equal(coverage.done,1);
     (await finishRun(runId));
     assert.equal((await claimRun('us', '2026-10-01', { retryFailed: true })), null);
-    (await heartbeatWorker());
+    await heartbeatWorker();
+    assert.equal((await workerProcessHealth()).status,'stale');
+    const {SCANNER_RUNTIME_VERSION}=await import('./runtime-version.mjs');
+    await heartbeatWorker({runtimeVersion:SCANNER_RUNTIME_VERSION});
     const health = (await workerProcessHealth());
     assert.equal(health.status, 'running');
     assert.equal((await workerProcessHealth(Date.parse(health.lastSeenAt) + 301_000)).status, 'offline');

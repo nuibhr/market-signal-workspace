@@ -32,7 +32,7 @@ export async function GET() {
       dr: (await scanCoverage('dr', drSession(now).key, dr?.universe ?? [], now)),
       us: (await scanCoverage('us', usScanSlot(usEodSession(now).day), rawReadiness.markets.find(market => market.id === 'us')?.universe ?? [], now)),
     };
-    for (const [id, item] of Object.entries(coverage)) coverage[id] = Object.fromEntries(['expected','done','ineligible','unavailable','remaining'].map(key=>[key,item[key]]));
+    for (const [id, item] of Object.entries(coverage)) coverage[id] = Object.fromEntries(['expected','done','ineligible','unavailable','missed','retry','neverChecked','phase','remaining','unavailableSymbols'].map(key=>[key,item[key]]));
   } catch { coverage = {}; }
   if (!rights.capabilities.autoPickFeed) {
     return Response.json({ status: 'membership-required', readiness, workers, worker: workers.thai, workerProcess, coverage, signals: [], events: [], runs: [] }, { headers: privateHeaders });

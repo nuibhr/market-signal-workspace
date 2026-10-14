@@ -1,7 +1,8 @@
+import {isSourceFailure} from './coverage-policy.mjs';
 import {createHash,randomUUID} from 'node:crypto';
 import {storage} from '../storage/database.mjs';
 import {autoPickReadiness,thaiScanSymbols,drScanSymbols,usScanSymbols,runThaiAutoPick,runDrAutoPick,runUsAutoPick} from './runner.mjs';
-import {activeSignals,scanCoverage,heartbeatWorker,reconcileWatchPlans,claimRun,finishRun} from './store.mjs';
+import {activeSignals,scanCoverage,heartbeatWorker,reconcileWatchPlans,claimRun,finishRun,settleScanCoverage,settleOutstandingScans} from './store.mjs';
 import {thaiSession} from './engine.mjs';
 import {drSession} from './dr-orb.mjs';
 import {usEodSession} from '../market-data/fmp-us.mjs';
@@ -21,12 +22,13 @@ async function finishUsCoverage(now){
   const c=await scanCoverage('us',usScanSlot(s.day),usScanSymbols(),now);
   if(c.remaining)return;
   const id=await claimRun('us',usScanSlot(s.day),{retryFailed:true});
-  if(id)await finishRun(id,{scanned:c.done,errorCode:c.unavailable?'PARTIAL_SOURCE_UNAVAILABLE':null});
+  if(id)await finishRun(id,{scanned:c.done,errorCode:c.unavailable?'PARTIAL_SOURCE_UNAVAILABLE':c.missed?'CANDIDATE_WINDOW_MISSED':null});
 }
 async function scheduleScans(queue,now=Date.now(),cron='*/5 * * * *'){
   if(!queue?.sendBatch)throw Error('SCANNER_QUEUE_REQUIRED');
   await heartbeatWorker();
   const enabled=readiness().markets.filter(m=>m.status==='active').map(m=>m.id);
+  await settleOutstandingScans(enabled,now);
   await reconcileWatchPlans(enabled,now);
   await storage.run(`UPDATE scanner_jobs SET state='failed',error_code=CASE WHEN attempts>=? THEN 'RETRY_EXHAUSTED' ELSE 'JOB_EXPIRED' END,
     lease_token=NULL,lease_until=NULL,updated_at=? WHERE state IN ('pending','retry','running')
@@ -42,7 +44,7 @@ async function scheduleScans(queue,now=Date.now(),cron='*/5 * * * *'){
       new Date(now).toISOString(),market,window.key,enabled.includes(market)&&window.monitor?1:0);
   }
   for(const market of enabled){
-    const window=windows.get(market);if(!window.monitor)continue;
+    const window=windows.get(market);await settleScanCoverage(market,window.key,window.symbols,now);if(!window.monitor)continue;
     const active=await activeSignals(market);
     const candidates=window.candidate?(await scanCoverage(market,window.key,window.symbols,now)).pending:[];
     const outstanding=await storage.all(`SELECT payload_json FROM scanner_jobs WHERE market=? AND session_key=? AND state IN ('pending','retry','running')`,market,window.key);
@@ -102,7 +104,10 @@ async function consumeScan(id,now=Date.now()){
       const finished=await storage.first('SELECT status FROM auto_pick_runs WHERE market=? AND slot=?',row.market,`cloud:${row.id}`);
       if(finished?.status!=='COMPLETE')throw Error('RUN_NOT_FINISHED');
     }
-    if(result.status==='unavailable'||result.status==='waiting-eod'||result.errors?.some(e=>e.includes('RETRY')||e.includes('MONITOR')||row.market==='us'&&!e.includes('PLAN_REQUIRED')))throw Error(result.code||'SOURCE_RETRY');
+    const monitorFailed=result.errors?.some(e=>e.includes('MONITOR'));
+    const candidateRetry=result.coverage?result.coverage.unresolved?.some(item=>isSourceFailure(item.reason))
+      :result.errors?.some(e=>e.includes('RETRY')||row.market==='us'&&!e.includes('PLAN_REQUIRED'));
+    if(result.status==='unavailable'||result.status==='waiting-eod'||monitorFailed||candidateRetry)throw Error(result.code||'SOURCE_RETRY');
     await mark('done',result.errors?.length?'PARTIAL_SOURCE_UNAVAILABLE':null);
     await heartbeatWorker();
     await storage.run('UPDATE cloud_scanner_state SET last_consumed_at=? WHERE id=1',new Date().toISOString());

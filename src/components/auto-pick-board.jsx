@@ -1,4 +1,5 @@
 'use client';
+import { summarizeCoverage } from '../auto-pick/coverage-view.mjs';
 import DrTracker from './dr-tracker.jsx';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -10,7 +11,7 @@ import { createNotificationInbox } from '../auto-pick/notification-inbox.mjs';
 import { createSignalSpeaker } from '../auto-pick/speech.mjs';
 const VOICE_KEY = 'nugaom-autopick-voice-enabled';
 const WORKER_LABELS = { healthy: 'สแกนตามเวลา', running: 'กำลังสแกน', degraded: 'ข้อมูลบางส่วนมีปัญหา',
-  disabled: 'ยังไม่เปิดสแกนบนคลาวด์', idle: 'รอตัวประมวลผลรอบถัดไป', 'awaiting-consumer': 'กำลังรอตัวประมวลผล', offline: 'ตัวสแกนไม่ติดต่อ',
+  disabled: 'ยังไม่เปิดสแกนบนคลาวด์', idle: 'รอตัวประมวลผลรอบถัดไป', 'awaiting-consumer': 'กำลังรอตัวประมวลผล', offline: 'ตัวสแกนไม่ติดต่อ', stale: 'ตัวสแกนยังใช้โค้ดเก่า',
   'scanning-incomplete': 'กำลังตรวจให้ครบ',
   stuck: 'รอบสแกนค้าง', 'not-running': 'worker ไม่ทำงาน', 'awaiting-first-run': 'รอรอบสแกนแรก',
   'outside-session': 'นอกเวลาตลาด', 'missed-candidate-window': 'พลาดรอบคัดหุ้นเช้า',
@@ -185,7 +186,7 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   const lastRunAt = (marketId ? [workers[marketId]?.lastRunAt] : Object.values(workers).map(item => item?.lastRunAt))
     .filter(Boolean).sort().at(-1);
   const statusLabel = market => market.id === 'us' && workers.us?.scanUnverified
-    ? `ฟีด FMP ใช้ไม่ได้ ${workers.us.planRequired} ตัว` : WORKER_LABELS[workers[market.id]?.status] ?? 'รอรอบสแกน';
+    ? workers.us.planRequired?`บางรายการติดสิทธิข้อมูล ${workers.us.planRequired} ตัว`:'รอบเต็มยังมีข้อมูลไม่พร้อม' : WORKER_LABELS[workers[market.id]?.status] ?? 'รอรอบสแกน';
   const workerSummary = activeMarkets.map(market => `${market.id === 'us' ? 'สหรัฐฯ' : market.id === 'thai' ? 'หุ้นไทย' : market.label}: ${statusLabel(market)}`).join(' · ');
   const workerLabel = WORKER_LABELS[worker?.status] ?? 'กำลังตรวจสถานะ worker';
   const badgeLabel = activeMarkets.length ? processRunning ? activeMarkets.map(statusLabel).join(' · ') : WORKER_LABELS[workerProcess?.status] ?? 'รอตรวจตัวสแกน' : 'รอเปิดสแกน';
@@ -198,13 +199,12 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
     {marketId==='dr' &&['available','membership-required'].includes(state?.status)&&<DrTracker signals={signals} events={events} onSelect={onSelect}/>}
     <div className="auto-pick-markets">{activeMarkets.map(market => <div className="auto-pick-market active" key={market.id}>
       <strong>{market.label}</strong><span>{workerProcess?.status === 'offline' ? 'ตัวสแกนหยุดทำงาน' : coverage[market.id]
-        ? coverage[market.id].remaining > 0 ? 'อยู่ระหว่างตรวจครบชุด'
-          : coverage[market.id].ineligible + coverage[market.id].unavailable > 0 ? 'ปิดรอบแล้ว · บางตัวไม่มีข้อมูล' : 'ตรวจครบชุดแล้ว'
+        ? workerProcess?.status==='stale'?'ตัวสแกนยังใช้โค้ดเก่า':summarizeCoverage(coverage[market.id]).label
         : workers[market.id]?.status === 'outside-session' ? 'รอเปิดตลาด' : 'รอรอบตรวจ'}</span>
       <small>{market.universeCount ?? 0} ตัว</small>
-      {coverage[market.id] && <small>รอบนี้ตรวจ {coverage[market.id].done + coverage[market.id].ineligible + coverage[market.id].unavailable}/{coverage[market.id].expected} · ไม่พร้อมตามช่วง/ไม่มีแท่ง {coverage[market.id].ineligible} · ฟีดไม่พร้อม {coverage[market.id].unavailable} · รอตรวจ/ลองใหม่ {coverage[market.id].remaining}</small>}
+      {coverage[market.id] && <small>ปิดสถานะ {summarizeCoverage(coverage[market.id]).accounted}/{coverage[market.id].expected} · ประเมินได้ {coverage[market.id].done} · ไม่เหมาะรอบนี้ {coverage[market.id].ineligible} · ฟีดไม่พร้อม {coverage[market.id].unavailable} · พลาดรอบ {coverage[market.id].missed||0} · ยังไม่เคยลอง {coverage[market.id].neverChecked||0} · รอลองใหม่ {coverage[market.id].retry||0}</small>}{coverage[market.id]?.unavailableSymbols?.length>0&&<small>ข้อมูลไม่พร้อมในรอบนี้: {coverage[market.id].unavailableSymbols.map(item=>item.symbol).join(', ')}</small>}
     </div>)}</div>
-    {shelvedMarkets.length > 0 && <details className="auto-pick-shelved-markets"><summary>ตลาดที่ยังสแกนไม่ครบหรือยังไม่เปิด {shelvedMarkets.length} หมวด</summary><div>{shelvedMarkets.map(market => <article key={market.id}><strong>{market.label}</strong><span>{market.id === 'us' && workers.us?.scanUnverified ? `รอบเต็มล่าสุดยังไม่ผ่าน: ${workers.us.planRequired ? `สิทธิ FMP ไม่ครอบคลุม ${workers.us.planRequired} ตัว` : 'ยังไม่มีรอบสแกนยืนยันครบชุดหุ้นสหรัฐฯ'} · ตรวจรอบใหม่ก่อนเปิดแสดง` : market.reason ?? 'รอข้อมูลราคาและกติกาสแกนที่ยืนยันแล้ว'}</span></article>)}</div></details>}
+    {shelvedMarkets.length > 0 && <details className="auto-pick-shelved-markets"><summary>ตลาดที่ยังสแกนไม่ครบหรือยังไม่เปิด {shelvedMarkets.length} หมวด</summary><div>{shelvedMarkets.map(market => <article key={market.id}><strong>{market.label}</strong><span>{market.id === 'us' && workers.us?.scanUnverified ? `รอบเต็มล่าสุดยังไม่ผ่าน: ${workers.us.planRequired ? `สิทธิ FMP ไม่ครอบคลุม ${workers.us.planRequired} ตัว` : 'ยังไม่มีรอบสแกนยืนยันครบชุดหุ้นสหรัฐฯ'} · ตรวจรอบใหม่ก่อนเปิดแสดง` : market.reason ?? 'รอข้อมูลราคาและกติกาสแกนที่ยืนยันแล้ว'}</span>{coverage[market.id]&&<small>{summarizeCoverage(coverage[market.id]).label} · ปิดสถานะ {summarizeCoverage(coverage[market.id]).accounted}/{coverage[market.id].expected} · ประเมินได้ {coverage[market.id].done} · ฟีดไม่พร้อม {coverage[market.id].unavailable} · พลาดรอบ {coverage[market.id].missed||0} · ยังไม่เคยลอง {coverage[market.id].neverChecked||0} · รอลองใหม่ {coverage[market.id].retry||0}</small>}{coverage[market.id]?.unavailableSymbols?.length>0&&<small>ข้อมูลใช้ไม่ได้: {coverage[market.id].unavailableSymbols.map(item=>item.symbol).join(', ')}</small>}</article>)}</div></details>}
     {!state && !error && <div className="auto-pick-empty">กำลังอ่านสถานะระบบ…</div>}
     {error && <div className="auto-pick-empty">อ่านสถานะสัญญาณจากเซิร์ฟเวอร์ไม่ได้</div>}
     {state?.status === 'membership-required' && <div className="auto-pick-empty"><ShieldCheck size={18} /><span>เข้าสู่ระบบ LINE และแจ้งเลขพอร์ตเพื่อรับสิทธิทดลองใช้ฟรี 14 วัน</span><a href="/account">บัญชีของฉัน ↗</a></div>}

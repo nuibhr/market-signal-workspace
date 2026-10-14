@@ -39,3 +39,7 @@ origin/main ก่อนรวมอยู่ที่ `21766235400d1d4f582cc953
 | Production | packaging พร้อม | hosting plan/limits, provider rights, fresh customer cutover, offsite recovery, hosted LINE/device checks และเปิด scanner ตามหลักฐาน |
 
 การอัปเดต main บน GitHub เป็นการรวม source เท่านั้น ไม่เปิดเว็บสาธารณะหรือ cloud scanner
+
+## ต่อจากรีวิว
+
+แก้รายการค้างและปิดสถานะ coverage เพิ่มแล้ว ดู `docs/autopick-coverage-repair-2026-10-14.md` สำหรับสถานะที่แยก missed/unavailable, migration 0009, worker reload และหลักฐานใหม่ ชุดรวมล่าสุดผ่าน 100 tests/subtests ข้อมูลรอบสแกนในตารางเดิมด้านบนเป็น snapshot ก่อนการแก้ครั้งนี้

@@ -62,5 +62,12 @@ test('cloud batches persist, coalesce, retry, reclaim expired leases and dedupli
       VALUES(?,?,?,?,?,?,?,?)`,'a'.repeat(64),'thai','2026-10-06','old',JSON.stringify({symbols:['PTT']}),0,new Date(start).toISOString(),new Date(start).toISOString());
     await scanner.scheduleScans(queue,Date.now());
     assert.equal((await storage.first('SELECT state FROM scanner_jobs WHERE id=?','a'.repeat(64))).state,'cancelled');
+    await context.test('terminal no-bars response records unavailable once and acknowledges the batch',async()=>{
+      let requests=0;
+      const terminal=createCloudScanner({readiness:()=>({markets:[{id:'us',status:'active'}]}),windowFor:()=>({key:'fixture-terminal',monitor:true,candidate:true,symbols:['WBD']}),
+        runMarket:{us:async()=>{requests++;await recordScanProgress('us','fixture-terminal','WBD','unavailable','BARS_UNAVAILABLE');return {status:'partial',errors:['WBD:BARS_UNAVAILABLE'],coverage:{remaining:0,unresolved:[]}};}}});
+      await terminal.scheduleScans(queue,Date.now());const id=sent.at(-1);
+      assert.equal((await terminal.consumeScan(id,Date.now())).status,'done');assert.equal((await terminal.consumeScan(id,Date.now())).status,'ignored');assert.equal(requests,1);
+    });
   }finally{sharedDatabase().close();context.mock.timers.reset();rmSync(directory,{recursive:true,force:true});}
 });

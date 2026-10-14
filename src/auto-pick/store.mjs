@@ -7,6 +7,8 @@ import { DR80_SYMBOLS, MAI_INITIAL_SYMBOLS, SET100_SYMBOLS } from '../markets/ca
 import { US_SCAN_SYMBOLS, US_UNIVERSE_VERSION, usScanSlot } from '../markets/us-universe.mjs';
 import { usEodSession } from '../market-data/fmp-us.mjs';
 import { createSettradeClient } from '../market-data/settrade.mjs';
+import { SCANNER_RUNTIME_VERSION } from './runtime-version.mjs';
+import { MAX_SOURCE_FAILURES, isSourceFailure, retryDelayMs, coveragePhase, cutoffDisposition } from './coverage-policy.mjs';
 import { PERFORMANCE_WINDOW, recordedOutcome, summarizeRecordedTrades } from './signal-performance.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex').slice(0, 32);
@@ -18,17 +20,18 @@ const parse = row => row && ({
   lastChecked15m: row.last_checked_15m, source: row.source, plan: JSON.parse(row.plan_json),
 });
 
-export async function heartbeatWorker() {
-  (await storage.run(`INSERT INTO auto_pick_worker_heartbeat (id,last_seen_at) VALUES (1,?)
-    ON CONFLICT(id) DO UPDATE SET last_seen_at=excluded.last_seen_at`,new Date().toISOString()));
+export async function heartbeatWorker({runtimeVersion=null}={}) {
+  await storage.run(`INSERT INTO auto_pick_worker_heartbeat(id,last_seen_at,runtime_version) VALUES(1,?,?)
+    ON CONFLICT(id) DO UPDATE SET last_seen_at=excluded.last_seen_at,runtime_version=COALESCE(excluded.runtime_version,auto_pick_worker_heartbeat.runtime_version)`,new Date().toISOString(),runtimeVersion);
 }
 
 export async function workerProcessHealth(now = Date.now()) {
   if (process.env.AUTO_PICK_RUNTIME === 'cloudflare') return cloudScannerProcessHealth(now);
-  const lastSeenAt = (await storage.first('SELECT last_seen_at AS lastSeenAt FROM auto_pick_worker_heartbeat WHERE id=1'))?.lastSeenAt ?? null;
+  const heartbeat=await storage.first('SELECT last_seen_at AS lastSeenAt,runtime_version AS runtimeVersion FROM auto_pick_worker_heartbeat WHERE id=1');
+  const lastSeenAt=heartbeat?.lastSeenAt??null;
   const age = lastSeenAt ? now - Date.parse(lastSeenAt) : Infinity;
   const intervalMinutes=process.env.AUTO_PICK_RUNTIME==='cloudflare'?5:1;
-  return { status: Number.isFinite(age) && age >= 0 && age <= (intervalMinutes===5?420_000:300_000) ? 'running' : 'offline', lastSeenAt, intervalMinutes };
+  return {status:Number.isFinite(age)&&age>=0&&age<=300000?heartbeat?.runtimeVersion===SCANNER_RUNTIME_VERSION?'running':'stale':'offline',lastSeenAt,intervalMinutes,runtimeVersion:heartbeat?.runtimeVersion??null,expectedRuntimeVersion:SCANNER_RUNTIME_VERSION};
 }
 
 export async function cloudScannerProcessHealth(now = Date.now()) {
@@ -86,38 +89,56 @@ export async function recordDecision(runId, symbol, plan, reason = null) {
     sourceTime,));
 }
 
-export async function recordScanProgress(market, sessionKey, symbol, state, reason = null) {
-  const ruleVersion = market === 'thai' ? THAI_ORB_RULE_VERSION : market === 'dr' ? DR_ORB_RULE_VERSION : null;
-  (await storage.run(`INSERT INTO auto_pick_scan_progress
-    (market,session_key,symbol,state,reason,rule_version,attempts,updated_at) VALUES (?,?,?,?,?,?,1,?)
-    ON CONFLICT(market,session_key,symbol) DO UPDATE SET
-      state=excluded.state,reason=excluded.reason,rule_version=excluded.rule_version,
-      attempts=auto_pick_scan_progress.attempts+1,updated_at=excluded.updated_at`,market, sessionKey, symbol, state, reason, ruleVersion, new Date().toISOString()));
+export async function recordScanProgress(market,sessionKey,symbol,state,reason=null) {
+  const ruleVersion=market==='thai'?THAI_ORB_RULE_VERSION:market==='dr'?DR_ORB_RULE_VERSION:null;
+  const failure=state==='retry'&&isSourceFailure(reason)?1:0;
+  await storage.run(`INSERT INTO auto_pick_scan_progress(market,session_key,symbol,state,reason,rule_version,attempts,updated_at,source_failures)
+    VALUES(?,?,?,?,?,?,1,?,?) ON CONFLICT(market,session_key,symbol) DO UPDATE SET
+    state=CASE WHEN ?=1 AND (CASE WHEN auto_pick_scan_progress.rule_version IS excluded.rule_version THEN auto_pick_scan_progress.source_failures ELSE 0 END)+1>=? THEN 'unavailable' ELSE excluded.state END,
+    reason=CASE WHEN ?=1 AND (CASE WHEN auto_pick_scan_progress.rule_version IS excluded.rule_version THEN auto_pick_scan_progress.source_failures ELSE 0 END)+1>=? THEN 'SOURCE_RETRY_EXHAUSTED:'||excluded.reason ELSE excluded.reason END,
+    rule_version=excluded.rule_version,attempts=auto_pick_scan_progress.attempts+1,updated_at=excluded.updated_at,
+    source_failures=CASE WHEN ?=1 THEN (CASE WHEN auto_pick_scan_progress.rule_version IS excluded.rule_version THEN auto_pick_scan_progress.source_failures ELSE 0 END)+1 ELSE 0 END`,
+    market,sessionKey,symbol,state,reason,ruleVersion,new Date().toISOString(),failure,failure,MAX_SOURCE_FAILURES,failure,MAX_SOURCE_FAILURES,failure);
 }
 
-export async function scanCoverage(market, sessionKey, symbols, now = Date.now()) {
-  const allowed = new Set(symbols);
-  const ruleVersion = market === 'thai' ? THAI_ORB_RULE_VERSION : market === 'dr' ? DR_ORB_RULE_VERSION : null;
-  const rows = (await storage.all(`SELECT symbol,state,reason,rule_version AS ruleVersion,attempts,updated_at AS updatedAt
-    FROM auto_pick_scan_progress WHERE market=? AND session_key=?`,market, sessionKey))
-    .filter(row => allowed.has(row.symbol) && (!ruleVersion || row.ruleVersion === ruleVersion));
-  const bySymbol = new Map(rows.map(row => [row.symbol, row]));
-  const done = rows.filter(row => row.state === 'done').length;
-  const ineligible = rows.filter(row => row.state === 'ineligible').length;
-  const unavailable = rows.filter(row => row.state === 'unavailable').length;
-  const retry = rows.filter(row => row.state === 'retry').length;
-  const unavailableSymbols = rows.filter(row => row.state === 'unavailable')
-    .map(row => ({ symbol: row.symbol, reason: row.reason ?? 'SOURCE_UNAVAILABLE' }));
-  return {
-    expected: symbols.length, done, ineligible, unavailable, retry,
-    unavailableSymbols,
-    remaining: symbols.length - done - ineligible - unavailable,
-    pending: symbols.filter(symbol => {
-      const row = bySymbol.get(symbol);
-      return !row || row.state === 'retry' && now - Date.parse(row.updatedAt) >= 60_000;
-    }),
-    unresolved: rows.filter(row => row.state === 'retry').map(row => ({ symbol: row.symbol, reason: row.reason, attempts: row.attempts })),
-  };
+export async function scanCoverage(market,sessionKey,symbols,now=Date.now()) {
+  const universe=[...new Set(symbols)],allowed=new Set(universe);
+  const ruleVersion=market==='thai'?THAI_ORB_RULE_VERSION:market==='dr'?DR_ORB_RULE_VERSION:null;
+  const rows=(await storage.all(`SELECT symbol,state,reason,rule_version AS ruleVersion,attempts,source_failures AS sourceFailures,updated_at AS updatedAt
+    FROM auto_pick_scan_progress WHERE market=? AND session_key=?`,market,sessionKey)).filter(row=>allowed.has(row.symbol)&&(!ruleVersion||row.ruleVersion===ruleVersion));
+  const bySymbol=new Map(rows.map(row=>[row.symbol,row]));
+  const count=state=>rows.filter(row=>row.state===state).length;
+  const details=state=>rows.filter(row=>row.state===state).map(row=>({symbol:row.symbol,reason:row.reason,attempts:row.attempts}));
+  const neverCheckedSymbols=universe.filter(symbol=>!bySymbol.has(symbol));
+  const eligibleRetries=rows.filter(row=>row.state==='retry'&&now-Date.parse(row.updatedAt)>=retryDelayMs(row))
+    .sort((a,b)=>a.attempts-b.attempts||a.updatedAt.localeCompare(b.updatedAt));
+  const done=count('done'),ineligible=count('ineligible'),unavailable=count('unavailable'),missed=count('missed');
+  return {expected:universe.length,done,ineligible,unavailable,missed,retry:count('retry'),neverChecked:neverCheckedSymbols.length,
+    phase:coveragePhase(market,sessionKey,now),remaining:universe.length-done-ineligible-unavailable-missed,
+    unavailableSymbols:details('unavailable'),missedSymbols:details('missed'),neverCheckedSymbols,
+    pending:[...neverCheckedSymbols,...eligibleRetries.map(row=>row.symbol)],unresolved:details('retry')};
+}
+
+export async function settleScanCoverage(market,key,symbols,now=Date.now()) {
+  if(coveragePhase(market,key,now)!=='ended')return scanCoverage(market,key,symbols,now);
+  const coverage=await scanCoverage(market,key,symbols,now);
+  const version=market==='thai'?THAI_ORB_RULE_VERSION:market==='dr'?DR_ORB_RULE_VERSION:null;
+  for(const item of [...coverage.unresolved,...coverage.neverCheckedSymbols.map(symbol=>({symbol,reason:null}))]) {
+    const state=item.reason?cutoffDisposition(item.reason):'missed';
+    const reason=item.reason?`${item.reason}_AT_CUTOFF`:'CANDIDATE_WINDOW_MISSED';
+    await storage.run(`INSERT INTO auto_pick_scan_progress(market,session_key,symbol,state,reason,rule_version,attempts,updated_at,source_failures)
+      VALUES(?,?,?,?,?,?,0,?,0) ON CONFLICT(market,session_key,symbol) DO UPDATE SET state=excluded.state,reason=excluded.reason,updated_at=excluded.updated_at,rule_version=excluded.rule_version
+      WHERE auto_pick_scan_progress.state='retry' OR auto_pick_scan_progress.rule_version IS NOT excluded.rule_version`,market,key,item.symbol,state,reason,version,new Date(now).toISOString());
+  }
+  return scanCoverage(market,key,symbols,now);
+}
+
+export async function settleOutstandingScans(enabledMarkets,now=Date.now()) {
+  for(const market of enabledMarkets) {
+    const symbols=market==='thai'?[...SET100_SYMBOLS,...MAI_INITIAL_SYMBOLS]:market==='dr'?DR80_SYMBOLS:market==='us'?US_SCAN_SYMBOLS:[];
+    const keys=await storage.all("SELECT DISTINCT session_key AS key FROM auto_pick_scan_progress WHERE market=? AND state='retry' ORDER BY session_key DESC LIMIT 5",market);
+    for(const {key} of keys)await settleScanCoverage(market,key,symbols,now);
+  }
 }
 
 export async function signalForSession(market, symbol, day) {
@@ -260,12 +281,11 @@ export async function scannerHealth(now = Date.now(), market = 'thai') {
   if (!session.monitorWindow) return { status: 'outside-session', lastRunAt };
   if (row.status === 'RUNNING') return { status: ageMinutes > 5 ? 'stuck' : 'running', lastRunAt };
   if (!Number.isFinite(ageMinutes) || ageMinutes > 20 || ageMinutes < -2) return { status: 'not-running', lastRunAt };
-  if (row.status === 'FAILED') return { status: 'degraded', lastRunAt, errorCode: row.error_code };
-  if (session.candidateWindow && (await scanCoverage('thai', session.day, [...SET100_SYMBOLS, ...MAI_INITIAL_SYMBOLS], now)).remaining > 0)
-    return { status: 'scanning-incomplete', lastRunAt };
-  if (session.minutes >= 675) {
-    if ((await scanCoverage('thai', session.day, [...SET100_SYMBOLS, ...MAI_INITIAL_SYMBOLS], now)).remaining > 0)
-      return { status: 'candidate-degraded', lastRunAt, errorCode: 'SCAN_UNIVERSE_INCOMPLETE' };
+  if (row.status === 'FAILED') return { status: row.error_code==='SCAN_IN_PROGRESS'&&session.candidateWindow?'scanning-incomplete':'degraded', lastRunAt, errorCode: row.error_code };
+  const coverage=await scanCoverage('thai',session.day,[...SET100_SYMBOLS,...MAI_INITIAL_SYMBOLS],now);
+  if(session.candidateWindow&&coverage.remaining>0)return {status:'scanning-incomplete',lastRunAt};
+  if(session.minutes>=675) {
+    if(coverage.remaining||coverage.missed||coverage.unavailable)return {status:'candidate-degraded',lastRunAt,errorCode:'SCAN_UNIVERSE_INCOMPLETE'};
     const start = new Date(Date.parse(`${session.day}T00:00:00+07:00`)).toISOString();
     const end = new Date(Date.parse(start) + 86_400_000).toISOString();
     const candidate = (await storage.first(`SELECT status,finished_at,error_code FROM auto_pick_runs
@@ -286,12 +306,10 @@ async function drScannerHealth(now) {
   const ageMinutes = (now - Date.parse(lastRunAt)) / 60_000;
   if (row.status === 'RUNNING') return { status: ageMinutes > 5 ? 'stuck' : 'running', lastRunAt };
   if (!Number.isFinite(ageMinutes) || ageMinutes > 20 || ageMinutes < -2) return { status: 'not-running', lastRunAt };
-  if (row.status === 'FAILED') return { status: 'degraded', lastRunAt, errorCode: row.error_code };
-  if (session.candidateWindow && (await scanCoverage('dr', session.key, DR80_SYMBOLS, now)).remaining > 0)
-    return { status: 'scanning-incomplete', lastRunAt };
-  if (!session.candidateWindow && now / 1000 >= session.entryEnd
-    && (await scanCoverage('dr', session.key, DR80_SYMBOLS, now)).remaining > 0)
-    return { status: 'candidate-degraded', lastRunAt, errorCode: 'SCAN_UNIVERSE_INCOMPLETE' };
+  if (row.status === 'FAILED') return { status: row.error_code==='SCAN_IN_PROGRESS'&&session.candidateWindow?'scanning-incomplete':'degraded', lastRunAt, errorCode: row.error_code };
+  const coverage=await scanCoverage('dr',session.key,DR80_SYMBOLS,now);
+  if(session.candidateWindow&&coverage.remaining>0)return {status:'scanning-incomplete',lastRunAt};
+  if(!session.candidateWindow&&now/1000>=session.entryEnd&&(coverage.remaining||coverage.missed||coverage.unavailable))return {status:'candidate-degraded',lastRunAt,errorCode:'SCAN_UNIVERSE_INCOMPLETE'};
   return { status: 'healthy', lastRunAt };
 }
 
@@ -319,7 +337,7 @@ async function usScannerHealth(now) {
   if (row.slot !== usScanSlot(day) || !Number.isFinite(ageMinutes) || ageMinutes < -2)
     return { status: session.afterDeadline ? 'missed-candidate-window' : 'awaiting-first-run', lastRunAt, ...verification };
   if (row.status === 'FAILED') {
-    return { status: 'degraded', lastRunAt,
+    return { status: row.error_code==='SCAN_IN_PROGRESS'?'scanning-incomplete':'degraded', lastRunAt,
       errorCode: planRequired ? 'FMP_PLAN_REQUIRED_FOR_UNIVERSE' : row.error_code,
       ...verification };
   }

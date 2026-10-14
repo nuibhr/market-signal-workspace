@@ -1,3 +1,4 @@
+import { sourceDisposition } from './coverage-policy.mjs';
 import { archiveCandles } from './history-store.mjs';
 import { SET100_SYMBOLS, MAI_INITIAL_SYMBOLS, DR80_SYMBOLS, US_STOCKS } from '../markets/catalog.mjs';
 import { US_SCAN_SYMBOLS, US_UNIVERSE_METADATA, usScanSlot } from '../markets/us-universe.mjs';
@@ -9,7 +10,7 @@ import { advancePick, bangkokParts, thaiSession } from './engine.mjs';
 import { advanceThaiOrbPick, buildThaiOrbPlan, THAI_ORB_RULE_VERSION } from './thai-orb.mjs';
 import { advanceDrOrbPick, buildDrOrbPlan, DR_ORB_RULE_VERSION, drSession } from './dr-orb.mjs';
 import { advanceUsEodPick, buildUsEodPlan } from './us-engine.mjs';
-import { activeSignals, claimRun, createSignal, finishRun, recordDecision, recordScanProgress, runForSlot, saveAdvance, scanCoverage, signalForSession } from './store.mjs';
+import { activeSignals, claimRun, createSignal, finishRun, recordDecision, recordScanProgress, runForSlot, saveAdvance, scanCoverage, settleScanCoverage, signalForSession } from './store.mjs';
 
 let nextSourceRequestAt = 0;
 let sourceClient;
@@ -84,12 +85,16 @@ export function autoPickReadiness() {
   };
 }
 
-function requireReady(market = 'thai') {
-  const readiness = autoPickReadiness();
+function ensureReady(market = 'thai', provider = autoPickReadiness) {
+  const readiness = provider();
   if (!readiness.markets.some(item => item.id === market && item.status === 'active')) throw new Error('AUTO_PICK_NOT_READY');
   if (!process.env.AUTO_PICK_RUN_SECRET || process.env.AUTO_PICK_RUN_SECRET.length < 32) throw new Error('AUTO_PICK_SECRET_MISSING');
   return readiness;
 }
+
+export function createAutoPickRunners({source=client,usSource=getUsDailyBars,readiness=autoPickReadiness}={}) {
+const client=source,getUsDailyBars=usSource;
+const requireReady=market=>ensureReady(market,readiness);
 
 function latestCurrentQuarter(series, now, day) {
   const closed = completedCandles(series.bars, '15m', now);
@@ -97,21 +102,11 @@ function latestCurrentQuarter(series, now, day) {
   return latest && bangkokParts(latest.time * 1000).day === day && now - (latest.time + 900) * 1000 < 45 * 60_000;
 }
 
-const sourceDisposition = error => error?.status === 400 || error?.status === 404 ? 'unavailable' : 'retry';
-
-async function settleMissingSessionData(market, key, symbols, reasons) {
-  for (const item of (await scanCoverage(market, key, symbols)).unresolved) {
-    if (reasons.includes(item.reason))
-      (await recordScanProgress(market, key, item.symbol, 'ineligible', `${item.reason}_AT_CUTOFF`));
-  }
-}
-
-export async function runThaiAutoPick(now = Date.now(), task = {}) {
+async function runThaiAutoPick(now = Date.now(), task = {}) {
   requireReady('thai');
   const session = thaiSession(now);
+  await settleScanCoverage('thai',session.day,task.symbols??thaiScanSymbols(),now);
   if (!session.monitorWindow) return { status: 'outside-session', day: session.day };
-  if (!session.candidateWindow && session.minutes >= 675)
-    (await settleMissingSessionData('thai', session.day, task.symbols??thaiScanSymbols(), ['NO_CURRENT_SESSION_CANDLE', 'OPENING_BAR_UNAVAILABLE']));
   const slot = task.id??`${new Date(Math.floor(now / 60_000) * 60_000).toISOString()}:${THAI_ORB_RULE_VERSION}`;
   const runId = (await claimRun('thai', slot,{retryFailed:Boolean(task.id),staleMs:task.id?180000:900000}));
   if (!runId) return { status: 'already-run', slot };
@@ -123,9 +118,10 @@ export async function runThaiAutoPick(now = Date.now(), task = {}) {
     for (const pick of (await activeSignals('thai')).filter(pick=>!task.symbols||task.symbols.includes(pick.symbol))) {
       try {
         const fifteen = await client.getCandles(pick.symbol, '15m');
+        const checkedAt=Date.now();
         const advanced = pick.plan?.setupType === 'OPENING_RANGE_BREAKOUT'
-          ? advanceThaiOrbPick(pick, fifteen.bars, now)
-          : advancePick(pick, (await client.getCandles(pick.symbol, '1h')).bars, fifteen.bars, now);
+          ? advanceThaiOrbPick(pick, fifteen.bars, checkedAt)
+          : advancePick(pick, (await client.getCandles(pick.symbol, '1h')).bars, fifteen.bars, Date.now());
         if (advanced.events.length || advanced.pick.lastChecked15m !== pick.lastChecked15m) (await saveAdvance(advanced.pick, advanced.events));
       } catch { errors.push(`${pick.symbol}:MONITOR_SOURCE_UNAVAILABLE`); }
     }
@@ -142,13 +138,15 @@ export async function runThaiAutoPick(now = Date.now(), task = {}) {
         try {
           const fifteen = await client.getCandles(symbol, '15m', SCAN_INTRADAY_BARS);
           const daily = await client.getCandles(symbol, '1d', SCAN_DAILY_BARS);
-          if (!latestCurrentQuarter(fifteen, now, session.day)) {
+          const checkedAt=Date.now();
+          if(!thaiSession(checkedAt).candidateWindow||thaiSession(checkedAt).day!==session.day) {await recordScanProgress('thai',session.day,symbol,'missed','CANDIDATE_WINDOW_ENDED_DURING_FETCH');break;}
+          if (!latestCurrentQuarter(fifteen, checkedAt, session.day)) {
             (await recordDecision(runId, symbol, null, 'NO_CURRENT_SESSION_CANDLE'));
             (await recordScanProgress('thai', session.day, symbol, 'retry', 'NO_CURRENT_SESSION_CANDLE'));
             continue;
           }
           const plan = buildThaiOrbPlan({ symbol, instrumentId: `${SET100_SYMBOLS.includes(symbol) ? 'SET100' : 'MAI_INITIAL'}:${symbol}`,
-            fifteenMinuteBars: fifteen.bars, dailyBars: daily.bars, now });
+            fifteenMinuteBars: fifteen.bars, dailyBars: daily.bars, now:checkedAt });
           (await recordDecision(runId, symbol, plan));
           (await recordScanProgress('thai', session.day, symbol,
             plan.code === 'OPENING_BAR_UNAVAILABLE' ? session.minutes >= 645 ? 'ineligible' : 'retry' : 'done', plan.code ?? null));
@@ -164,20 +162,21 @@ export async function runThaiAutoPick(now = Date.now(), task = {}) {
         }
       }
     }
-    (await finishRun(runId, { scanned, candidates, errorCode: errors.length ? 'PARTIAL_SOURCE_UNAVAILABLE' : null }));
-    return { status: errors.length ? 'partial' : 'complete', slot, scanned, candidates, errors };
+    const coverage=await settleScanCoverage('thai',session.day,task.symbols??thaiScanSymbols(),Date.now());
+    const errorCode=errors.length||session.candidateWindow&&coverage.unavailable?'PARTIAL_SOURCE_UNAVAILABLE':session.candidateWindow&&coverage.remaining?'SCAN_IN_PROGRESS':session.candidateWindow&&coverage.missed?'CANDIDATE_WINDOW_MISSED':null;
+    await finishRun(runId,{scanned,candidates,errorCode});
+    return {status:errorCode?'partial':'complete',slot,scanned,candidates,errors,coverage};
   } catch {
     (await finishRun(runId, { scanned, candidates, errorCode: 'SOURCE_UNAVAILABLE' }));
     return { status: 'unavailable', slot, scanned, candidates, code: 'SOURCE_UNAVAILABLE' };
   }
 }
 
-export async function runDrAutoPick(now = Date.now(), task = {}) {
+async function runDrAutoPick(now = Date.now(), task = {}) {
   requireReady('dr');
   const session = drSession(now);
+  await settleScanCoverage('dr',session.key,task.symbols??drScanSymbols(),now);
   if (!session.monitorWindow) return { status: 'outside-session', session: session.key };
-  if (!session.candidateWindow || now / 1000 >= session.openingEnd + 3600)
-    (await settleMissingSessionData('dr', session.key, task.symbols??drScanSymbols(), ['DR_SESSION_NOT_CONFIRMED', 'NO_FRESH_DR_CANDLE', 'OPENING_BAR_UNAVAILABLE']));
   const slot = task.id??`${new Date(Math.floor(now / 60_000) * 60_000).toISOString()}:${DR_ORB_RULE_VERSION}`;
   const runId = (await claimRun('dr', slot,{retryFailed:Boolean(task.id),staleMs:task.id?180000:900000}));
   if (!runId) return { status: 'already-run', slot };
@@ -189,7 +188,7 @@ export async function runDrAutoPick(now = Date.now(), task = {}) {
     for (const pick of (await activeSignals('dr')).filter(pick=>!task.symbols||task.symbols.includes(pick.symbol))) {
       try {
         const [fifteen, quote] = await Promise.all([client.getCandles(pick.symbol, '15m'), client.getQuote(pick.symbol)]);
-        const advanced = advanceDrOrbPick(pick, fifteen.bars, quote, now);
+        const advanced = advanceDrOrbPick(pick, fifteen.bars, quote, Date.now());
         if (advanced.events.length || advanced.pick.lastChecked15m !== pick.lastChecked15m) (await saveAdvance(advanced.pick, advanced.events));
       } catch { errors.push(`${pick.symbol}:MONITOR_SOURCE_UNAVAILABLE`); }
     }
@@ -216,13 +215,15 @@ export async function runDrAutoPick(now = Date.now(), task = {}) {
           }
           const fifteen = await client.getCandles(symbol, '15m', SCAN_INTRADAY_BARS);
           const daily = await client.getCandles(symbol, '1d', SCAN_DAILY_BARS);
-          const latest = completedCandles(fifteen.bars, '15m', now).filter(bar => bar.time >= session.start && bar.time < session.end).at(-1);
-          if (!latest || now - (latest.time + 900) * 1000 > 45 * 60_000) {
+          const checkedAt=Date.now();
+          if(!drSession(checkedAt).candidateWindow||drSession(checkedAt).key!==session.key) {await recordScanProgress('dr',session.key,symbol,'missed','CANDIDATE_WINDOW_ENDED_DURING_FETCH');break;}
+          const latest = completedCandles(fifteen.bars, '15m', checkedAt).filter(bar => bar.time >= session.start && bar.time < session.end).at(-1);
+          if (!latest || checkedAt - (latest.time + 900) * 1000 > 45 * 60_000) {
             (await recordDecision(runId, symbol, null, 'NO_FRESH_DR_CANDLE'));
             (await recordScanProgress('dr', session.key, symbol, now / 1000 >= session.openingEnd + 3600 ? 'ineligible' : 'retry', 'NO_FRESH_DR_CANDLE'));
             continue;
           }
-          const plan = buildDrOrbPlan({ symbol, fifteenMinuteBars: fifteen.bars, dailyBars: daily.bars, session, now });
+          const plan = buildDrOrbPlan({ symbol, fifteenMinuteBars: fifteen.bars, dailyBars: daily.bars, session, now:checkedAt });
           (await recordDecision(runId, symbol, plan));
           (await recordScanProgress('dr', session.key, symbol,
             plan.code === 'OPENING_BAR_UNAVAILABLE'
@@ -240,20 +241,23 @@ export async function runDrAutoPick(now = Date.now(), task = {}) {
         }
       }
     }
-    (await finishRun(runId, { scanned, candidates, errorCode: errors.length ? 'PARTIAL_SOURCE_UNAVAILABLE' : null }));
-    return { status: errors.length ? 'partial' : 'complete', session: session.key, slot, scanned, candidates, errors };
+    const coverage=await settleScanCoverage('dr',session.key,task.symbols??drScanSymbols(),Date.now());
+    const errorCode=errors.length||session.candidateWindow&&coverage.unavailable?'PARTIAL_SOURCE_UNAVAILABLE':session.candidateWindow&&coverage.remaining?'SCAN_IN_PROGRESS':session.candidateWindow&&coverage.missed?'CANDIDATE_WINDOW_MISSED':null;
+    await finishRun(runId,{scanned,candidates,errorCode});
+    return {status:errorCode?'partial':'complete',session:session.key,slot,scanned,candidates,errors,coverage};
   } catch {
     (await finishRun(runId, { scanned, candidates, errorCode: 'SOURCE_UNAVAILABLE' }));
     return { status: 'unavailable', session: session.key, slot, scanned, candidates, code: 'SOURCE_UNAVAILABLE' };
   }
 }
 
-export async function runUsAutoPick(now = Date.now(), task = {}) {
+async function runUsAutoPick(now = Date.now(), task = {}) {
   requireReady('us');
   const session = usEodSession(now);
   if (!session.scanWindow) return { status: 'outside-session', day: session.day };
   const scanSlot = usScanSlot(session.day);
-  if (!task.id&&(await runForSlot('us', scanSlot))?.status === 'COMPLETE') return { status: 'already-run', day: session.day };
+  const before=await settleScanCoverage('us',scanSlot,task.symbols??usScanSymbols(),now);
+  if(!task.id&&before.remaining===0&&await runForSlot('us',scanSlot))return {status:'already-run',day:session.day,coverage:before};
 
   let firstBars;
   try { firstBars = await getUsDailyBars('AAPL', { now }); }
@@ -271,7 +275,7 @@ export async function runUsAutoPick(now = Date.now(), task = {}) {
     return { status: 'waiting-eod', day: session.day, latestDay: firstBars.latestDay };
   }
 
-  const runId = (await claimRun('us', task.id??scanSlot, { retryFailed: true }));
+  const runId = (await claimRun('us', task.id??scanSlot, { retryFailed: true, staleMs:task.id?180000:900000 }));
   if (!runId) return { status: 'already-run', day: session.day };
   let scanned = 0;
   let candidates = 0;
@@ -282,7 +286,9 @@ export async function runUsAutoPick(now = Date.now(), task = {}) {
     const active = (await activeSignals('us')).filter(pick=>!task.symbols||task.symbols.includes(pick.symbol));
     const activeSymbols = new Set(active.map(pick => pick.symbol));
     // Monitor existing plans before spending the bounded budget on new candidates.
-    for (const pick of active) {
+    const monitorPlans=active.filter(p=>(p.lastChecked15m??0)<Date.parse(`${session.day}T00:00:00Z`)/1000
+      &&!(p.status==='WAITING_FOR_ENTRY'&&(p.plan?.referenceCandles?.dailyDay??p.sessionDay)>=session.day));
+    for (const pick of monitorPlans) {
       try {
         const series = barsBySymbol.get(pick.symbol) ?? await getUsDailyBars(pick.symbol, { now });
         barsBySymbol.set(pick.symbol, series);
@@ -301,6 +307,8 @@ export async function runUsAutoPick(now = Date.now(), task = {}) {
         const series = barsBySymbol.get(symbol) ?? await getUsDailyBars(symbol, { now });
         barsBySymbol.set(symbol, series);
         (await archiveCandles(symbol, '1d', series));
+        const checkedAt=Date.now(),currentSession=usEodSession(checkedAt);
+        if(!currentSession.scanWindow||currentSession.day!==session.day) {await recordScanProgress('us',scanSlot,symbol,'missed','CANDIDATE_WINDOW_ENDED_DURING_FETCH');break;}
         if (series.latestDay !== session.day) {
           (await recordDecision(runId, symbol, null, 'NO_CURRENT_D1_BAR'));
           (await recordScanProgress('us', scanSlot, symbol, 'retry', 'NO_CURRENT_D1_BAR'));
@@ -320,18 +328,22 @@ export async function runUsAutoPick(now = Date.now(), task = {}) {
       } catch (error) {
         const code = error?.code ?? 'SOURCE_UNAVAILABLE';
         (await recordDecision(runId, symbol, null, code));
-        (await recordScanProgress('us', scanSlot, symbol, code === 'PLAN_REQUIRED' ? 'unavailable' : 'retry', code));
+        (await recordScanProgress('us', scanSlot, symbol, sourceDisposition(error), code));
         errors.push(`${symbol}:${code}`);
       }
     }
-    const coverage = (await scanCoverage('us', scanSlot, symbols));
-    const errorCode = errors.length || coverage.unavailable ? 'PARTIAL_SOURCE_UNAVAILABLE' : coverage.remaining ? 'SCAN_IN_PROGRESS' : null;
+    const coverage = await settleScanCoverage('us',scanSlot,symbols,Date.now());
+    const errorCode = errors.length || coverage.unavailable ? 'PARTIAL_SOURCE_UNAVAILABLE' : coverage.remaining ? 'SCAN_IN_PROGRESS' : coverage.missed ? 'CANDIDATE_WINDOW_MISSED' : null;
     (await finishRun(runId, { scanned: coverage.done, candidates, errorCode }));
     return { status: errorCode ? 'partial' : 'complete', day: session.day, scanned, candidates,
-      monitored: active.length, errors, published, coverage };
+      monitored: monitorPlans.length, errors, published, coverage };
 
   } catch {
     (await finishRun(runId, { scanned, candidates, errorCode: 'SOURCE_UNAVAILABLE' }));
     return { status: 'unavailable', day: session.day, scanned, candidates, code: 'SOURCE_UNAVAILABLE' };
   }
 }
+
+return {runThaiAutoPick,runDrAutoPick,runUsAutoPick};
+}
+export const {runThaiAutoPick,runDrAutoPick,runUsAutoPick}=createAutoPickRunners();
