@@ -41,3 +41,7 @@ HTTP anonymous community/team redirect เข้าหน้าบัญชี; 
 ต้องทดสอบ UI ด้วยบัญชี LINE สมาชิก/ทีมจริง, มือถือ และการ reload/เน็ตหลุดจริงก่อนเปิดลูกค้า Browser visual verification ยังไม่ได้ทำตามข้อจำกัด automation ที่บันทึกไว้ ไม่อ้างว่าภาพ/interaction บนอุปกรณ์จริงผ่านแล้ว
 
 สิทธิแสดงข้อมูล, provider availability, แผน Cloudflare, customer cutover/restore, hosted LINE consent และเสียงจริงยังเป็นเงื่อนไข production เว็บ Cloud ยัง maintenance และ scanner ยังปิดตามสถานะเดิม
+
+## รีวิวก่อนรวม main
+
+รีวิวและแก้ confirmation ของ send ที่บันทึกแล้วหลัง lock/close และเปลี่ยนการแจ้งข้อความใหม่ไปใช้ incoming sequence ตามสิทธิ แทนยอด unread รวม ชุดล่าสุดผ่าน 88/88 ดู `docs/code-review-2026-10-14.md` สำหรับหลักฐานปัจจุบันและส่วนที่ยังไม่พร้อม

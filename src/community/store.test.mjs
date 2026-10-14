@@ -53,11 +53,13 @@ async function verifyFlow(t) {
     for(const key of ['sender_id','line_id','portfolio_hash'])assert.ok(!json.includes(key));
   });
   await t.test('unread receipts are monotonic, bounded and isolated by member',async()=>{
-    let overview=await communityOverview(other),room=overview.rooms.find(r=>r.id==='lounge');assert.equal(room.unread,9);
+    let overview=await communityOverview(other),room=overview.rooms.find(r=>r.id==='lounge');assert.equal(room.unread,9);assert.equal(overview.incomingCursor,room.lastSeq);
+    assert.equal((await communityOverview(member)).incomingCursor,0,'Own room sends are not incoming');
     const max=room.lastSeq;
     await change(other,{action:'read',kind:'room',channelId:'lounge',lastSeq:max});
     await change(other,{action:'read',kind:'room',channelId:'lounge',lastSeq:0});
-    assert.equal((await communityOverview(other)).rooms.find(r=>r.id==='lounge').unread,0);
+    const marked=await communityOverview(other);assert.equal(marked.rooms.find(r=>r.id==='lounge').unread,0);
+    assert.equal(marked.incomingCursor,max,'Receipts do not erase new-message detection');
     assert.equal((await communityOverview(admin)).rooms.find(r=>r.id==='lounge').unread,9);
     await assert.rejects(change(other,{action:'read',kind:'room',channelId:'lounge',lastSeq:max+100}),{message:'INVALID_CURSOR'});
   });
@@ -70,7 +72,9 @@ async function verifyFlow(t) {
     await assert.rejects(read(analyst,'thread',threadId),{message:'CHANNEL_NOT_FOUND'});
     await assert.rejects(change(member,{action:'send',kind:'thread',channelId:threadId,body:'Injected'}),{message:'CHANNEL_NOT_FOUND'});
     assert.equal((await communityOverview(marketing,{team:true})).total,1);
-    assert.equal((await communityOverview(analyst,{team:true})).total,0);
+    const wrongTeam=await communityOverview(analyst,{team:true});assert.equal(wrongTeam.total,0);
+    assert.equal(wrongTeam.incomingCursor,0,'Team cursor excludes rooms and another team inbox');
+    assert.ok((await communityOverview(marketing,{team:true})).incomingCursor>0);
     await change(marketing,{action:'send',kind:'thread',channelId:threadId,body:'Fixture response'});
     let detail=await read(expired,'thread',threadId);
     assert.equal(detail.channel.status,'answered');assert.equal(detail.messages[0].fromTeam,true);
@@ -112,6 +116,23 @@ async function verifyFlow(t) {
     const historical=randomUUID(),id=randomUUID(),now=new Date().toISOString();
     await storage.batch([op("INSERT INTO support_threads(id,member_id,team,subject,status,version,created_at,updated_at) VALUES(?,?,'marketing','Imported','closed',7,?,?)",historical,expired.id,now,now),op("INSERT INTO community_messages(id,thread_id,sender_id,sender_kind,body,created_at,applied) VALUES(?,?,?,'member','Historical',?,1)",id,historical,expired.id,now)]);
     const recorded=await read(expired,'thread',historical);assert.equal(recorded.channel.status,'closed');assert.equal(recorded.channel.version,7);
+  });
+  await t.test('a committed send remains confirmable after a room locks or thread closes',async()=>{
+    const roomBody={action:'send',operationId:randomUUID(),kind:'room',channelId:'thai',body:'Confirmed fixture room message'};
+    await mutateCommunity(member,roomBody);
+    await change(admin,{action:'lock-room',roomId:'thai',locked:true});
+    assert.equal((await mutateCommunity(member,roomBody)).replayed,true);
+    assert.equal((await read(member,'room','thai')).total,1);
+    await assert.rejects(mutateCommunity(member,{...roomBody,operationId:randomUUID()}),{message:'ROOM_LOCKED'});
+    await change(admin,{action:'lock-room',roomId:'thai',locked:false});
+    const thread=await change(expired,{action:'create-thread',team:'marketing',subject:'Reply confirmation',body:'Initial fixture'});
+    const threadBody={action:'send',operationId:randomUUID(),kind:'thread',channelId:thread.threadId,body:'Confirmed fixture reply'};
+    await mutateCommunity(expired,threadBody);
+    const detail=await read(admin,'thread',thread.threadId);
+    await change(admin,{action:'thread-state',threadId:thread.threadId,version:detail.channel.version,status:'closed'});
+    assert.equal((await mutateCommunity(expired,threadBody)).replayed,true);
+    assert.equal((await read(expired,'thread',thread.threadId)).total,2);
+    await assert.rejects(mutateCommunity(expired,{...threadBody,operationId:randomUUID()}),{message:'THREAD_CLOSED'});
   });
   await t.test('fresh membership state and validation prevent stale access and malformed messages',async()=>{
     await storage.run("UPDATE members SET trial_ends_at=? WHERE id=?",new Date(Date.now()-1000).toISOString(),member.id);

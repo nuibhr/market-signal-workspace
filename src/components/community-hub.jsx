@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAdminResource } from './use-admin-resource.mjs';
+import { advanceIncomingCursor } from '../community/updates.mjs';
 const TEAMS={marketing:'บัญชีและแพ็กเกจ',analyst:'ข้อมูลและแผน'};
 const STATUS={pending:'รับเรื่องแล้ว',review:'กำลังตรวจ',answered:'ตอบแล้ว',closed:'ปิดเรื่อง'};
 const ERRORS={LOGIN_REQUIRED:'กรุณาเข้าสู่ระบบด้วย LINE อีกครั้ง',MEMBERSHIP_REQUIRED:'ห้องสมาชิกใช้ได้เมื่อมีสิทธิทดลองหรือรายเดือน',FORBIDDEN:'บัญชีนี้ไม่มีสิทธิทำรายการนี้',CHANNEL_NOT_FOUND:'ไม่พบหัวข้อ หรือสิทธิการเข้าถึงเปลี่ยนแล้ว',THREAD_CLOSED:'หัวข้อนี้ปิดแล้ว เปิดหัวข้อใหม่หากต้องการคุยต่อ',ROOM_LOCKED:'ห้องนี้พักการส่งข้อความชั่วคราว',COMMUNITY_CHANGED:'ข้อมูลเปลี่ยนแล้ว กรุณารีเฟรชก่อนทำรายการ',OPERATION_CONFLICT:'รายการนี้เคยส่งด้วยข้อมูลอื่น กรุณารีเฟรชตรวจข้อความ',INVALID_COMMUNITY_INPUT:'ตรวจข้อความและความยาวอีกครั้ง',INVALID_CURSOR:'อ่านสถานะไม่สำเร็จ กรุณารีเฟรช',RATE_LIMITED:'ทำรายการถี่เกินไป กรุณารอสักครู่'};
@@ -13,10 +14,10 @@ function usePolling(resource) {
 }
 export default function CommunityHub({team=false}) {
   const [page,setPage]=useState(1),[selected,setSelected]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[uncertain,setUncertain]=useState(false),[revision,setRevision]=useState(0);
-  const pending=useRef(null),unread=useRef(null);
+  const pending=useRef(null),incoming=useRef(null);
   const overview=useAdminResource(`/api/community?team=${team?'1':'0'}&page=${page}`);
   usePolling(overview);
-  useEffect(()=>{if(!overview.data)return;const count=overview.data.threads.reduce((n,t)=>n+t.unread,0)+overview.data.rooms.reduce((n,r)=>n+r.unread,0);if(unread.current!==null&&count>unread.current)setNotice('มีข้อความใหม่ในพื้นที่ของคุณ');unread.current=count;},[overview.data]);
+  useEffect(()=>{if(!overview.data)return;const update=advanceIncomingCursor(incoming.current,overview.data.incomingCursor);if(update.hasNew)setNotice('มีข้อความใหม่ในพื้นที่ของคุณ');incoming.current=update.cursor;},[overview.data]);
   const execute=useCallback(async task=>{
     setBusy(true);setError('');setNotice('');
     try {
@@ -41,7 +42,7 @@ export default function CommunityHub({team=false}) {
       {data.access.team&&<p><Link className="account-secondary" href={team?'/community':'/team'}>{team?'กลับพื้นที่ของฉัน':'เปิดกล่องงานทีม'}</Link></p>}
       <div className="community-layout"><aside className="community-sidebar">
         {!team&&<section className="account-card"><h2>ห้องสมาชิก</h2><p className="community-help">แลกเปลี่ยนอย่างสุภาพ ไม่แชร์คีย์หรือข้อมูลบัญชีส่วนตัว</p>{data.access.rooms?data.rooms.map(room=><button className={`community-channel${selected?.kind==='room'&&selected.id===room.id?' selected':''}`} key={room.id} onClick={()=>setSelected({kind:'room',id:room.id})} aria-pressed={selected?.kind==='room'&&selected.id===room.id}><strong>{room.name}{room.locked?' · พักการส่ง':''}</strong><small>{room.description}</small>{room.unread>0&&<span className="community-unread">ยังไม่อ่าน {room.unread}</span>}</button>):<p>ห้องเปิดให้สมาชิกที่มีสิทธิทดลองหรือรายเดือน <Link href="/account">ตรวจสิทธิของฉัน</Link></p>}</section>}
-        <section className="account-card"><h2>{team?'กล่องงานที่รับผิดชอบ':'คุยส่วนตัวกับทีม'}</h2><p className="community-help">{team?'เฉพาะหัวข้อในทีมที่มีสิทธิ เข้าดูและตอบได้จากรายการนี้':'มีเพียงคุณ ทีมที่รับเรื่อง และแอดมินที่อ่านได้'}</p>{data.threads.map(thread=><button key={thread.id} className={`community-channel${selected?.kind==='thread'&&selected.id===thread.id?' selected':''}`} onClick={()=>setSelected({kind:'thread',id:thread.id})} aria-pressed={selected?.kind==='thread'&&selected.id===thread.id}><strong>{thread.subject}</strong><small>{team?`${thread.memberName} · `:''}{TEAMS[thread.team]} · {STATUS[thread.status]}</small>{thread.unread>0&&<span className="community-unread">ยังไม่อ่าน {thread.unread}</span>}</button>)}{!data.threads.length&&<p className="account-empty">ยังไม่มีหัวข้อ</p>}<Pager data={data} onPage={n=>{setPage(n);unread.current=null;}}/></section>
+        <section className="account-card"><h2>{team?'กล่องงานที่รับผิดชอบ':'คุยส่วนตัวกับทีม'}</h2><p className="community-help">{team?'เฉพาะหัวข้อในทีมที่มีสิทธิ เข้าดูและตอบได้จากรายการนี้':'มีเพียงคุณ ทีมที่รับเรื่อง และแอดมินที่อ่านได้'}</p>{data.threads.map(thread=><button key={thread.id} className={`community-channel${selected?.kind==='thread'&&selected.id===thread.id?' selected':''}`} onClick={()=>setSelected({kind:'thread',id:thread.id})} aria-pressed={selected?.kind==='thread'&&selected.id===thread.id}><strong>{thread.subject}</strong><small>{team?`${thread.memberName} · `:''}{TEAMS[thread.team]} · {STATUS[thread.status]}</small>{thread.unread>0&&<span className="community-unread">ยังไม่อ่าน {thread.unread}</span>}</button>)}{!data.threads.length&&<p className="account-empty">ยังไม่มีหัวข้อ</p>}<Pager data={data} onPage={setPage}/></section>
         {!team&&<NewThread disabled={disabled} write={write} onCreated={id=>setSelected({kind:'thread',id})}/>}
       </aside><section className="community-conversation">{selected?<Channel key={`${selected.kind}:${selected.id}`} selected={selected} revision={revision} write={write} disabled={disabled} onRead={overview.reload}/>:<div className="account-card community-welcome"><h2>{team?'เลือกหัวข้อเพื่อดูแลสมาชิก':'เลือกห้อง หรือเปิดหัวข้อกับทีม'}</h2><p>ข้อความเก็บในระบบเดียวกับบัญชี LINE ของคุณ การแจ้งข้อความใหม่ทำงานขณะเปิดหน้านี้</p><p>ความเห็นในห้องสมาชิกไม่ได้เป็นคำสั่งซื้อขายหรือผลสแกนของ AutoPick</p></div>}</section></div>
       {team&&data.access.admin&&<CommunityAdmin revision={revision} write={write} disabled={disabled}/>}

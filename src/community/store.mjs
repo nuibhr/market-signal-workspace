@@ -44,13 +44,16 @@ export async function communityOverview(actor,{team=false,page=1}={}) {
     FROM community_rooms r ORDER BY CASE r.id WHEN 'lounge' THEN 0 ELSE 1 END,r.id`,a.member.id,a.member.id):[];
   const where=team?(a.admin?'1=1':`EXISTS(SELECT 1 FROM community_staff s WHERE s.member_id=? AND s.role=t.team)`):'t.member_id=?';
   const args=team&&a.admin?[]:[a.member.id];
+  const incomingCursor=(await storage.first(`SELECT COALESCE(MAX(x.seq),0) AS n FROM community_messages x
+    WHERE x.hidden=0 AND x.sender_id<>? AND ((x.room_id IS NOT NULL AND ?=1)
+      OR (x.thread_id IS NOT NULL AND EXISTS(SELECT 1 FROM support_threads t WHERE t.id=x.thread_id AND ${where})))`,a.member.id,Number(a.rooms&&!team),...args)).n;
   const total=(await storage.first(`SELECT COUNT(*) AS n FROM support_threads t WHERE ${where}`,...args)).n;
   const current=Math.min(pageNumber(page),Math.ceil(total/7)||1);
   const threads=await storage.all(`SELECT t.*,m.display_name AS memberName,
     COALESCE((SELECT MAX(seq) FROM community_messages WHERE thread_id=t.id),0) AS lastSeq,
     (SELECT COUNT(*) FROM community_messages x WHERE x.thread_id=t.id AND x.hidden=0 AND x.sender_id<>? AND x.seq>COALESCE((SELECT last_seq FROM community_reads WHERE member_id=? AND channel='thread:'||t.id),0)) AS unread
     FROM support_threads t JOIN members m ON m.id=t.member_id WHERE ${where} ORDER BY t.updated_at DESC,t.id DESC LIMIT 7 OFFSET ?`,a.member.id,a.member.id,...args,(current-1)*7);
-  return {access:{rooms:a.rooms,admin:a.admin,roles:a.roles,team:a.admin||a.roles.length>0},rooms:rooms.map(r=>({...r,locked:!!r.locked})),threads:threads.map(r=>({...safeThread(r),lastSeq:r.lastSeq,unread:r.unread})),total,page:current,pageSize:7};
+  return {access:{rooms:a.rooms,admin:a.admin,roles:a.roles,team:a.admin||a.roles.length>0},incomingCursor,rooms:rooms.map(r=>({...r,locked:!!r.locked})),threads:threads.map(r=>({...safeThread(r),lastSeq:r.lastSeq,unread:r.unread})),total,page:current,pageSize:7};
 }
 export async function channelMessages(actor,{kind,id,page=1}) {
   const a=await communityAccess(actor);
@@ -82,8 +85,6 @@ export async function mutateCommunity(actor,body) {
     if(!['room','thread'].includes(body.kind)||typeof body.channelId!=='string')fail('INVALID_CHANNEL');
     channel=body.kind==='room'?await roomAccess(a,body.channelId):await threadAccess(a,body.channelId);
     if(body.action==='send') {
-      if(body.kind==='room'&&channel.locked&&!a.admin)fail('ROOM_LOCKED',409);
-      if(body.kind==='thread'&&channel.status==='closed')fail('THREAD_CLOSED',409);
       normalized={action:body.action,kind:body.kind,channelId:body.channelId,body:text(body.body,2000)};
       result={ok:true,messageId:body.operationId};
     } else {
@@ -132,6 +133,12 @@ export async function mutateCommunity(actor,body) {
     normalized={action:body.action,reportId:body.reportId};result={ok:true};
   } else fail('INVALID_ACTION');
   const digest=hash(normalized),previous=await replay(a,body.operationId,digest);if(previous)return previous;
+  // Current rights were checked above. Lock/closure blocks new writes, while
+  // already committed operations remain confirmable after a lost response.
+  if(body.action==='send') {
+    if(body.kind==='room'&&channel.locked&&!a.admin)fail('ROOM_LOCKED',409);
+    if(body.kind==='thread'&&channel.status==='closed')fail('THREAD_CLOSED',409);
+  }
   const record=(gate='1=1',params=[])=>operationRecord(a,body,digest,result,gate,params,normalized);
   const absent='NOT EXISTS(SELECT 1 FROM community_operations WHERE id=?)';
   if(body.action==='create-thread') {
