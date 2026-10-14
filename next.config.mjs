@@ -23,6 +23,9 @@ export default {
     './scripts/scan-webull.mjs', './scripts/webull-bars.py', './src/webull-lab/**/*.mjs',
     './src/analysis/technical.mjs', './src/analysis/pivots.mjs', './src/analysis/chart-levels.mjs',
     './src/analysis/us-candles.mjs', './src/markets/us-liquid-500.mjs', './src/markets/us-universe.mjs',
+  ], '/api/forex/mt5/connector': [
+    './src/forex-mt5/connector.mq5', './src/forex-mt5/connector.ex5',
+    './src/forex-mt5/customer-relay.zip',
   ] },
   async headers() { return [{ source: '/:path*', headers }]; },
 };
