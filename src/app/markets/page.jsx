@@ -1,4 +1,4 @@
-import MarketLobby from '../../components/market-lobby.jsx';
+import HomeLanding from '../../components/home-landing.jsx';
 
-export const metadata = { title: 'เลือกตลาด — Nugaom AI Pick' };
-export default function MarketsPage() { return <MarketLobby />; }
+export { metadata } from '../page.jsx';
+export default function MarketsPage() { return <HomeLanding />; }

@@ -47,3 +47,5 @@ origin/main ก่อนรวมอยู่ที่ `21766235400d1d4f582cc953
 ตรวจเส้นทาง Community ต่อแล้ว: แก้ lost confirmation + rate limit ที่อาจส่งซ้ำ, คำขอค้าง และการส่งซ้อน ชุดล่าสุดผ่าน **111 tests/subtests** พร้อม Next/Cloud build ดู `docs/community-flow-verification-2026-10-14.md` การตรวจด้วย LINE/มือถือจริงยังเป็นงานค้างก่อนเปิดลูกค้า
 
 รวม Forex / CFD Command Center เข้า main ที่ `/forex` บนพอร์ต 3000 แล้ว ใช้ session LINE เดิม พร้อม MT5 receiver ของสมาชิกบน Node และฐานข้อมูลแยก ชุดรวมล่าสุด **153 tests/subtests ผ่าน** พร้อม Next/Cloud build ดู `docs/forex-command-center-integration-2026-10-14.md` ตัวรับ MT5 ยังไม่เปิดบน Cloudflare/D1 และข้อมูล Demo/การเชื่อม pilot เดิมยังแยกจากข้อมูลสมาชิกจริง
+
+ปรับทางเข้าตามคำยืนยันให้ใช้ Robot 3D ล่าสุด: `/` กับ `/markets` ใช้หน้าเดียวกัน และเชื่อม Forex ใหม่/สมาชิก/Community ครบ ชุดที่เกี่ยวข้อง 29/29 กับ Next/Cloud build ผ่าน; HTTP ยืนยัน Robot markup ตรงกันทั้งสองทางเข้า ไม่มี iframe ยังไม่อ้างผลตรวจภาพ WebGL/มือถือจริง

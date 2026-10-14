@@ -42,8 +42,8 @@ export default function LandingRobot() {
       <span className="ng-robot-eyebrow"><span /> YOUR PERSONAL MARKET RADAR</span>
       <h1 id="robot-hero-title">มองตลาด<br />ให้<span>เห็นจังหวะ</span></h1>
       <p>พบกับน้องนักออม AI ผู้ช่วยสแกนตลาด<br className="ng-desktop-break" /> ติดตามสัญญาณ และทบทวนทุกการตัดสินใจ<br className="ng-desktop-break" /> ในพื้นที่เดียวของคุณ</p>
-      <div className="ng-robot-actions"><Link href="/account" className="ng-robot-primary">เริ่มต้นด้วย LINE <ArrowUpRight size={20} /></Link><Link href="/markets" className="ng-robot-secondary">สำรวจตลาด <span>↗</span></Link></div>
-      <div className="ng-robot-market-links" aria-label="เลือกตลาด"><Link href="/thai">หุ้นไทย</Link><Link href="/dr">DR</Link><Link href="/us">US & ETF</Link><Link href="/tfex">TFEX</Link><Link href="/forex">Forex</Link></div>
+      <div className="ng-robot-actions"><Link href="/account" className="ng-robot-primary">เริ่มต้นด้วย LINE <ArrowUpRight size={20} /></Link><a href="#discover" className="ng-robot-secondary">สำรวจตลาด <span>↗</span></a></div>
+      <div className="ng-robot-market-links" aria-label="ตลาดและพื้นที่สมาชิก"><Link href="/thai">หุ้นไทย</Link><Link href="/dr">DR</Link><Link href="/us">US & ETF</Link><Link href="/tfex">TFEX</Link><Link href="/forex">Forex / CFD</Link><Link href="/community">ชุมชนและทีม</Link></div>
       <div className="ng-robot-caption"><ScanLine size={15} /><span>สแกนตามเงื่อนไข · แจ้งเตือนผ่านเว็บ · คุณเป็นผู้ตัดสินใจ</span></div>
     </div>
 

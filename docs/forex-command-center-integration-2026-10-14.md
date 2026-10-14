@@ -45,3 +45,11 @@ No localhost browser automation was retried after the previous policy block, and
 Demo Preview retains the existing prominent Demo labels and example prices/account values/AI/calendar panels. Guest/no-feed removes those values. A connected MT5 universe uses received broker quotes and closed bars; it does not make the account/AI/calendar/alerts panels live. Forex AutoPick and trading execution remain unavailable.
 
 Public MT5 operation still needs an approved HTTPS Node deployment with persistent dedicated storage, backups, and real Mac/Windows/LINE verification, or an authorized receiver adaptation for the main Cloudflare deployment. Passing Cloud packaging does not certify remote MT5 reception. Native Vantage current price and candle validation remains pending after pairing on the main app.
+
+## Latest Robot 3D entry point
+
+The user clarified that the current product entry is the newer Robot 3D landing, introduced in `2176623`, rather than the earlier Sylva scene in `c333e95`. Both `/` and `/markets` now render the shared `HomeLanding` component with that existing Robot hero. The former `/markets` static lobby was the visible version mismatch.
+
+The Robot scene geometry, renderer, pointer interaction, resource cleanup and motion/fallback code are retained. Hero/navigation/footer links expose the integrated Forex / CFD Command Center, LINE account and Community. The explore action scrolls to the market cards on the current page; each market's home control returns to `/`. Forex market copy now describes the imported Vantage workspace and preserves the distinction between Demo and received MT5 data.
+
+Validation for this entry-point update: 29 relevant Forex/member/Community regressions pass, fresh Next/Cloud packaging pass, both local URLs return 200 with identical rendered landing markup, Robot markup, all eight destination links and no iframe. All five market routes return 200 with the new home link. The Forex receiver, auth/membership, Community, AutoPick and deployment files remain byte-for-byte unchanged from `fdf4a2b`. The earlier 153-test full-suite result above belongs to the preceding integration pass; it was not rerun for this navigation-only update. Current browser/WebGL/mobile rendering remains unverified under the existing localhost automation block.
