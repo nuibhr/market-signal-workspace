@@ -43,3 +43,5 @@ origin/main ก่อนรวมอยู่ที่ `21766235400d1d4f582cc953
 ## ต่อจากรีวิว
 
 แก้รายการค้างและปิดสถานะ coverage เพิ่มแล้ว ดู `docs/autopick-coverage-repair-2026-10-14.md` สำหรับสถานะที่แยก missed/unavailable, migration 0009, worker reload และหลักฐานใหม่ ชุดรวมล่าสุดผ่าน 100 tests/subtests ข้อมูลรอบสแกนในตารางเดิมด้านบนเป็น snapshot ก่อนการแก้ครั้งนี้
+
+ตรวจเส้นทาง Community ต่อแล้ว: แก้ lost confirmation + rate limit ที่อาจส่งซ้ำ, คำขอค้าง และการส่งซ้อน ชุดล่าสุดผ่าน **111 tests/subtests** พร้อม Next/Cloud build ดู `docs/community-flow-verification-2026-10-14.md` การตรวจด้วย LINE/มือถือจริงยังเป็นงานค้างก่อนเปิดลูกค้า

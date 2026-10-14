@@ -1,8 +1,9 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAdminResource } from './use-admin-resource.mjs';
 import { advanceIncomingCursor } from '../community/updates.mjs';
+import { createCommunityWriter, sendCommunityMutation } from '../community/writer.mjs';
 const TEAMS={marketing:'บัญชีและแพ็กเกจ',analyst:'ข้อมูลและแผน'};
 const STATUS={pending:'รับเรื่องแล้ว',review:'กำลังตรวจ',answered:'ตอบแล้ว',closed:'ปิดเรื่อง'};
 const ERRORS={LOGIN_REQUIRED:'กรุณาเข้าสู่ระบบด้วย LINE อีกครั้ง',MEMBERSHIP_REQUIRED:'ห้องสมาชิกใช้ได้เมื่อมีสิทธิทดลองหรือรายเดือน',FORBIDDEN:'บัญชีนี้ไม่มีสิทธิทำรายการนี้',CHANNEL_NOT_FOUND:'ไม่พบหัวข้อ หรือสิทธิการเข้าถึงเปลี่ยนแล้ว',THREAD_CLOSED:'หัวข้อนี้ปิดแล้ว เปิดหัวข้อใหม่หากต้องการคุยต่อ',ROOM_LOCKED:'ห้องนี้พักการส่งข้อความชั่วคราว',COMMUNITY_CHANGED:'ข้อมูลเปลี่ยนแล้ว กรุณารีเฟรชก่อนทำรายการ',OPERATION_CONFLICT:'รายการนี้เคยส่งด้วยข้อมูลอื่น กรุณารีเฟรชตรวจข้อความ',INVALID_COMMUNITY_INPUT:'ตรวจข้อความและความยาวอีกครั้ง',INVALID_CURSOR:'อ่านสถานะไม่สำเร็จ กรุณารีเฟรช',RATE_LIMITED:'ทำรายการถี่เกินไป กรุณารอสักครู่'};
@@ -12,31 +13,29 @@ function Notice({resource}) {return resource.error?<p className="account-alert e
 function usePolling(resource) {
   useEffect(()=>{const poll=()=>{if(document.visibilityState==='visible')resource.reload();};const timer=setInterval(poll,30000);document.addEventListener('visibilitychange',poll);return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',poll);};},[resource.reload]);
 }
+function RetryPending({busy,retryAt,retry}) {
+  const [now,setNow]=useState(Date.now);
+  useEffect(()=>{setNow(Date.now());if(!retryAt)return;const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[retryAt]);
+  const seconds=Math.max(0,Math.ceil((retryAt-now)/1000));
+  return <button className="account-secondary" disabled={busy||seconds>0} onClick={retry}>{seconds>0?`ลองรายการเดิมได้ใน ${seconds} วินาที`:'ลองรายการเดิมอีกครั้ง'}</button>;
+}
 export default function CommunityHub({team=false}) {
-  const [page,setPage]=useState(1),[selected,setSelected]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[uncertain,setUncertain]=useState(false),[revision,setRevision]=useState(0);
-  const pending=useRef(null),incoming=useRef(null);
+  const [page,setPage]=useState(1),[selected,setSelected]=useState(null),[notice,setNotice]=useState(''),[revision,setRevision]=useState(0);
+  const [{busy,uncertain,error,retryAt},setWriteState]=useState({busy:false,uncertain:false,error:'',retryAt:0});
+  const writer=useRef(null),incoming=useRef(null);
   const overview=useAdminResource(`/api/community?team=${team?'1':'0'}&page=${page}`);
   usePolling(overview);
   useEffect(()=>{if(!overview.data)return;const update=advanceIncomingCursor(incoming.current,overview.data.incomingCursor);if(update.hasNew)setNotice('มีข้อความใหม่ในพื้นที่ของคุณ');incoming.current=update.cursor;},[overview.data]);
-  const execute=useCallback(async task=>{
-    setBusy(true);setError('');setNotice('');
-    try {
-      const response=await fetch('/api/community',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(task.body),cache:'no-store'});
-      const payload=await response.json();
-      if(!response.ok) {
-        if(response.status>=500)throw Error('UNCERTAIN');
-        setError(ERRORS[payload.error]||'ทำรายการไม่สำเร็จ กรุณารีเฟรช');pending.current=null;setUncertain(false);overview.reload();setRevision(n=>n+1);return false;
-      }
-      pending.current=null;setUncertain(false);overview.reload();setRevision(n=>n+1);setNotice(task.body.action==='send'||task.body.action==='create-thread'?'บันทึกข้อความแล้ว':'บันทึกรายการแล้ว');task.onSuccess?.(payload);return true;
-    } catch {pending.current=task;setUncertain(true);setError('ยังไม่ได้รับคำยืนยันจากเซิร์ฟเวอร์ กดลองรายการเดิมอีกครั้งได้');return false;}
-    finally {setBusy(false);}
-  },[overview.reload]);
-  const write=(body,onSuccess)=>{if(busy||uncertain)return Promise.resolve(false);return execute({body:{...body,operationId:crypto.randomUUID()},onSuccess});};
+  if(!writer.current)writer.current=createCommunityWriter({
+    onChange:state=>{setWriteState(state);if(state.busy)setNotice('');else if(state.error){overview.reload();setRevision(n=>n+1);}},
+    onConfirmed:(_payload,body)=>{overview.reload();setRevision(n=>n+1);setNotice(body.action==='send'||body.action==='create-thread'?'บันทึกข้อความแล้ว':'บันทึกรายการแล้ว');},
+  });
+  const write=(body,onSuccess)=>writer.current.write(body,onSuccess);
   const disabled=busy||uncertain;
   const data=overview.data;
   return <div className="community-hub">
     {notice&&<div className="community-notice" role="status"><span>{notice}</span><button className="account-secondary" onClick={()=>setNotice('')}>ปิด</button></div>}
-    {error&&<div className="account-alert error" role="alert">{error}{uncertain&&<button className="account-secondary" disabled={busy} onClick={()=>execute(pending.current)}>ลองรายการเดิมอีกครั้ง</button>}</div>}
+    {error&&<div className="account-alert error" role="alert">{ERRORS[error]||(uncertain?'ยังไม่ได้รับคำยืนยันจากเซิร์ฟเวอร์':'ทำรายการไม่สำเร็จ กรุณาตรวจข้อมูลอีกครั้ง')}{uncertain&&<><p>เก็บรายการเดิมไว้แล้ว กดลองอีกครั้งเพื่อยืนยันผลก่อนส่งรายการใหม่</p><RetryPending busy={busy} retryAt={retryAt} retry={()=>writer.current.retry()}/></>}</div>}
     <Notice resource={overview}/>
     {data&&<>
       {data.access.team&&<p><Link className="account-secondary" href={team?'/community':'/team'}>{team?'กลับพื้นที่ของฉัน':'เปิดกล่องงานทีม'}</Link></p>}
@@ -62,7 +61,10 @@ function Channel({selected,revision,write,disabled,onRead}) {
     if(!data||document.hidden)return;
     const lastSeq=Math.max(0,...data.messages.map(m=>m.seq));if(lastSeq<=acknowledged.current)return;
     let cancelled=false;acknowledged.current=lastSeq;
-    fetch('/api/community',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read',kind:selected.kind,channelId:selected.id,lastSeq,operationId:crypto.randomUUID()}),cache:'no-store'}).then(r=>{if(!r.ok)throw Error();if(!cancelled){setReadError('');onRead();}}).catch(()=>{acknowledged.current=0;if(!cancelled)setReadError('บันทึกสถานะอ่านไม่สำเร็จ จะลองใหม่เมื่อรีเฟรช');});
+    sendCommunityMutation({action:'read',kind:selected.kind,channelId:selected.id,lastSeq,operationId:crypto.randomUUID()}).then(outcome=>{
+      if(outcome.status==='confirmed'){if(!cancelled){setReadError('');onRead();}}
+      else {if(acknowledged.current===lastSeq)acknowledged.current=0;if(!cancelled)setReadError('บันทึกสถานะอ่านไม่สำเร็จ จะลองใหม่เมื่อรีเฟรช');}
+    });
     return()=>{cancelled=true;};
   },[data,selected.kind,selected.id,onRead]);
   const closed=selected.kind==='thread'?data?.channel.status==='closed':data?.channel.locked&&!data.admin;
