@@ -136,11 +136,16 @@ export function createRobotScene(canvas, { onError } = {}) {
   const pointer = new THREE.Vector2(), smooth = new THREE.Vector2();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   function resize() {
+    if (disposed) return;
     const { width, height } = canvas.getBoundingClientRect();
     if (!width || !height) return;
-    renderer.setSize(width, height, false); camera.aspect = width / height;
-    camera.position.set(3.7, 2.5, camera.aspect < 1 ? 10.5 : 8.7); camera.lookAt(0, 0.05, 0); camera.updateProjectionMatrix();
-    if (!active) renderer.render(scene, camera);
+    try {
+      renderer.setSize(width, height, false); camera.aspect = width / height;
+      camera.position.set(3.7, 2.5, camera.aspect < 1 ? 10.5 : 8.7); camera.lookAt(0, 0.05, 0); camera.updateProjectionMatrix();
+      if (!active) renderer.render(scene, camera);
+    } catch {
+      active = false; cancelAnimationFrame(frame); onError?.();
+    }
   }
   const observer = new ResizeObserver(resize); observer.observe(canvas); resize();
   const move = event => { const box = canvas.getBoundingClientRect(); pointer.set((event.clientX - box.left) / box.width * 2 - 1, (event.clientY - box.top) / box.height * 2 - 1); };

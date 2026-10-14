@@ -97,3 +97,13 @@ test('a zero or negative last price is unavailable for a listed instrument', () 
   assert.equal(normalizeSettradeQuote({ last: 0 }, 'S50U26', '2026-09-25T04:00:00.000Z', 'TFEX').status, 'unavailable');
   assert.equal(normalizeSettradeQuote({ last: -1 }, 'S50U26', '2026-09-25T04:00:00.000Z', 'TFEX').price, null);
 });
+
+test('login distinguishes provider outages and throttling from rejected authentication without reading error bodies', async () => {
+  const env = { SETTRADE_BROKER_ID:'fixture', SETTRADE_APP_CODE:'fixture', BROKER_APP_ID:'fixture', BROKER_API_SECRET:Buffer.alloc(32,1).toString('base64') };
+  for (const [status,code] of [[401,'AUTH_FAILED'],[403,'AUTH_FAILED'],[429,'RATE_LIMITED'],[500,'SOURCE_UNAVAILABLE'],[503,'SOURCE_UNAVAILABLE']]) {
+    let readBody=false;
+    const client=createSettradeClient({env,fetcher:async()=>({ok:false,status,json:async()=>{readBody=true;throw Error('private-provider-body');}})});
+    await assert.rejects(client.login(),error=>error.code===code&&error.status===status);
+    assert.equal(readBody,false,'Provider error bodies stay out of customer responses');
+  }
+});

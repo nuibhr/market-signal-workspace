@@ -275,7 +275,11 @@ export function createSettradeClient(options = {}) {
     } catch {
       throw new SettradeDataError('NETWORK_UNAVAILABLE');
     }
-    if (!response.ok) throw new SettradeDataError(code, response.status);
+    if (!response.ok) {
+      // A provider outage during login is not evidence of invalid credentials.
+      const failure = response.status === 429 ? 'RATE_LIMITED' : response.status >= 500 ? 'SOURCE_UNAVAILABLE' : code;
+      throw new SettradeDataError(failure, response.status);
+    }
     try {
       return await response.json();
     } catch {

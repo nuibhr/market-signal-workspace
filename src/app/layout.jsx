@@ -9,6 +9,7 @@ import './workspace-v8.css';
 import './account.css';
 import './admin.css';
 import './coaches.css';
+import './community.css';
 import './assistant.css';
 import './auto-pick.css';
 import './workspace-v9.css';

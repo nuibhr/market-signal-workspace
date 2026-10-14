@@ -1,0 +1,76 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+const temporary = mkdtempSync(join(tmpdir(),'nugaom-coach-test-'));
+process.env.DATABASE_PATH = join(temporary,'fixture.sqlite');
+process.env.SESSION_SECRET = 'fixture-session-'.repeat(5);
+process.env.PORTFOLIO_HASH_SECRET = 'fixture-portfolio-'.repeat(5);
+process.env.ADMIN_LINE_IDS = 'U'+'a'.repeat(32);
+const { storage, withD1Database } = await import('../storage/database.mjs');
+const { upsertLineMember } = await import('../membership/store.mjs');
+const { sharedDatabase } = await import('../storage/sqlite.mjs');
+const { mutatePortfolio, portfolioDetail, listPortfolios } = await import('./store.mjs');
+
+async function verifyCoachFlow() {
+  const admin = await upsertLineMember({lineId:process.env.ADMIN_LINE_IDS,displayName:'Fixture admin'});
+  const owner = await upsertLineMember({lineId:'U'+'b'.repeat(32),displayName:'Fixture coach'});
+  const other = await upsertLineMember({lineId:'U'+'c'.repeat(32),displayName:'Fixture other'});
+  await assert.rejects(mutatePortfolio(owner,{action:'create',operationId:randomUUID()}),{message:'FORBIDDEN'});
+  const created = await mutatePortfolio(admin,{action:'create',operationId:randomUUID(),memberId:owner.id,name:'Fixture paper portfolio',currency:'THB',initialCapital:10000});
+  const portfolioId = created.portfolioId;
+  assert.equal((await listPortfolios(null)).total,0,'New portfolio is private');
+  await assert.rejects(portfolioDetail(null,portfolioId),{message:'COACH_NOT_FOUND'});
+  await assert.rejects(portfolioDetail(other,portfolioId,{management:true}),{message:'FORBIDDEN'});
+  await assert.rejects(listPortfolios(other,{admin:true}),{message:'FORBIDDEN'});
+  await assert.rejects(mutatePortfolio(owner,{action:'visibility',operationId:randomUUID(),portfolioId,published:true,active:true}),{message:'FORBIDDEN'});
+  const body={action:'open',operationId:randomUUID(),portfolioId,market:'thai',symbol:'PTT',quantity:10,price:100,fee:1,note:'Fixture entry'};
+  const opened=await mutatePortfolio(owner,body);
+  assert.equal((await mutatePortfolio(owner,body)).replayed,true,'Retry must not debit cash twice');
+  await assert.rejects(mutatePortfolio(owner,{...body,price:101}),{message:'OPERATION_CONFLICT'});
+  await assert.rejects(mutatePortfolio(other,{...body,operationId:randomUUID()}),{message:'FORBIDDEN'});
+  for(let i=0;i<8;i++) await mutatePortfolio(owner,{...body,operationId:randomUUID()});
+  let detail=await portfolioDetail(owner,portfolioId,{management:true});
+  assert.equal(detail.portfolio.mode,'paper');
+  assert.equal(detail.portfolio.cash,991);
+  assert.equal(detail.statistics.winRate,null,'Open positions never count as wins');
+  assert.equal(detail.trades.length,7);
+  assert.equal((await portfolioDetail(owner,portfolioId,{management:true,page:2})).trades.length,2);
+  const close={action:'close',operationId:randomUUID(),portfolioId,tradeId:opened.tradeId,price:102,fee:1,note:'Fixture target'};
+  await mutatePortfolio(owner,close);
+  assert.equal((await mutatePortfolio(owner,close)).replayed,true,'Retry must not credit proceeds twice');
+  await assert.rejects(mutatePortfolio(owner,{...close,operationId:randomUUID()}),{message:'COACH_TRADE_UNAVAILABLE'});
+  detail=await portfolioDetail(owner,portfolioId,{management:true,filter:'open'});
+  await mutatePortfolio(owner,{...close,operationId:randomUUID(),tradeId:detail.trades[0].id,price:95,note:'Fixture loss'});
+  detail=await portfolioDetail(owner,portfolioId,{management:true});
+  assert.equal(detail.statistics.realized,-34);
+  assert.equal(detail.statistics.winRate,50);
+  assert.equal(detail.statistics.bookBalance,9966);
+  await assert.rejects(mutatePortfolio(owner,{...body,operationId:randomUUID(),market:'us'}),{message:'COACH_CURRENCY_MISMATCH'});
+  await assert.rejects(mutatePortfolio(owner,{...body,operationId:randomUUID(),quantity:1000000}),{message:'COACH_INSUFFICIENT_CASH'});
+  await mutatePortfolio(admin,{action:'visibility',operationId:randomUUID(),portfolioId,published:true,active:true});
+  const publicDetail=await portfolioDetail(null,portfolioId);
+  assert.equal(publicDetail.canManage,false);
+  const json=JSON.stringify(publicDetail);
+  for(const field of ['owner_id','line_id','portfolio_hash','entry_actor','exit_actor']) assert.ok(!json.includes(field),`Private ${field} omitted`);
+  await mutatePortfolio(admin,{action:'visibility',operationId:randomUUID(),portfolioId,published:false,active:false});
+  await assert.rejects(portfolioDetail(null,portfolioId),{message:'COACH_NOT_FOUND'});
+  await assert.rejects(mutatePortfolio(owner,{...body,operationId:randomUUID()}),{message:'COACH_INACTIVE'});
+  assert.equal((await storage.first('SELECT COUNT(*) AS n FROM coach_trades WHERE portfolio_id=?',portfolioId)).n,9,'History remains intact when hidden');
+}
+
+test('SQLite coach ownership, publication, seven-row history and idempotent paper accounting', verifyCoachFlow);
+test('native D1 coach ownership, publication, seven-row history and idempotent paper accounting', async()=>{
+  const directory=join(temporary,'.wrangler/state/v3');
+  const configPath=join(temporary,'wrangler.json');
+  writeFileSync(configPath,JSON.stringify({name:'nugaom-coach-fixture',compatibility_date:'2026-10-07',d1_databases:[{binding:'DB',database_name:'fixture',database_id:'00000000-0000-0000-0000-000000000000',migrations_dir:resolve('deploy/cloudflare/migrations')}]}));
+  const migration=spawnSync(process.execPath,['node_modules/wrangler/bin/wrangler.js','d1','migrations','apply','DB','--local','--config',configPath],{encoding:'utf8',env:{...process.env,WRANGLER_SEND_METRICS:'false'}});
+  assert.equal(migration.status,0,'Fixture D1 migrations apply');
+  const {getPlatformProxy}=await import('wrangler');
+  const proxy=await getPlatformProxy({configPath,persist:{path:directory}});
+  try { await withD1Database(proxy.env.DB,verifyCoachFlow); } finally { await proxy.dispose(); }
+});
+test.after(()=>{sharedDatabase().close();rmSync(temporary,{recursive:true,force:true});});

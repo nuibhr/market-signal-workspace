@@ -129,7 +129,7 @@ export function RoadmapPanel({ onOpen }) {
     ['บันทึกผล', 'ผลงานสัญญาณ', 'สรุป 100 ไม้ที่ปิดล่าสุดจากราคาเข้า/ออกที่บันทึกไว้ · ไม้รอเข้าและข้อมูลไม่ครบไม่นับเป็นชนะหรือแพ้', 'results'],
     ['บางส่วน', 'ข่าว ปฏิทินเศรษฐกิจ และ XD', 'ข่าวไทย/สหรัฐฯ จาก MarketDX · วันประกาศและตัวเลขสหรัฐฯ จาก FRED · XD เปิดดูต้นทาง SET', 'calendar'],
     ['รอข้อมูล', 'TFEX · Forex AutoPick', 'TFEX มีกราฟ OHLC แล้ว แต่ยังต้องยืนยันสัญญานำและกติกาความเสี่ยง · Forex รอฟีด bid/ask กับแท่งจริง', 'autopick'],
-    ['ขั้นถัดไป', 'ช่องคุยกับทีมและชุมชน', 'ซ่อนหน้าจอสนทนา DEMO แล้ว · ต้องมีระบบส่งข้อความและทีมรับจริงก่อนเปิดเมนู', 'learn'],
+    ['พื้นที่สมาชิก', 'ช่องคุยกับทีมและชุมชน', 'เข้าใช้ห้องสมาชิกและส่งหัวข้อส่วนตัวกับทีมจากหน้าบัญชี', 'learn'],
   ];
   return <div className="hub-panel roadmap-panel"><div className="hub-intro"><span className="hub-heading-icon"><Compass size={23} /></span><div><h3>สถานะระบบและสิ่งที่ยังขาด</h3><p>รายการนี้ช่วยแยกของที่ใช้ได้ตอนนี้ออกจากงาน fullstack ที่ต้องเชื่อมก่อนเปิดจริง</p></div></div><div className="roadmap-list">{items.map(([status, title, copy, target]) => <button key={title} onClick={() => onOpen(target)}><span className={status === 'พร้อมใช้' ? 'roadmap-state ready' : 'roadmap-state'}>{status}</span><span><strong>{title}</strong><small>{copy}</small></span><span>↗</span></button>)}</div></div>;
 }

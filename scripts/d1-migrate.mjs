@@ -6,10 +6,11 @@ import { resolve, join, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { sqliteDatabase } from '../src/storage/sqlite.mjs';
 import { backupDatabase } from '../src/security/backup.mjs';
+import { pristineCommunityRooms } from '../src/community/rooms.mjs';
 const tables=['members','ai_credit_accounts','ai_credit_events','ai_conversations','ai_questions','sessions','line_oauth_flows',
   'monthly_codes','renewal_requests','membership_events','admin_credit_grants','customer_preferences','customer_favorites','customer_holdings','customer_daily_reports',
   'auto_pick_runs','auto_pick_signals','auto_pick_events','auto_pick_decisions','auto_pick_scan_progress','auto_pick_worker_heartbeat',
-  'scanner_candles','historical_replay_summaries','request_limits','scanner_jobs','provider_cache','cloud_scanner_state','coach_portfolios','coach_trades','coach_operations'];
+  'scanner_candles','historical_replay_summaries','request_limits','scanner_jobs','provider_cache','cloud_scanner_state','coach_portfolios','coach_trades','coach_operations','community_rooms','community_staff','support_threads','community_messages','community_reads','community_reports','community_operations'];
 const directory=resolve(process.env.D1_MIGRATION_DIR||'data/d1-migration');
 const quoteName=value=>'"'+value.replaceAll('"','""')+'"';
 function literal(value) {
@@ -55,7 +56,8 @@ function prepare() {
       const columns=report.tables[name].columns;
       const prefix=`INSERT INTO ${quoteName(name)} (${columns.map(quoteName).join(',')}) VALUES `;
       let rows=[],bytes=Buffer.byteLength(prefix);
-      const flush=()=>{if(rows.length)writeSync(fd,prefix+rows.join(',')+';\n');rows=[];bytes=Buffer.byteLength(prefix);};
+      const suffix=name==='community_rooms'?' ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,locked=excluded.locked':'';
+      const flush=()=>{if(rows.length)writeSync(fd,prefix+rows.join(',')+suffix+';\n');rows=[];bytes=Buffer.byteLength(prefix);};
       for(const row of snapshot.prepare(`SELECT * FROM ${quoteName(name)}`).iterate()) {
         const text='('+columns.map(field=>literal(row[field])).join(',')+')';
         if(Buffer.byteLength(text)+Buffer.byteLength(prefix)>90000)throw new Error('D1_ROW_TOO_LARGE:'+name);
@@ -80,7 +82,13 @@ async function importAndVerify(configPath,local) {
   try {
     for(const name of tables) {
       const row=await target.env.DB.prepare(`SELECT COUNT(*) AS n FROM ${quoteName(name)}`).first();
-      if(row.n)throw new Error('DESTINATION_NOT_EMPTY:'+name);
+      if(row.n){
+        if(name==='community_rooms'){
+          const rows=(await target.env.DB.prepare('SELECT id,name,description,locked FROM community_rooms').all()).results;
+          if(pristineCommunityRooms(rows))continue;
+        }
+        throw new Error('DESTINATION_NOT_EMPTY:'+name);
+      }
     }
   }finally{await target.dispose();}
   const flags=['--config',configPath,local?'--local':'--remote'];
