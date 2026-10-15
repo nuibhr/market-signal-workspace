@@ -39,3 +39,22 @@ test('launch report never contains credential values', () => {
   for (const key of ['LINE_CHANNEL_SECRET','SESSION_SECRET','PORTFOLIO_HASH_SECRET','AUTO_PICK_RUN_SECRET','BACKUP_ENCRYPTION_KEY']) assert.ok(!report.includes(configured[key]));
   assert.ok(!report.includes('macro-secret') && !report.includes('news-secret'));
 });
+test('main launch checks include the merged MT5 receiver and its separate recovery evidence', () => {
+  const forex = { ...configured, FOREX_MT5_ENABLED: 'true', FOREX_MT5_VANTAGE_SERVERS: 'VantageMarkets-Demo',
+    FOREX_MT5_DATABASE_PATH: '/var/lib/nugaom/forex.sqlite', FOREX_MT5_PERSISTENT_STORAGE: 'true' };
+  assert.equal(check(forex, 'forex-receiver'), 'blocked'); // D1 cannot host this Node SQLite receiver.
+  assert.equal(check(forex, 'forex-backup'), 'blocked'); // Member backup evidence does not cover a second database.
+  const node = { ...forex, NODE_ENV: 'production', STORAGE_PROVIDER: 'sqlite', DATABASE_PATH: '/var/lib/nugaom/members.sqlite',
+    AUTO_PICK_PERSISTENT_SERVER_CONFIRMED: 'true', FOREX_MT5_BACKUP_RECOVERY_CONFIRMED: 'true' };
+  assert.equal(check(node, 'forex-receiver'), 'ready');
+  assert.equal(check(node, 'forex-backup'), 'ready');
+  for (const patch of [{ FOREX_MT5_DATABASE_PATH: node.DATABASE_PATH }, { FOREX_MT5_LOCAL_MODE: 'true' },
+    { FOREX_MT5_MEMBER_LOCAL_FILES: 'true' }, { FOREX_MT5_PERSISTENT_STORAGE: 'false' }, { FOREX_MT5_VANTAGE_SERVERS: '' }]) {
+    assert.equal(check({ ...node, ...patch }, 'forex-receiver'), 'blocked');
+  }
+  assert.equal(check({ ...node, BACKUP_ENCRYPTION_KEY: '' }, 'forex-backup'), 'blocked');
+  const text = JSON.stringify(launchConfiguration(node));
+  assert.ok(!text.includes(node.FOREX_MT5_DATABASE_PATH));
+  assert.ok(!text.includes(node.LINE_CHANNEL_SECRET));
+  assert.ok(!launchConfiguration(configured).checks.some(item => item.id.startsWith('forex-')));
+});

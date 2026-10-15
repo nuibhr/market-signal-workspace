@@ -49,3 +49,5 @@ origin/main ก่อนรวมอยู่ที่ `21766235400d1d4f582cc953
 รวม Forex / CFD Command Center เข้า main ที่ `/forex` บนพอร์ต 3000 แล้ว ใช้ session LINE เดิม พร้อม MT5 receiver ของสมาชิกบน Node และฐานข้อมูลแยก ชุดรวมล่าสุด **153 tests/subtests ผ่าน** พร้อม Next/Cloud build ดู `docs/forex-command-center-integration-2026-10-14.md` ตัวรับ MT5 ยังไม่เปิดบน Cloudflare/D1 และข้อมูล Demo/การเชื่อม pilot เดิมยังแยกจากข้อมูลสมาชิกจริง
 
 ปรับทางเข้าตามคำยืนยันให้ใช้ Robot 3D ล่าสุด: `/` กับ `/markets` ใช้หน้าเดียวกัน และเชื่อม Forex ใหม่/สมาชิก/Community ครบ ชุดที่เกี่ยวข้อง 29/29 กับ Next/Cloud build ผ่าน; HTTP ยืนยัน Robot markup ตรงกันทั้งสองทางเข้า ไม่มี iframe ยังไม่อ้างผลตรวจภาพ WebGL/มือถือจริง
+
+ตรวจ acceptance เพิ่มวันที่ 15 ต.ค.: แก้ MT5 timeout/คำตอบเก่า, AI retry หลังคำตอบหลุด และรวม MT5 ใน launch checks แล้ว ชุดรวม 163 tests/subtests, HTTP 54 จุด และ Next/Cloud build ผ่าน แต่ยังไม่ผ่าน launch gate จาก coverage จริง, hosting/recovery/สิทธิข้อมูล และอุปกรณ์จริง ดู [รายงานก่อนเปิดใช้งานฉบับล่าสุด](prelaunch-acceptance-2026-10-15.md)

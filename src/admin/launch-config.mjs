@@ -1,4 +1,5 @@
 import { isAbsolute } from 'node:path';
+import { customerPreflight } from '../forex-mt5/customer-preflight.mjs';
 
 // Configuration evidence only; never return credential values.
 export function launchConfiguration(env = process.env) {
@@ -28,5 +29,12 @@ export function launchConfiguration(env = process.env) {
   add('rights-history', 'สิทธิแสดงกราฟย้อนหลัง Yahoo', env.YAHOO_DISPLAY_RIGHTS_CONFIRMED === 'true', 'สิทธิกราฟย้อนหลังแยกจากสิทธิสัญญาณ US รายวัน');
   if (env.MARKETDX_API_KEY) add('rights-news', 'สิทธิแสดงข่าว', env.MARKETDX_PUBLIC_DISPLAY_RIGHTS_CONFIRMED === 'true', 'ต้องยืนยันสิทธิแสดงข่าวแก่ลูกค้า');
   if (env.FRED_API_KEY) add('rights-macro', 'สิทธิแสดงข้อมูลเศรษฐกิจ', env.FRED_PUBLIC_DISPLAY_RIGHTS_CONFIRMED === 'true', 'ต้องยืนยันสิทธิแสดงชุดข้อมูลเศรษฐกิจ');
+  if (env.FOREX_MT5_ENABLED === 'true') {
+    const forex = customerPreflight(env);
+    add('forex-receiver', 'การเชื่อม MT5 สำหรับสมาชิก', forex.configuration_ready,
+      forex.configuration_ready ? 'ตั้งค่า Node, HTTPS และฐานข้อมูล MT5 ถาวรแล้ว ยังต้องทดสอบ Terminal จริง' : `ยังไม่ผ่าน: ${forex.remaining.join(', ')}`);
+    add('forex-backup', 'สำรองและกู้คืนข้อมูล MT5', backupKey && env.FOREX_MT5_BACKUP_RECOVERY_CONFIRMED === 'true',
+      'ฐาน MT5 แยกจากฐานสมาชิก ต้องสำรองนอกเครื่องและทดสอบกู้คืนแยกก่อนยืนยัน FOREX_MT5_BACKUP_RECOVERY_CONFIRMED');
+  }
   return { checks, publicOrigin: publicHttps ? origin.origin : null };
 }

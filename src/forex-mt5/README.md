@@ -50,6 +50,8 @@ Use the existing deployed app's LINE credentials and callback configuration, not
 
 Generate the explicit server list from `VANTAGE_SERVER_CATALOG.join(',')`. Run `NODE_ENV=production node --env-file=<deployment-env> src/forex-mt5/customer-preflight.mjs` before release. Its read-only, secret-free report requires HTTPS, known exact server labels, existing LINE config, persistent Node storage and disabled development shortcuts. Passing it does not replace DNS/TLS/login/member-isolation tests, native Mac/Windows customer ingestion, restart persistence and backup restore verification.
 
+Main's `npm run check:production` also checks these MT5 prerequisites when `FOREX_MT5_ENABLED=true`. The member backup command does not back up the separate Forex database. Set `FOREX_MT5_BACKUP_RECOVERY_CONFIRMED=true` only after an offsite encrypted backup and a restore of that database have actually been verified; the flag itself does not perform a backup.
+
 ## Validation for this update
 
 ```sh
