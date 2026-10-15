@@ -11,6 +11,7 @@ import { BookOpen, Layers3, Newspaper, Radar, Waves } from 'lucide-react';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS, TFEX_SYMBOLS } from '../markets/catalog.mjs';
 import { formatQuotePrice } from '../markets/quote-format.mjs';
 import { analyzeCandles } from '../analysis/technical.mjs';
+import { loadChartCandles } from '../market-data/chart-client.mjs';
 import SymbolSearch from './symbol-search.jsx';
 import UsAssetTabs from './us-asset-tabs.jsx';
 import AnalysisRail from './analysis-rail.jsx';
@@ -197,26 +198,13 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     setLiveSeries(null);
     setLiveState('loading');
     setChartLoadMs(null);
-    const route = hasSettradeConnection ? '/api/market-data' : hasTfexConnection ? '/api/tfex/candles' : asset.id==='forex' || asset.id==='us' && timeframe!=='1d' ? '/api/history-bars' : '/api/us-bars';
     async function loadCandles() {
-      const attempts = hasTfexConnection ? 2 : 1;
-      for (let attempt = 0; attempt < attempts; attempt += 1) {
-        const startedAt = performance.now();
-        try {
-          let response = await fetch(`${route}?symbol=${encodeURIComponent(asset.symbol)}&market=${asset.id}&timeframe=${timeframe}`, { cache: 'no-store', signal: controller.signal });
-          let payload = await response.json();
-          if((!response.ok||payload.status!=='available')&&!hasTfexConnection&&route!=='/api/history-bars'&&timeframe!=='4h'){
-            response=await fetch(`/api/history-bars?symbol=${encodeURIComponent(asset.symbol)}&market=${asset.id}&timeframe=${timeframe}`,{cache:'no-store',signal:controller.signal});payload=await response.json();
-          }
-          if (!response.ok || payload.status !== 'available' || !Array.isArray(payload.bars) || payload.bars.length === 0)
-            throw new Error(payload.code ?? 'SOURCE_UNAVAILABLE');
-          if (!controller.signal.aborted) { setLiveSeries(payload); setLiveState('available'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
-          return;
-        } catch (error) {
-          if (controller.signal.aborted) return;
-          if (attempt + 1 === attempts) { setLiveSeries(null); setLiveState('unavailable'); setChartLoadMs(Math.round(performance.now() - startedAt)); return; }
-          await new Promise(resolve => setTimeout(resolve, 800));
-        }
+      const startedAt = performance.now();
+      try {
+        const payload = await loadChartCandles(asset, timeframe, { signal: controller.signal });
+        if (!controller.signal.aborted) { setLiveSeries(payload); setLiveState('available'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
+      } catch {
+        if (!controller.signal.aborted) { setLiveSeries(null); setLiveState('unavailable'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
       }
     }
     loadCandles();
@@ -369,7 +357,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
         <header className="topbar">
           <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
           <div className="topbar-search-area"><SymbolSearch marketId={marketId} onSelect={selectAsset} /></div>
-          <div className="topbar-actions"><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
+          <div className="topbar-actions"><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
         </header>
 
         <div className="page-content">
@@ -418,8 +406,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               <div className="ohlc-strip"><span>O <b>{latestBar ? formatQuotePrice(latestBar.open,asset) : '—'}</b></span><span>H <b>{latestBar ? formatQuotePrice(latestBar.high,asset) : '—'}</b></span><span>L <b>{latestBar ? formatQuotePrice(latestBar.low,asset) : '—'}</b></span><span>C <b>{latestBar ? formatQuotePrice(latestBar.close,asset) : '—'}</b></span><span>V <b>{latestBar && asset.id!=='forex' ? displayNumber(latestBar.volume, 0) : '—'}</b></span><span className="source-time">{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} · ${latestBarLabel}` : hasTfexConnection ? 'กำลังรอ TFEX OHLC' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>
               {analysis && <div className="chart-monitor-summary"><span>SUP <b>{formatQuotePrice(analysis.support,asset)}</b></span><span>RES <b>{formatQuotePrice(analysis.resistance,asset)}</b></span><span>RSI 14 <b>{displayNumber(analysis.rsi14, 1)}</b></span><span>MACD <b>{displayNumber(analysis.macdHistogram, 3)}</b></span></div>}
               {liveSeries?.signalMode==='EOD_CLOSED_CANDLE'&&<div className="history-feed-note">ข้อมูลรายวันหลังตลาดปิด · ใช้แท่งปิดสแกนและติดตามสัญญาณ · ราคานี้ไม่ใช่ราคาซื้อขายแบบเรียลไทม์</div>}
-              {liveSeries?.chartOnly&&<div className="history-feed-note">Yahoo Finance · กราฟย้อนหลังจาก {liveSeries.sourceTicker} · แท่งปิดแล้ว · ไม่ใช้กราฟสำรองนี้ยืนยัน AutoPick{asset.id==='forex'&&' · ไม่มี Volume รวมของตลาด'}</div>}
-              {hasRealBars && <div className="chart-freshness">ข้อมูลแท่ง {TIMEFRAME_LABELS[timeframe]} จาก {sourceLabel} · แท่งล่าสุด {latestBarLabel} · เซิร์ฟเวอร์รับข้อมูล {formatQuoteReceipt(liveSeries.receivedAt)} · {liveSeries.freshness === 'recent' ? 'ข้อมูลตามรอบตลาดล่าสุด' : 'ข้อมูลย้อนหลังเก่า'} · แสดงเฉพาะแท่งปิดแล้ว · โหลดผ่านเว็บ {chartLoadMs == null ? '—' : `${chartLoadMs} ms`} (ไม่ใช่ความหน่วงราคาตลาด) {!liveSeries.chartOnly&&hasSettradeConnection?' · รีเฟรชหลังรอบ 15 นาทีขณะเปิดหน้านี้':''}</div>}
+              {liveSeries?.chartOnly&&<div className="history-feed-note">{liveSeries.source}{liveSeries.sourceTicker&&` · ${liveSeries.sourceTicker}`} · {liveSeries.fallback ? `ข้อมูลสำรองอายุอย่างน้อย 15 นาที · แท่งปิดล่าสุด ${latestBarLabel} · อายุจากขอบเขตแท่ง ${Math.ceil(liveSeries.observedDelaySeconds/60).toLocaleString()} นาที (ไม่ใช่การรับรองความหน่วงของผู้ให้บริการ)` : 'แท่งปิดแล้ว'} · ไม่ใช้กราฟสำรองนี้ยืนยัน AutoPick{asset.id==='forex'&&' · ไม่มี Volume รวมของตลาด'}</div>}
+              {hasRealBars && <div className="chart-freshness">ข้อมูลแท่ง {TIMEFRAME_LABELS[timeframe]} จาก {sourceLabel} · แท่งล่าสุด {latestBarLabel} · เซิร์ฟเวอร์รับข้อมูล {formatQuoteReceipt(liveSeries.receivedAt)} · {liveSeries.freshness === 'recent' ? 'ข้อมูลตามรอบตลาดล่าสุด' : liveSeries.freshness === 'delayed' ? 'ข้อมูลสำรองแบบดีเลย์' : 'ข้อมูลย้อนหลังเก่า'} · แสดงเฉพาะแท่งปิดแล้ว · โหลดผ่านเว็บ {chartLoadMs == null ? '—' : `${chartLoadMs} ms`} (ไม่ใช่ความหน่วงราคาตลาด) {!liveSeries.chartOnly&&hasSettradeConnection?' · รีเฟรชหลังรอบ 15 นาทีขณะเปิดหน้านี้':''}</div>}
               <ChartToolbox chartOnly={Boolean(liveSeries?.chartOnly)} asset={asset} bars={displayBars} analysis={analysis} tradePlan={tradePlan} freshness={liveSeries?.freshness} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} indicators={chartIndicators} onToggleIndicator={toggleIndicator} onOpenAutomation={() => navigateTo('autopick')} />
             </article>
 
