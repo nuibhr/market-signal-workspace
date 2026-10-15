@@ -1,0 +1,6 @@
+# Use together with compose.yml only while setting up the public preview.
+services:
+  web:
+    environment:
+      FOREX_MT5_PREVIEW: 'true'
+      FOREX_MT5_ENABLED: 'false'
