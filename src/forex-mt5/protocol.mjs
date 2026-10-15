@@ -159,6 +159,7 @@ export function validatePacket(packet, config, now = Date.now()) {
     "instruments",
     "quotes",
     "chart",
+    "clock",
   ]);
   fail(packet.schema_version === 1 && packet.broker_id === "vantage");
   assertIdentity(packet.server, packet.company, config);
@@ -172,6 +173,14 @@ export function validatePacket(packet, config, now = Date.now()) {
     Number.isFinite(stamp) && stamp >= now - 120000 && stamp <= now + 30000,
     "CLOCK_OUT_OF_RANGE",
   );
+  if (packet.clock !== undefined) {
+    exactKeys(packet.clock, ["utc_seconds", "server_seconds", "last_tick_seconds", "used_offset_minutes"]);
+    for (const key of ["utc_seconds", "server_seconds", "last_tick_seconds"])
+      fail(Number.isSafeInteger(packet.clock[key]) && packet.clock[key] > 0);
+    fail(Math.abs(packet.clock.utc_seconds * 1000 - stamp) <= 2000, "CLOCK_OUT_OF_RANGE");
+    fail(packet.clock.used_offset_minutes === null ||
+      (Number.isInteger(packet.clock.used_offset_minutes) && Math.abs(packet.clock.used_offset_minutes) <= 840));
+  }
   if (packet.kind === "universe") {
     fail(Number.isSafeInteger(packet.sync_id) && packet.sync_id > 0);
     fail(

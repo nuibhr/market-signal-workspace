@@ -1,11 +1,12 @@
 #property strict
-#property version "2.16"
+#property version "2.20"
 #property description "Nugaom read-only symbol/quote/candle bridge. No account credentials or order operations."
 input string Endpoint = "http://localhost:3100/api/forex/mt5";
 input bool LocalFiles = false; // Same-computer file transport; no WebRequest needed
 input string LocalChannel = ""; // 32 hex characters shown by the local web UI
 input string BridgeToken = ""; // One-time pairing key, never an MT5 password
 input string ExpectedServer = "VantageMarkets-Demo";
+input bool AutoDetectServerTime = true; // Require repeated fresh clock observations from the receiver
 input int ServerUtcOffsetMinutes = 10000; // Must confirm broker clock offset; 10000 disables prices/bars
 input int PollSeconds = 5;
 
@@ -16,6 +17,8 @@ datetime synced_at = 0;
 string requested_symbol = "", requested_frame = "1h";
 long pending_file_sequence = 0;
 string terminal_state = "";
+int effective_offset = 10000;
+long history_since = 0;
 
 string ServerLabel() {
    string value=ExpectedServer;
@@ -99,6 +102,19 @@ string ReadField(string json,string key) {
    start+=StringLen(prefix); int end=StringFind(json,"\"",start);
    return end<0 ? "" : StringSubstr(json,start,end-start);
 }
+string Clock() {
+   return "\"clock\":{\"utc_seconds\":"+IntegerToString((long)TimeGMT())+
+      ",\"server_seconds\":"+IntegerToString((long)TimeTradeServer())+
+      ",\"last_tick_seconds\":"+IntegerToString((long)TimeCurrent())+
+      ",\"used_offset_minutes\":"+(MathAbs(effective_offset)<=840 ? IntegerToString(effective_offset) : "null")+"}";
+}
+void ApplyClock(string response) {
+   if(!AutoDetectServerTime) return;
+   string offset=ReadField(response,"requested_utc_offset_minutes");
+   effective_offset=offset=="" ? 10000 : (int)StringToInteger(offset);
+   string since=ReadField(response,"requested_history_since");
+   history_since=(long)StringToInteger(since);
+}
 string Unhex(string value) {
    if(StringLen(value)%2!=0) return "";
    char bytes[]; ArrayResize(bytes,StringLen(value)/2);
@@ -131,6 +147,7 @@ bool ReadLocalReply() {
       if(status=="401" || status=="403" || status=="409") EventKillTimer();
       return false;
    }
+   ApplyClock(response);
    string wanted=Unhex(ReadField(response,"requested_symbol_hex")), frame=ReadField(response,"requested_frame");
    if(wanted!="") requested_symbol=wanted;
    if(frame=="15m" || frame=="1h" || frame=="4h" || frame=="1d") requested_frame=frame;
@@ -141,12 +158,12 @@ bool Send(string fields) {
    // Publish the approved label after checking the terminal name; backend allowlists remain exact.
    string body="{\"schema_version\":1,\"broker_id\":\"vantage\",\"server\":"+J(ServerLabel())+
       ",\"company\":"+J(AccountInfoString(ACCOUNT_COMPANY))+",\"sent_at\":"+J(UTC())+
-      ",\"sequence\":"+IntegerToString(++sequence_id)+","+fields+"}";
+      ",\"sequence\":"+IntegerToString(++sequence_id)+","+(AutoDetectServerTime ? Clock()+"," : "")+fields+"}";
    if(LocalFiles) return SendLocal(body);
    char data[],result[]; string response_headers;
    int size=StringToCharArray(body,data,0,WHOLE_ARRAY,CP_UTF8); ArrayResize(data,size-1);
    ResetLastError();
-   int status=WebRequest("POST",Endpoint,"Content-Type: application/json\r\nAuthorization: Bearer "+BridgeToken+"\r\n",5000,data,result,response_headers);
+   int status=WebRequest("POST",Endpoint,"Content-Type: application/json\r\nX-Forex-Retry: same-packet\r\nAuthorization: Bearer "+BridgeToken+"\r\n",5000,data,result,response_headers);
    if(status!=200) {
       // Never print the token or payload. A changed broker/expired key stops the adapter.
       Print("Nugaom bridge: HTTP ",status," / network code ",GetLastError());
@@ -154,6 +171,7 @@ bool Send(string fields) {
       return false;
    }
    string response=CharArrayToString(result,0,WHOLE_ARRAY,CP_UTF8);
+   ApplyClock(response);
    string wanted=Unhex(ReadField(response,"requested_symbol_hex"));
    string frame=ReadField(response,"requested_frame");
    if(wanted!="") requested_symbol=wanted;
@@ -169,7 +187,7 @@ ENUM_TIMEFRAMES Frame() {
 string Quote(string symbol) {
    MqlTick tick;
    if(!SymbolInfoTick(symbol,tick) || tick.bid<=0 || tick.ask<tick.bid) return "";
-   long time=(long)tick.time-ServerUtcOffsetMinutes*60;
+   long time=(long)tick.time-effective_offset*60;
    return "{\"broker_symbol\":"+J(symbol)+",\"bid\":"+N(tick.bid)+",\"ask\":"+N(tick.ask)+",\"time\":"+IntegerToString(time)+"}";
 }
 string Chart() {
@@ -179,15 +197,15 @@ string Chart() {
    int copied=CopyRates(requested_symbol,Frame(),1,100,rates);
    string rows="";
    for(int i=0;i<copied;i++) {
-      long time=(long)rates[i].time-ServerUtcOffsetMinutes*60;
-      if(time<(long)TimeGMT()-86400) continue;
+      long time=(long)rates[i].time-effective_offset*60;
+      if(time<(long)TimeGMT()-86400 || (AutoDetectServerTime && time<history_since)) continue;
       if(rows!="") rows+=",";
       rows+="{\"time\":"+IntegerToString(time)+",\"open\":"+N(rates[i].open)+",\"high\":"+N(rates[i].high)+
          ",\"low\":"+N(rates[i].low)+",\"close\":"+N(rates[i].close)+",\"volume\":"+IntegerToString(rates[i].tick_volume)+"}";
    }
    if(rows=="") return "null";
    return "{\"broker_symbol\":"+J(requested_symbol)+",\"timeframe\":"+J(requested_frame)+
-      ",\"utc_offset_minutes\":"+IntegerToString(ServerUtcOffsetMinutes)+",\"bars\":["+rows+"]}";
+      ",\"utc_offset_minutes\":"+IntegerToString(effective_offset)+",\"bars\":["+rows+"]}";
 }
 int InitError(string reason) {
    Print("Nugaom setup: ",reason);
@@ -217,7 +235,8 @@ int OnInit() {
    // Parameter/preset reinitialization must start a fresh universe and discard any old ACK wait.
    sync_id=0; next_part=0; universe_total=0; needs_sync=true; synced_at=0;
    pending_file_sequence=0; requested_symbol=""; requested_frame="1h"; terminal_state="";
-   Print("Nugaom setup: connector version 2.16; starting fresh universe");
+   effective_offset=AutoDetectServerTime ? 10000 : ServerUtcOffsetMinutes; history_since=0;
+   Print("Nugaom setup: connector version 2.20; starting fresh universe");
    if(LocalFiles) {
       if(StringLen(LocalChannel)!=32) {
          Print("Nugaom setup: LocalChannel length is ",StringLen(LocalChannel),"; expected 32");
@@ -231,7 +250,7 @@ int OnInit() {
    if(PollSeconds<5 || PollSeconds>60) return InitError("POLL_SECONDS: use 5 to 60 seconds");
    if(LocalFiles && MQLInfoInteger(MQL_TESTER)) return InitError("STRATEGY_TESTER: attach the local EA to a terminal chart");
    sequence_id=(long)TimeGMT()*1000000+(long)(GetMicrosecondCount()%1000000);
-   if(MathAbs(ServerUtcOffsetMinutes)>840) Print("Nugaom: universe only; confirm broker UTC offset to enable prices/candles.");
+   if(MathAbs(effective_offset)>840) Print("Nugaom: universe only; waiting for fresh broker clock observations to enable prices/candles.");
    if(!EventSetTimer(PollSeconds)) return InitError("TIMER_FAILED: cannot start the export timer");
    ExportReady(); // Empty broker metadata/disconnection must wait, never bypass identity checks.
    return INIT_SUCCEEDED;
@@ -260,7 +279,12 @@ void OnTimer() {
       return;
    }
    string quotes="", chart="null";
-   if(MathAbs(ServerUtcOffsetMinutes)<=840) {
+   if(AutoDetectServerTime) {
+      long delta=(long)TimeTradeServer()-(long)TimeGMT();
+      long lag=(long)TimeTradeServer()-(long)TimeCurrent();
+      if(MathAbs(delta-effective_offset*60)>5 || lag>20 || lag < -5) effective_offset=10000;
+   }
+   if(MathAbs(effective_offset)<=840) {
       if(requested_symbol!="") SymbolSelect(requested_symbol,true);
       // Quote the requested chart symbol first, then at most 99 other Market Watch symbols.
       if(requested_symbol!="") quotes=Quote(requested_symbol);

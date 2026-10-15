@@ -1,3 +1,4 @@
+import { connectorEndpoint } from "../../../../components/forex/connection-setup.mjs";
 import { cookies } from "next/headers";
 import {
   configuration,
@@ -85,8 +86,15 @@ function errorResponse(error) {
 export async function GET(request) {
   try {
     const config = configuration();
+    const local = config.local && loopback(request);
+    const publicOrigin = process.env.APP_ORIGIN || (local ? new URL(request.url).origin : "");
+    let endpoint = null;
+    try { endpoint = connectorEndpoint(publicOrigin, local); } catch { /* No public endpoint configured. */ }
+    const { isConfigured } = await import("../../../../membership/store.mjs");
     const capabilities = {
       enabled: config.enabled,
+      endpoint,
+      memberLoginConfigured: isConfigured(),
       servers: config.servers,
       local: config.local && loopback(request),
       localFiles:
@@ -161,7 +169,7 @@ export async function POST(request) {
       const token = request.headers
         .get("authorization")
         ?.match(/^Bearer ([A-Za-z0-9_-]{43})$/)?.[1];
-      return Response.json(store.ingest(token, body, config), { headers });
+      return Response.json(store.ingest(token, body, config, Date.now(), request.headers.get("x-forex-retry") === "same-packet"), { headers });
     }
     sameSite(request);
     fail(
@@ -208,6 +216,8 @@ export async function POST(request) {
         "HTTPS_REQUIRED",
         403,
       );
+      fail(Boolean(process.env.APP_ORIGIN) || (config.local && loopback(request)), "PUBLIC_ORIGIN_REQUIRED", 503);
+      connectorEndpoint(process.env.APP_ORIGIN || new URL(request.url).origin, config.local && loopback(request));
       const pairing = store.pair(owner, body.server, config);
       localFiles.stop(owner);
       return Response.json(pairing, {

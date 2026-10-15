@@ -1,0 +1,50 @@
+name: nugaom-forex-customer
+services:
+  web:
+    build:
+      context: ../../..
+      dockerfile: src/forex-mt5/hosting/Dockerfile
+    restart: unless-stopped
+    init: true
+    env_file:
+      - ${FOREX_ENV_FILE:?Set FOREX_ENV_FILE to the absolute private customer env path}
+    environment:
+      SITE_HOST: ${SITE_HOST:?Set the public DNS hostname}
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: '3000'
+      FOREX_MT5_ENABLED: 'true'
+      FOREX_MT5_LOCAL_MODE: 'false'
+      FOREX_MT5_LOCAL_FILES_PATH: ''
+      FOREX_MT5_DATABASE_PATH: /var/lib/nugaom/forex/bridge.sqlite
+      FOREX_MT5_PERSISTENT_STORAGE: 'true'
+      DATABASE_PATH: /var/lib/nugaom/membership/nugaom.sqlite
+    volumes:
+      - customer_data:/var/lib/nugaom
+    expose:
+      - '3000'
+    healthcheck:
+      test: ['CMD', 'node', 'src/forex-mt5/hosting/health.mjs']
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+  https:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      SITE_HOST: ${SITE_HOST:?Set the public DNS hostname}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+volumes:
+  customer_data:
+  certificates:
+  caddy_config:

@@ -1,0 +1,8 @@
+{$SITE_HOST} {
+  encode zstd gzip
+  @mt5 path /api/forex/mt5
+  request_body @mt5 {
+    max_size 512000
+  }
+  reverse_proxy web:3000
+}

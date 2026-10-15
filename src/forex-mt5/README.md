@@ -1,3 +1,70 @@
+# Hostinger deployment preparation · 2026-10-15
+
+The operator chose Hostinger for testing, superseding the proposed office Windows host. The local development website was restarted on loopback port 3100. No Hostinger service/package/account connection or public deployment is confirmed. No subscription, domain, DNS change or existing-site modification has been made.
+
+`hosting/README.md` contains the managed Node.js preview procedure and an optional VPS/container setup. New preview settings leave MT5 ingestion disabled until private persistent storage and existing LINE sign-in are verified. Customer preflight/startup checks now also reject reuse of the membership SQLite file (including a symlink), known managed build/public directories, or mismatched proxy/site hostnames. Docker is unavailable on this development Mac; a local Next build is not verification of Hostinger or Docker operation.
+
+The v2.20 EA was reloaded on 2026-10-08 and the actual Demo terminal supplied **12 Bid/Ask quotes**, with a currently verified **UTC+3** broker clock, while retaining the complete **1,268-symbol** universe. Those observations are historical evidence, not a claim of a fresh connection on 2026-10-15. Actual closed bars after offset observation and native Windows MT5 verification remain outstanding. Local-file pairing sessions are in memory and are not restored by restarting the development server.
+
+# Customer self-service pilot · 2026-10-08
+
+Version **2.20** adds Mac/Windows onboarding, client-generated MT5 presets, a compiled EA download, an optional customer file relay, current broker-clock observations, and safe retry receipts. These changes stay inside the dedicated Forex components/API/bridge. No shared workspace, market, membership, LINE auth, admin, Auto Pick, deployment configuration, or D1 migration changes.
+
+## Current operational status
+
+- The local receiver is running on `http://localhost:3100`, with the **19 exact server labels** shown in the operator's screenshot. The operator confirmed using only those entries; the `Live 21` suffix is a server label, not the total count. No missing numbers are invented. The catalog is `vantage-servers.mjs`; production must explicitly configure its allowlist.
+- Actual MT5 ingestion of **1,268 symbols** was verified before this update. Both v2.20 EA variants compile in the installed Mac Wine MetaEditor with **0 errors and 0 warnings**. Reload is needed for current-clock observations and actual price verification. This does not imply real Windows terminal verification or deployment of the customer service.
+- The release has **no public HTTPS address, production host/persistent volume, or configured LINE login in this checkout**. Customers on other computers cannot connect to this localhost receiver. Customer controls/presets/relay are implemented, but public customer operation is not active yet.
+
+## Customer setup
+
+On the Forex MT5 panel, choose **Mac** or **Windows** and the exact Vantage server. Sign in with the existing LINE flow on the deployed site. Select direct EA/WebRequest or the customer file relay, create a key, and download the ready `.set` preset. The preset is UTF-16 LE with BOM and CRLF for MT5 Inputs → Load. It binds to the server selected at key creation; changing the dropdown later cannot change that preset. No broker password or login number is requested.
+
+The key permits market ingestion for seven days. It is displayed once, kept only in the mounted panel's memory, and stored hashed at the receiver. The downloaded HTTP preset or relay JSON contains the customer's upload key and should be kept private. Keys never enter URLs, logs, download endpoints, or shared release artifacts. Creating a new key replaces the owner's prior key; revocation stops receiving and deletes their bridge data immediately.
+
+Download the compiled `NugaomReadOnlyBridge.ex5` from the panel, put it in **MT5 → File → Open Data Folder → MQL5 → Experts**, Refresh Navigator, attach to one chart, and load `NugaomMT5.set`. A `.mq5` source download is retained for MetaEditor compilation on terminals incompatible with the supplied X64 build. Use full MT5 Desktop with Expert Advisors; an iPhone/iPad app on Mac cannot run this EA.
+
+### Direct EA
+
+Allow WebRequest to the site origin under **Tools → Options → Expert Advisors**, then load the preset. This avoids typing the endpoint/key in Inputs, but MT5 still requires the allowed URL. Double-click the new URL row before typing; if the Wine URL field remains unusable, choose the file relay.
+
+### Customer file relay (Mac and Windows)
+
+The panel's **ส่งผ่านไฟล์ · ไม่ใช้ช่อง URL** option uses the same EA with `LocalFiles=true`. It provides a channel preset (no plaintext upload token in the EA), a private `NugaomRelay.json` containing the key and HTTPS destination, and a downloadable ZIP with the EA, a standalone Node relay, Mac/Windows launchers and instructions. **Node.js 22+ must be installed separately**. The launcher is a pilot utility, not a signed/notarized desktop installer.
+
+Start the relay on the same customer computer as MT5 and select the downloaded JSON and the exact `MQL5/Files/NugaomBridge` directory. It reads only that channel's packet and sends it to the configured HTTPS receiver; it never listens on a public port or reads account/password data. Redirects are forbidden, files and configs are bounded, symlink input is rejected, and replies are replaced atomically without the key. Network failures retry without advancing the EA. Identical last-packet retry receipts prevent a lost HTTP response from corrupting sync/clock observations; different or older replays still fail. Open MT5 and the relay while using the service.
+
+This customer transport differs from the existing developer-only same-computer bridge. The latter still requires the local Forex page to be open and remains disabled in production. The customer relay posts to HTTPS and works independently of browser polling once paired.
+
+## Clock and price behavior
+
+`AutoDetectServerTime=true` is the default. The EA reports UTC (`TimeGMT`), estimated broker current time (`TimeTradeServer`), fresh last broker tick (`TimeCurrent`), and the offset it used. The receiver requires three compatible observations spanning at least ten seconds, with fresh ticks, a quarter-hour offset within ±14 hours and a small clock residual. Its ACK supplies the offset. Closed markets/stale ticks pause price export; an offset change clears caches and starts observation again. Clock state is owner-scoped and stored only in dedicated Forex SQLite tables.
+
+`TimeTradeServer` and `TimeGMT` depend on the computer clock. Packet UTC tolerance and the fresh broker tick corroborate the current estimate; this is **not independent broker attestation or historical timezone verification**. To avoid guessing past DST, auto-mode exports only closed candles whose opening time is after the start of the observed offset period, up to the existing 24-hour window. First candles appear after a newly formed bar closes, so long timeframes and RSI/MACD need time to accumulate enough bars. The manual offset input remains a compatibility option for explicitly verified operator clocks; customers should retain auto mode.
+
+References: [TimeTradeServer](https://www.mql5.com/en/docs/dateandtime/timetradeserver), [TimeCurrent](https://www.mql5.com/en/docs/dateandtime/timecurrent), [TimeGMT](https://www.mql5.com/en/docs/dateandtime/timegmt).
+
+## Public service release requirements
+
+The current dedicated bridge uses Node and its own persistent SQLite database; the main project's Cloudflare/D1 deployment plan and migrations remain unchanged. Do not deploy this receiver as an ephemeral Worker or set its path to the membership database. A public release needs an agreed Node host with persistent storage and a stable HTTPS origin, or a separately authorized Forex storage/runtime adaptation for Cloudflare. No paid resource, public tunnel, DNS, or auth callback has been created or altered by this update.
+
+Use the existing deployed app's LINE credentials and callback configuration, not a development bypass. Set `APP_ORIGIN` to its exact HTTPS origin; pairing refuses missing public origin and production never permits local sessions/file imports. Keep the same-origin CSRF and per-member connection isolation. Use an absolute dedicated `FOREX_MT5_DATABASE_PATH` on durable storage and set `FOREX_MT5_PERSISTENT_STORAGE=true` only after storage is provisioned. This flag is an operator preflight assertion, not a filesystem durability guarantee.
+
+Generate the explicit server list from `VANTAGE_SERVER_CATALOG.join(',')`. Run `NODE_ENV=production node --env-file=<deployment-env> src/forex-mt5/customer-preflight.mjs` before release. Its read-only, secret-free report requires HTTPS, known exact server labels, existing LINE config, persistent Node storage and disabled development shortcuts. Passing it does not replace DNS/TLS/login/member-isolation tests, native Mac/Windows customer ingestion, restart persistence and backup restore verification.
+
+## Validation for this update
+
+```sh
+node --test src/components/forex/forex.test.mjs src/components/forex/connection-setup.test.mjs src/forex-mt5/bridge.test.mjs src/forex-mt5/local-files.test.mjs src/forex-mt5/customer-relay.test.mjs src/forex-mt5/customer-preflight.test.mjs
+NUGAOM_REVIEW_MODE=true npm run build
+```
+
+The source-scope assertion compares protected files with baseline `cf74b0d7e4b5e255ba7646e4b3b6ec48dd79a82e`. New tests cover preset binding/encoding/injection, the 19 screenshot labels, clock readiness/offset changes/historical limits/privacy, exact retry receipts, customer relay errors/retries/symlinks/expiry, and release checks. Read-only local API checks confirm anonymous owner data is absent and downloaded source/EA/ZIP match the release bytes. This is API/build verification; the prior localhost browser URL-policy rejection was not bypassed. Native current quotes/candles after reloading the updated EA and physical Windows testing must be reported separately.
+
+---
+
+The following records the completed Phase 2 baseline and its earlier manual-clock transport. The customer pilot behavior described above supersedes its installation/clock instructions.
+
 # Phase 2: read-only Vantage MT5 market bridge
 
 This adds market ingestion, authenticated pairing, and a Forex-only UI adapter. It does **not** read broker credentials, account login numbers, balances, positions, orders, or trade history. It does not place trades. Existing membership/LINE authentication and every shared market endpoint remain unchanged.

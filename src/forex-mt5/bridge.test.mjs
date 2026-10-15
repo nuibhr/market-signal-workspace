@@ -422,3 +422,75 @@ test("backend retains exact approved server labels after EA padding/case normali
     "VantageMarkets-Demo",
   );
 });
+
+const clockSample = (now, offset = 180, used = null, lag = 0) => ({
+  utc_seconds: Math.floor(now / 1000),
+  server_seconds: Math.floor(now / 1000) + offset * 60,
+  last_tick_seconds: Math.floor(now / 1000) + offset * 60 - lag,
+  used_offset_minutes: used,
+});
+test("automatic clock requires fresh repeated observations; prices wait for the approved offset", () => {
+  const { store, token } = fixture();
+  const first = store.ingest(token, packet(1, { clock: clockSample(NOW) }), config, NOW);
+  assert.equal(first.requested_utc_offset_minutes, "10000");
+  store.ingest(token, feed(2, { clock: clockSample(NOW + 5000) }, NOW + 5000), config, NOW + 5000);
+  assert.deepEqual(store.view("alice", config, {}, NOW + 5000).quotes, {});
+  const ready = store.ingest(token, feed(3, { clock: clockSample(NOW + 10000) }, NOW + 10000), config, NOW + 10000);
+  assert.equal(ready.requested_utc_offset_minutes, "180");
+  assert.equal(store.view("alice", config, {}, NOW + 10000).clock.status, "ready");
+  store.ingest(token, feed(4, { clock: clockSample(NOW + 15000, 180, 180) }, NOW + 15000), config, NOW + 15000);
+  assert.equal(store.view("alice", config, {}, NOW + 15000).quotes["EURUSD.a"].bid, 1.08345);
+  assert.equal(store.view("bob", config, {}, NOW + 15000).clock, undefined);
+  const paused = store.ingest(token, feed(5, { clock: clockSample(NOW + 20000, 180, 180, 60) }, NOW + 20000), config, NOW + 20000);
+  assert.equal(paused.requested_utc_offset_minutes, "10000");
+  assert.deepEqual(store.view("alice", config, {}, NOW + 20000).quotes, {});
+  assert.equal(store.view("alice", config, {}, NOW + 20000).clock.status, "unavailable");
+  store.db.close();
+});
+test("clock changes reset observations and exclude bars before the observed offset period", () => {
+  const { store, token } = fixture();
+  store.ingest(token, packet(1, { clock: clockSample(NOW) }), config, NOW);
+  for (let n = 1; n <= 3; n++) store.ingest(token,
+    feed(n + 1, { clock: clockSample(NOW + n * 5000, 180, 180) }, NOW + n * 5000), config, NOW + n * 5000);
+  assert.ok(store.view("alice", config, {}, NOW + 15000).quotes["EURUSD.a"]);
+  store.ingest(token, feed(5, { clock: clockSample(NOW + 20000, 120) }, NOW + 20000), config, NOW + 20000);
+  assert.deepEqual(store.view("alice", config, {}, NOW + 20000).quotes, {});
+  for (let n = 5; n <= 6; n++) store.ingest(token,
+    feed(n + 1, { clock: clockSample(NOW + n * 5000, 120) }, NOW + n * 5000), config, NOW + n * 5000);
+  assert.equal(store.view("alice", config, {}, NOW + 30000).clock.offset_minutes, 120);
+  const chart = { broker_symbol: "EURUSD.a", timeframe: "15m", utc_offset_minutes: 120,
+    bars: [{ time: NOW / 1000, open: 1, high: 2, low: 1, close: 2, volume: 1 }] };
+  store.ingest(token, feed(8, { chart, clock: clockSample(NOW + 35000, 120, 120) }, NOW + 35000), config, NOW + 35000);
+  assert.equal(store.view("alice", config, { symbol: "EURUSD.a", frame: "15m" }, NOW + 35000).chart, null);
+  chart.bars[0].time = NOW / 1000 + 20;
+  store.ingest(token, feed(9, { chart, clock: clockSample(NOW + 40000, 120, 120) }, NOW + 40000), config, NOW + 40000);
+  assert.equal(store.view("alice", config, { symbol: "EURUSD.a", frame: "15m" }, NOW + 40000).chart.bars.length, 1);
+  assert.equal(store.view("alice", config, {}, NOW + 80000).clock.status, "unavailable");
+  store.revoke("alice");
+  assert.equal(store.db.prepare("SELECT count(*) AS n FROM forex_clock").get().n, 0);
+  store.db.close();
+});
+test("clock schema rejects private fields and clock timestamps unrelated to packet UTC", () => {
+  for (const clock of [ { ...clockSample(NOW), password: "forbidden" },
+    { ...clockSample(NOW), utc_seconds: NOW / 1000 + 3 },
+    { ...clockSample(NOW), used_offset_minutes: 10000 },
+    { ...clockSample(NOW), last_tick_seconds: 0 } ])
+    assert.throws(() => validatePacket(packet(1, { clock }), config, NOW));
+});
+
+test("opt-in HTTP retry returns only the exact last receipt without replaying clock or writes", () => {
+  const { store, token } = fixture();
+  const input = packet(1, { clock: clockSample(NOW) });
+  const first = store.ingest(token, input, config, NOW, true);
+  assert.deepEqual(store.ingest(token, input, config, NOW + 5000, true), first);
+  assert.equal(store.clock(store.connection("alice").id).samples, 1);
+  assert.equal(store.connection("alice").last_seen, NOW);
+  assert.throws(() => store.ingest(token, { ...input, company: "Vantage Changed" }, config, NOW + 5000, true), /TERMINAL_CHANGED/);
+  assert.throws(() => store.ingest(token, { ...input, sync_id: 2 }, config, NOW + 5000, true), /REPLAYED_PACKET/);
+  store.ingest(token, feed(2, { clock: clockSample(NOW + 5000), quotes: [] }, NOW + 5000), config, NOW + 5000, true);
+  assert.throws(() => store.ingest(token, input, config, NOW + 5000, true), /REPLAYED_PACKET/);
+  store.revoke("alice");
+  assert.throws(() => store.ingest(token, input, config, NOW + 5000, true), /INVALID_CONNECTOR_TOKEN/);
+  assert.equal(store.db.prepare("SELECT count(*) AS n FROM forex_receipts").get().n, 0);
+  store.db.close();
+});

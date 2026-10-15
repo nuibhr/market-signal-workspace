@@ -4,6 +4,8 @@ import { mkdirSync, chmodSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { assertIdentity, fail, FRAMES, validatePacket } from "./protocol.mjs";
 
+import { observeClock, publicClock } from "./clock.mjs";
+
 const digest = (token) => createHash("sha256").update(token).digest("hex");
 const secret = () => randomBytes(32).toString("base64url");
 const iso = (time) => new Date(time).toISOString();
@@ -26,6 +28,8 @@ export class ForexStore {
       CREATE TABLE IF NOT EXISTS forex_chunks (
         connection_id TEXT NOT NULL, sync_id INTEGER NOT NULL, part INTEGER NOT NULL, parts INTEGER NOT NULL,
         body TEXT NOT NULL, PRIMARY KEY(connection_id, sync_id, part));
+      CREATE TABLE IF NOT EXISTS forex_receipts (connection_id TEXT PRIMARY KEY, digest TEXT NOT NULL, body TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS forex_clock (connection_id TEXT PRIMARY KEY, body TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS forex_local_sessions (hash TEXT PRIMARY KEY, expires INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS forex_limits (bucket TEXT PRIMARY KEY, hits INTEGER NOT NULL, expires INTEGER NOT NULL);`);
   }
@@ -83,6 +87,8 @@ export class ForexStore {
     return { token, expires_at: iso(expires) };
   }
   revoke(owner) {
+    this.db.prepare("DELETE FROM forex_receipts WHERE connection_id IN (SELECT id FROM forex_connections WHERE owner=?)").run(owner);
+    this.db.prepare("DELETE FROM forex_clock WHERE connection_id IN (SELECT id FROM forex_connections WHERE owner=?)").run(owner);
     this.db
       .prepare(
         "DELETE FROM forex_chunks WHERE connection_id IN (SELECT id FROM forex_connections WHERE owner=?)",
@@ -161,6 +167,7 @@ export class ForexStore {
       expires_at: iso(row.expires),
       error_code: null,
       snapshot,
+      clock: publicClock(this.clock(row.id), now),
       quotes,
       chart: chart
         ? {
@@ -170,7 +177,11 @@ export class ForexStore {
         : null,
     };
   }
-  ingest(token, input, config, now = Date.now()) {
+  clock(id) {
+    const row = this.db.prepare("SELECT body FROM forex_clock WHERE connection_id=?").get(id);
+    return row ? JSON.parse(row.body) : null;
+  }
+  ingest(token, input, config, now = Date.now(), retry = false) {
     fail(
       typeof token === "string" && /^[A-Za-z0-9_-]{43}$/.test(token),
       "INVALID_CONNECTOR_TOKEN",
@@ -193,9 +204,30 @@ export class ForexStore {
         "TERMINAL_CHANGED",
         403,
       );
+      const hash = digest(JSON.stringify(input));
+      if (retry && packet.sequence === row.sequence) {
+        const receipt = this.db.prepare("SELECT digest,body FROM forex_receipts WHERE connection_id=?").get(row.id);
+        fail(receipt?.digest === hash, "REPLAYED_PACKET", 409);
+        this.db.exec("COMMIT");
+        return JSON.parse(receipt.body); // Lost HTTP response: exact last packet, no duplicate ingest/clock samples.
+      }
       fail(packet.sequence > row.sequence, "REPLAYED_PACKET", 409);
+      let clock = this.clock(row.id);
+      if (packet.clock) {
+        const old = clock;
+        clock = observeClock(clock, packet.clock, now);
+        this.db.prepare("INSERT INTO forex_clock VALUES(?,?) ON CONFLICT(connection_id) DO UPDATE SET body=excluded.body")
+          .run(row.id, JSON.stringify(clock));
+        if (clock.status !== "ready" || old?.offset_minutes !== clock.offset_minutes) {
+          this.db.prepare("UPDATE forex_connections SET quotes='{}',charts='{}' WHERE id=?").run(row.id);
+          row.quotes = "{}"; row.charts = "{}";
+        }
+      }
       if (packet.kind === "universe") this.universe(row, packet, now);
-      else this.feed(row, packet, now);
+      else if (!clock || (packet.clock && clock.status === "ready" &&
+        packet.clock.used_offset_minutes === clock.offset_minutes &&
+        (!packet.chart || (packet.chart.utc_offset_minutes === clock.offset_minutes &&
+          packet.chart.bars.every(bar => bar.time >= clock.history_since))))) this.feed(row, packet, now);
       this.db
         .prepare(
           "UPDATE forex_connections SET company=?,last_seen=?,sequence=? WHERE id=?",
@@ -206,15 +238,20 @@ export class ForexStore {
           "SELECT wanted_symbol,wanted_frame FROM forex_connections WHERE id=?",
         )
         .get(row.id);
-      this.db.exec("COMMIT");
       // Hex avoids requiring a JSON parser for arbitrary broker symbols in MQL5.
-      return {
+      const receipt = {
         accepted: true,
         requested_symbol_hex: Buffer.from(current.wanted_symbol || "").toString(
           "hex",
         ),
         requested_frame: current.wanted_frame,
+        requested_utc_offset_minutes: String(clock?.offset_minutes ?? 10000),
+        requested_history_since: String(clock?.history_since ?? 0),
       };
+      this.db.prepare("INSERT INTO forex_receipts VALUES(?,?,?) ON CONFLICT(connection_id) DO UPDATE SET digest=excluded.digest,body=excluded.body")
+        .run(row.id, hash, JSON.stringify(receipt));
+      this.db.exec("COMMIT");
+      return receipt;
     } catch (error) {
       this.db.exec("ROLLBACK");
       throw error;
