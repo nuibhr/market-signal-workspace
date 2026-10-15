@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { customerFeed, customerSignal } from './customer-view.mjs';
 import { replayThreeMonths } from './backtest.mjs';
+import {thaiScanSymbols,drScanSymbols,usScanSymbols} from './runner.mjs';
 const directory=mkdtempSync(join(tmpdir(),'nugaom-customer-review-'));
 process.env.DATABASE_PATH=join(directory,'test.sqlite');
 const {createSignal,signalResults}=await import('./store.mjs');
@@ -26,7 +27,7 @@ test('signal results default to seven records with a complete next page',async (
  assert.equal(first.total,9);assert.equal(first.summary.entered,0);assert.equal(first.summary.winRate,null);
 });
 test('whole-market replay summary reports missing work without inventing wins',async () =>{
- const report=(await backtestSummary('all'));assert.equal(report.summary.expected,392);
+ const report=(await backtestSummary('all'));assert.equal(report.summary.expected,thaiScanSymbols().length+drScanSymbols().length+usScanSymbols().length);
  assert.equal(report.summary.processed,0);assert.equal(report.summary.winRate,null);assert.equal(report.coverageComplete,false);
 });
 test('an old first candle alone cannot certify a complete three-month backtest',async () =>{

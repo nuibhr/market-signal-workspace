@@ -32,7 +32,13 @@ export function withD1Database(binding,action){
 async function adapter(){
   if(context.getStore())return context.getStore();
   const mode=process.env.STORAGE_PROVIDER||'sqlite';
-  if(mode==='d1')throw new Error('D1_BINDING_REQUIRED');
+  if(mode==='d1'){
+    // OpenNext installs this request-scoped getter (see cloudflare/init.js).
+    // Read only the active request binding; the development helper also imports
+    // Wrangler's Node CLI, which cannot be shipped inside a Worker.
+    const requestContext=globalThis[Symbol.for('__cloudflare-context__')];
+    return d1Adapter(requestContext?.env?.DB);
+  }
   if(mode==='d1-local'||mode==='d1-remote'){
     if(!platform)platform=(async()=>{
       const {getPlatformProxy}=await import('wrangler');

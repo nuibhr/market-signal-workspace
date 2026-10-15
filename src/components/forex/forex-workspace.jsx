@@ -17,6 +17,7 @@ import {
   Wallet,
 } from "lucide-react";
 import MarketNavigation from "../market-navigation.jsx";
+import MemberAvatar from "../member-avatar.jsx";
 import useMt5Connection from "./use-mt5-connection.jsx";
 import ConnectionPanel from "./connection-panel.jsx";
 import InstrumentUniverse from "./instrument-universe.jsx";
@@ -111,7 +112,7 @@ const METRICS = [
   ["Pending orders", "2", "ตัวอย่างคำสั่งรอ", "neutral"],
 ];
 
-export default function ForexWorkspace({ initialSymbol = null }) {
+export default function ForexWorkspace({ initialSymbol = null, viewer = null }) {
   const [section, setSection] = useState("overview");
   const [demoPreview, setPreview] = useState(true);
   const [frame, setFrame] = useState("1h");
@@ -224,6 +225,10 @@ export default function ForexWorkspace({ initialSymbol = null }) {
             </button>
           ))}
         </nav>
+        <nav className={styles.memberLinks} aria-label="พื้นที่สมาชิก">
+          <Link href="/account">{viewer ? 'บัญชีของฉัน' : 'เข้าสู่ระบบด้วย LINE'}</Link>
+          <Link href="/community">ห้องสมาชิกและคุยกับทีม</Link>
+        </nav>
         <div className={styles.sidebarFoot}>
           <span className={styles.brokerLogo}>V</span>
           <div>
@@ -299,10 +304,12 @@ export default function ForexWorkspace({ initialSymbol = null }) {
             >
               <Bell size={16} />
             </button>
-            <span className={styles.guestAvatar}>G</span>
-            <span className={styles.guestName}>
-              Guest<small>Vantage desk</small>
-            </span>
+            <Link href="/account" className={styles.memberProfile}>
+              <span className={styles.guestAvatar}>{viewer ? <MemberAvatar account={viewer} size={28}/> : 'G'}</span>
+              <span className={styles.guestName}>
+                {viewer?.displayName || 'Guest'}<small>{viewer ? 'บัญชี LINE ของคุณ' : 'เข้าสู่ระบบด้วย LINE'}</small>
+              </span>
+            </Link>
           </div>
         </header>
         <div className={styles.content}>

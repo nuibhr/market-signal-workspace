@@ -1,17 +1,12 @@
 import { resolve, isAbsolute } from "node:path";
-import { realpathSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { configuration } from "./protocol.mjs";
+import { receiverConfiguration } from "./runtime-policy.mjs";
 import { connectorEndpoint } from "../components/forex/connection-setup.mjs";
 import { VANTAGE_SERVER_CATALOG } from "./vantage-servers.mjs";
 
-const actualPath = path => {
-  const value = resolve(path);
-  return existsSync(value) ? realpathSync(value) : value;
-};
 // Read-only release checks. A passing report is not proof of DNS/TLS/login/remote terminal operation.
 export function customerPreflight(env = process.env) {
-  const config = configuration(env);
+  const config = receiverConfiguration(env);
   let endpoint = null, lineReady = false;
   try {
     endpoint = connectorEndpoint(env.APP_ORIGIN);
@@ -26,12 +21,8 @@ export function customerPreflight(env = process.env) {
     https_origin_configured: Boolean(endpoint),
     explicit_known_servers: config.servers.length > 0 && config.servers.every(s => VANTAGE_SERVER_CATALOG.includes(s)),
     existing_line_login_configured: lineReady,
-    database_outside_managed_releases: !/(?:^|[\\/])(?:hbuilds|public_html|\.next|\.next-review)(?:[\\/]|$)/i.test(config.databasePath),
-    separate_forex_database: actualPath(config.databasePath) !== actualPath(env.DATABASE_PATH || "data/nugaom.sqlite"),
-    separate_public_host_valid: !env.SITE_HOST || (Boolean(endpoint) && new URL(endpoint).host === env.SITE_HOST &&
-      /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(env.SITE_HOST)),
     persistent_forex_database: isAbsolute(config.databasePath) && env.FOREX_MT5_PERSISTENT_STORAGE === "true",
-    local_shortcut_disabled: env.FOREX_MT5_LOCAL_MODE !== "true" && !env.FOREX_MT5_LOCAL_FILES_PATH,
+    local_shortcut_disabled: env.FOREX_MT5_LOCAL_MODE !== "true" && env.FOREX_MT5_MEMBER_LOCAL_FILES !== 'true' && !env.FOREX_MT5_LOCAL_FILES_PATH,
   };
   return { configuration_ready: Object.values(checks).every(Boolean), checks,
     endpoint, server_count: config.servers.length,

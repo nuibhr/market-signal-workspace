@@ -1,5 +1,5 @@
 [Unit]
-Description=Nugaom AI Pick scanner
+Description=Nugaom Swing signal scanner
 Wants=network-online.target
 After=network-online.target
 
@@ -10,7 +10,7 @@ Group=nugaom
 WorkingDirectory=/opt/nugaom/current
 EnvironmentFile=/etc/nugaom/production.env
 Environment=NODE_ENV=production
-ExecStart=/usr/bin/node scripts/auto-pick-worker.mjs
+ExecStart=/usr/bin/node scripts/signal-worker.mjs
 Restart=always
 RestartSec=15
 TimeoutStopSec=40

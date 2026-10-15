@@ -1,0 +1,183 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+const temporary=mkdtempSync(join(tmpdir(),'nugaom-community-'));
+process.env.DATABASE_PATH=join(temporary,'fixture.sqlite');
+process.env.SESSION_SECRET='fixture-session-'.repeat(5);
+process.env.PORTFOLIO_HASH_SECRET='fixture-portfolio-'.repeat(5);
+process.env.ADMIN_LINE_IDS='U'+'a'.repeat(32);
+const { storage, withD1Database, operation:op }=await import('../storage/database.mjs');
+const { upsertLineMember }=await import('../membership/store.mjs');
+const { sharedDatabase }=await import('../storage/sqlite.mjs');
+const { COMMUNITY_SCHEMA }=await import('../storage/schema.mjs');
+const { pristineCommunityRooms }=await import('./rooms.mjs');
+const { communityAccess,communityOverview,channelMessages,mutateCommunity,communityAdmin }=await import('./store.mjs');
+const { backupDatabase,decryptSnapshot }=await import('../security/backup.mjs');
+const { DatabaseSync }=await import('node:sqlite');
+const change=(actor,body)=>mutateCommunity(actor,{operationId:randomUUID(),...body});
+const read=(actor,kind,id,page=1)=>channelMessages(actor,{kind,id,page});
+
+async function verifyFlow(t) {
+  const members=[];
+  for(const [letter,name] of [['a','Admin'],['b','Member'],['c','Other member'],['d','Marketing'],['e','Analyst'],['f','Expired']]) members.push(await upsertLineMember({lineId:'U'+letter.repeat(32),displayName:'Fixture '+name}));
+  const [admin,member,other,marketing,analyst,expired]=members;
+  for(const actor of [member,other])await storage.run("UPDATE members SET trial_ends_at=?,portfolio_status='verified' WHERE id=?",new Date(Date.now()+86400000).toISOString(),actor.id);
+  await change(admin,{action:'role',memberId:marketing.id,role:'marketing',enabled:true});
+  await change(admin,{action:'role',memberId:analyst.id,role:'analyst',enabled:true});
+  let roomMessage,threadId;
+  await t.test('rooms require current membership; support remains available without an active subscription',async()=>{
+    await assert.rejects(communityOverview(null),{message:'LOGIN_REQUIRED'});
+    assert.equal((await communityOverview(member)).rooms.length,6);
+    assert.equal((await communityOverview(expired)).rooms.length,0);
+    await assert.rejects(read(expired,'room','lounge'),{message:'MEMBERSHIP_REQUIRED'});
+    assert.equal((await communityOverview(marketing)).access.rooms,true);
+    await assert.rejects(communityOverview(member,{team:true}),{message:'FORBIDDEN'});
+  });
+  await t.test('message retry is idempotent and operation IDs are bound to actor and content',async()=>{
+    const body={action:'send',operationId:randomUUID(),kind:'room',channelId:'lounge',body:'Fixture message 12345678'};
+    roomMessage=body.operationId;
+    await mutateCommunity(member,body);await mutateCommunity(member,body);
+    assert.equal((await read(other,'room','lounge')).total,1);
+    assert.equal((await read(other,'room','lounge')).messages[0].body,'Fixture message ••••5678');
+    await assert.rejects(mutateCommunity(member,{...body,body:'Different'}),{message:'OPERATION_CONFLICT'});
+    await assert.rejects(mutateCommunity(other,body),{message:'OPERATION_CONFLICT'});
+    for(let n=0;n<8;n++)await change(member,{action:'send',kind:'room',channelId:'lounge',body:`Fixture ${n}`});
+    assert.equal((await read(other,'room','lounge')).messages.length,7);
+    assert.equal((await read(other,'room','lounge',2)).messages.length,2);
+    const latest=await read(other,'room','lounge');
+    const json=JSON.stringify(latest);
+    for(const key of ['sender_id','line_id','portfolio_hash'])assert.ok(!json.includes(key));
+  });
+  await t.test('unread receipts are monotonic, bounded and isolated by member',async()=>{
+    let overview=await communityOverview(other),room=overview.rooms.find(r=>r.id==='lounge');assert.equal(room.unread,9);assert.equal(overview.incomingCursor,room.lastSeq);
+    assert.equal((await communityOverview(member)).incomingCursor,0,'Own room sends are not incoming');
+    const max=room.lastSeq;
+    await change(other,{action:'read',kind:'room',channelId:'lounge',lastSeq:max});
+    await change(other,{action:'read',kind:'room',channelId:'lounge',lastSeq:0});
+    const marked=await communityOverview(other);assert.equal(marked.rooms.find(r=>r.id==='lounge').unread,0);
+    assert.equal(marked.incomingCursor,max,'Receipts do not erase new-message detection');
+    assert.equal((await communityOverview(admin)).rooms.find(r=>r.id==='lounge').unread,9);
+    await assert.rejects(change(other,{action:'read',kind:'room',channelId:'lounge',lastSeq:max+100}),{message:'INVALID_CURSOR'});
+  });
+  await t.test('private inbox blocks other members and the wrong team, including expired membership and revoked roles',async()=>{
+    const operationId=randomUUID(),body={action:'create-thread',operationId,team:'marketing',subject:'Fixture account',body:'Please help'};
+    threadId=operationId;
+    await mutateCommunity(expired,body);await mutateCommunity(expired,body);
+    assert.equal((await read(expired,'thread',threadId)).total,1);
+    await assert.rejects(read(member,'thread',threadId),{message:'CHANNEL_NOT_FOUND'});
+    await assert.rejects(read(analyst,'thread',threadId),{message:'CHANNEL_NOT_FOUND'});
+    await assert.rejects(change(member,{action:'send',kind:'thread',channelId:threadId,body:'Injected'}),{message:'CHANNEL_NOT_FOUND'});
+    assert.equal((await communityOverview(marketing,{team:true})).total,1);
+    const wrongTeam=await communityOverview(analyst,{team:true});assert.equal(wrongTeam.total,0);
+    assert.equal(wrongTeam.incomingCursor,0,'Team cursor excludes rooms and another team inbox');
+    assert.ok((await communityOverview(marketing,{team:true})).incomingCursor>0);
+    await change(marketing,{action:'send',kind:'thread',channelId:threadId,body:'Fixture response'});
+    let detail=await read(expired,'thread',threadId);
+    assert.equal(detail.channel.status,'answered');assert.equal(detail.messages[0].fromTeam,true);
+    await change(admin,{action:'role',memberId:marketing.id,role:'marketing',enabled:false});
+    await assert.rejects(read(marketing,'thread',threadId),{message:'CHANNEL_NOT_FOUND'});
+    await change(admin,{action:'role',memberId:marketing.id,role:'marketing',enabled:true});
+  });
+  await t.test('transfer changes visibility and optimistic versions protect concurrent thread updates',async()=>{
+    let detail=await read(marketing,'thread',threadId);
+    const oldVersion=detail.channel.version;
+    await change(marketing,{action:'transfer',threadId,team:'analyst',version:oldVersion});
+    await assert.rejects(read(marketing,'thread',threadId),{message:'CHANNEL_NOT_FOUND'});
+    assert.equal((await read(analyst,'thread',threadId)).channel.team,'analyst');
+    await assert.rejects(change(admin,{action:'thread-state',threadId,status:'closed',version:oldVersion}),{message:'COMMUNITY_CHANGED'});
+    detail=await read(analyst,'thread',threadId);
+    const close={action:'thread-state',operationId:randomUUID(),threadId,status:'closed',version:detail.channel.version};
+    await mutateCommunity(analyst,close);await mutateCommunity(analyst,close);
+    await assert.rejects(change(expired,{action:'send',kind:'thread',channelId:threadId,body:'Closed'}),{message:'THREAD_CLOSED'});
+    await assert.rejects(change(expired,{action:'transfer',threadId,team:'marketing',version:detail.channel.version}),{message:'FORBIDDEN'});
+  });
+  await t.test('reporting, hiding and room locks preserve records and restrict moderation to admin',async()=>{
+    await change(other,{action:'report',messageId:roomMessage,reason:'Fixture review'});
+    await change(other,{action:'report',messageId:roomMessage,reason:'Duplicate review'});
+    assert.equal((await communityAdmin(admin)).total,1);
+    await assert.rejects(communityAdmin(marketing),{message:'FORBIDDEN'});
+    await assert.rejects(change(marketing,{action:'moderate',messageId:roomMessage,hidden:true}),{message:'FORBIDDEN'});
+    await change(admin,{action:'moderate',messageId:roomMessage,hidden:true});
+    const hidden=(await read(other,'room','lounge',2)).messages.find(m=>m.id===roomMessage);
+    assert.equal(hidden.body,null);assert.equal(hidden.hidden,true);
+    await change(admin,{action:'lock-room',roomId:'lounge',locked:true});
+    await assert.rejects(change(member,{action:'send',kind:'room',channelId:'lounge',body:'Locked'}),{message:'ROOM_LOCKED'});
+    await change(admin,{action:'lock-room',roomId:'lounge',locked:false});
+    const report=(await communityAdmin(admin)).reports[0];
+    await change(admin,{action:'resolve-report',reportId:report.id});assert.equal((await communityAdmin(admin)).total,0);
+    await assert.rejects(storage.run('DELETE FROM community_messages WHERE id=?',roomMessage),/IMMUTABLE_COMMUNITY_MESSAGE/);
+    await assert.rejects(storage.run('UPDATE community_messages SET body=? WHERE id=?','Altered',roomMessage),/IMMUTABLE_COMMUNITY_MESSAGE/);
+  });
+  await t.test('historical message import does not change closed status or replay version increments',async()=>{
+    const historical=randomUUID(),id=randomUUID(),now=new Date().toISOString();
+    await storage.batch([op("INSERT INTO support_threads(id,member_id,team,subject,status,version,created_at,updated_at) VALUES(?,?,'marketing','Imported','closed',7,?,?)",historical,expired.id,now,now),op("INSERT INTO community_messages(id,thread_id,sender_id,sender_kind,body,created_at,applied) VALUES(?,?,?,'member','Historical',?,1)",id,historical,expired.id,now)]);
+    const recorded=await read(expired,'thread',historical);assert.equal(recorded.channel.status,'closed');assert.equal(recorded.channel.version,7);
+  });
+  await t.test('a committed send remains confirmable after a room locks or thread closes',async()=>{
+    const roomBody={action:'send',operationId:randomUUID(),kind:'room',channelId:'thai',body:'Confirmed fixture room message'};
+    await mutateCommunity(member,roomBody);
+    await change(admin,{action:'lock-room',roomId:'thai',locked:true});
+    assert.equal((await mutateCommunity(member,roomBody)).replayed,true);
+    assert.equal((await read(member,'room','thai')).total,1);
+    await assert.rejects(mutateCommunity(member,{...roomBody,operationId:randomUUID()}),{message:'ROOM_LOCKED'});
+    await change(admin,{action:'lock-room',roomId:'thai',locked:false});
+    const thread=await change(expired,{action:'create-thread',team:'marketing',subject:'Reply confirmation',body:'Initial fixture'});
+    const threadBody={action:'send',operationId:randomUUID(),kind:'thread',channelId:thread.threadId,body:'Confirmed fixture reply'};
+    await mutateCommunity(expired,threadBody);
+    const detail=await read(admin,'thread',thread.threadId);
+    await change(admin,{action:'thread-state',threadId:thread.threadId,version:detail.channel.version,status:'closed'});
+    assert.equal((await mutateCommunity(expired,threadBody)).replayed,true);
+    assert.equal((await read(expired,'thread',thread.threadId)).total,2);
+    await assert.rejects(mutateCommunity(expired,{...threadBody,operationId:randomUUID()}),{message:'THREAD_CLOSED'});
+  });
+  await t.test('fresh membership state and validation prevent stale access and malformed messages',async()=>{
+    await storage.run("UPDATE members SET trial_ends_at=? WHERE id=?",new Date(Date.now()-1000).toISOString(),member.id);
+    await assert.rejects(read(member,'room','lounge'),{message:'MEMBERSHIP_REQUIRED'});
+    await assert.rejects(change(admin,{action:'send',kind:'room',channelId:'lounge',body:'x'.repeat(2001)}),{message:'INVALID_COMMUNITY_INPUT'});
+    await assert.rejects(change(admin,{action:'role',memberId:other.id,role:'admin',enabled:true}),{message:'INVALID_COMMUNITY_INPUT'});
+    await assert.rejects(change(other,{action:'role',memberId:other.id,role:'marketing',enabled:true}),{message:'FORBIDDEN'});
+  });
+}
+test('SQLite community end-to-end permissions and persistent messages',verifyFlow);
+test('native local D1 community end-to-end permissions and persistent messages',async t=>{
+  const configPath=join(temporary,'wrangler.json');
+  writeFileSync(configPath,JSON.stringify({name:'nugaom-community-fixture',compatibility_date:'2026-10-07',d1_databases:[{binding:'DB',database_name:'fixture',database_id:'00000000-0000-0000-0000-000000000000',migrations_dir:resolve('deploy/cloudflare/migrations')}]}));
+  const migration=spawnSync(process.execPath,['node_modules/wrangler/bin/wrangler.js','d1','migrations','apply','DB','--local','--config',configPath],{encoding:'utf8',env:{...process.env,WRANGLER_SEND_METRICS:'false'}});
+  assert.equal(migration.status,0,'All additive migrations including 0008 apply');
+  const {getPlatformProxy}=await import('wrangler');
+  const proxy=await getPlatformProxy({configPath,persist:{path:join(temporary,'.wrangler/state/v3')}});
+  try {await withD1Database(proxy.env.DB,()=>verifyFlow(t));} finally {await proxy.dispose();}
+});
+test('SQLite encrypted recovery includes community messages, roles and audit',()=>{
+  const key='a'.repeat(64),file=backupDatabase({secret:key,directory:join(temporary,'backup')});
+  const restored=join(temporary,'restored.sqlite');writeFileSync(restored,decryptSnapshot(readFileSync(file),key));
+  const db=new DatabaseSync(restored,{readOnly:true});
+  assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+  assert.ok(db.prepare('SELECT COUNT(*) AS n FROM community_messages').get().n>0);
+  assert.ok(db.prepare('SELECT COUNT(*) AS n FROM community_operations').get().n>0);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM community_staff').get().n,2);db.close();
+});
+test('SQLite and D1 community schema are the same additive migration',()=>{assert.equal(COMMUNITY_SCHEMA,readFileSync('deploy/cloudflare/migrations/0008_community.sql','utf8'));});
+test('fixture cutover preserves all community tables and rejects a destination that already has customer data',()=>{
+  const directory=join(temporary,'cutover');mkdirSync(directory);
+  const configPath=join(directory,'wrangler.json');
+  writeFileSync(configPath,JSON.stringify({name:'nugaom-cutover-fixture',compatibility_date:'2026-10-07',d1_databases:[{binding:'DB',database_name:'fixture-cutover',database_id:'00000000-0000-0000-0000-000000000001',migrations_dir:resolve('deploy/cloudflare/migrations')}]}));
+  const env={...process.env,BACKUP_ENCRYPTION_KEY:'a'.repeat(64),BACKUP_DIRECTORY:join(directory,'backups'),D1_MIGRATION_DIR:join(directory,'snapshot'),WRANGLER_SEND_METRICS:'false'};
+  const run=(args)=>spawnSync(process.execPath,args,{encoding:'utf8',env,timeout:45000});
+  assert.equal(run(['node_modules/wrangler/bin/wrangler.js','d1','migrations','apply','DB','--local','--config',configPath]).status,0);
+  const prepared=run(['scripts/d1-migrate.mjs','prepare']);assert.equal(prepared.status,0,prepared.stderr);
+  const manifest=JSON.parse(readFileSync(join(directory,'snapshot','manifest.json'),'utf8'));
+  for(const table of ['community_rooms','community_staff','support_threads','community_messages','community_reads','community_reports','community_operations'])assert.ok(manifest.tables[table],`${table} included in manifest`);
+  const imported=run(['scripts/d1-migrate.mjs','import',configPath,'--local']);assert.equal(imported.status,0,imported.stderr);
+  const rejected=run(['scripts/d1-migrate.mjs','import',configPath,'--local']);assert.equal(rejected.status,1);assert.match(rejected.stderr,/DESTINATION_NOT_EMPTY/);
+});
+test('only pristine template rooms can bypass the empty-destination check',async()=>{
+  const rows=await storage.all('SELECT id,name,description,locked FROM community_rooms');assert.equal(pristineCommunityRooms(rows),true);
+  assert.equal(pristineCommunityRooms(rows.map((r,i)=>i===0?{...r,locked:1}:r)),false);
+  assert.equal(pristineCommunityRooms(rows.slice(1)),false);
+});
+test.after(()=>{sharedDatabase().close();rmSync(temporary,{recursive:true,force:true});});

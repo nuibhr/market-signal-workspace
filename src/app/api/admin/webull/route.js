@@ -8,6 +8,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export async function GET(request) {
   if (!isAdmin(await currentMember())) return Response.json({ error: 'FORBIDDEN' }, { status: 403, headers: privateHeaders });
+  if(process.env.STORAGE_PROVIDER==='d1')return Response.json({error:'WEBULL_LOCAL_ONLY'},{status:409,headers:privateHeaders});
   const symbol = new URL(request.url).searchParams.get('symbol');
   const run = await labRun();
   if (!symbol) return Response.json(run, { headers: privateHeaders });
@@ -18,6 +19,7 @@ export async function GET(request) {
 }
 export async function POST(request) {
   if (!isAdmin(await currentMember()) || !sameOrigin(request)) return Response.json({ error: 'FORBIDDEN' }, { status: 403, headers: privateHeaders });
+  if(process.env.STORAGE_PROVIDER==='d1')return Response.json({error:'WEBULL_LOCAL_ONLY'},{status:409,headers:privateHeaders});
   if (!labConfigured()) return Response.json({ error: 'SANDBOX_US_REQUIRED' }, { status: 409, headers: privateHeaders });
   const run = await labRun();
   const due = !run.startedAt || Date.now() - Date.parse(run.startedAt) >= 300_000 || run.status === 'INTERRUPTED';

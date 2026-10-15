@@ -1,0 +1,42 @@
+{
+  "package": "@designcodeio/threeui@1.2.0",
+  "source": "https://threeui.com/source-code/sylva-hero.json",
+  "files": [
+    {
+      "path": "public/landing-pages/inner-green-3d.html",
+      "language": "html",
+      "role": "canonical-source",
+      "bytes": 197914,
+      "lines": 4304,
+      "sha256": "69c3694bd63f44ef9f007ebe4dac57a83e4402e0cdf6b54dd10b96dd4f05e197",
+      "sourceUrl": "/landing-pages/inner-green-3d.html"
+    },
+    {
+      "path": "public/landing-pages/inner-green-assets/three.min.js",
+      "language": "javascript",
+      "role": "three-runtime",
+      "bytes": 608081,
+      "lines": 6,
+      "sha256": "8a5f7249903b54d30f79f708699d2fed2d6a1d0741a4cd41377d1f01bb5a2271",
+      "sourceUrl": "/landing-pages/inner-green-assets/three.min.js"
+    },
+    {
+      "path": "public/landing-pages/inner-green-assets/card-ecostove.jpg",
+      "mimeType": "image/jpeg",
+      "bytes": 290988,
+      "sha256": "70ce084084902bc502f00c366405b661ecdff90dee95d363b36a6e146829e433"
+    },
+    {
+      "path": "public/landing-pages/inner-green-assets/card-ethos.jpg",
+      "mimeType": "image/jpeg",
+      "bytes": 316720,
+      "sha256": "337627390f499b3ae272cec9e2f83c817694a82f42e1aa10a7b26a2c7d679dff"
+    },
+    {
+      "path": "public/landing-pages/inner-green-assets/lexend-latin.woff2",
+      "mimeType": "font/woff2",
+      "bytes": 39692,
+      "sha256": "1ec8f6ee2750554b4bc59ff0b507d316a82a7ba37e0e5bebc41d3bd9b9faad46"
+    }
+  ]
+}

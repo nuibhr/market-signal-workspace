@@ -1,24 +1,8 @@
-# Verified Hostinger VPS preview · 2026-10-15
+# Unified app integration · 2026-10-14
 
-The test site is deployed at **https://76.13.20.122.sslip.io/forex** on the operator-authorized VPS `76.13.20.122`. SSH access with the dedicated key, Ubuntu 24.04, Docker/Compose, a Linux Node 24.22.0 image and Next.js 16.3.8 are verified. The externally checked HTTPS certificate is valid. All five market routes returned HTTP 200, the public EA download matches release bytes, and anonymous API state contains no owner data. The deployment runs as UID 1000 and exposes only the HTTPS proxy, not the Node port. A marker in the dedicated data volume survived a web restart and was removed after verification.
+The main app now serves the Command Center and receiver at **port 3000**, with the existing LINE login and a separate Forex database. The original pilot connection and its 1,268-symbol snapshot stay in the older checkout. Re-pair on `/forex` under your LINE member; load the newly generated preset/channel in the EA. See [the integration report](../../docs/forex-command-center-integration-2026-10-14.md) for validation and remaining limits.
 
-**Customer MT5 pairing is still disabled.** This is the explicit preview profile, serving the 19-symbol Guest universe. LINE Channel ID/Secret have not been entered on this server and LINE sign-in has not been verified. The operator confirmed having an existing LINE Login channel. Add the test callback to that channel, enter credentials privately with `/opt/nugaom-forex/configure-line.py`, reload the preview and verify real sign-in before enabling customer mode. No local member/MT5 database, broker credentials or pairing presets were transferred. Live customer ingestion, native Windows terminal testing and backup/restore remain outstanding.
-
-Local tests: 40 Node tests plus one Python secret-helper test. VPS tests: 32 Node tests plus the Python secret-helper test. Both Mac and VPS production builds passed. Installed dependency audit found zero known vulnerabilities after the security patch. Source-scope checks preserve the protected market/workspace/auth/D1/Auto Pick sources. Only the Next package/lock version was patched outside the dedicated Forex scope to address reviewed security advisories.
-
-Deployed application source commit: `d633592`. The deployment uses `/opt/nugaom-forex/current`, a private `/etc/nugaom-forex/pilot.env` (0600), and persistent Compose data/certificate volumes. New VPS release installation and the 16.3.8 update did not change existing services; the initial VPS only had SSH listening. No subscription upgrade, domain purchase or existing domain DNS modification was performed. The temporary hostname resolves the VPS IP through sslip.io; use a chosen permanent domain before treating the pilot as the production customer service.
-
-The following describes earlier preparation and templates; current operation is the verified preview above.
-
----
-
-# Hostinger deployment preparation · 2026-10-15
-
-The operator chose Hostinger for testing, superseding the proposed office Windows host. The local development website was restarted on loopback port 3100. No Hostinger service/package/account connection or public deployment is confirmed. No subscription, domain, DNS change or existing-site modification has been made.
-
-`hosting/README.md` contains the managed Node.js preview procedure and an optional VPS/container setup. New preview settings leave MT5 ingestion disabled until private persistent storage and existing LINE sign-in are verified. Customer preflight/startup checks now also reject reuse of the membership SQLite file (including a symlink), known managed build/public directories, or mismatched proxy/site hostnames. Docker is unavailable on this development Mac; a local Next build is not verification of Hostinger or Docker operation.
-
-The v2.20 EA was reloaded on 2026-10-08 and the actual Demo terminal supplied **12 Bid/Ask quotes**, with a currently verified **UTC+3** broker clock, while retaining the complete **1,268-symbol** universe. Those observations are historical evidence, not a claim of a fresh connection on 2026-10-15. Actual closed bars after offset observation and native Windows MT5 verification remain outstanding. Local-file pairing sessions are in memory and are not restored by restarting the development server.
+Main's anonymous pilot mode is disabled. Development loopback HTTP permits member pairing; the optional `FOREX_MT5_MEMBER_LOCAL_FILES=true` plus the configured absolute Files path permits member-owned Mac file pairing. Both local file modes remain disabled in production. On Cloudflare/D1 the receiver explicitly reports unavailable until its Node SQLite runtime is adapted. The historical port 3100/local-session instructions below describe the earlier separate pilot.
 
 # Customer self-service pilot · 2026-10-08
 
@@ -65,6 +49,8 @@ The current dedicated bridge uses Node and its own persistent SQLite database; t
 Use the existing deployed app's LINE credentials and callback configuration, not a development bypass. Set `APP_ORIGIN` to its exact HTTPS origin; pairing refuses missing public origin and production never permits local sessions/file imports. Keep the same-origin CSRF and per-member connection isolation. Use an absolute dedicated `FOREX_MT5_DATABASE_PATH` on durable storage and set `FOREX_MT5_PERSISTENT_STORAGE=true` only after storage is provisioned. This flag is an operator preflight assertion, not a filesystem durability guarantee.
 
 Generate the explicit server list from `VANTAGE_SERVER_CATALOG.join(',')`. Run `NODE_ENV=production node --env-file=<deployment-env> src/forex-mt5/customer-preflight.mjs` before release. Its read-only, secret-free report requires HTTPS, known exact server labels, existing LINE config, persistent Node storage and disabled development shortcuts. Passing it does not replace DNS/TLS/login/member-isolation tests, native Mac/Windows customer ingestion, restart persistence and backup restore verification.
+
+Main's `npm run check:production` also checks these MT5 prerequisites when `FOREX_MT5_ENABLED=true`. The member backup command does not back up the separate Forex database. Set `FOREX_MT5_BACKUP_RECOVERY_CONFIRMED=true` only after an offsite encrypted backup and a restore of that database have actually been verified; the flag itself does not perform a backup.
 
 ## Validation for this update
 

@@ -14,7 +14,7 @@ export function membershipFor(member) {
     capabilities: {
       symbolSearch: true, marketChart: true, manualDailyScan: active, autoPickFeed: active, aiQuestions: active,
       localWatchlist: true, multiTimeframe: true, serverAlerts: false,
-      savedCloudWorkspace: false, deepScan: false, communityPosting: false,
+      savedCloudWorkspace: false, deepScan: false, communityPosting: active,
     },
     limits: { dailyScanSymbols: active ? 8 : 0, freeAiQuestionsDaily: active ? 5 : 0, extraAiQuestionCredits: 1 },
   };

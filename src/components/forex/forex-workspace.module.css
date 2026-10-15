@@ -186,6 +186,16 @@
   background: #08202a;
   border-radius: 8px;
 }
+.memberLinks {
+  display: grid;
+  gap: 8px;
+  padding: 12px 8px;
+  color: #93afbc;
+  font-size: 11px;
+}
+.memberLinks a:hover { color: #14deb0; }
+.memberProfile { display: flex; align-items: center; gap: 8px; color: inherit; }
+.memberProfile .guestAvatar { overflow: hidden; }
 .sidebarFoot strong {
   font-size: 9px;
 }

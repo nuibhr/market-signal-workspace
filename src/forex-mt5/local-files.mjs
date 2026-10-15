@@ -8,7 +8,7 @@ import { BridgeError, configuration, fail } from "./protocol.mjs";
 
 export function localFileDirectory(env = process.env) {
   const path = env.FOREX_MT5_LOCAL_FILES_PATH;
-  return configuration(env).local &&
+  return (configuration(env).local || (env.NODE_ENV === 'development' && env.FOREX_MT5_MEMBER_LOCAL_FILES === 'true')) &&
     typeof path === "string" &&
     isAbsolute(path)
     ? path
@@ -50,7 +50,7 @@ export class LocalFilesBridge {
     return { channel: session.channel, error: session.error };
   }
   async pump(owner, store, config, now = Date.now()) {
-    if (!config.local || !config.enabled) return;
+    if ((!config.local && !config.memberLocalFiles) || !config.enabled) return;
     const session = this.sessions.get(owner);
     if (!this.state(owner, now)) return;
     if (session.pending) return session.pending;

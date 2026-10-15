@@ -1,3 +1,33 @@
+# Unified main + Hostinger release
+
+The integration includes **all application source from `main` at `07990da`** and the Hostinger runtime from `808b646`. Forex uses main's member sessions, handlers and recovery fixes. Shared workspace, Thai/DR/TFEX/US, membership, admin, Cloudflare migrations and Swing logic are byte-for-byte main's source. Host-specific filesystem checks live in `hosting/start.mjs`, keeping the shared preflight portable.
+
+The existing Compose project name and volume names are retained. Never use `down -v` during upgrades. Set `RELEASE_TAG` to the deployed commit for an immutable local image tag. The web and optional scanner use that same image. Web, proxy and scanner logs rotate at 10 MB × 3 files per service, and services restart after process or host restart unless explicitly stopped.
+
+## Continuous Swing scanner
+
+The `scanner` Compose profile is opt-in. It runs main's `scripts/signal-worker.mjs`, shares only the membership/signal database with the web, and publishes no port. It handles Thai, DR and US; TFEX currently provides charts only. The default preview deployment does not start this service.
+
+Before starting, privately configure the existing provider credentials, display-rights flags, `AUTO_PICK_RUN_SECRET` and selected `AUTO_PICK_*_ENABLED` flags in the server env file. Do not turn on rights flags merely to make preflight pass. US Swing requires `YAHOO_DISPLAY_RIGHTS_CONFIRMED`; FMP EOD alone cannot provide its intraday frames. The hosting scanner guard requires both main readiness and the actual Swing provider policy.
+
+From the deployed release (include the preview override while MT5 remains disabled):
+
+```sh
+docker compose --env-file /etc/nugaom-forex/pilot.env -f src/forex-mt5/hosting/compose.yml -f src/forex-mt5/hosting/compose.preview.yml --profile scanner run --rm --no-deps scanner node src/forex-mt5/hosting/scanner.mjs --check
+# Only after the preceding check passes:
+docker compose --env-file /etc/nugaom-forex/pilot.env -f src/forex-mt5/hosting/compose.yml -f src/forex-mt5/hosting/compose.preview.yml --profile scanner up -d scanner
+```
+
+The persistence flag on the scanner reflects its actual named volume; provider permissions and enable flags remain operator controlled. A running process is not evidence of complete coverage or successful live signals. Verify scan progress and source errors after enabling it.
+
+## Validation of integration
+
+All 227 pre-existing Node tests passed, plus the new scanner readiness regression (228 total); the private LINE configuration Python test passed. The Next production build passed locally. `npm ci` reported zero known vulnerabilities. Runtime/source state on the VPS is recorded separately after deployment. No production LINE login or data-feed credentials were supplied during integration, and no display rights were inferred.
+
+## Historical preparation notes
+
+The notes below describe the original Forex-only pilot and its validation at that time. Current deployment status and restrictions above take precedence.
+
 # Verified Hostinger VPS preview · 2026-10-15
 
 The test site is deployed at **https://76.13.20.122.sslip.io/forex** on the operator-authorized VPS `76.13.20.122`. SSH access with the dedicated key, Ubuntu 24.04, Docker/Compose, a Linux Node 24.22.0 image and Next.js 16.3.8 are verified. The externally checked HTTPS certificate is valid. All five market routes returned HTTP 200, the public EA download matches release bytes, and anonymous API state contains no owner data. The deployment runs as UID 1000 and exposes only the HTTPS proxy, not the Node port. A marker in the dedicated data volume survived a web restart and was removed after verification.

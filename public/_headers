@@ -1,0 +1,6 @@
+# Archived ThreeUI source is not embedded by the Nugaom robot landing.
+/landing-pages/*
+  X-Frame-Options: DENY
+  Content-Security-Policy: object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  X-Robots-Tag: noindex

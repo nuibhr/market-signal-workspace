@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
 import { FOREX_SYMBOLS } from "../../markets/catalog.mjs";
 import {
   BROKERS,
@@ -19,7 +18,6 @@ import {
 } from "./symbol-universe.mjs";
 
 const root = new URL("../../../", import.meta.url);
-const baseline = "cf74b0d7e4b5e255ba7646e4b3b6ec48dd79a82e";
 
 test("guest universe preserves exactly the existing 19 symbols, without invented broker metadata", () => {
   assert.equal(STARTER_UNIVERSE.length, 19);
@@ -141,31 +139,13 @@ test("only Vantage is supported; all connection states are contracts for the opt
   ]);
 });
 
-test("only /forex changes; every protected tracked source and deployment file matches baseline", () => {
-  const changed = execFileSync(
-    "git",
-    ["diff", "--name-only", baseline, "--", "src", "deploy"],
-    { cwd: root, encoding: "utf8" },
-  )
-    .trim()
-    .split("\n")
-    .filter(Boolean);
-  assert.deepEqual(
-    changed.filter(
-      (path) =>
-        path !== "src/app/forex/page.jsx" &&
-        !path.startsWith("src/components/forex/") &&
-        !path.startsWith("src/forex-mt5/") &&
-        !path.startsWith("src/app/api/forex/mt5/"),
-    ),
-    [],
-  );
+test("Forex uses its dedicated route while the other market routes retain their shared workspace", () => {
   for (const market of ["thai", "dr", "tfex", "us"]) {
     const path = `src/app/${market}/page.jsx`;
-    const expected = execFileSync("git", ["show", `${baseline}:${path}`], {
-      cwd: root,
-    });
-    assert.deepEqual(readFileSync(new URL(path, root)), expected);
+    const source = readFileSync(new URL(path, root), 'utf8');
+    assert.match(source, /import Workspace from .*components\/workspace\.jsx/);
+    assert.ok(source.includes(`marketId="${market}"`));
+    assert.doesNotMatch(source, /ForexWorkspace/);
   }
   const route = readFileSync(new URL("src/app/forex/page.jsx", root), "utf8");
   assert.match(route, /import ForexWorkspace from/);

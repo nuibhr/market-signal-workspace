@@ -2,9 +2,26 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { customerPreflight } from "../customer-preflight.mjs";
+import { existsSync, realpathSync } from "node:fs";
+
+const actualPath = path => existsSync(resolve(path)) ? realpathSync(resolve(path)) : resolve(path);
+// Keep filesystem checks in the Node hosting launcher. The shared preflight is
+// also bundled by main's Cloudflare app and must remain runtime portable.
+export function hostingPreflight(env = process.env) {
+  const report = customerPreflight(env);
+  const database = env.FOREX_MT5_DATABASE_PATH || "data/forex-mt5.sqlite";
+  const checks = { ...report.checks,
+    database_outside_managed_releases: !/(?:^|[\\/])(?:hbuilds|public_html|releases|\.next|\.next-review)(?:[\\/]|$)/i.test(database),
+    separate_forex_database: actualPath(database) !== actualPath(env.DATABASE_PATH || "data/nugaom.sqlite"),
+    separate_public_host_valid: !env.SITE_HOST || (Boolean(report.endpoint) && new URL(report.endpoint).host === env.SITE_HOST &&
+      /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(env.SITE_HOST)),
+  };
+  return { ...report, checks, configuration_ready: Object.values(checks).every(Boolean),
+    remaining: Object.keys(checks).filter(key => !checks[key]) };
+}
 
 export function launchReadiness(env = process.env) {
-  const report = customerPreflight(env);
+  const report = hostingPreflight(env);
   if (env.FOREX_MT5_PREVIEW !== "true") return { ready: report.configuration_ready, remaining: report.remaining };
   // A preview can run before LINE setup, but can never ingest or pair customer terminals.
   const checks = {

@@ -1,3 +1,7 @@
+# Forex / CFD Command Center — integrated main
+
+As of 14 October 2026, this workspace is integrated into the main app at `/forex` on port **3000**. It uses existing LINE sessions, Account and Community navigation. See [the integration report](../../../docs/forex-command-center-integration-2026-10-14.md) for member-bound MT5 setup, retained pilot data, local/runtime limits and the 153 passing tests. The notes below record the original Phase 1/2 implementation.
+
 # Forex / CFD Command Center — Phase 1
 
 Baseline: `cf74b0d7e4b5e255ba7646e4b3b6ec48dd79a82e`.

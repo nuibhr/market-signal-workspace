@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { getFmpDailyBars, newYorkParts } from './fmp-us.mjs';
+import { cloudCacheGet, cloudCachePut, cloudStorage } from './cloud-cache.mjs';
 
 // Closed daily candles can support EOD signals. This adapter never claims a live quote.
 const silent = () => {}, pending = new Map();
@@ -39,8 +40,10 @@ export async function getYahooUsDailyBars(symbol, {now=Date.now(), assetKind='st
   const key=`yahoo-eod-v1:${symbol}:${closedThrough}:true${assetKind==='etf'?':ETF':''}`,file=resolve(process.cwd(),'data','us-yahoo-eod',createHash('sha256').update(key).digest('hex')+'.json');
   if(pending.has(key))return pending.get(key);
   const job=(async()=>{
+    const cloudHit=await cloudCacheGet(key);
+    if(validSeries(cloudHit,symbol,clock.day,allowCurrent,instrumentType))return cloudHit;
     try {
-      if((await stat(file)).size<100000){const cached=JSON.parse(await readFile(file,'utf8'));
+      if(!cloudStorage()&&(await stat(file)).size<100000){const cached=JSON.parse(await readFile(file,'utf8'));
         if(cached.key===key&&cached.expiresAt>Date.now()&&validSeries(cached.data,symbol,clock.day,allowCurrent,instrumentType))return cached.data;}
     }catch{}
     if(Date.now()<yahooRetryAt)throw fail('RATE_LIMITED');
@@ -66,8 +69,9 @@ export async function getYahooUsDailyBars(symbol, {now=Date.now(), assetKind='st
     if(!bars.length)throw fail('BARS_UNAVAILABLE');
     const data={symbol,instrumentType,source:'Yahoo Finance · EOD historical',timeframe:'1d',live:false,
       receivedAt:new Date().toISOString(),latestDay:bars.at(-1).time,bars};
-    try{await mkdir(resolve(process.cwd(),'data','us-yahoo-eod'),{recursive:true,mode:0o700});
-      const temp=`${file}.${process.pid}.tmp`;await writeFile(temp,JSON.stringify({key,data,expiresAt:Date.now()+(allowCurrent?6*3600000:300000)}),{mode:0o600});await rename(temp,file);}catch{}
+    await cloudCachePut(key,data,allowCurrent?6*3600000:300000);
+    try{if(!cloudStorage()){await mkdir(resolve(process.cwd(),'data','us-yahoo-eod'),{recursive:true,mode:0o700});
+      const temp=`${file}.${process.pid}.tmp`;await writeFile(temp,JSON.stringify({key,data,expiresAt:Date.now()+(allowCurrent?6*3600000:300000)}),{mode:0o600});await rename(temp,file);}}catch{}
     return data;
   })().finally(()=>pending.delete(key));
   pending.set(key,job);return job;

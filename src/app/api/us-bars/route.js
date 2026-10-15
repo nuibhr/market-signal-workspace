@@ -2,6 +2,7 @@ import { assessDailySeries } from '../../../market-data/settrade.mjs';
 import { newYorkParts } from '../../../market-data/fmp-us.mjs';
 import { getUsDailyBars, usEodRights } from '../../../market-data/us-eod.mjs';
 import { ALL_ASSETS } from '../../../markets/catalog.mjs';
+import { rememberChartSnapshot } from '../../../market-data/delayed-candles.mjs';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const HEADERS = { 'Cache-Control': 'private, no-store' };
@@ -20,10 +21,12 @@ export async function GET(request) {
     const isEtf = asset.sectionId === 'US_ETFS';
     const series = await getUsDailyBars(symbol, {assetKind:isEtf?'etf':'stock'});
     const assessment = assessDailySeries(series);
-    return Response.json({ ...series, status:'available', instrumentId:asset.instrumentId, market:'US',
+    const payload = { ...series, status:'available', instrumentId:asset.instrumentId, market:'US',
       latestTime:null, freshness:assessment.freshness, signalEligible:!isEtf&&assessment.signalEligible, quote:null,
       live:false, signalMode:isEtf?'ETF_TECHNICAL_REVIEW':'EOD_CLOSED_CANDLE',
-      excludedCurrentDay:series.latestDay !== newYorkParts().day }, {headers:HEADERS});
+      excludedCurrentDay:series.latestDay !== newYorkParts().day };
+    await rememberChartSnapshot(payload, asset, timeframe);
+    return Response.json(payload, {headers:HEADERS});
   } catch (error) {
     const code = ['SOURCE_NOT_CONFIGURED','PLAN_REQUIRED','RATE_LIMITED','BARS_UNAVAILABLE','INVALID_RESPONSE','DISPLAY_RIGHTS_NOT_CONFIRMED'].includes(error?.code) ? error.code : 'SOURCE_UNAVAILABLE';
     return Response.json({status:'unavailable',code}, {status:503,headers:HEADERS});

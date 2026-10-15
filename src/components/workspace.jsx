@@ -6,11 +6,12 @@ import Image from 'next/image';
 import {useRouter} from 'next/navigation';
 import MarketNavigation from './market-navigation.jsx';
 import {marketPage,marketHref} from '../markets/market-pages.mjs';
-import HoldingsDesk from './holdings-desk.jsx';
+import SignalDesk from './signal-desk.jsx';
 import { BookOpen, Layers3, Newspaper, Radar, Waves } from 'lucide-react';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS, TFEX_SYMBOLS } from '../markets/catalog.mjs';
 import { formatQuotePrice } from '../markets/quote-format.mjs';
 import { analyzeCandles } from '../analysis/technical.mjs';
+import { loadChartCandles } from '../market-data/chart-client.mjs';
 import SymbolSearch from './symbol-search.jsx';
 import UsAssetTabs from './us-asset-tabs.jsx';
 import AnalysisRail from './analysis-rail.jsx';
@@ -18,7 +19,7 @@ import LiveMarketWatch from './live-market-watch.jsx';
 import ChartToolbox from './chart-toolbox.jsx';
 import CandlestickChart from './candlestick-chart.jsx';
 import { AmbientDepth, MarketScanner, MultiTimeframe, VolumePulse, NewsGuide, NewsFeedState } from './workspace-features.jsx';
-import { WorkspaceSidebar, DailyDesk, FinancialCheck, LearningPanel, RoadmapPanel, CalendarPanel, DividendCalendarPanel } from './workspace-hub.jsx';
+import { WorkspaceSidebar, FinancialCheck, LearningPanel, RoadmapPanel, CalendarPanel, DividendCalendarPanel } from './workspace-hub.jsx';
 import NugaomAssistant from './nugaom-assistant.jsx';
 import AutoPickBoard from './auto-pick-board.jsx';
 import SignalResults from './signal-results.jsx';
@@ -143,8 +144,12 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     ? displayedQuote.observedAt ? hasRealQuote && marketQuote.freshness === 'recent' ? 'มีเวลา source · ตามรอบล่าสุด' : 'มีเวลา source · ตรวจเวลา quote' : 'เวลา source ไม่ระบุ · ตรวจแท่งล่าสุด'
     : TIMEFRAME_LABELS[timeframe];
   const sparkBars = displayBars ?? [];
-  const analysis = useMemo(() => hasRealBars ? analyzeCandles(liveSeries.bars, timeframe === '1d' ? liveSeries.quote?.price : null, TIMEFRAME_DESCRIPTIONS[timeframe], { timeframe, dailyBars: timeframe === '1d' ? liveSeries.bars : pivotContext?.instrumentId === asset.instrumentId ? pivotContext.bars : [] }) : null, [hasRealBars, liveSeries, timeframe, pivotContext, asset.instrumentId]);
-  const tradePlan = planContext?.instrumentId === asset.instrumentId ? planContext.plan : null;
+  const analysis = useMemo(() => {
+    if(!hasRealBars)return null;
+    const value=analyzeCandles(liveSeries.bars,timeframe==='1d'?liveSeries.quote?.price:null,TIMEFRAME_DESCRIPTIONS[timeframe],{timeframe,dailyBars:timeframe==='1d'?liveSeries.bars:pivotContext?.instrumentId===asset.instrumentId?pivotContext.bars:[]});
+    return value&&['thai','dr','us'].includes(asset.id)?{...value,levels:{...value.levels,rrPlan:null}}:value;
+  },[hasRealBars,liveSeries,timeframe,pivotContext,asset.instrumentId,asset.id]);
+  const tradePlan = ['thai','dr','us'].includes(asset.id)?null:planContext?.instrumentId === asset.instrumentId ? planContext.plan : null;
   const currentAnalysis = Boolean(analysis) && liveSeries?.freshness === 'recent' && !liveSeries?.chartOnly;
   const currentAiResult = currentAnalysis && aiResult?.symbol === asset.symbol && aiResult.timeframe === timeframe && aiResult.latestDay === liveSeries?.latestDay && aiResult.latestTime === (liveSeries?.latestTime ?? null) ? aiResult : null;
   const favoriteAssets = useMemo(()=>MARKET_ASSETS[marketId].filter(item=>favorites.includes(item.symbol)),[marketId,favorites]);
@@ -166,7 +171,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     setActiveNav(id);
     if (id === 'analysis-tools') { setPopup('scanner'); return; }
     if(id==='favorites')setFavoritesOpenRequest(value=>value+1);
-    const selector = { overview: '#section-overview', daily: '#section-daily', autopick: '#section-auto-pick', favorites: '#section-watchlist', watchlist: '#section-watchlist', signals: '#section-trade-plan', results: '#section-results' }[id];
+    const selector = { overview: '#section-overview', daily: ['thai','dr','us'].includes(marketId)?'#section-auto-pick':'#section-daily', autopick: '#section-auto-pick', favorites: '#section-watchlist', watchlist: '#section-watchlist', signals: ['thai','dr','us'].includes(marketId)?'#section-auto-pick':'#section-trade-plan', results: '#section-results' }[id];
     if (selector) { document.querySelector(selector)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); setPopup(null); }
     else setPopup(id);
   }
@@ -197,26 +202,13 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     setLiveSeries(null);
     setLiveState('loading');
     setChartLoadMs(null);
-    const route = hasSettradeConnection ? '/api/market-data' : hasTfexConnection ? '/api/tfex/candles' : asset.id==='forex' || asset.id==='us' && timeframe!=='1d' ? '/api/history-bars' : '/api/us-bars';
     async function loadCandles() {
-      const attempts = hasTfexConnection ? 2 : 1;
-      for (let attempt = 0; attempt < attempts; attempt += 1) {
-        const startedAt = performance.now();
-        try {
-          let response = await fetch(`${route}?symbol=${encodeURIComponent(asset.symbol)}&market=${asset.id}&timeframe=${timeframe}`, { cache: 'no-store', signal: controller.signal });
-          let payload = await response.json();
-          if((!response.ok||payload.status!=='available')&&!hasTfexConnection&&route!=='/api/history-bars'&&timeframe!=='4h'){
-            response=await fetch(`/api/history-bars?symbol=${encodeURIComponent(asset.symbol)}&market=${asset.id}&timeframe=${timeframe}`,{cache:'no-store',signal:controller.signal});payload=await response.json();
-          }
-          if (!response.ok || payload.status !== 'available' || !Array.isArray(payload.bars) || payload.bars.length === 0)
-            throw new Error(payload.code ?? 'SOURCE_UNAVAILABLE');
-          if (!controller.signal.aborted) { setLiveSeries(payload); setLiveState('available'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
-          return;
-        } catch (error) {
-          if (controller.signal.aborted) return;
-          if (attempt + 1 === attempts) { setLiveSeries(null); setLiveState('unavailable'); setChartLoadMs(Math.round(performance.now() - startedAt)); return; }
-          await new Promise(resolve => setTimeout(resolve, 800));
-        }
+      const startedAt = performance.now();
+      try {
+        const payload = await loadChartCandles(asset, timeframe, { signal: controller.signal });
+        if (!controller.signal.aborted) { setLiveSeries(payload); setLiveState('available'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
+      } catch {
+        if (!controller.signal.aborted) { setLiveSeries(null); setLiveState('unavailable'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
       }
     }
     loadCandles();
@@ -256,7 +248,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   }, [asset.instrumentId, asset.symbol, timeframe, hasSettradeConnection, hasTfexConnection, hasRealBars, reloadNonce, liveSeries?.chartOnly]);
 
   useEffect(() => {
-    if (!hasSettradeConnection || timeframe !== '1d' || liveSeries?.chartOnly) { setPlanContext(null); setPlanContextState('idle'); return undefined; }
+    if (['thai','dr','us'].includes(asset.id) || !hasSettradeConnection || timeframe !== '1d' || liveSeries?.chartOnly) { setPlanContext(null); setPlanContextState('idle'); return undefined; }
     const controller = new AbortController();
     setPlanContext(null);
     setPlanContextState('loading');
@@ -369,7 +361,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
         <header className="topbar">
           <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
           <div className="topbar-search-area"><SymbolSearch marketId={marketId} onSelect={selectAsset} /></div>
-          <div className="topbar-actions"><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
+          <div className="topbar-actions"><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
         </header>
 
         <div className="page-content">
@@ -384,10 +376,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
             <div className="welcome-steps"><span>{rights?.authenticated ? `วันนี้ / ${page.short}` : 'เริ่มต้นกับ Nugaom'}</span><div><b>01</b><span>{rights?.authenticated ? 'ตรวจจังหวะที่ระบบพบ' : 'สำรวจหุ้นและตลาด'}</span></div><div><b>02</b><span>{rights?.authenticated ? 'อ่านกราฟและบริบทตลาด' : 'เชื่อม LINE และแจ้งพอร์ต'}</span></div><div><b>03</b><span>{rights?.authenticated ? 'ติดตามผลและเสียงแจ้งเตือน' : 'ลองใช้เครื่องมือสมาชิก 14 วัน'}</span></div><small>{rights?.authenticated ? `สถานะสมาชิก: ${rights.label}` : 'สิทธิสมาชิกขึ้นกับสถานะบัญชีและการเชื่อมต่อระบบ'}</small></div>
           </section>
 
-          {marketId==='dr'&&<AutoPickBoard marketId={marketId} onSelect={selectAsset}/>}
-          {['thai','dr'].includes(marketId)?<DailyDesk marketId={marketId} favorites={favorites} onSelect={selectAsset} rights={rights}/>:<section id="section-daily" className="market-routine panel"><div><span className="eyebrow">TODAY / {page.short}</span><h2>เครื่องมือประจำตลาด</h2><p>{marketId==='us'?'สัญญาณใช้แท่งรายวันหลังตลาดปิด · กราฟย้อนหลังเลือกดูได้หลายช่วงเวลา':marketId==='forex'?'กราฟย้อนหลังคู่เงิน · AutoPick ยังรอฟีดที่ยืนยันใช้แจ้งเตือนได้':'ดูซีรีส์สัญญาและกราฟจริง · AutoPick ยังรอยืนยันกติกาแต่ละสินค้า'}</p></div><div><button onClick={()=>setPopup('scanner')}>สแกนเชิงลึก</button><button onClick={()=>setPopup('calendar')}>ปฏิทินเศรษฐกิจ</button><button onClick={()=>navigateTo('results')}>ผลงานสัญญาณ</button></div></section>}
-          {marketId!=='dr'&&<AutoPickBoard marketId={marketId} onSelect={selectAsset}/>}
-          {['thai','dr','us'].includes(marketId)&&<HoldingsDesk marketId={marketId} rights={rights} onSelect={selectAsset}/>}
+          {['thai','dr','us'].includes(marketId)&&<SignalDesk marketId={marketId} memberId={memberAccount?.id} rights={rights} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={selectAsset} loginHref={loginHref}/>}
+          {!['thai','dr','us'].includes(marketId)&&<section id="section-daily" className="market-routine panel"><div><span className="eyebrow">TODAY / {page.short}</span><h2>เครื่องมือประจำตลาด</h2><p>{marketId==='us'?'สัญญาณใช้แท่งรายวันหลังตลาดปิด · กราฟย้อนหลังเลือกดูได้หลายช่วงเวลา':marketId==='forex'?'กราฟย้อนหลังคู่เงิน · AutoPick ยังรอฟีดที่ยืนยันใช้แจ้งเตือนได้':'ดูซีรีส์สัญญาและกราฟจริง · AutoPick ยังรอยืนยันกติกาแต่ละสินค้า'}</p></div><div><button onClick={()=>setPopup('scanner')}>สแกนเชิงลึก</button><button onClick={()=>setPopup('calendar')}>ปฏิทินเศรษฐกิจ</button><button onClick={()=>navigateTo('results')}>ผลงานสัญญาณ</button></div></section>}
+          {!['thai','dr','us'].includes(marketId)&&<AutoPickBoard marketId={marketId} onSelect={selectAsset}/>}
 
           <section className="asset-hero" aria-label="สินทรัพย์ที่เลือก">
             <div className="hero-copy">
@@ -418,8 +409,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               <div className="ohlc-strip"><span>O <b>{latestBar ? formatQuotePrice(latestBar.open,asset) : '—'}</b></span><span>H <b>{latestBar ? formatQuotePrice(latestBar.high,asset) : '—'}</b></span><span>L <b>{latestBar ? formatQuotePrice(latestBar.low,asset) : '—'}</b></span><span>C <b>{latestBar ? formatQuotePrice(latestBar.close,asset) : '—'}</b></span><span>V <b>{latestBar && asset.id!=='forex' ? displayNumber(latestBar.volume, 0) : '—'}</b></span><span className="source-time">{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} · ${latestBarLabel}` : hasTfexConnection ? 'กำลังรอ TFEX OHLC' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>
               {analysis && <div className="chart-monitor-summary"><span>SUP <b>{formatQuotePrice(analysis.support,asset)}</b></span><span>RES <b>{formatQuotePrice(analysis.resistance,asset)}</b></span><span>RSI 14 <b>{displayNumber(analysis.rsi14, 1)}</b></span><span>MACD <b>{displayNumber(analysis.macdHistogram, 3)}</b></span></div>}
               {liveSeries?.signalMode==='EOD_CLOSED_CANDLE'&&<div className="history-feed-note">ข้อมูลรายวันหลังตลาดปิด · ใช้แท่งปิดสแกนและติดตามสัญญาณ · ราคานี้ไม่ใช่ราคาซื้อขายแบบเรียลไทม์</div>}
-              {liveSeries?.chartOnly&&<div className="history-feed-note">Yahoo Finance · กราฟย้อนหลังจาก {liveSeries.sourceTicker} · แท่งปิดแล้ว · ไม่ใช้กราฟสำรองนี้ยืนยัน AutoPick{asset.id==='forex'&&' · ไม่มี Volume รวมของตลาด'}</div>}
-              {hasRealBars && <div className="chart-freshness">ข้อมูลแท่ง {TIMEFRAME_LABELS[timeframe]} จาก {sourceLabel} · แท่งล่าสุด {latestBarLabel} · เซิร์ฟเวอร์รับข้อมูล {formatQuoteReceipt(liveSeries.receivedAt)} · {liveSeries.freshness === 'recent' ? 'ข้อมูลตามรอบตลาดล่าสุด' : 'ข้อมูลย้อนหลังเก่า'} · แสดงเฉพาะแท่งปิดแล้ว · โหลดผ่านเว็บ {chartLoadMs == null ? '—' : `${chartLoadMs} ms`} (ไม่ใช่ความหน่วงราคาตลาด) {!liveSeries.chartOnly&&hasSettradeConnection?' · รีเฟรชหลังรอบ 15 นาทีขณะเปิดหน้านี้':''}</div>}
+              {liveSeries?.chartOnly&&<div className="history-feed-note">{liveSeries.source}{liveSeries.sourceTicker&&` · ${liveSeries.sourceTicker}`} · {liveSeries.fallback ? `ข้อมูลสำรองอายุอย่างน้อย 15 นาที · แท่งปิดล่าสุด ${latestBarLabel} · อายุจากขอบเขตแท่ง ${Math.ceil(liveSeries.observedDelaySeconds/60).toLocaleString()} นาที (ไม่ใช่การรับรองความหน่วงของผู้ให้บริการ)` : 'แท่งปิดแล้ว'} · ไม่ใช้กราฟสำรองนี้ยืนยัน AutoPick{asset.id==='forex'&&' · ไม่มี Volume รวมของตลาด'}</div>}
+              {hasRealBars && <div className="chart-freshness">ข้อมูลแท่ง {TIMEFRAME_LABELS[timeframe]} จาก {sourceLabel} · แท่งล่าสุด {latestBarLabel} · เซิร์ฟเวอร์รับข้อมูล {formatQuoteReceipt(liveSeries.receivedAt)} · {liveSeries.freshness === 'recent' ? 'ข้อมูลตามรอบตลาดล่าสุด' : liveSeries.freshness === 'delayed' ? 'ข้อมูลสำรองแบบดีเลย์' : 'ข้อมูลย้อนหลังเก่า'} · แสดงเฉพาะแท่งปิดแล้ว · โหลดผ่านเว็บ {chartLoadMs == null ? '—' : `${chartLoadMs} ms`} (ไม่ใช่ความหน่วงราคาตลาด) {!liveSeries.chartOnly&&hasSettradeConnection?' · รีเฟรชหลังรอบ 15 นาทีขณะเปิดหน้านี้':''}</div>}
               <ChartToolbox chartOnly={Boolean(liveSeries?.chartOnly)} asset={asset} bars={displayBars} analysis={analysis} tradePlan={tradePlan} freshness={liveSeries?.freshness} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} indicators={chartIndicators} onToggleIndicator={toggleIndicator} onOpenAutomation={() => navigateTo('autopick')} />
             </article>
 
@@ -428,7 +419,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
             <LiveMarketWatch market={market} asset={asset} favorites={favorites} favoritesOpenRequest={favoritesOpenRequest} favoritesSynced={Boolean(memberAccount)} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} series={hasRealBars ? liveSeries : null} analysis={analysis} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory(marketId); setPopup('search'); }} />
           </section>
 
-          <SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} />
+          {['thai','dr','us'].includes(marketId)?<details className="panel"><summary>ประวัติสัญญาณรุ่นเดิม ORB / EOD แยกจาก Swing Standard</summary><SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} sectionId="section-legacy-results" /></details>:<SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} />}
           <footer className="page-footer"><span>Nugaom AI Pick · MARKET SIGNAL WORKSPACE</span><span>Settrade · FMP / Yahoo EOD สำหรับหุ้นสหรัฐฯ · ผลสัญญาณอ้างอิงราคาแท่ง ไม่ใช่ fill</span></footer>
         </div>
       </main>

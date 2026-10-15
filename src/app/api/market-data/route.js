@@ -1,5 +1,6 @@
 import { assessDailySeries, assessIntradaySeries, createSettradeClient, MAX_CANDLE_BARS, SettradeDataError } from '../../../market-data/settrade.mjs';
 import { ALL_ASSETS, SETTRADE_SYMBOLS } from '../../../markets/catalog.mjs';
+import { rememberChartSnapshot } from '../../../market-data/delayed-candles.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,7 @@ export async function GET(request) {
     const assessment = timeframe === '1d'
       ? assessDailySeries({ ...series, bars })
       : assessIntradaySeries({ ...series, bars });
-    return Response.json({
+    const payload = {
       status: bars.length ? 'available' : 'unavailable',
       instrumentId: instrument.instrumentId,
       symbol,
@@ -72,7 +73,9 @@ export async function GET(request) {
         observedAt: quote.observedAt,
         receivedAt: quote.receivedAt,
       } : null,
-    }, { headers: NO_STORE });
+    };
+    if (payload.status === 'available') await rememberChartSnapshot(payload, instrument, timeframe);
+    return Response.json(payload, { headers: NO_STORE });
   } catch (error) {
     const code = error instanceof SettradeDataError ? error.code : 'SOURCE_UNAVAILABLE';
     return Response.json({ status: 'unavailable', code }, { status: 503, headers: NO_STORE });

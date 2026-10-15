@@ -4,3 +4,62 @@ export const D1_SAFETY_SCHEMA="-- Additive migration; no customer records or cre
 export const D1_IMPORT_SAFETY="-- Historical completed answers are records, not new credit reservations.\nDROP TRIGGER ai_reservation_guard;\nDROP TRIGGER ai_reservation_charge;\nCREATE TRIGGER ai_reservation_guard BEFORE INSERT ON ai_questions WHEN NEW.status='pending' BEGIN\n  SELECT RAISE(ABORT,'QUESTION_IN_PROGRESS') WHERE EXISTS(SELECT 1 FROM ai_questions WHERE member_id=NEW.member_id AND status='pending');\n  SELECT RAISE(ABORT,'FREE_QUOTA_EXHAUSTED') WHERE NEW.charge_type='free' AND (SELECT COUNT(*) FROM ai_questions WHERE member_id=NEW.member_id AND day_key=NEW.day_key AND charge_type='free')>=5;\n  SELECT RAISE(ABORT,'INSUFFICIENT_AI_CREDITS') WHERE NEW.charge_type='credit' AND COALESCE((SELECT balance FROM ai_credit_accounts WHERE member_id=NEW.member_id),0)<1;\nEND;\nCREATE TRIGGER ai_reservation_charge AFTER INSERT ON ai_questions WHEN NEW.status='pending' AND NEW.charge_type='credit' BEGIN\n  UPDATE ai_credit_accounts SET balance=balance-1 WHERE member_id=NEW.member_id;\n  INSERT INTO ai_credit_events(id,member_id,actor_id,amount,balance_after,reason,created_at)\n    SELECT 'ai-charge:'||NEW.id||':'||NEW.reservation_token,NEW.member_id,NEW.member_id,-1,balance,'ai-question',NEW.created_at\n    FROM ai_credit_accounts WHERE member_id=NEW.member_id;\nEND;\n";
 
 export const ADMIN_OPERATIONS_SCHEMA="-- Admin operations are additive. Imported completed grants never replay their credit effect.\nALTER TABLE monthly_codes ADD COLUMN revoked_at TEXT;\nALTER TABLE monthly_codes ADD COLUMN revoked_by TEXT REFERENCES members(id);\nCREATE TABLE admin_credit_grants (\n  id TEXT PRIMARY KEY,\n  actor_id TEXT NOT NULL REFERENCES members(id),\n  member_id TEXT NOT NULL REFERENCES members(id),\n  amount INTEGER NOT NULL CHECK(amount BETWEEN 1 AND 1000),\n  note TEXT NOT NULL DEFAULT '',\n  created_at TEXT NOT NULL,\n  applied INTEGER NOT NULL DEFAULT 0 CHECK(applied IN (0,1))\n);\nCREATE TRIGGER admin_credit_grant_apply AFTER INSERT ON admin_credit_grants WHEN NEW.applied=0 BEGIN\n  INSERT INTO ai_credit_accounts(member_id,balance) VALUES(NEW.member_id,NEW.amount)\n    ON CONFLICT(member_id) DO UPDATE SET balance=balance+excluded.balance;\n  INSERT INTO ai_credit_events(id,member_id,actor_id,amount,balance_after,reason,created_at)\n    SELECT 'admin-grant:'||NEW.id,NEW.member_id,NEW.actor_id,NEW.amount,balance,'admin-grant',NEW.created_at\n    FROM ai_credit_accounts WHERE member_id=NEW.member_id;\n  UPDATE admin_credit_grants SET applied=1 WHERE id=NEW.id;\nEND;\nCREATE INDEX admin_grants_member_recent ON admin_credit_grants(member_id,created_at DESC);\nCREATE INDEX membership_events_member_recent ON membership_events(member_id,created_at DESC,id DESC);\nCREATE INDEX membership_events_recent ON membership_events(created_at DESC,id DESC);\nCREATE INDEX ai_credit_events_member_recent ON ai_credit_events(member_id,created_at DESC,id DESC);\nCREATE INDEX monthly_codes_member_recent ON monthly_codes(member_id,created_at DESC);\nCREATE INDEX renewals_status_recent ON renewal_requests(status,created_at DESC,id DESC);\nCREATE INDEX members_recent ON members(updated_at DESC,id DESC);\n";
+
+export const CLOUD_SCANNER_SCHEMA="CREATE TABLE scanner_jobs (\n  id TEXT PRIMARY KEY,market TEXT NOT NULL,session_key TEXT NOT NULL,slot TEXT NOT NULL,\n  payload_json TEXT NOT NULL,state TEXT NOT NULL DEFAULT 'pending',attempts INTEGER NOT NULL DEFAULT 0,\n  available_at INTEGER NOT NULL,lease_until INTEGER,lease_token TEXT,last_enqueued_at INTEGER,\n  error_code TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL\n);\nCREATE INDEX scanner_jobs_dispatch ON scanner_jobs(state,available_at,lease_until);\nCREATE INDEX scanner_jobs_market ON scanner_jobs(market,updated_at DESC);\nCREATE TABLE provider_cache (id TEXT PRIMARY KEY,payload_json TEXT NOT NULL,expires_at INTEGER NOT NULL);\nCREATE INDEX provider_cache_expiry ON provider_cache(expires_at);\nCREATE TABLE cloud_scanner_state (id INTEGER PRIMARY KEY CHECK(id=1),last_scheduled_at TEXT,last_consumed_at TEXT,cron TEXT,dispatch_count INTEGER NOT NULL DEFAULT 0);\n";
+export const CLOUD_SCANNER_PRIORITY_SCHEMA="ALTER TABLE scanner_jobs ADD COLUMN priority INTEGER NOT NULL DEFAULT 1;\nCREATE INDEX scanner_jobs_priority ON scanner_jobs(priority,created_at,id);\n";
+
+export const COACH_PORTFOLIO_SCHEMA = `
+CREATE TABLE coach_portfolios (
+  id TEXT PRIMARY KEY,
+  owner_id TEXT NOT NULL REFERENCES members(id),
+  name TEXT NOT NULL,
+  currency TEXT NOT NULL CHECK(currency IN ('THB','USD')),
+  initial_minor INTEGER NOT NULL CHECK(initial_minor > 0),
+  cash_minor INTEGER NOT NULL CHECK(cash_minor >= 0),
+  published INTEGER NOT NULL DEFAULT 0 CHECK(published IN (0,1)),
+  active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)),
+  version INTEGER NOT NULL DEFAULT 0,
+  last_operation TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  UNIQUE(owner_id,currency)
+);
+CREATE TABLE coach_trades (
+  id TEXT PRIMARY KEY,
+  portfolio_id TEXT NOT NULL REFERENCES coach_portfolios(id),
+  symbol TEXT NOT NULL,
+  market TEXT NOT NULL CHECK(market IN ('thai','dr','us')),
+  quantity INTEGER NOT NULL CHECK(quantity > 0),
+  entry_micro INTEGER NOT NULL CHECK(entry_micro > 0),
+  entry_fee_minor INTEGER NOT NULL CHECK(entry_fee_minor >= 0),
+  cost_minor INTEGER NOT NULL CHECK(cost_minor > 0),
+  entry_note TEXT NOT NULL,
+  opened_at TEXT NOT NULL,
+  entry_actor TEXT NOT NULL REFERENCES members(id),
+  exit_micro INTEGER,
+  exit_fee_minor INTEGER,
+  proceeds_minor INTEGER,
+  pnl_minor INTEGER,
+  exit_note TEXT,
+  closed_at TEXT,
+  exit_actor TEXT REFERENCES members(id),
+  CHECK((closed_at IS NULL AND exit_micro IS NULL AND pnl_minor IS NULL) OR
+        (closed_at IS NOT NULL AND exit_micro > 0 AND exit_fee_minor >= 0 AND proceeds_minor >= 0 AND pnl_minor IS NOT NULL))
+);
+CREATE INDEX coach_trades_history ON coach_trades(portfolio_id,opened_at DESC,id);
+CREATE INDEX coach_trades_closed ON coach_trades(portfolio_id,closed_at,id);
+CREATE INDEX coach_portfolios_public ON coach_portfolios(published,active,created_at DESC);
+CREATE TABLE coach_operations (
+  id TEXT PRIMARY KEY,
+  portfolio_id TEXT NOT NULL REFERENCES coach_portfolios(id),
+  actor_id TEXT NOT NULL REFERENCES members(id),
+  payload_hash TEXT NOT NULL,
+  action TEXT NOT NULL,
+  trade_id TEXT,
+  created_at TEXT NOT NULL
+);
+`;
+
+export const COMMUNITY_SCHEMA = "-- Fresh community implementation. Additive; no customer data or credentials.\nCREATE TABLE community_rooms (\n  id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL,\n  locked INTEGER NOT NULL DEFAULT 0 CHECK(locked IN (0,1))\n);\nINSERT INTO community_rooms(id,name,description) VALUES\n ('lounge','ห้องนักออม','พูดคุยและแลกเปลี่ยนประสบการณ์'),\n ('thai','หุ้นไทย','แลกเปลี่ยนมุมมองหุ้นไทย'),\n ('dr','DR','สินทรัพย์ต่างประเทศในกระดานไทย'),\n ('us','US และ ETF','หุ้นสหรัฐฯ และ ETF'),\n ('tfex','TFEX','กราฟ สัญญา และการจัดการความเสี่ยง'),\n ('forex','Forex','คู่เงินและบริบทเศรษฐกิจ');\nCREATE TABLE community_staff (\n  member_id TEXT NOT NULL REFERENCES members(id),\n  role TEXT NOT NULL CHECK(role IN ('marketing','analyst')),\n  PRIMARY KEY(member_id,role)\n);\nCREATE TABLE support_threads (\n  id TEXT PRIMARY KEY, member_id TEXT NOT NULL REFERENCES members(id),\n  team TEXT NOT NULL CHECK(team IN ('marketing','analyst')), subject TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','review','answered','closed')),\n  version INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n);\nCREATE TABLE community_messages (\n  seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT NOT NULL UNIQUE,\n  room_id TEXT REFERENCES community_rooms(id), thread_id TEXT REFERENCES support_threads(id),\n  sender_id TEXT NOT NULL REFERENCES members(id), sender_kind TEXT NOT NULL CHECK(sender_kind IN ('member','team')),\n  body TEXT NOT NULL, applied INTEGER NOT NULL DEFAULT 0 CHECK(applied IN (0,1)), hidden INTEGER NOT NULL DEFAULT 0 CHECK(hidden IN (0,1)), created_at TEXT NOT NULL,\n  CHECK((room_id IS NOT NULL AND thread_id IS NULL) OR (room_id IS NULL AND thread_id IS NOT NULL))\n);\nCREATE INDEX community_room_messages ON community_messages(room_id,seq DESC);\nCREATE INDEX community_thread_messages ON community_messages(thread_id,seq DESC);\nCREATE INDEX support_member_threads ON support_threads(member_id,updated_at DESC,id);\nCREATE INDEX support_team_threads ON support_threads(team,updated_at DESC,id);\nCREATE TABLE community_reads (\n  member_id TEXT NOT NULL REFERENCES members(id), channel TEXT NOT NULL, last_seq INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY(member_id,channel)\n);\nCREATE TABLE community_reports (\n  id TEXT PRIMARY KEY, message_id TEXT NOT NULL REFERENCES community_messages(id),\n  reporter_id TEXT NOT NULL REFERENCES members(id), reason TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','resolved')), created_at TEXT NOT NULL,\n  UNIQUE(message_id,reporter_id)\n);\nCREATE TABLE community_operations (\n  id TEXT PRIMARY KEY, actor_id TEXT NOT NULL REFERENCES members(id), action TEXT NOT NULL,\n  payload_hash TEXT NOT NULL, result_json TEXT NOT NULL, details_json TEXT NOT NULL, created_at TEXT NOT NULL\n);\nCREATE TRIGGER support_message_update AFTER INSERT ON community_messages WHEN NEW.thread_id IS NOT NULL AND NEW.applied=0 BEGIN\n  UPDATE support_threads SET updated_at=NEW.created_at,version=version+1,\n    status=CASE WHEN NEW.sender_kind='team' THEN 'answered' ELSE 'pending' END WHERE id=NEW.thread_id;\n  UPDATE community_messages SET applied=1 WHERE id=NEW.id;\nEND;\nCREATE TRIGGER community_message_no_delete BEFORE DELETE ON community_messages BEGIN\n  SELECT RAISE(ABORT,'IMMUTABLE_COMMUNITY_MESSAGE');\nEND;\nCREATE TRIGGER community_message_content_no_update BEFORE UPDATE OF id,seq,room_id,thread_id,sender_id,sender_kind,body,created_at ON community_messages BEGIN\n  SELECT RAISE(ABORT,'IMMUTABLE_COMMUNITY_MESSAGE');\nEND;\n";
+
+export const SCAN_PROGRESS_SCHEMA = "-- Retry counters are per symbol/session; no trading records or prices are changed.\nALTER TABLE auto_pick_scan_progress ADD COLUMN source_failures INTEGER NOT NULL DEFAULT 0;\nALTER TABLE auto_pick_worker_heartbeat ADD COLUMN runtime_version TEXT;\n";

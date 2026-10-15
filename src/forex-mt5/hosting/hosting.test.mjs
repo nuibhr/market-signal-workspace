@@ -3,9 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync, writeFileSync, symlinkSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { customerPreflight } from "../customer-preflight.mjs";
 import { healthyBridge } from "./health.mjs";
-import { customerStartOptions } from "./start.mjs";
+import { customerStartOptions, hostingPreflight as customerPreflight } from "./start.mjs";
 const env = { NODE_ENV: "production", APP_ORIGIN: "https://forex.example.com", SITE_HOST: "forex.example.com",
   FOREX_MT5_ENABLED: "true", FOREX_MT5_VANTAGE_SERVERS: "VantageMarkets-Demo",
   FOREX_MT5_DATABASE_PATH: "/var/lib/nugaom/forex/bridge.sqlite", FOREX_MT5_PERSISTENT_STORAGE: "true",
@@ -14,7 +13,8 @@ const env = { NODE_ENV: "production", APP_ORIGIN: "https://forex.example.com", S
 test("customer launcher rejects incomplete host configuration before starting a web process", () => {
   assert.deepEqual(customerStartOptions(env), { ready: true, hostname: "127.0.0.1", port: "3000" });
   for (const extra of [{ APP_ORIGIN: "" }, { SITE_HOST: "other.example.com" }, { LINE_CHANNEL_SECRET: "" },
-    { PORT: "0" }, { PORT: "65536" }, { PORT: "3000 --other" }, { FOREX_MT5_LOCAL_MODE: "true" }])
+    { PORT: "0" }, { PORT: "65536" }, { PORT: "3000 --other" }, { FOREX_MT5_LOCAL_MODE: "true" },
+    { FOREX_MT5_MEMBER_LOCAL_FILES: "true" }, { STORAGE_PROVIDER: "d1" }])
     assert.equal(customerStartOptions({ ...env, ...extra }).ready, false);
 });
 test("customer storage must differ from membership even through a symlink, and avoid managed deployment folders", () => {

@@ -139,6 +139,7 @@ export default function ConnectionPanel({ bridge }) {
             {bridge.capabilities.memberLoginConfigured === false
               ? "เว็บทดสอบพร้อมแล้ว · กำลังเตรียมการเข้าสู่ระบบก่อนเปิดให้ลูกค้าผูก MT5"
               : "เข้าสู่ระบบด้วย LINE ตามปกติก่อนสร้างกุญแจจับคู่"}
+            {bridge.capabilities.memberLoginConfigured && <a href="/account"> · เข้าสู่ระบบด้วย LINE</a>}
           </p>
         )}
       {bridge.capabilities.localFiles && (
@@ -303,8 +304,9 @@ export default function ConnectionPanel({ bridge }) {
       )}
       {!bridge.capabilities.enabled && (
         <p className={styles.note}>
-          ระบบรับข้อมูลยังไม่ได้เปิดใช้งาน · ใช้ Guest 19 สัญลักษณ์หรือทดลอง
-          Demo ได้
+          {bridge.capabilities.disabledReason === 'NODE_RECEIVER_REQUIRED'
+            ? 'การเชื่อม MT5 บนเซิร์ฟเวอร์นี้ยังไม่พร้อม · ใช้ Guest หรือทดลอง Demo ได้'
+            : 'ระบบรับข้อมูลยังไม่ได้เปิดใช้งาน · ใช้ Guest 19 สัญลักษณ์หรือทดลอง Demo ได้'}
         </p>
       )}
       {downloadError && <p role="alert" className={styles.negative}>{downloadError}</p>}
@@ -333,7 +335,7 @@ export default function ConnectionPanel({ bridge }) {
           เปิด MT5 และ EA ทิ้งไว้ระหว่างใช้งาน
         </li>
       </ol>
-      {bridge.capabilities.local && <p className={styles.note}>
+      {bridge.capabilities.loopback && <p className={styles.note}>
         ขณะนี้เป็นระบบบนเครื่องนี้ ลูกค้าบนเครื่องอื่นต้องเข้าผ่านเว็บ HTTPS ที่เปิดใช้งานแล้ว
         การเชื่อมผ่านไฟล์บน Mac ใช้ได้เฉพาะ MT5 กับเว็บที่รันบนเครื่องเดียวกัน
       </p>}
