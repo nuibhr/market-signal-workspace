@@ -24,6 +24,22 @@ The persistence flag on the scanner reflects its actual named volume; provider p
 
 All 227 pre-existing Node tests passed, plus the new scanner readiness regression (228 total); the private LINE configuration Python test passed. The Next production build passed locally. `npm ci` reported zero known vulnerabilities. Runtime/source state on the VPS is recorded separately after deployment. No production LINE login or data-feed credentials were supplied during integration, and no display rights were inferred.
 
+## Verified VPS integration — 15 October 2026
+
+Deployed application release `bab5966` at `https://76.13.20.122.sslip.io/` includes main `07990da`. Node 24 / Next 16.3.8 Linux production build passed; 84 focused Linux tests passed. All 24 public HTTP checks passed, including all market pages, protected routes, empty anonymous MT5 reads and expected refusal of unconfigured licensed feeds. Preview ingestion stays disabled; LINE fields are still unset and the scanner profile remains stopped.
+
+The existing member volume was retained. A consistent SQLite snapshot before upgrade is at `/var/backups/nugaom/pre-main-bab5966/` on the VPS and passed integrity checks. The upgraded pilot database passed integrity checks and contains migrations 2–10, with zero members. The Forex database has not yet been created in this public preview. This local snapshot is not an offsite backup or full disaster-recovery verification. Existing session/hash secrets and public TLS were retained.
+
+## Moving to another VPS
+
+This deployment does not depend on a Hostinger API. Use a Linux target with Docker Compose, adequate build memory/storage and inbound ports 80/443. Build the same reviewed source and retain the Compose project name `nugaom-forex-customer` for volume mapping, or explicitly map the existing volume when restoring under another name.
+
+1. Install/build the same release on the target while the existing website stays online. Transfer the private env file through a secure administrative channel; retain `SESSION_SECRET` and `PORTFOLIO_HASH_SECRET`. Actual secrets never belong in Git/source ZIPs.
+2. At cutover, stop the old scanner and temporarily stop writes/receiver ingestion. Produce consistent SQLite snapshots of both member and Forex databases, including committed WAL content; do not copy only a live `.sqlite` file. Restore both separately into the target volume at the same configured paths with UID 1000 ownership and private permissions. The current empty pilot has no Forex database to transfer yet.
+3. Keep only one scanner/receiver active during cutover. Start the target in preview first, validate TLS, schema/integrity, login and member isolation; restore testing must not overwrite the source database. Provision an offsite encrypted backup separately before inviting real users.
+4. A custom domain can keep the public hostname by changing its DNS to the new IP. The current `76.13.20.122.sslip.io` hostname is bound to the old IP and cannot be repointed: replace `SITE_HOST`, `APP_ORIGIN`, `LINE_REDIRECT_URI`, add the new LINE callback, and update customer EA/relay HTTPS endpoints. MT5 pairing tokens belong to the preserved Forex database; verify token/reconnect behavior before cutover, or re-pair explicitly if that database is not migrated.
+5. Verify market feeds, scanner progress, native MT5 reception and restart persistence on the new server. Retain the old server and snapshots until acceptance, then retire it. Cancelling renewal/billing is separate from migrating the data.
+
 ## Historical preparation notes
 
 The notes below describe the original Forex-only pilot and its validation at that time. Current deployment status and restrictions above take precedence.
