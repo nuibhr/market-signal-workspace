@@ -20,7 +20,7 @@ const price = (value, market) => Number.isFinite(value)
   ? `${market === 'us' ? '$' : ''}${value.toLocaleString('en-US', { maximumFractionDigits: value < 1 ? 5 : 2 })}` : '—';
 const percent = value => Number.isFinite(value) ? `${value >= 0 ? '+' : ''}${value.toFixed(2)}%` : '—';
 
-export default function SignalResults({ onSelect, loginHref = '/account', fixedMarket=null }) {
+export default function SignalResults({ onSelect, loginHref = '/account', fixedMarket=null, sectionId='section-results' }) {
   const [market, setMarket] = useState(fixedMarket??'all');
   const [status, setStatus] = useState('all');
   const [scope, setScope] = useState('closed');
@@ -55,7 +55,7 @@ export default function SignalResults({ onSelect, loginHref = '/account', fixedM
     const text = `Nugaom AI Pick · ผลสัญญาณ 100 ไม้ที่ปิดล่าสุด\nตลาด: ${MARKETS.find(([id])=>id===market)?.[1]}\nช่วงปิดผล ${summary.from ? at(summary.from) : '—'} – ${summary.to ? at(summary.to) : '—'}\nมีผลบันทึก ${summary.closed}/100 ไม้ · ชนะ ${summary.wins} · แพ้ ${summary.losses} · เสมอ ${summary.flat}\nอัตราชนะ ${closed ? `${summary.winRate.toFixed(1)}%` : 'ยังไม่มีผลปิด'} · ผลเฉลี่ยต่อไม้ ${percent(summary.averageReturnPercent)}\nราคาอ้างอิงจากแท่งที่ระบบตรวจพบ ก่อนค่าธรรมเนียมและสลิปเพจ · ไม่ใช่ผลซื้อขายลูกค้า`;
     try {await navigator.clipboard.writeText(text);setCopied(true);} catch {setCopied(false);}
   }
-  return <section id="section-results" className="performance-section signal-results" aria-labelledby="signal-results-title">
+  return <section id={sectionId} className="performance-section signal-results" aria-labelledby="signal-results-title">
     <div className="section-heading"><div><div className="eyebrow">ผลงานจากระบบ</div><h2 id="signal-results-title">ผลงานสัญญาณ</h2><p>ราคาเข้าและออกอ้างอิงจากแท่งราคาที่ระบบตรวจพบ · ไม่ใช่ราคาซื้อขายจริงของลูกค้า</p></div><button className="results-refresh" onClick={() => setRevision(value => value + 1)}>โหลดล่าสุด ↻</button></div>
     {error && <div className="results-message" role="status">อ่านประวัติสัญญาณไม่ได้ กรุณาลองโหลดใหม่</div>}
     {!data && !error && <div className="results-message" role="status">กำลังอ่านผลสัญญาณ…</div>}

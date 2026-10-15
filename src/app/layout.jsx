@@ -15,6 +15,7 @@ import './auto-pick.css';
 import './workspace-v9.css';
 import './market-pages.css';
 import './focus-performance.css';
+import './signal-desk.css';
 
 export const metadata = {
   title: 'Nugaom AI Pick — Market Intelligence Workspace',

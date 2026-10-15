@@ -26,12 +26,12 @@ for (const path of ['/api/health', '/api/account', '/api/membership', '/api/auto
     ...(path === '/api/auto-pick' ? { worker: data?.workerProcess, workers: data?.workers, coverage: data?.coverage } : {}),
     ...(path === '/api/forex/mt5' ? { valid: data?.authorized === false && data?.snapshot === null,
       receiverEnabled: data?.capabilities?.enabled, serverCount: data?.capabilities?.servers?.length } : {}) }));
-for (const [path, expected] of [['/api/community', 401], ['/api/favorites', 401], ['/api/holdings', 403],
+for (const [path, expected] of [['/api/community', 401], ['/api/favorites', 401], ['/api/holdings', 403], ['/api/signals',403],
   ['/api/auto-pick/events', 403], ['/api/signal-backtest', 403], ['/api/technical-plan?symbol=PTT', 403],
   ['/api/admin/system', 403], ['/api/admin/audit', 403], ['/api/admin/memberships', 403]])
   await probe(path, [expected], {}, ({ data }) => ({ code: data?.error || data?.code || data?.status }));
 for (const [path, expected] of [['/api/account', 401], ['/api/favorites', 401], ['/api/community', 401],
-  ['/api/assistant', 401], ['/api/holdings', 403], ['/api/coaches', 403], ['/api/admin/memberships', 403], ['/api/forex/mt5', 401]]) {
+  ['/api/assistant', 401], ['/api/holdings', 403], ['/api/signals',403], ['/api/coaches', 403], ['/api/admin/memberships', 403], ['/api/forex/mt5', 401]]) {
   const body = JSON.stringify(path === '/api/forex/mt5' ? { action: 'pair', server: 'VantageMarkets-Demo' } : {});
   await probe(path, [expected], { method: 'POST', headers: { Origin: origin.origin, 'Content-Type': 'application/json' }, body },
     ({ data }) => ({ code: data?.error || data?.code }));

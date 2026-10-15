@@ -10,7 +10,8 @@ import { pristineCommunityRooms } from '../src/community/rooms.mjs';
 const tables=['members','ai_credit_accounts','ai_credit_events','ai_conversations','ai_questions','sessions','line_oauth_flows',
   'monthly_codes','renewal_requests','membership_events','admin_credit_grants','customer_preferences','customer_favorites','customer_holdings','customer_daily_reports',
   'auto_pick_runs','auto_pick_signals','auto_pick_events','auto_pick_decisions','auto_pick_scan_progress','auto_pick_worker_heartbeat',
-  'scanner_candles','historical_replay_summaries','request_limits','scanner_jobs','provider_cache','cloud_scanner_state','coach_portfolios','coach_trades','coach_operations','community_rooms','community_staff','support_threads','community_messages','community_reads','community_reports','community_operations'];
+  'scanner_candles','historical_replay_summaries','request_limits','scanner_jobs','provider_cache','cloud_scanner_state','coach_portfolios','coach_trades','coach_operations','community_rooms','community_staff','support_threads','community_messages','community_reads','community_reports','community_operations',
+  'signal_desk_observations','signal_desk_leases','signal_desk_profiles','signal_desk_preferences','signal_desk_profile_access','signal_desk_signals','signal_desk_events'];
 const directory=resolve(process.env.D1_MIGRATION_DIR||'data/d1-migration');
 const quoteName=value=>'"'+value.replaceAll('"','""')+'"';
 function literal(value) {
