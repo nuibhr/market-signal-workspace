@@ -1,3 +1,17 @@
+# Verified Hostinger VPS preview · 2026-10-15
+
+The test site is deployed at **https://76.13.20.122.sslip.io/forex** on the operator-authorized VPS `76.13.20.122`. SSH access with the dedicated key, Ubuntu 24.04, Docker/Compose, a Linux Node 24.22.0 image and Next.js 16.3.8 are verified. The externally checked HTTPS certificate is valid. All five market routes returned HTTP 200, the public EA download matches release bytes, and anonymous API state contains no owner data. The deployment runs as UID 1000 and exposes only the HTTPS proxy, not the Node port. A marker in the dedicated data volume survived a web restart and was removed after verification.
+
+**Customer MT5 pairing is still disabled.** This is the explicit preview profile, serving the 19-symbol Guest universe. LINE Channel ID/Secret have not been entered on this server and LINE sign-in has not been verified. The operator confirmed having an existing LINE Login channel. Add the test callback to that channel, enter credentials privately with `/opt/nugaom-forex/configure-line.py`, reload the preview and verify real sign-in before enabling customer mode. No local member/MT5 database, broker credentials or pairing presets were transferred. Live customer ingestion, native Windows terminal testing and backup/restore remain outstanding.
+
+Local tests: 40 Node tests plus one Python secret-helper test. VPS tests: 32 Node tests plus the Python secret-helper test. Both Mac and VPS production builds passed. Installed dependency audit found zero known vulnerabilities after the security patch. Source-scope checks preserve the protected market/workspace/auth/D1/Auto Pick sources. Only the Next package/lock version was patched outside the dedicated Forex scope to address reviewed security advisories.
+
+Deployed application source commit: `d633592`. The deployment uses `/opt/nugaom-forex/current`, a private `/etc/nugaom-forex/pilot.env` (0600), and persistent Compose data/certificate volumes. New VPS release installation and the 16.3.8 update did not change existing services; the initial VPS only had SSH listening. No subscription upgrade, domain purchase or existing domain DNS modification was performed. The temporary hostname resolves the VPS IP through sslip.io; use a chosen permanent domain before treating the pilot as the production customer service.
+
+The following describes earlier preparation and templates; current operation is the verified preview above.
+
+---
+
 # Hostinger deployment preparation · 2026-10-15
 
 The operator chose Hostinger for testing, superseding the proposed office Windows host. The local development website was restarted on loopback port 3100. No Hostinger service/package/account connection or public deployment is confirmed. No subscription, domain, DNS change or existing-site modification has been made.
