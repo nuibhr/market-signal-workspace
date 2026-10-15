@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync, symlinkSync, readFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { customerPreflight } from "../customer-preflight.mjs";
+import { healthyBridge } from "./health.mjs";
 import { customerStartOptions } from "./start.mjs";
 const env = { NODE_ENV: "production", APP_ORIGIN: "https://forex.example.com", SITE_HOST: "forex.example.com",
   FOREX_MT5_ENABLED: "true", FOREX_MT5_VANTAGE_SERVERS: "VantageMarkets-Demo",
@@ -33,4 +34,25 @@ test("managed hosting preview keeps market ingestion and development pairing dis
   assert.match(source, /^FOREX_MT5_ENABLED=false$/m);
   assert.match(source, /^FOREX_MT5_LOCAL_MODE=false$/m);
   assert.match(source, /^FOREX_MT5_PERSISTENT_STORAGE=false$/m);
+});
+
+test("public preview works before LINE setup but refuses active ingestion or developer shortcuts", () => {
+  const preview = { ...env, FOREX_MT5_PREVIEW: "true", FOREX_MT5_ENABLED: "false", LINE_CHANNEL_ID: "", LINE_CHANNEL_SECRET: "" };
+  assert.equal(customerStartOptions(preview).ready, true);
+  for (const extra of [{ FOREX_MT5_ENABLED: "true" }, { FOREX_MT5_LOCAL_MODE: "true" },
+    { FOREX_MT5_LOCAL_FILES_PATH: "/tmp/mt5" }, { APP_ORIGIN: "http://example.com" },
+    { FOREX_MT5_DATABASE_PATH: "/app/hbuilds/current/data.sqlite" }])
+    assert.equal(customerStartOptions({ ...preview, ...extra }).ready, false);
+  assert.equal(customerStartOptions({ ...preview, FOREX_MT5_PREVIEW: "false" }).ready, false);
+});
+test("health checks distinguish customer/preview readiness and reject anonymous data leaks", () => {
+  const data = { capabilities: { enabled: false, local: false, localFiles: false, memberLoginConfigured: false },
+    authorized: false, snapshot: null, quotes: {}, chart: null };
+  assert.equal(healthyBridge(data, true), true);
+  assert.equal(healthyBridge(data), false);
+  for (const extra of [{ authorized: true }, { snapshot: { instruments: [] } },
+    { quotes: { EURUSD: { bid: 1 } } }, { chart: { bars: [] } }])
+    assert.equal(healthyBridge({ ...data, ...extra }, true), false);
+  assert.equal(healthyBridge({ ...data, capabilities: { ...data.capabilities, enabled: true } }, true), false);
+  assert.equal(healthyBridge({ ...data, capabilities: { ...data.capabilities, enabled: true, memberLoginConfigured: true } }), true);
 });

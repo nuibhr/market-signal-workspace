@@ -3,9 +3,25 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { customerPreflight } from "../customer-preflight.mjs";
 
-export function customerStartOptions(env = process.env) {
+export function launchReadiness(env = process.env) {
   const report = customerPreflight(env);
-  if (!report.configuration_ready) return { ready: false, remaining: report.remaining };
+  if (env.FOREX_MT5_PREVIEW !== "true") return { ready: report.configuration_ready, remaining: report.remaining };
+  // A preview can run before LINE setup, but can never ingest or pair customer terminals.
+  const checks = {
+    production_node_runtime: report.checks.production_node_runtime,
+    https_origin_configured: report.checks.https_origin_configured,
+    separate_public_host_valid: report.checks.separate_public_host_valid,
+    separate_forex_database: report.checks.separate_forex_database,
+    database_outside_managed_releases: report.checks.database_outside_managed_releases,
+    persistent_forex_database: report.checks.persistent_forex_database,
+    local_shortcut_disabled: report.checks.local_shortcut_disabled,
+    preview_ingestion_disabled: env.FOREX_MT5_ENABLED === "false",
+  };
+  return { ready: Object.values(checks).every(Boolean), remaining: Object.keys(checks).filter(key => !checks[key]) };
+}
+export function customerStartOptions(env = process.env) {
+  const report = launchReadiness(env);
+  if (!report.ready) return { ready: false, remaining: report.remaining };
   const port = env.PORT || "3000";
   if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535)
     return { ready: false, remaining: ["valid_port"] };

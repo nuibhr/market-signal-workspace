@@ -49,3 +49,9 @@ Node 24 is the container target. References: [Node supported releases](https://n
 ## Source archive
 
 After committing reviewed source, run `python3 src/forex-mt5/hosting/package-source.py /absolute/output/forex-hostinger-source.zip` from this checkout. The helper requires a clean Git checkout and packages only tracked application/build source. It excludes local environment files, credentials files, SQLite databases, downloaded `.set` presets, Git metadata, dependencies, caches and local runtime state. The two explicit hosting environment *examples* contain empty/placeholder configuration only. Existing code and the compiled public EA/relay downloads are included; they contain no customer keys. Dependencies and the Linux build are created by Hostinger, rather than uploading this Mac's runtime binaries.
+
+## VPS preview mode
+
+The dedicated preview override is `compose.preview.yml`. With the same environment file and Compose base, add `-f src/forex-mt5/hosting/compose.preview.yml` to `up --build -d`. This sets `FOREX_MT5_PREVIEW=true` and `FOREX_MT5_ENABLED=false`. The startup guard permits absent LINE credentials only in this explicitly disabled receiver mode; it still requires production runtime, HTTPS origin, separate persistent paths and no developer shortcut. Anonymous health must show no owner data. Production mode remains the original stricter guard requiring LINE configuration and active receiver readiness.
+
+When LINE is configured and its callback verified, launch the base Compose file without the preview override; do not leave the override active while inviting customers to pair terminals. Do not change shared authentication source or reuse a development local session.
