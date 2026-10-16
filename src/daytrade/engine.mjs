@@ -78,6 +78,7 @@ export function setupAt(asset,bars,i,values=features(bars),offset=0) {
     trigger:b.close, sessionKey:session.key,offsetMinutes:offset,reason:'แนวโน้ม EMA20/50 · แท่ง 15m ปิดผ่านแท่งก่อนหน้า'};
 }
 export function entryPlan(asset,setup,open,{spread=0,slippageBps=0,feeBps=0}={}) {
+  if(setup.side==='LONG'?!canLong(asset):!canShort(asset))return null;
   if(![open,spread,slippageBps,feeBps].every(finite)||open<=0||spread<0||slippageBps<0||feeBps<0)return null;
   const direction=setup.side==='LONG'?1:-1;
   const friction=(direction>0?spread:0)+open*slippageBps/10000;

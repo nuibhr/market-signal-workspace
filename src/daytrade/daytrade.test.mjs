@@ -64,6 +64,9 @@ test('stocks and DR never manufacture short trades; CFD short obeys broker trade
   assert.equal(setupAt({...asset,trade_mode:2},falling,69)?.side,'SHORT');
   assert.equal(setupAt({...asset,trade_mode:2},rows(70),69),null);
   assert.equal(setupAt({...asset,trade_mode:3},rows(70),69),null);
+  const longSetup=setupAt(asset,rows(70),69);
+  assert.equal(entryPlan({...asset,trade_mode:2},longSetup,rows(70).at(-1).close),null);
+  assert.equal(entryPlan({...asset,trade_mode:3},longSetup,rows(70).at(-1).close),null);
   assert.equal(setupAt(asset,falling,69)?.side,'SHORT');
   assert.equal(setupAt({...asset,trade_mode:0},rows(70),69),null);
 });
@@ -137,6 +140,8 @@ test('close-only CFD is unavailable for new scans, never an endlessly queued or 
   assert.equal(scanJobs(db,connection,1000000),'');
   const row=dashboard(db,connection,'forex').universe[0];
   assert.equal(row.status,'UNAVAILABLE');assert.equal(row.code,'BROKER_CLOSE_ONLY');assert.equal(row.side,null);
+  db.prepare('INSERT INTO daytrade_cursor VALUES(?,?,?)').run('mt5:member:one:VantageMarkets-Demo',asset.symbol,JSON.stringify({active:{side:'LONG'}}));
+  assert.equal(scanJobs(db,connection,1000001),Buffer.from(asset.symbol).toString('hex'));
   db.close();
 });
 test('core forex retries after three minutes ahead of a large unvisited US queue',()=>{

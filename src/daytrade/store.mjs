@@ -88,7 +88,13 @@ export function scanJobs(db,connection,now=Date.now()) {
   if(!connection.snapshot)return '';
   const instruments=JSON.parse(connection.snapshot).instruments;
   const assets=[...cfdUniverse(instruments,'forex'),...cfdUniverse(instruments,'us')];
-  const symbols=new Set(assets.filter(a=>[1,2,4].includes(a.trade_mode)).map(a=>a.symbol));
+  const symbols=new Set(assets.filter(a=>{
+    if([1,2,4].includes(a.trade_mode))return true;
+    // A close-only restriction prevents new setups but still permits tracking an existing reference exit.
+    if(a.trade_mode!==3)return false;
+    const cursor=db.prepare('SELECT body FROM daytrade_cursor WHERE scope=? AND symbol=?').get(cfdScope(connection),a.symbol);
+    return Boolean(cursor&&JSON.parse(cursor.body).active);
+  }).map(a=>a.symbol));
   const add=db.prepare('INSERT OR IGNORE INTO daytrade_jobs(connection_id,symbol,attempt) VALUES(?,?,0)');
   for(const symbol of symbols)add.run(connection.id,symbol);
   for(const row of db.prepare('SELECT symbol FROM daytrade_jobs WHERE connection_id=?').all(connection.id))if(!symbols.has(row.symbol))
