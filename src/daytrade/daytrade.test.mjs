@@ -40,6 +40,7 @@ test('real broker regional folders override venue aliases; US 24h and official E
 test('Forex desk exposes exactly the nine core assets without mutating a full broker snapshot',()=>{
   const all=[...CORE_FOREX,'GBPJPY'].map(s=>({...asset,id:s,broker_symbol:s,canonical_symbol:s}));
   assert.equal(cfdUniverse(all,'forex').length,9);assert.equal(all.length,10);
+  assert.equal(cfdUniverse([{...asset,category:'share_cfds'}],'forex').length,0);
   assert.equal(cfdUniverse([{...asset,canonical_symbol:null,broker_symbol:'XAUUSD.a',currency_base:'XAU',currency_profit:'USD'}],'forex').length,0);
   for(const market of ['thai','dr','tfex'])assert.ok(nativeUniverse(market).length>0);
 });

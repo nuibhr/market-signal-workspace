@@ -21,7 +21,7 @@ export function listingRegion(instrument) {
 // Currency alone cannot distinguish a US listing from an overseas USD listing.
 export const usListing = instrument => listingRegion(instrument)==='US';
 export function cfdUniverse(instruments, market) {
-  return instruments.filter(i => market === 'forex' ? CORE_FOREX.includes(exactPair(i)) : usListing(i))
+  return instruments.filter(i => market === 'forex' ? ['fx','metals'].includes(i.category)&&CORE_FOREX.includes(exactPair(i)) : usListing(i))
     .map(i => ({ ...i, market, symbol:i.broker_symbol, name:i.description,
       instrumentId:i.id, point:i.point, instrumentType:i.category === 'etfs' ? 'etf_cfd' : market === 'us' ? 'stock_cfd' : 'spot_cfd',
       underlyingSymbol:i.underlying_symbol || null, volumeSource:market === 'us' ? 'underlying-pending' : 'tick-only' }));
