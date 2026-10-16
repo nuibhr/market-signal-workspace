@@ -34,7 +34,7 @@ async function boundedRead(path, max) {
 export class CustomerRelay {
   constructor(config, directory, send = fetch) {
     this.config = relayConfig(config); this.directory = directory; this.send = send;
-    this.digest = null; this.reply = null;
+    this.digest = null; this.reply = null; this.recoverable = false;
   }
   async pump(now = Date.now()) {
     if (Date.parse(this.config.expires_at) <= now) throw Error("PAIRING_EXPIRED");
@@ -49,9 +49,16 @@ export class CustomerRelay {
         headers: { "Content-Type": "application/json", "X-Forex-Retry": "same-packet",
           Authorization: `Bearer ${this.config.token}` }, body: packetText,
       });
+      this.recoverable = false;
       if (!response.ok) {
-        // Retry transient errors without acknowledging them. Fatal auth/policy errors stop the EA.
+        // Reject the packet at the receiver, then let the EA create a fresh one for
+        // known clock/data errors. Never retry that invalid packet or soften auth/policy failures.
         if (![400, 401, 403, 409].includes(response.status)) throw Error("RECEIVER_UNAVAILABLE");
+        if(response.status===400){
+          try{const body=await response.text();
+            this.recoverable=body.length<=4096&&['CLOCK_OUT_OF_RANGE','INVALID_PACKET','DUPLICATE_SYMBOL'].includes(JSON.parse(body).error);
+          }catch{}
+        }
         this.reply = { sequence: String(packet.sequence), status: String(response.status) };
       } else {
         const result = JSON.parse(await response.text());
@@ -69,6 +76,7 @@ export class CustomerRelay {
     try { await writeFile(temporary, JSON.stringify(this.reply), { flag: "wx", mode: 0o600 });
       await rename(temporary, target);
     } finally { await rm(temporary, { force: true }); }
+    if(this.reply.status==='400'&&this.recoverable)return 'แพ็กเก็ตถูกปฏิเสธ · รอแพ็กเก็ตใหม่จาก EA';
     if (this.reply.status !== "200") throw Error(`RECEIVER_${this.reply.status}`);
     return "รับข้อมูลแล้ว · เปิด MT5 และหน้าต่างนี้ไว้";
   }

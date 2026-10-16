@@ -57,6 +57,20 @@ test("transient network errors receive no file ACK and retry the identical packe
     assert.equal(JSON.parse(await readFile(reply)).status, "200");
   });
 });
+test('known clock/data rejection releases the old packet and accepts a fresh sequence without weakening auth',async()=>{
+  await fixture(async({directory,path,reply})=>{
+    let calls=0;
+    const relay=new CustomerRelay(config,directory,async()=>++calls===1?Response.json({error:'CLOCK_OUT_OF_RANGE'},{status:400}):Response.json(accepted));
+    await relay.pump(now);assert.equal(JSON.parse(await readFile(reply)).status,'400');
+    await relay.pump(now);assert.equal(calls,1);
+    await writeFile(path,JSON.stringify({...packet,sequence:2}));await relay.pump(now);
+    assert.equal(JSON.parse(await readFile(reply)).status,'200');assert.equal(calls,2);
+    for(const [status,error] of [[400,'UNSUPPORTED_FIELDS'],[400,'UNKNOWN_SYMBOL'],[401,'INVALID_CONNECTOR_TOKEN'],[403,'BROKER_NOT_ALLOWED'],[409,'REPLAYED_PACKET']]){
+      const denied=new CustomerRelay(config,directory,async()=>Response.json({error},{status}));
+      await assert.rejects(denied.pump(now),new RegExp('RECEIVER_'+status));
+    }
+  });
+});
 test("relay rejects symlinks, oversized files and a different server before sending", async () => {
   await fixture(async ({ directory, path, reply }) => {
     let calls = 0;
