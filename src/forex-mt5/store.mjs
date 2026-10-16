@@ -253,7 +253,8 @@ export class ForexStore {
         requested_frame: current.wanted_frame,
         requested_utc_offset_minutes: String(clock?.offset_minutes ?? 10000),
         requested_history_since: String(clock?historySince:0),
-        requested_scan_symbols_hex: clock?.status === "ready" ? scanJobs(this.db,this.connection(row.owner),now) : "",
+        requested_scan_symbols_hex: clock?.status === "ready" &&
+          (packet.kind==='feed'||packet.part===packet.parts-1) ? scanJobs(this.db,this.connection(row.owner),now) : "",
       };
       this.db.prepare("INSERT INTO forex_receipts VALUES(?,?,?) ON CONFLICT(connection_id) DO UPDATE SET digest=excluded.digest,body=excluded.body")
         .run(row.id, hash, JSON.stringify(receipt));

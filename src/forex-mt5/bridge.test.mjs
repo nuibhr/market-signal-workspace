@@ -480,6 +480,19 @@ test("clock schema rejects private fields and clock timestamps unrelated to pack
     assert.throws(() => validatePacket(packet(1, { clock }), config, NOW));
 });
 
+test('catalogue resync reserves no scan jobs until the final chunk can start collecting bars',()=>{
+  const {store,token}=fixture();
+  store.ingest(token,packet(1,{instruments:[metadata('EURUSD')]}),config,NOW);
+  store.db.prepare('INSERT INTO forex_clock VALUES(?,?)').run(store.connection('alice').id,JSON.stringify({status:'ready',candidate:180,offset_minutes:180,
+    samples:3,first_at:NOW-15000,last_at:NOW-5000,history_since:NOW/1000-86400}));
+  const partial=store.ingest(token,packet(2,{sync_id:2,parts:2,part:0,instruments:Array.from({length:100},(_,i)=>metadata(`SYM${i}`)),clock:clockSample(NOW,180,180)}),config,NOW);
+  assert.equal(partial.requested_scan_symbols_hex,'');
+  assert.equal(store.db.prepare('SELECT count(*) n FROM daytrade_jobs').get().n,0);
+  const final=store.ingest(token,packet(3,{sync_id:2,parts:2,part:1,instruments:[metadata('EURUSD')],clock:clockSample(NOW+10000,180,180)},NOW+10000),config,NOW+10000);
+  assert.equal(final.requested_scan_symbols_hex,Buffer.from('EURUSD').toString('hex'));
+  assert.equal(store.db.prepare('SELECT count(*) n FROM daytrade_jobs').get().n,1);
+  store.db.close();
+});
 test('batch scan contracts require a verified clock, store more than chart cache slots and reject incomplete/foreign bars',()=>{
   const {store,token}=fixture();
   const meta={...metadata('XAUUSD'),canonical_symbol:'XAUUSD',category:'metals',digits:2,point:0.01,
