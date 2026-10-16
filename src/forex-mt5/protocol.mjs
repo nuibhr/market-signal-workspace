@@ -59,6 +59,7 @@ export function configuration(env = process.env) {
     local:
       env.NODE_ENV === "development" && env.FOREX_MT5_LOCAL_MODE === "true",
     databasePath: env.FOREX_MT5_DATABASE_PATH || "data/forex-mt5.sqlite",
+    ...(env.FOREX_MT5_HISTORY_POLICY==='vantage-season-window-v1'?{historyPolicy:env.FOREX_MT5_HISTORY_POLICY}:{}),
   };
 }
 export function assertIdentity(server, company, config) {
@@ -88,7 +89,7 @@ export function instrument(row, server) {
     "trade_mode",
     "session",
   ];
-  exactKeys(row, keys);
+  exactKeys(row, [...keys, "broker_path", "exchange", "underlying_symbol"]);
   fail(keys.every((key) => Object.hasOwn(row, key)));
   const symbol = textValue(row.broker_symbol);
   fail(row.category === null || categories.has(row.category));
@@ -103,6 +104,9 @@ export function instrument(row, server) {
     display_symbol: symbol,
     canonical_symbol: optionalString(row.canonical_symbol),
     description: textValue(row.description, 512),
+    ...(row.broker_path !== undefined ? { broker_path: row.broker_path === null ? null : textValue(row.broker_path,512) } : {}),
+    ...(row.exchange !== undefined ? { exchange: optionalString(row.exchange) } : {}),
+    ...(row.underlying_symbol !== undefined ? { underlying_symbol: optionalString(row.underlying_symbol) } : {}),
     digits: optionalNumber(row.digits, 0, 12),
     point: optionalNumber(row.point, 1e-12),
     contract_size: optionalNumber(row.contract_size),
@@ -160,6 +164,7 @@ export function validatePacket(packet, config, now = Date.now()) {
     "quotes",
     "chart",
     "clock",
+    "scan_charts",
   ]);
   fail(packet.schema_version === 1 && packet.broker_id === "vantage");
   assertIdentity(packet.server, packet.company, config);
@@ -200,7 +205,7 @@ export function validatePacket(packet, config, now = Date.now()) {
       packet.part === packet.parts - 1 || packet.instruments.length === 100,
       "INCONSISTENT_SYNC",
     );
-    fail(!Object.hasOwn(packet, "quotes") && !Object.hasOwn(packet, "chart"));
+    fail(!Object.hasOwn(packet, "quotes") && !Object.hasOwn(packet, "chart") && !Object.hasOwn(packet,"scan_charts"));
     return {
       ...packet,
       instruments: packet.instruments.map((row) =>
@@ -226,31 +231,35 @@ export function validatePacket(packet, config, now = Date.now()) {
         quote.time * 1000 <= now + 30000,
     );
   }
-  if (packet.chart !== null) {
-    exactKeys(packet.chart, [
+  fail(Object.hasOwn(packet,"chart") && (packet.chart===null || typeof packet.chart==="object" && !Array.isArray(packet.chart)));
+  if(packet.scan_charts !== undefined) fail(Array.isArray(packet.scan_charts) && packet.scan_charts.length <= 8 && packet.scan_charts.every(c=>c && typeof c==="object" && typeof c.broker_symbol==="string"));
+  const charts = [...(packet.chart ? [packet.chart] : []), ...(packet.scan_charts || [])];
+  fail(new Set((packet.scan_charts||[]).map(c=>c.broker_symbol)).size === (packet.scan_charts||[]).length, "DUPLICATE_SYMBOL");
+  for (const chart of charts) {
+    exactKeys(chart, [
       "broker_symbol",
       "timeframe",
       "bars",
       "utc_offset_minutes",
     ]);
-    textValue(packet.chart.broker_symbol);
-    fail(Object.hasOwn(FRAMES, packet.chart.timeframe));
+    textValue(chart.broker_symbol);
+    fail(Object.hasOwn(FRAMES, chart.timeframe));
     fail(
-      Number.isInteger(packet.chart.utc_offset_minutes) &&
-        Math.abs(packet.chart.utc_offset_minutes) <= 840,
+      Number.isInteger(chart.utc_offset_minutes) &&
+        Math.abs(chart.utc_offset_minutes) <= 840,
     );
     fail(
-      Array.isArray(packet.chart.bars) &&
-        packet.chart.bars.length > 0 &&
-        packet.chart.bars.length <= 300,
+      Array.isArray(chart.bars) &&
+        chart.bars.length > 0 &&
+        chart.bars.length <= 300,
     );
     let previous = 0;
-    for (const bar of packet.chart.bars) {
+    for (const bar of chart.bars) {
       exactKeys(bar, ["time", "open", "high", "low", "close", "volume"]);
       fail(
         Number.isSafeInteger(bar.time) &&
           bar.time > previous &&
-          bar.time * 1000 <= now + 30000,
+          (bar.time + FRAMES[chart.timeframe]) * 1000 <= now + 2000,
       );
       previous = bar.time;
       for (const key of ["open", "high", "low", "close"])

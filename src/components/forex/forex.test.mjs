@@ -139,8 +139,8 @@ test("only Vantage is supported; all connection states are contracts for the opt
   ]);
 });
 
-test("Forex uses its dedicated route while the other market routes retain their shared workspace", () => {
-  for (const market of ["thai", "dr", "tfex", "us"]) {
+test("Forex and US have dedicated desks while Thai/DR/TFEX retain the shared workspace", () => {
+  for (const market of ["thai", "dr", "tfex"]) {
     const path = `src/app/${market}/page.jsx`;
     const source = readFileSync(new URL(path, root), 'utf8');
     assert.match(source, /import Workspace from .*components\/workspace\.jsx/);

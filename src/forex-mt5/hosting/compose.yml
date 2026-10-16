@@ -59,6 +59,23 @@ services:
     depends_on:
       web:
         condition: service_healthy
+  daytrade:
+    profiles: ['scanner']
+    image: nugaom-workspace:${RELEASE_TAG:-local}
+    command: ['node', 'scripts/daytrade-worker.mjs']
+    restart: unless-stopped
+    logging: *logging
+    init: true
+    env_file:
+      - ${FOREX_ENV_FILE:?Set FOREX_ENV_FILE to the absolute private customer env path}
+    environment:
+      NODE_ENV: production
+      FOREX_MT5_DATABASE_PATH: /var/lib/nugaom/forex/bridge.sqlite
+    volumes:
+      - customer_data:/var/lib/nugaom
+    depends_on:
+      web:
+        condition: service_healthy
   https:
     image: caddy:2
     restart: unless-stopped

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import DaytradePanel from './daytrade/daytrade-panel.jsx';
 import { ALL_ASSETS } from '../markets/catalog.mjs';
 import { createSignalSpeaker } from '../auto-pick/speech.mjs';
 import { createNotificationInbox } from '../auto-pick/notification-inbox.mjs';
@@ -21,7 +22,7 @@ async function jsonRequest(url,options={},timeout=60000){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
  try{const r=await fetch(url,{...options,cache:'no-store',signal:options.signal||controller.signal});const d=await r.json();if(!r.ok)throw Error(d.code||'REQUEST_UNAVAILABLE');return d;}finally{clearTimeout(timer);}
 }
-export default function SignalDesk({marketId,memberId,rights,favorites=[],onToggleFavorite,onSelect,loginHref}){
+function LegacySignalDesk({marketId,memberId,rights,favorites=[],onToggleFavorite,onSelect,loginHref}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[page,setPage]=useState(1),[query,setQuery]=useState(''),[mode,setMode]=useState('all'),[favoritesOnly,setFavoritesOnly]=useState(false),[revision,setRevision]=useState(0),[toast,setToast]=useState(null),[voice,setVoice]=useState(false),[speechState,setSpeechState]=useState('idle'),[replay,setReplay]=useState(null),[costs,setCosts]=useState(Object.fromEntries(COST_FIELDS.map(([key])=>[key,'']))),[clock,setClock]=useState(null);
  const inbox=useRef(null),speaker=useRef(null),owner=useRef(null),active=useRef(null),inflight=useRef(false),selection=useRef(''),costLoaded=useRef(null),toastRef=useRef(null),spoken=useRef(null);
  const enabled=Boolean(rights?.capabilities?.autoPickFeed),marketAssets=ALL_ASSETS.filter(a=>a.id===marketId);
@@ -100,4 +101,9 @@ export default function SignalDesk({marketId,memberId,rights,favorites=[],onTogg
   </>}
   {toast&&<aside className="signal-toast" role="status" aria-live="polite"><strong>{toast.historical?'เหตุการณ์ย้อนหลัง · ':''}{toast.symbol} · {EVENT[toast.type]||toast.type}</strong><p>{toast.detail}</p><small>ราคาอ้างอิง {n(toast.price,4)} · แท่ง {at(toast.priceAt)} · แจ้ง {at(toast.createdAt)}</small><button onClick={()=>dismiss(toast.id)}>ปิดแจ้งเตือน</button></aside>}
  </section>;
+}
+
+export default function SignalDesk(props){
+ const [legacy,setLegacy]=useState(false);
+ return <><DaytradePanel market={props.marketId} onSelect={props.onSelect?symbol=>{const asset=ALL_ASSETS.find(a=>a.id===props.marketId&&a.symbol===symbol);if(asset)props.onSelect(asset);}:undefined}/>{props.marketId!=='tfex'&&<details className="panel" onToggle={event=>setLegacy(event.currentTarget.open)}><summary>ประวัติกติกา Swing รุ่นเดิม · แยกจาก Daytrade</summary>{legacy&&<LegacySignalDesk {...props}/>}</details>}</>;
 }

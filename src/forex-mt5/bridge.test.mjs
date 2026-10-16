@@ -459,13 +459,15 @@ test("clock changes reset observations and exclude bars before the observed offs
     feed(n + 1, { clock: clockSample(NOW + n * 5000, 120) }, NOW + n * 5000), config, NOW + n * 5000);
   assert.equal(store.view("alice", config, {}, NOW + 30000).clock.offset_minutes, 120);
   const chart = { broker_symbol: "EURUSD.a", timeframe: "15m", utc_offset_minutes: 120,
-    bars: [{ time: NOW / 1000, open: 1, high: 2, low: 1, close: 2, volume: 1 }] };
+    bars: [{ time: NOW / 1000 - 900, open: 1, high: 2, low: 1, close: 2, volume: 1 }] };
   store.ingest(token, feed(8, { chart, clock: clockSample(NOW + 35000, 120, 120) }, NOW + 35000), config, NOW + 35000);
   assert.equal(store.view("alice", config, { symbol: "EURUSD.a", frame: "15m" }, NOW + 35000).chart, null);
   chart.bars[0].time = NOW / 1000 + 20;
-  store.ingest(token, feed(9, { chart, clock: clockSample(NOW + 40000, 120, 120) }, NOW + 40000), config, NOW + 40000);
-  assert.equal(store.view("alice", config, { symbol: "EURUSD.a", frame: "15m" }, NOW + 40000).chart.bars.length, 1);
-  assert.equal(store.view("alice", config, {}, NOW + 80000).clock.status, "unavailable");
+  // Keep independent clock observations alive until the first post-change bar closes.
+  for(let n=8;n<=184;n++)store.ingest(token,feed(n+1,{clock:clockSample(NOW+n*5000,120,120)},NOW+n*5000),config,NOW+n*5000);
+  store.ingest(token, feed(186, { chart, clock: clockSample(NOW + 925000, 120, 120) }, NOW + 925000), config, NOW + 925000);
+  assert.equal(store.view("alice", config, { symbol: "EURUSD.a", frame: "15m" }, NOW + 925000).chart.bars.length, 1);
+  assert.equal(store.view("alice", config, {}, NOW + 965000).clock.status, "unavailable");
   store.revoke("alice");
   assert.equal(store.db.prepare("SELECT count(*) AS n FROM forex_clock").get().n, 0);
   store.db.close();
@@ -476,6 +478,27 @@ test("clock schema rejects private fields and clock timestamps unrelated to pack
     { ...clockSample(NOW), used_offset_minutes: 10000 },
     { ...clockSample(NOW), last_tick_seconds: 0 } ])
     assert.throws(() => validatePacket(packet(1, { clock }), config, NOW));
+});
+
+test('batch scan contracts require a verified clock, store more than chart cache slots and reject incomplete/foreign bars',()=>{
+  const {store,token}=fixture();
+  const meta={...metadata('XAUUSD'),canonical_symbol:'XAUUSD',category:'metals',digits:2,point:0.01,
+    broker_path:'Metals',exchange:null,underlying_symbol:null};
+  store.ingest(token,packet(1,{instruments:[meta]}),config,NOW);
+  const chart={broker_symbol:'XAUUSD',timeframe:'15m',utc_offset_minutes:180,
+    bars:Array.from({length:60},(_,i)=>({time:NOW/1000-60*900+i*900,open:100,high:101,low:99,close:100,volume:5}))};
+  assert.throws(()=>store.ingest(token,feed(2,{quotes:[],scan_charts:[chart]}),config,NOW),/CLOCK_OBSERVATION_REQUIRED/);
+  store.db.prepare('INSERT INTO forex_clock VALUES(?,?)').run(store.connection('alice').id,JSON.stringify({status:'ready',candidate:180,offset_minutes:180,
+    samples:3,first_at:NOW-15000,last_at:NOW-5000,history_since:NOW/1000-86400}));
+  const ack=store.ingest(token,feed(2,{quotes:[{broker_symbol:'XAUUSD',bid:100,ask:100.1,time:NOW/1000}],scan_charts:[chart],clock:clockSample(NOW,180,180)}),config,NOW);
+  assert.ok(ack.requested_scan_symbols_hex);
+  assert.equal(store.db.prepare('SELECT count(*) n FROM daytrade_bars').get().n,1);
+  assert.equal(JSON.parse(store.db.prepare('SELECT body FROM daytrade_bars').get().body).bars.length,60);
+  assert.throws(()=>validatePacket(feed(3,{scan_charts:[{...chart,bars:[{...chart.bars[0],time:NOW/1000}]}]}),config,NOW));
+  assert.throws(()=>validatePacket(feed(3,{scan_charts:[chart,chart]}),config,NOW),/DUPLICATE_SYMBOL/);
+  assert.throws(()=>validatePacket(feed(3,{scan_charts:[null]}),config,NOW));
+  assert.throws(()=>store.ingest(token,feed(3,{quotes:[],scan_charts:[{...chart,broker_symbol:'FOREIGN'}],clock:clockSample(NOW,180,180)}),config,NOW),/UNKNOWN_SYMBOL/);
+  store.db.close();
 });
 
 test("opt-in HTTP retry returns only the exact last receipt without replaying clock or writes", () => {

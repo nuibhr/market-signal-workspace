@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 // Forex-only chart adapter: honours terminal digits/point without touching the shared chart.
-export default function Mt5PriceChart({ instrument, bars, chartStyle }) {
+export default function Mt5PriceChart({ instrument, bars, chartStyle, plan = null }) {
   const container = useRef(null);
   useEffect(() => {
     let chart,
@@ -49,6 +49,9 @@ export default function Mt5PriceChart({ instrument, bars, chartStyle }) {
           ? bars.map((bar) => ({ time: bar.time, value: bar.close }))
           : bars,
       );
+      if(plan) for(const [title,price,color] of [["Entry",plan.entry,"#8cb4ff"],["SL",plan.stop,"#ff8798"],["TP 2R",plan.target,"#67e7b8"]]) {
+        if(Number.isFinite(price))series.createPriceLine({price,color,lineWidth:1,lineStyle:2,axisLabelVisible:true,title});
+      }
       chart.timeScale().fitContent();
       observer = new ResizeObserver(() => {
         if (container.current)
@@ -61,7 +64,7 @@ export default function Mt5PriceChart({ instrument, bars, chartStyle }) {
       observer?.disconnect();
       chart?.remove();
     };
-  }, [instrument.digits, instrument.point, bars, chartStyle]);
+  }, [instrument.digits, instrument.point, bars, chartStyle, plan]);
   return (
     <div
       ref={container}

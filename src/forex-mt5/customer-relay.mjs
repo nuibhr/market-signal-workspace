@@ -59,7 +59,8 @@ export class CustomerRelay {
         this.reply = { sequence: String(packet.sequence), status: "200",
           requested_symbol_hex: result.requested_symbol_hex, requested_frame: result.requested_frame,
           requested_utc_offset_minutes: result.requested_utc_offset_minutes,
-          requested_history_since: result.requested_history_since };
+          requested_history_since: result.requested_history_since,
+          requested_scan_symbols_hex: result.requested_scan_symbols_hex };
       }
       this.digest = hash;
     }

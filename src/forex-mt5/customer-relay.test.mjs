@@ -10,7 +10,7 @@ const config = { endpoint: "https://example.com/api/forex/mt5", token: "t".repea
   channel: "a".repeat(32), server: "VantageMarkets-Demo", expires_at: new Date(now + 60000).toISOString() };
 const packet = { server: config.server, sequence: 1 };
 const accepted = { accepted: true, requested_symbol_hex: "455552555344", requested_frame: "1h",
-  requested_utc_offset_minutes: "180", requested_history_since: String(Math.floor(now / 1000)) };
+  requested_utc_offset_minutes: "180", requested_history_since: String(Math.floor(now / 1000)),requested_scan_symbols_hex:"584155555344,4141504c" };
 async function fixture(run) {
   const directory = await mkdtemp(join(tmpdir(), "customer-relay-"));
   const path = join(directory, `${config.channel}.packet.json`), reply = join(directory, `${config.channel}.reply.json`);
@@ -40,6 +40,7 @@ test("relay sends one packet, retries lost acknowledgements locally, and never w
     await relay.pump(now); assert.equal(calls, 1);
     const body = await readFile(reply, "utf8"); assert.ok(!body.includes(config.token));
     assert.equal(JSON.parse(body).requested_utc_offset_minutes, "180");
+    assert.equal(JSON.parse(body).requested_scan_symbols_hex,accepted.requested_scan_symbols_hex);
     await writeFile(path, JSON.stringify({ ...packet, sequence: 2 }));
     await relay.pump(now); assert.equal(calls, 2);
     await assert.rejects(relay.pump(now + 60001), /PAIRING_EXPIRED/);
