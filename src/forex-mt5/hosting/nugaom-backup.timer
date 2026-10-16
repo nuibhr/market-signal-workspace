@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Nugaom backup around 03:15 Asia/Bangkok
+
+[Timer]
+OnCalendar=*-*-* 20:15:00 UTC
+RandomizedDelaySec=600
+Persistent=true
+Unit=nugaom-backup.service
+
+[Install]
+WantedBy=timers.target
