@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {cleanBars,features,setupAt,entryPlan,exitOnBar,replayDaytrade,summarize} from './engine.mjs';
-import {cfdUniverse,nativeUniverse,CORE_FOREX,usListing} from './universe.mjs';
+import {cfdUniverse,nativeUniverse,CORE_FOREX,usListing,listingRegion} from './universe.mjs';
 import {initializeDaytrade,ingestBars,dashboard,seriesFor,scanJobs} from './store.mjs';
 import {ForexStore} from '../forex-mt5/store.mjs';
 import {createDaytradeHandlers} from './handlers.mjs';
@@ -27,6 +27,15 @@ test('US classification needs exchange or broker region; USD alone and foreign t
   assert.equal(usListing({category:'etfs',exchange:'NASDAQ'}),true);
   assert.equal(usListing({category:'share_cfds',exchange:'ASX'}),false);
   assert.equal(usListing({category:'indices',exchange:'NYSE'}),false);
+});
+test('real broker regional folders override venue aliases; US 24h and official ETF MICs are included',()=>{
+  assert.equal(usListing({category:'share_cfds',broker_path:'Stocks\\UK\\10\\AAL',exchange:'NASDAQ'}),false);
+  assert.equal(usListing({category:'share_cfds',broker_path:'Stocks\\US.24H\\IBM.24H'}),true);
+  assert.equal(usListing({category:'etfs',broker_path:'ETF\\ETF-C\\GLD',exchange:'ARCX'}),true);
+  assert.equal(usListing({category:'etfs',broker_path:'ETF\\ETF-C\\SMH',broker_symbol:'SMH',exchange:'NMQ'}),true);
+  assert.equal(usListing({category:'etfs',broker_path:'ETF\\ETF-C\\UNKNOWN',broker_symbol:'UNKNOWN',exchange:'NMQ'}),false);
+  assert.equal(listingRegion({category:'etfs',exchange:'HKG'}),'OTHER');
+  assert.equal(listingRegion({category:'etfs',exchange:'UNKNOWN'}),'UNKNOWN');
 });
 test('Forex desk exposes exactly the nine core assets without mutating a full broker snapshot',()=>{
   const all=[...CORE_FOREX,'GBPJPY'].map(s=>({...asset,id:s,broker_symbol:s,canonical_symbol:s}));
@@ -69,6 +78,12 @@ test('short exits use ask-side spread once, including target trigger checks',()=
   const b={time:base+900,open:100,high:101,low:95.9,close:97};
   assert.equal(exitOnBar(asset,trade,b,base),null); // bid touched, ask did not.
   assert.equal(exitOnBar(asset,trade,{...b,low:95.7},base).netR,2);
+});
+test('empty volume buckets cannot confirm a setup or manufacture an exit',()=>{
+  const bars=rows(70);bars.at(-1).volume=0;
+  assert.equal(setupAt(asset,bars,69),null);
+  const trade={side:'LONG',plan:{entry:100,stop:98,target:104,risk:2,spread:0,slippageBps:0,feeBps:0},heldBars:1,sessionKey:'2026-10-12',offsetMinutes:0};
+  assert.equal(exitOnBar(asset,trade,{time:base+900,open:100,high:105,low:97,close:100,volume:0},base),null);
 });
 test('replay enters a later bar and extending history cannot change completed earlier results',()=>{
   const first=rows(90),full=rows(120);

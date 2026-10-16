@@ -64,7 +64,7 @@ export function setupAt(asset,bars,i,values=features(bars),offset=0) {
   const b=bars[i], p=bars[i-1], session=localSession(asset,b.time,offset);
   if(!session.open||session.last)return null;
   const {fast,slow,volatility}=values, a=volatility[i];
-  if(!(a>0) || b.time-p.time!==900 || b.high-b.low>3*a)return null;
+  if(!(a>0) || b.volume===0 || b.time-p.time!==900 || b.high-b.low>3*a)return null;
   const up=fast[i]>slow[i]&&slow[i]>slow[i-4]&&b.close>fast[i];
   const down=canShort(asset)&&fast[i]<slow[i]&&slow[i]<slow[i-4]&&b.close<fast[i];
   const side=up&&b.close>b.open&&b.close>p.high ? 'LONG' : down&&b.close<b.open&&b.close<p.low ? 'SHORT' : null;
@@ -92,6 +92,7 @@ export function exitOnBar(asset,trade,b,previousTime) {
   const long=trade.side==='LONG', dir=long?1:-1, p=trade.plan;
   // No inference across a missing interval, overnight or lunch break.
   if(previousTime!==null&&b.time!==previousTime+900)return {status:'REVIEW',reason:'DATA_GAP'};
+  if(b.volume===0)return null; // An empty provider bucket proves no tradable observation.
   const ask=long?0:p.spread, open=b.open+ask,high=b.high+ask,low=b.low+ask;
   const stopHit=long?low<=p.stop:high>=p.stop, targetHit=long?high>=p.target:low<=p.target;
   const stopGap=long?open<=p.stop:open>=p.stop;
@@ -118,7 +119,7 @@ export function replayDaytrade(asset,input,{now=Date.now(),offsetMinutes=0,costs
   for(let i=0;i<bars.length;i++) {
     const b=bars[i];
     if(pending&&!active){
-      if(b.time===pending.availableAt&&localSession(asset,b.time,offsetMinutes).key===pending.sessionKey){
+      if(b.volume!==0&&b.time===pending.availableAt&&localSession(asset,b.time,offsetMinutes).key===pending.sessionKey){
         const plan=entryPlan(asset,pending,b.open,costs);
         if(plan)active={...pending,id:`${RULE}:${asset.instrumentId}:${pending.signalTime}`,symbol:asset.symbol,
           plan,entryTime:b.time,heldBars:0,lastBar:null,status:'OPEN',origin:'replay'};

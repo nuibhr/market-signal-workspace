@@ -1,6 +1,7 @@
 import { cleanBars, features, setupAt, entryPlan, exitOnBar, replayDaytrade, RULE, SETTINGS, summarize } from './engine.mjs';
-import { cfdUniverse, nativeUniverse } from './universe.mjs';
+import { cfdUniverse, nativeUniverse, listingRegion } from './universe.mjs';
 import { nativeTradingDay } from './calendar.mjs';
+import { thaiEquityTick } from '../analysis/thai-tick.mjs';
 
 const cfdScope = connection => `mt5:${connection.owner}:${connection.server}`;
 
@@ -42,7 +43,7 @@ function advanceForward(db,scope,asset,bars,{now,offsetMinutes,costs,spreadKnown
   const save=trade=>db.prepare('INSERT INTO daytrade_forward VALUES(?,?,?) ON CONFLICT(scope,id) DO UPDATE SET body=excluded.body')
     .run(scope,trade.id,JSON.stringify(trade));
   for(const b of bars.filter(b=>state.last!==null&&b.time>state.last)) {
-    if(state.pending&&!state.active&&b.time>=state.pending.publishedAt/1000){
+    if(state.pending&&!state.active&&b.volume!==0&&b.time>=state.pending.publishedAt/1000){
       const p=state.pending;
       if(b.time>=p.publishedAt/1000&&b.time<=p.availableAt+1800){
         const plan=entryPlan(asset,p,b.open,costs);
@@ -134,11 +135,11 @@ export function dashboard(db,connection,market,{symbol,now=Date.now()}={}) {
     connection:cfd?connection?(connection.expires<=now?'expired':now-connection.last_seen>30000?'stale':'connected'):'required':'server',
     universe:rows,coverage:{total:rows.length,ready:rows.filter(r=>r.status==='READY').length,warmup:rows.filter(r=>r.status==='WARMUP').length,
       queued:rows.filter(r=>r.status==='QUEUED').length,unavailable:rows.filter(r=>r.status==='UNAVAILABLE').length,fresh:rows.filter(r=>r.status==='READY'&&!r.stale).length},
-    mappingPending:cfd&&market==='us'?instruments.filter(i=>['share_cfds','etfs'].includes(i.category)&&!usListingSafe(i)).length:0,
-    selected:chosen?{symbol:chosen.symbol,name:chosen.name,digits:chosen.digits??2,point:chosen.point,bars:series?.bars??[],
+    mappingPending:cfd&&market==='us'?instruments.filter(i=>listingRegion(i)==='UNKNOWN').length:0,
+    selected:chosen?{symbol:chosen.symbol,name:chosen.name,digits:chosen.digits??2,
+      point:chosen.point||(['thai','dr'].includes(market)&&series?.bars.length?thaiEquityTick(series.bars.at(-1).close):null),bars:series?.bars??[],
       updated:series?.updated??null,spreadKnown:series?.spreadKnown??false,costs:series?.costs??null,
       replay,forward:forward.filter(t=>t.symbol===chosen.symbol)}:null,
     forward:forward.slice(0,200),summary:summarize(forward),volumeStatus:market==='us'?'FMP_INTRADAY_PENDING':'PRICE_ONLY',
     generatedAt:new Date(now).toISOString()};
 }
-function usListingSafe(i){return cfdUniverse([i],'us').length>0;}

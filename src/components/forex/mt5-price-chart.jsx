@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 // Forex-only chart adapter: honours terminal digits/point without touching the shared chart.
-export default function Mt5PriceChart({ instrument, bars, chartStyle, plan = null }) {
+export default function Mt5PriceChart({ instrument, bars, chartStyle, plan = null, sourceLabel = 'MT5' }) {
   const container = useRef(null);
   useEffect(() => {
     let chart,
@@ -69,7 +69,7 @@ export default function Mt5PriceChart({ instrument, bars, chartStyle, plan = nul
     <div
       ref={container}
       style={{ height: 355, width: "100%" }}
-      aria-label={`กราฟ MT5 ${instrument.broker_symbol} เวลา UTC`}
+      aria-label={`กราฟ ${sourceLabel} ${instrument.broker_symbol} เวลา UTC`}
     />
   );
 }
