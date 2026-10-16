@@ -88,7 +88,7 @@ export function scanJobs(db,connection,now=Date.now()) {
   if(!connection.snapshot)return '';
   const instruments=JSON.parse(connection.snapshot).instruments;
   const assets=[...cfdUniverse(instruments,'forex'),...cfdUniverse(instruments,'us')];
-  const symbols=new Set(assets.filter(a=>[2,4].includes(a.trade_mode)).map(a=>a.symbol));
+  const symbols=new Set(assets.filter(a=>[1,2,4].includes(a.trade_mode)).map(a=>a.symbol));
   const add=db.prepare('INSERT OR IGNORE INTO daytrade_jobs(connection_id,symbol,attempt) VALUES(?,?,0)');
   for(const symbol of symbols)add.run(connection.id,symbol);
   for(const row of db.prepare('SELECT symbol FROM daytrade_jobs WHERE connection_id=?').all(connection.id))if(!symbols.has(row.symbol))
@@ -117,7 +117,8 @@ export function dashboard(db,connection,market,{symbol,now=Date.now()}={}) {
   const assets=cfd?cfdUniverse(instruments,market):nativeUniverse(market);
   const rows=assets.map(asset=>{
     const row=db.prepare('SELECT body,checked FROM daytrade_coverage WHERE scope=? AND symbol=?').get(scope||'',asset.symbol);
-    const data=row?JSON.parse(row.body):{status:'QUEUED',code:'WAITING_COLLECTOR',bars:0};
+    let data=row?JSON.parse(row.body):{status:'QUEUED',code:'WAITING_COLLECTOR',bars:0};
+    if(cfd&&![1,2,4].includes(asset.trade_mode))data={...data,status:'UNAVAILABLE',code:asset.trade_mode===3?'BROKER_CLOSE_ONLY':asset.trade_mode===0?'BROKER_TRADE_DISABLED':'BROKER_TRADE_MODE_UNKNOWN'};
     const series=seriesFor(db,scope||'',asset.symbol);
     const last=series?.bars.at(-1),latest=last&&setupAt(asset,series.bars,series.bars.length-1,undefined,series.offsetMinutes);
     const stale=last&&now-(last.time+900)*1000>30*60000;

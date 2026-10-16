@@ -1,5 +1,5 @@
 import { thaiEquityTick } from '../analysis/thai-tick.mjs';
-import { canShort } from './universe.mjs';
+import { canLong, canShort } from './universe.mjs';
 import { nativeTradingDay } from './calendar.mjs';
 
 // One versioned, price-only research rule. Volume confirmation is a separate input.
@@ -60,12 +60,12 @@ function localSession(asset, seconds, offsetMinutes=0) {
 }
 export function setupAt(asset,bars,i,values=features(bars),offset=0) {
   if(i<SETTINGS.warmup-1)return null;
-  if(asset.source==='mt5' && ![2,4].includes(asset.trade_mode))return null;
+  if(['us','forex'].includes(asset.market) && ![1,2,4].includes(asset.trade_mode))return null;
   const b=bars[i], p=bars[i-1], session=localSession(asset,b.time,offset);
   if(!session.open||session.last)return null;
   const {fast,slow,volatility}=values, a=volatility[i];
   if(!(a>0) || b.volume===0 || b.time-p.time!==900 || b.high-b.low>3*a)return null;
-  const up=fast[i]>slow[i]&&slow[i]>slow[i-4]&&b.close>fast[i];
+  const up=canLong(asset)&&fast[i]>slow[i]&&slow[i]>slow[i-4]&&b.close>fast[i];
   const down=canShort(asset)&&fast[i]<slow[i]&&slow[i]<slow[i-4]&&b.close<fast[i];
   const side=up&&b.close>b.open&&b.close>p.high ? 'LONG' : down&&b.close<b.open&&b.close<p.low ? 'SHORT' : null;
   if(!side)return null;

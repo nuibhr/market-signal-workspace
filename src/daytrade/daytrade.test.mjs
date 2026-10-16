@@ -59,7 +59,11 @@ test('one trend setup has structural stop at least 1.5 ATR and a single 2R targe
 test('stocks and DR never manufacture short trades; CFD short obeys broker trade mode',()=>{
   const falling=rows(70).map(b=>({...b,open:220-b.open,close:220-b.close,high:220-b.low,low:220-b.high}));
   assert.equal(setupAt({...asset,market:'dr'},falling,69),null);
-  assert.equal(setupAt({...asset,trade_mode:2},falling,69),null);
+  assert.equal(setupAt({...asset,trade_mode:1},falling,69),null);
+  assert.equal(setupAt({...asset,trade_mode:1},rows(70),69)?.side,'LONG');
+  assert.equal(setupAt({...asset,trade_mode:2},falling,69)?.side,'SHORT');
+  assert.equal(setupAt({...asset,trade_mode:2},rows(70),69),null);
+  assert.equal(setupAt({...asset,trade_mode:3},rows(70),69),null);
   assert.equal(setupAt(asset,falling,69)?.side,'SHORT');
   assert.equal(setupAt({...asset,trade_mode:0},rows(70),69),null);
 });
@@ -127,6 +131,13 @@ test('batch collector rotates all symbols fairly and keeps queues scoped to a co
   const connection={id:'one',snapshot:JSON.stringify({instruments})};
   const seen=new Set();for(let i=0;i<3;i++)for(const s of scanJobs(db,connection,1000000+i*1000).split(','))if(s)seen.add(Buffer.from(s,'hex').toString());
   assert.equal(seen.size,19);assert.equal(scanJobs(db,{id:'two',snapshot:JSON.stringify({instruments:[asset]})},1000000),Buffer.from('XAUUSD').toString('hex'));db.close();
+});
+test('close-only CFD is unavailable for new scans, never an endlessly queued or ready setup',()=>{
+  const db=memory(),connection={id:'restricted',owner:'member:one',server:'VantageMarkets-Demo',expires:Date.now()+100000,last_seen:Date.now(),snapshot:JSON.stringify({instruments:[{...asset,trade_mode:3}]})};
+  assert.equal(scanJobs(db,connection,1000000),'');
+  const row=dashboard(db,connection,'forex').universe[0];
+  assert.equal(row.status,'UNAVAILABLE');assert.equal(row.code,'BROKER_CLOSE_ONLY');assert.equal(row.side,null);
+  db.close();
 });
 test('core forex retries after three minutes ahead of a large unvisited US queue',()=>{
   const db=memory(),instruments=[asset,...Array.from({length:100},(_,i)=>({...asset,id:`s${i}`,broker_symbol:`s${i}`,category:'share_cfds',broker_path:'Shares\\US'}))];

@@ -30,5 +30,7 @@ export function nativeUniverse(market) {
   return ALL_ASSETS.filter(a => a.id === market && ['thai','dr','tfex'].includes(market))
     .map(a => ({ ...a, market, point:a.tickSize || null, instrumentType:market === 'tfex' ? 'future' : market === 'dr' ? 'dr' : 'stock', volumeSource:'exchange' }));
 }
+// ENUM_SYMBOL_TRADE_MODE: disabled=0, long-only=1, short-only=2, close-only=3, full=4.
+export const canLong = asset => !['us','forex'].includes(asset.market) || [1,4].includes(asset.trade_mode);
 export const canShort = asset => asset.market === 'tfex' ||
-  ['us','forex'].includes(asset.market) && asset.trade_mode === 4;
+  ['us','forex'].includes(asset.market) && [2,4].includes(asset.trade_mode);
