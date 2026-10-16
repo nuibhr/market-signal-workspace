@@ -127,6 +127,14 @@ test('batch collector rotates all symbols fairly and keeps queues scoped to a co
   const seen=new Set();for(let i=0;i<3;i++)for(const s of scanJobs(db,connection,1000000+i*1000).split(','))if(s)seen.add(Buffer.from(s,'hex').toString());
   assert.equal(seen.size,19);assert.equal(scanJobs(db,{id:'two',snapshot:JSON.stringify({instruments:[asset]})},1000000),Buffer.from('XAUUSD').toString('hex'));db.close();
 });
+test('core forex retries after three minutes ahead of a large unvisited US queue',()=>{
+  const db=memory(),instruments=[asset,...Array.from({length:100},(_,i)=>({...asset,id:`s${i}`,broker_symbol:`s${i}`,category:'share_cfds',broker_path:'Shares\\US'}))];
+  const connection={id:'core',snapshot:JSON.stringify({instruments})},decode=now=>scanJobs(db,connection,now).split(',').map(s=>Buffer.from(s,'hex').toString());
+  assert.equal(decode(1000000)[0],'XAUUSD');
+  assert.equal(decode(1001000).includes('XAUUSD'),false);
+  assert.equal(decode(1180001)[0],'XAUUSD');
+  db.close();
+});
 test('forward entry waits for a bar that begins after publication, survives repeated polls, and persists a closed outcome',()=>{
   const db=memory(),a=rows(70),published=(a.at(-1).time+905)*1000;
   ingestBars(db,'x',asset,a,{now:published,spread:.02,slippageBps:0});

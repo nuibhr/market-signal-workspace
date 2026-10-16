@@ -95,8 +95,8 @@ export function scanJobs(db,connection,now=Date.now()) {
     db.prepare('DELETE FROM daytrade_jobs WHERE connection_id=? AND symbol=?').run(connection.id,row.symbol);
   const core=cfdUniverse(instruments,'forex').map(a=>a.symbol);
   const priorities=core.length?core:[''];
-  const jobs=db.prepare(`SELECT symbol FROM daytrade_jobs WHERE connection_id=? AND attempt<? ORDER BY attempt,
-    CASE WHEN symbol IN (${priorities.map(()=>'?').join(',')}) THEN 0 ELSE 1 END,symbol LIMIT 8`).all(connection.id,now-180000,...priorities);
+  const jobs=db.prepare(`SELECT symbol FROM daytrade_jobs WHERE connection_id=? AND attempt<? ORDER BY
+    CASE WHEN symbol IN (${priorities.map(()=>'?').join(',')}) THEN 0 ELSE 1 END,attempt,symbol LIMIT 8`).all(connection.id,now-180000,...priorities);
   for(const j of jobs)db.prepare('UPDATE daytrade_jobs SET attempt=? WHERE connection_id=? AND symbol=?').run(now,connection.id,j.symbol);
   return jobs.map(j=>Buffer.from(j.symbol).toString('hex')).join(',');
 }
