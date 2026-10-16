@@ -2,6 +2,7 @@ import { cleanBars, features, setupAt, entryPlan, exitOnBar, replayDaytrade, RUL
 import { cfdUniverse, nativeUniverse, listingRegion } from './universe.mjs';
 import { nativeTradingDay } from './calendar.mjs';
 import { thaiEquityTick } from '../analysis/thai-tick.mjs';
+import { forwardEvents } from '../monitor/view.mjs';
 
 const cfdScope = connection => `mt5:${connection.owner}:${connection.server}`;
 
@@ -117,10 +118,11 @@ export function ingestScanCharts(db,row,charts,quotes,now) {
       spread:q&&now-q.time*1000<30000?q.ask-q.bid:null});
   }
 }
-export function dashboard(db,connection,market,{symbol,now=Date.now()}={}) {
+export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=false}={}) {
   const cfd=['us','forex'].includes(market),scope=cfd?(connection?cfdScope(connection):null):`native:${market}`;
   const instruments=connection?.snapshot?JSON.parse(connection.snapshot).instruments:[];
   const assets=cfd?cfdUniverse(instruments,market):nativeUniverse(market);
+  const quotes=cfd?JSON.parse(connection?.quotes||'{}'):{};
   const rows=assets.map(asset=>{
     const row=db.prepare('SELECT body,checked FROM daytrade_coverage WHERE scope=? AND symbol=?').get(scope||'',asset.symbol);
     let data=row?JSON.parse(row.body):{status:'QUEUED',code:'WAITING_COLLECTOR',bars:0};
@@ -129,14 +131,15 @@ export function dashboard(db,connection,market,{symbol,now=Date.now()}={}) {
     const last=series?.bars.at(-1),latest=last&&setupAt(asset,series.bars,series.bars.length-1,undefined,series.offsetMinutes);
     const stale=last&&now-(last.time+900)*1000>30*60000;
     return {symbol:asset.symbol,name:asset.name,kind:asset.instrumentType,...data,checkedAt:row?.checked??null,
-      latestBar:last?.time??null,price:last?.close??null,stale:Boolean(stale),
+      latestBar:last?.time??null,price:last?.close??null,stale:Boolean(stale),receivedAt:series?.updated??null,quote:quotes[asset.symbol]??null,
       side:!stale&&data.status==='READY'?latest?.side??null:null,volumeSource:asset.volumeSource,
       spreadKnown:series?.spreadKnown??false};
   });
-  const chosen=assets.find(a=>a.symbol===symbol)||assets[0],series=chosen&&seriesFor(db,scope,chosen.symbol);
+  const chosen=compact?null:assets.find(a=>a.symbol===symbol)||assets[0],series=chosen&&seriesFor(db,scope,chosen.symbol);
   const replay=chosen&&series?replayDaytrade(chosen,series.bars,{now,offsetMinutes:series.offsetMinutes,costs:series.costs}):null;
   const symbols=new Set(assets.map(a=>a.symbol));
   const forward=scope?db.prepare('SELECT body FROM daytrade_forward WHERE scope=?').all(scope).map(r=>JSON.parse(r.body)).filter(t=>symbols.has(t.symbol)).sort((a,b)=>b.publishedAt-a.publishedAt):[];
+  for(const row of rows){const t=forward.find(t=>t.symbol===row.symbol&&['WAITING','OPEN'].includes(t.status));row.monitorPlan=t?{entry:t.plan?.entry??t.trigger,stop:t.plan?.stop??t.stop,target:t.plan?.target??null,side:t.side,status:t.status}:null;}
   return {market,rule:RULE,settings:SETTINGS,source:cfd?'Vantage MT5':market==='tfex'?'TFEX Open API':'Settrade Market API',
     marketCalendar:cfd?null:nativeTradingDay(Math.floor(now/1000)),
     connection:cfd?connection?(connection.expires<=now?'expired':now-connection.last_seen>30000?'stale':'connected'):'required':'server',
@@ -147,6 +150,7 @@ export function dashboard(db,connection,market,{symbol,now=Date.now()}={}) {
       point:chosen.point||(['thai','dr'].includes(market)&&series?.bars.length?thaiEquityTick(series.bars.at(-1).close):null),bars:series?.bars??[],
       updated:series?.updated??null,spreadKnown:series?.spreadKnown??false,costs:series?.costs??null,
       replay,forward:forward.filter(t=>t.symbol===chosen.symbol)}:null,
+    monitorEvents:forwardEvents(forward).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id)),
     forward:forward.slice(0,200),summary:summarize(forward),volumeStatus:market==='us'?'FMP_INTRADAY_PENDING':'PRICE_ONLY',
     generatedAt:new Date(now).toISOString()};
 }

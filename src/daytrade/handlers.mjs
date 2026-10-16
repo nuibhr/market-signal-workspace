@@ -16,11 +16,13 @@ export function createDaytradeHandlers({currentMember,getStore=storeFor,env=proc
       const store=getStore(config),connection=store.connection(`member:${member.id}`);
       store.limit('daytrade-read',member.id,90);
       const safe=connection&&connection.expires>Date.now()&&config.servers.includes(connection.server)?connection:null;
-      const data=dashboard(store.db,safe,market,{symbol:new URL(request.url).searchParams.get('symbol')});
+      const data=dashboard(store.db,safe,market,{symbol:new URL(request.url).searchParams.get('symbol'),compact:new URL(request.url).searchParams.get('compact')==='1'});
+      data.notificationScope=`daytrade:${member.id}:${['us','forex'].includes(market)?safe?.id||'disconnected':'native'}:${market}`;
       data.historicalTimePolicy=config.historyPolicy||'observed-clock-only';
       data.signalAccess=membershipFor(member).capabilities.autoPickFeed;
       if(!data.signalAccess){
-        data.universe=data.universe.map(r=>({...r,side:null}));
+        data.universe=data.universe.map(r=>({...r,side:null,monitorPlan:null}));
+        data.monitorEvents=[];
         data.forward=[];data.summary=null;
         if(data.selected){data.selected.replay=null;data.selected.forward=[];}
       }

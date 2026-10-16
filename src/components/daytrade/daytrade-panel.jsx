@@ -1,5 +1,8 @@
 'use client';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
+import {useMonitor,AlertHistory} from '../monitor/monitor-provider.jsx';
+import MarketTable from '../monitor/market-table.jsx';
+import {monitorRow,filterRows,MARKET_LABELS} from '../../monitor/view.mjs';
 import Link from 'next/link';
 import Mt5PriceChart from '../forex/mt5-price-chart.jsx';
 import styles from './daytrade.module.css';
@@ -15,14 +18,17 @@ function Trades({rows,digits=4}){
   return <div className={styles.tableWrap}><table><thead><tr><th>สินทรัพย์ / ทิศทาง</th><th>แท่งสัญญาณ / เข้า</th><th>Entry</th><th>SL</th><th>TP</th><th>ออก / เวลา</th><th>ผล R / สถานะ</th></tr></thead><tbody>{rows.map(t=><tr key={t.id}><td><b>{t.symbol}</b><small>{t.side}</small></td><td>{time(t.signalTime)}<small>{time(t.entryTime)}</small></td><td>{n(t.plan?.entry,digits)}</td><td>{n(t.plan?.stop??t.stop,digits)}</td><td>{n(t.plan?.target,digits)}</td><td>{n(t.exit,digits)}<small>{time(t.exitTime)}</small></td><td className={t.netR>0?styles.positive:t.netR<0?styles.negative:''}>{Number.isFinite(t.netR)?`${n(t.netR)}R`:label[t.status]||t.status}<small>{reason[t.reason]||t.reason}</small></td></tr>)}</tbody></table>{!rows.length&&<p className={styles.empty}>ยังไม่มีไม้ในชุดนี้ ระบบจะไม่สร้างสถิติขึ้นแทนข้อมูล</p>}</div>;
 }
 export default function DaytradePanel({market='us',initialSymbol=null,onSelect,id='section-auto-pick'}){
+  const monitor=useMonitor();
+  const [selectedMarket,setSelectedMarket]=useState(market),[group,setGroup]=useState(market),[highlights,setHighlights]=useState(new Set());
+  const priorMet=useRef(null);
   const [data,setData]=useState(null),[error,setError]=useState(null),[symbol,setSymbol]=useState(initialSymbol),[query,setQuery]=useState(''),[filter,setFilter]=useState('all'),[page,setPage]=useState(1),[revision,setRevision]=useState(0),[tab,setTab]=useState('forward');
-  useEffect(()=>{setSymbol(initialSymbol);setData(null);setPage(1);},[market,initialSymbol]);
+  useEffect(()=>{setSymbol(initialSymbol);setSelectedMarket(market);setGroup(market);setData(null);setPage(1);},[market,initialSymbol]);
   useEffect(()=>{
     let disposed=false,timer,controller;
     const poll=async()=>{
       controller=new AbortController();
       try{
-        const params=new URLSearchParams({market,...(symbol?{symbol}:{})});
+        const params=new URLSearchParams({market:selectedMarket,...(symbol?{symbol}:{})});
         const res=await fetch(`/api/daytrade?${params}`,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});
         const value=await res.json();
         if(!res.ok)throw Error(value.error||'SCANNER_UNAVAILABLE');
@@ -31,13 +37,22 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
       if(!disposed)timer=setTimeout(poll,15000);
     };poll();
     return()=>{disposed=true;clearTimeout(timer);controller?.abort();};
-  },[market,symbol,revision]);
-  const choose=s=>{setSymbol(s);onSelect?.(s);};
-  const rows=(data?.universe||[]).filter(r=>(filter==='all'||filter==='signal'?filter!=='signal'||r.side:r.status===filter)&&`${r.symbol} ${r.name}`.toLowerCase().includes(query.toLowerCase()));
-  const chosen=data?.selected,latestTrade=chosen?.forward.find(t=>['WAITING','OPEN'].includes(t.status));
+  },[selectedMarket,symbol,revision]);
+  const choose=r=>{setSelectedMarket(r.market);setSymbol(r.symbol);if(r.market===market)onSelect?.(r.symbol);};
+  const source=Object.keys(monitor?.snapshots||{}).length?monitor.snapshots:data?{[selectedMarket]:data}:{};
+  const allRows=Object.entries(source).flatMap(([id,d])=>d.universe.map(r=>monitorRow(r,id,d.connection,monitor?.now||Date.now())));
+  const rows=filterRows(allRows,{query,group,status:filter});
+  const relevant=filterRows(allRows,{group});
+  const pageCount=Math.max(1,Math.ceil(rows.length/25)),currentPage=Math.min(page,pageCount);
+  useEffect(()=>{
+    const current=new Set(Object.entries(monitor?.snapshots||{}).flatMap(([id,d])=>d.universe.filter(r=>monitorRow(r,id,d.connection).met).map(r=>`${id}:${r.symbol}`)));
+    const added=priorMet.current?new Set([...current].filter(k=>!priorMet.current.has(k))):new Set();priorMet.current=current;
+    setHighlights(added);if(added.size){const t=setTimeout(()=>setHighlights(new Set()),20000);return()=>clearTimeout(t);}
+  },[monitor?.snapshots]);
+  const chosen=data?.market===selectedMarket&&(!symbol||data?.selected?.symbol===symbol)?data?.selected:null,latestTrade=chosen?.forward.find(t=>['WAITING','OPEN'].includes(t.status));
   const plan=latestTrade?.plan||(latestTrade?{entry:latestTrade.trigger,stop:latestTrade.stop,target:null}:chosen?.replay?.open?.plan);
   return <section className={styles.panel} id={id} aria-label={`Daytrade scanner ${market}`}>
-    <header className={styles.heading}><div><span className={styles.eyebrow}>DAYTRADE / ONE PLAN</span><h2>ตามเทรนด์ · รอแท่งยืนยัน · จบเป็นไม้</h2><p>{market==='us'?'หุ้นและ ETF CFD · ราคา Vantage MT5':market==='forex'?'ทอง เงิน และ 7 คู่เงินหลัก':'สแกนจากแท่งราคาในตลาด'} · กติกาทดสอบ v1 · แผนเดียวต่อสินทรัพย์</p></div><button onClick={()=>setRevision(v=>v+1)}>อัปเดต</button></header>
+    <header className={styles.heading}><div><span className={styles.eyebrow}>MARKET MONITOR / 15m</span><h2>ติดตามราคาและเงื่อนไข</h2><p>{MARKET_LABELS[market]} · แผนเดิม EMA20/50 · ราคาอ้างอิงตามแหล่งข้อมูล</p></div><button onClick={()=>{setRevision(v=>v+1);monitor?.refresh();}}>อัปเดต</button></header>
     {['thai','dr','tfex'].includes(market)&&<p className={styles.caption}>ใช้แท่งปิดที่พร้อมตามนโยบายหน่วงข้อมูล 15 นาทีเดิม · สัญญาณเป็นราคาอ้างอิงตามเวลาที่ระบบรับได้</p>}
     <div className={styles.rules}><span>EMA20 / EMA50</span><span>ยืนยันด้วยแท่งปิด 15m</span><span>SL ตามโครงสร้าง ≥ 1.5 ATR</span><span>TP 2R · ถือไม่เกิน 16 แท่ง</span><span>ไม่เลื่อนคุ้มทุนก่อนเป้า</span></div>
     {error&&<div className={styles.notice} role="status">{error==='SIGN_IN_REQUIRED'?<>เข้าสู่ระบบ LINE เพื่อดูข้อมูลและประวัติของคุณ <Link href="/account">เข้าสู่ระบบ ↗</Link></>:error==='NODE_RECEIVER_REQUIRED'?'ตัวสแกนชุดนี้ต้องใช้ Node server ที่เก็บข้อมูลถาวร':'โหลดข้อมูลสแกนไม่ได้ กำลังลองใหม่'}</div>}
@@ -45,13 +60,21 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
     {data&&<>
       {data.marketCalendar?.closedReason&&<div className={styles.notice}>วันนี้ตลาดหยุด{data.marketCalendar.closedReason==='WEEKEND'?'สุดสัปดาห์':'ตามปฏิทินตลาด'} · ใช้ประวัติที่มีทดสอบย้อนหลัง รอแท่งใหม่เมื่อเปิดตลาด · <a href={market==='tfex'?'https://www.tfex.co.th/en/about/holiday':'https://www.set.or.th/th/about/event-calendar/holiday'} target="_blank" rel="noreferrer">ปฏิทินวันหยุด ↗</a></div>}
       {!data.signalAccess&&<div className={styles.notice}>ดูสถานะข้อมูลและกราฟได้ · จุดเข้า ผลสแกน และสถิติใช้สิทธิสมาชิกเดิม <Link href="/account">ตรวจสิทธิ / แจ้งเลขพอร์ต ↗</Link></div>}
-      <div className={styles.coverage}><b>ทั้งหมด {data.coverage.total}</b><span>พร้อม {data.coverage.ready}</span><span>สด {data.coverage.fresh}</span><span>สะสมแท่ง {data.coverage.warmup}</span><span>รอรอบ {data.coverage.queued}</span><span>ข้อมูลไม่พร้อม {data.coverage.unavailable}</span><small>{data.source} · อัปเดต {time(data.generatedAt)}</small></div>
+      <div className={styles.coverage}><b>ติดตาม {relevant.length}</b><span className={styles.positive}>เข้าเงื่อนไข {relevant.filter(r=>r.met).length}</span><span>ใกล้เข้า: ยังไม่มีเกณฑ์เดิม</span><span>ตรวจไม่ได้ {relevant.filter(r=>r.abnormal).length}</span><small>เว็บอ่านสถานะ {time(data.generatedAt)} · Polling 15s</small></div>
+      {Object.keys(monitor?.errors||{}).filter(k=>!k.startsWith('swing-')).length>0&&<p className={styles.caption} role="status">บางตลาดโหลดไม่ได้ รายการตลาดนั้นจะไม่ใช้ข้อมูลค้างแสดงเงื่อนไข · ลองอัปเดตอีกครั้ง</p>}
       {['us','forex'].includes(market)&&data.connection!=='connected'&&<div className={styles.notice}>MT5 {data.connection==='required'?'ยังไม่เชื่อมต่อ':data.connection==='expired'?'กุญแจหมดอายุ':'ไม่มี heartbeat ล่าสุด'} · <Link href="/forex">ตรวจการเชื่อมต่อ Vantage ↗</Link></div>}
       {data.mappingPending>0&&<div className={styles.notice}>มีหุ้น/ETF CFD อีก {data.mappingPending} รายการที่ยังยืนยันตลาด US ไม่ได้ รอข้อมูล Exchange/Path จาก EA รุ่นใหม่</div>}
       {market==='us'&&<p className={styles.caption}>ราคา: Vantage CFD · Volume หุ้นอ้างอิง: รอเชื่อม FMP ระหว่างวัน · สแกนเฉพาะช่วงหลัก US · ใช้ราคา ไม่ใช้ tick volume แทน volume หุ้น</p>}
-      <div className={styles.toolbar}><input aria-label="ค้นหาสินทรัพย์เดย์เทรด" placeholder="ค้นหาสินทรัพย์…" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/><select aria-label="สถานะการสแกน" value={filter} onChange={e=>{setFilter(e.target.value);setPage(1);}}>{[['all','ทั้งหมด'],['signal','ตรงเงื่อนไขล่าสุด'],['READY','พร้อมประเมิน'],['WARMUP','สะสมแท่ง'],['QUEUED','รอรอบข้อมูล'],['UNAVAILABLE','ข้อมูลไม่พร้อม']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></div>
-      <div className={styles.tableWrap}><table><thead><tr><th>สินทรัพย์</th><th>ราคาปิด</th><th>สถานะ</th><th>แท่ง 15m</th><th>แท่งล่าสุด</th><th>เหตุผล / ทิศทาง</th></tr></thead><tbody>{rows.slice((page-1)*15,page*15).map(r=><tr key={r.symbol} aria-selected={chosen?.symbol===r.symbol}><td><button className={styles.symbol} onClick={()=>choose(r.symbol)}>{r.symbol} ↗</button><small>{r.name}</small></td><td>{n(r.price,6)}</td><td>{label[r.status]}{r.stale?' · ราคาเก่า':''}</td><td>{r.bars||0} / 60</td><td>{time(r.latestBar)}</td><td>{r.side||reason[r.code]||(r.stale?'รอแท่งใหม่':'รอแท่งยืนยัน')}{r.status==='READY'&&!r.spreadKnown&&<small>ยังไม่ทราบ spread · ยังไม่ประกาศไม้</small>}</td></tr>)}</tbody></table>{!rows.length&&<p className={styles.empty}>{data.coverage.total?'ไม่พบรายการตามตัวกรอง':'รอรายการสินทรัพย์จากแหล่งข้อมูล ไม่มีราคาเดโมในตัวสแกน'}</p>}</div>
-      <div className={styles.pager}><span>{rows.length} รายการ · หน้า {page} / {Math.max(1,Math.ceil(rows.length/15))}</span><button disabled={page<=1} onClick={()=>setPage(p=>p-1)}>ก่อนหน้า</button><button disabled={page*15>=rows.length} onClick={()=>setPage(p=>p+1)}>ถัดไป</button></div>
+      <div className={styles.toolbar}>
+        <label>ค้นหา<input aria-label="ค้นหาสินทรัพย์เดย์เทรด" placeholder="NTES, symbol หรือชื่อสินทรัพย์…" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/></label>
+        <label>กลุ่มสินทรัพย์<select aria-label="กลุ่มสินทรัพย์" value={group} onChange={e=>{setGroup(e.target.value);setPage(1);}}><option value="all">ทุกตลาด</option>{Object.entries(MARKET_LABELS).map(([v,l])=><option key={v} value={v}>{l}</option>)}<option value="etf">ETF CFDs</option></select></label>
+        <label>สถานะ<select aria-label="สถานะการสแกน" value={filter} onChange={e=>{setFilter(e.target.value);setPage(1);}}>{[['all','ทั้งหมด'],['met','เข้าเงื่อนไขแล้ว'],['near','ใกล้ถึงราคาเข้า'],['waiting','รอเงื่อนไข'],['abnormal','ข้อมูลผิดปกติ']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+      </div>
+      {filter==='near'&&<p className={styles.caption}>กติกาเดิมไม่มีระยะ “ใกล้เข้า” จึงยังไม่จัดรายการเข้ากลุ่มนี้ ดูระยะห่างจริงในตารางได้</p>}
+      <p className={styles.caption}>Bid quote คือราคาที่ broker ส่งล่าสุด · ปิดแท่ง 15m คือราคาประเมินเดิม · ราคาเข้าเป็นแผนของระบบ แก้เองไม่ได้ตามสิทธิเดิม</p>
+      <MarketTable rows={rows.slice((currentPage-1)*25,currentPage*25)} selected={{symbol:chosen?.symbol,market:selectedMarket}} highlights={highlights} choose={choose} reason={reason} emptyMessage={filter==='near'?'ยังไม่มีเกณฑ์ใกล้เข้าที่กำหนดไว้ในกลยุทธ์':allRows.length?'ไม่พบรายการตามตัวกรอง':'รอรายการจริงจากแหล่งข้อมูล'}/>
+      <div className={styles.pager}><span>{rows.length} รายการ · หน้า {currentPage} / {pageCount} · เข้าเงื่อนไขก่อน</span><button disabled={currentPage<=1} onClick={()=>setPage(currentPage-1)}>ก่อนหน้า</button><button disabled={currentPage>=pageCount} onClick={()=>setPage(currentPage+1)}>ถัดไป</button></div>
+      <AlertHistory/>
       {chosen&&<div className={styles.detail}><div className={styles.heading}><div><span className={styles.eyebrow}>PRICE / {chosen.symbol}</span><h3>{chosen.name}</h3></div><span>แท่งปิด 15m · เวลาในกราฟ UTC</span></div>
         <div className={styles.levels}>{[['Entry',plan?.entry],['Stop loss',plan?.stop],['Take profit',plan?.target]].map(([k,v])=><div key={k}><span>{k}</span><strong>{n(v,chosen.digits)}</strong></div>)}</div>
         <p className={styles.caption}>{latestTrade?'แผนที่ระบบบันทึกจริง':plan?'ระดับของไม้ทดสอบย้อนหลังที่ยังเปิด':'ยังไม่มีแผนเข้า ไม่ไล่ราคาเมื่อแท่งยืนยันยังไม่ครบ'}</p>

@@ -7,6 +7,7 @@ import {useRouter} from 'next/navigation';
 import MarketNavigation from './market-navigation.jsx';
 import {marketPage,marketHref} from '../markets/market-pages.mjs';
 import SignalDesk from './signal-desk.jsx';
+import {SoundControl} from './monitor/monitor-provider.jsx';
 import { BookOpen, Layers3, Newspaper, Radar, Waves } from 'lucide-react';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS, TFEX_SYMBOLS } from '../markets/catalog.mjs';
 import { formatQuotePrice } from '../markets/quote-format.mjs';
@@ -353,7 +354,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   }, [popup]);
 
   return (
-    <div className={`app-frame market-workspace market-${marketId}`} style={{'--market-accent':page.accent,'--market-rgb':page.rgb}}>
+    <div className={`app-frame market-workspace monitor-workspace market-${marketId}`} style={{'--market-accent':page.accent,'--market-rgb':page.rgb}}>
       <AmbientDepth />
       <WorkspaceSidebar marketId={marketId} activeNav={activeNav} onNavigate={navigateTo} rights={rights} account={memberAccount} loginHref={loginHref} hasRealBars={hasRealBars} favoriteCount={favoriteAssets.length} />
 
@@ -361,7 +362,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
         <header className="topbar">
           <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
           <div className="topbar-search-area"><SymbolSearch marketId={marketId} onSelect={selectAsset} /></div>
-          <div className="topbar-actions"><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
+          <div className="topbar-actions"><a className="monitor-account" href={loginHref}>บัญชีสมาชิก ↗</a><SoundControl/><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
         </header>
 
         <div className="page-content">
@@ -371,9 +372,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               <span className="eyebrow">{page.eyebrow}</span>
               <h1>{page.title}</h1>
               <p>{page.description}</p>
-              <div className="welcome-actions"><a className="welcome-line" href={loginHref}><span className="welcome-line-mark">LINE</span>{rights?.authenticated ? 'เปิดมุมสมาชิก' : 'เริ่มใช้ฟรี 14 วันด้วย LINE'} <span>↗</span></a><button className="welcome-explore" onClick={() => navigateTo('daily')}>เปิดเครื่องมือ <span>→</span></button></div>
+              <button className="welcome-explore" onClick={() => navigateTo('daily')}>เปิดเครื่องมือ →</button>
             </div>
-            <div className="welcome-steps"><span>{rights?.authenticated ? `วันนี้ / ${page.short}` : 'เริ่มต้นกับ Nugaom'}</span><div><b>01</b><span>{rights?.authenticated ? 'ตรวจจังหวะที่ระบบพบ' : 'สำรวจหุ้นและตลาด'}</span></div><div><b>02</b><span>{rights?.authenticated ? 'อ่านกราฟและบริบทตลาด' : 'เชื่อม LINE และแจ้งพอร์ต'}</span></div><div><b>03</b><span>{rights?.authenticated ? 'ติดตามผลและเสียงแจ้งเตือน' : 'ลองใช้เครื่องมือสมาชิก 14 วัน'}</span></div><small>{rights?.authenticated ? `สถานะสมาชิก: ${rights.label}` : 'สิทธิสมาชิกขึ้นกับสถานะบัญชีและการเชื่อมต่อระบบ'}</small></div>
           </section>
 
           {['thai','dr','tfex','us'].includes(marketId)&&<SignalDesk marketId={marketId} memberId={memberAccount?.id} rights={rights} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={selectAsset} loginHref={loginHref}/>}

@@ -2,9 +2,6 @@
 import { useEffect, useRef, useState } from 'react';
 import DaytradePanel from './daytrade/daytrade-panel.jsx';
 import { ALL_ASSETS } from '../markets/catalog.mjs';
-import { createSignalSpeaker } from '../auto-pick/speech.mjs';
-import { createNotificationInbox } from '../auto-pick/notification-inbox.mjs';
-import { receiveSignalPage, referenceAlertHistorical, referenceVoiceEligible } from '../signals/client.mjs';
 
 const n = (value, digits=2) => Number.isFinite(value)?value.toLocaleString('th-TH',{maximumFractionDigits:digits}):'—';
 const at = value => value?new Date(value).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}):'—';
@@ -23,53 +20,33 @@ async function jsonRequest(url,options={},timeout=60000){
  try{const r=await fetch(url,{...options,cache:'no-store',signal:options.signal||controller.signal});const d=await r.json();if(!r.ok)throw Error(d.code||'REQUEST_UNAVAILABLE');return d;}finally{clearTimeout(timer);}
 }
 function LegacySignalDesk({marketId,memberId,rights,favorites=[],onToggleFavorite,onSelect,loginHref}){
- const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[page,setPage]=useState(1),[query,setQuery]=useState(''),[mode,setMode]=useState('all'),[favoritesOnly,setFavoritesOnly]=useState(false),[revision,setRevision]=useState(0),[toast,setToast]=useState(null),[voice,setVoice]=useState(false),[speechState,setSpeechState]=useState('idle'),[replay,setReplay]=useState(null),[costs,setCosts]=useState(Object.fromEntries(COST_FIELDS.map(([key])=>[key,'']))),[clock,setClock]=useState(null);
- const inbox=useRef(null),speaker=useRef(null),owner=useRef(null),active=useRef(null),inflight=useRef(false),selection=useRef(''),costLoaded=useRef(null),toastRef=useRef(null),spoken=useRef(null);
+ const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[page,setPage]=useState(1),[query,setQuery]=useState(''),[mode,setMode]=useState('all'),[favoritesOnly,setFavoritesOnly]=useState(false),[revision,setRevision]=useState(0),[replay,setReplay]=useState(null),[costs,setCosts]=useState(Object.fromEntries(COST_FIELDS.map(([key])=>[key,'']))),[clock,setClock]=useState(null);
+ const inflight=useRef(false),selection=useRef(''),costLoaded=useRef(null);
  const enabled=Boolean(rights?.capabilities?.autoPickFeed),marketAssets=ALL_ASSETS.filter(a=>a.id===marketId);
- selection.current=`${marketId}:${enabled}:${memberId||'guest'}`;toastRef.current=toast;
+ selection.current=`${marketId}:${enabled}:${memberId||'guest'}`;
  const select=symbol=>{const asset=marketAssets.find(a=>a.symbol===symbol);if(asset)onSelect(asset);};
- useEffect(()=>{owner.current=crypto.randomUUID();speaker.current=createSignalSpeaker(window,state=>setSpeechState(state));const update=()=>setClock(new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false}));update();const t=setInterval(update,1000);return()=>{clearInterval(t);speaker.current?.stop();inbox.current?.release();};},[]);
+ useEffect(()=>{const update=()=>setClock(new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false}));update();const t=setInterval(update,1000);return()=>clearInterval(t);},[]);
  useEffect(()=>{
   let stopped=false,timer,controller;const scope=selection.current;
-  setData(null);setError('');setToast(null);speaker.current?.stop();setReplay(null);costLoaded.current=null;
-  inbox.current?.release();inbox.current=null;
+  setData(null);setError('');setReplay(null);costLoaded.current=null;
   if(!enabled)return;
   async function load(){
    controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),20000);
    try{
-    const cursor=(await inbox.current?.snapshot())?.cursor;
     const p=new URLSearchParams({market:marketId,mode,page:String(page),q:query});
-    if(cursor!==undefined&&cursor!==null)p.set('after',cursor);
     if(favoritesOnly)p.set('favorites',favorites.join(','));
     let d=await jsonRequest(`/api/signals?${p}`,{signal:controller.signal});
     if(stopped||selection.current!==scope||d.market!==marketId)return;
     const expectedScope=`swing:${memberId}:${marketId}`;
     if(d.notificationScope!==expectedScope)throw Error('MEMBERSHIP_REQUIRED');
-    if(inbox.current?.scope!==d.notificationScope){inbox.current?.release();inbox.current=createNotificationInbox({scope:d.notificationScope,owner:owner.current,storage:window.localStorage,locks:navigator.locks,onPersistenceError:()=>setError('เบราว์เซอร์เก็บประวัติแจ้งเตือนไม่ได้ อาจแจ้งซ้ำเมื่อโหลดใหม่')});}
-    d=await receiveSignalPage({page:d,requestCursor:cursor,inbox:inbox.current,expectedScope,
-      filter:e=>(mode==='all'||e.mode===mode)&&(!favoritesOnly||favorites.includes(e.symbol)),
-      fetchAfter:after=>{p.set('after',after);return jsonRequest(`/api/signals?${p}`,{signal:controller.signal});}});
     if(stopped)return;
     setData(d);setError('');
     if(costLoaded.current!==d.usCosts?.id){costLoaded.current=d.usCosts?.id;setCosts(Object.fromEntries(COST_FIELDS.map(([k])=>[k,d.usCosts?.costs[k]??''])));}
-    if(!toastRef.current){const alert=await claimMatching();if(alert){await inbox.current.displayed(alert.id);setToast(alert);}}
-   }catch(e){if(!stopped&&e.message==='MEMBERSHIP_REQUIRED'){setData(null);setToast(null);inbox.current?.release();speaker.current?.stop();}if(!stopped)setError(e.message==='MEMBERSHIP_REQUIRED'?'สิทธิสมาชิกหมดอายุ กรุณาเข้าบัญชีเพื่อตรวจสิทธิ':'โหลดสัญญาณไม่สำเร็จ ข้อมูลเดิมอาจเก่า กรุณาลองใหม่');}
+   }catch(e){if(!stopped&&e.message==='MEMBERSHIP_REQUIRED'){setData(null);}if(!stopped)setError(e.message==='MEMBERSHIP_REQUIRED'?'สิทธิสมาชิกหมดอายุ กรุณาเข้าบัญชีเพื่อตรวจสิทธิ':'โหลดสัญญาณไม่สำเร็จ ข้อมูลเดิมอาจเก่า กรุณาลองใหม่');}
    finally{clearTimeout(timeout);if(!stopped)timer=setTimeout(load,10000);}
   }
-  load();return()=>{stopped=true;controller?.abort();clearTimeout(timer);inbox.current?.release();};
+  load();return()=>{stopped=true;controller?.abort();clearTimeout(timer);};
  },[enabled,memberId,marketId,page,query,mode,favoritesOnly,favorites.join(','),revision]);
- useEffect(()=>{
-  if(!toast)return;
-  if(voice&&referenceVoiceEligible(toast)&&spoken.current!==toast.id){spoken.current=toast.id;speaker.current?.play(`${toast.symbol} ${EVENT[toast.type]||toast.type} ${toast.price?`ราคาอ้างอิง ${n(toast.price,4)}`:''}`);inbox.current?.voice(toast.id,'attempted');}
-  const t=setTimeout(()=>dismiss(toast.id),18000);return()=>clearTimeout(t);
- },[toast?.id,voice]);
- async function claimMatching(){
-  for(let i=0;i<100;i++){const alert=await inbox.current?.claim(document.visibilityState==='visible');if(!alert)return null;
-   if((mode==='all'||alert.mode===mode)&&(!favoritesOnly||favorites.includes(alert.symbol)))return {...alert,historical:referenceAlertHistorical(alert)};
-   await inbox.current.dismiss(alert.id);
-  }return null;
- }
- async function dismiss(id){await inbox.current?.dismiss(id);setToast(null);toastRef.current=null;const next=await claimMatching();if(next){await inbox.current.displayed(next.id);setToast(next);}}
  async function act(body){
   if(inflight.current)return;inflight.current=true;setBusy(true);setError('');const scope=selection.current;
   try{const d=await jsonRequest('/api/signals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -84,7 +61,7 @@ function LegacySignalDesk({marketId,memberId,rights,favorites=[],onToggleFavorit
  return <section className="panel signal-desk" id="section-auto-pick" aria-labelledby="signal-desk-title">
   <header className="signal-desk-heading"><div><span className="eyebrow">SWING STANDARD · D1 / 4H</span><h2 id="signal-desk-title">สแกนและติดตามสัญญาณ</h2><p>ผลของแผนระบบ แยก Breakout / Pullback · Stop ตามโครงสร้าง − ATR · TP1 2R สุทธิ 50% แล้ว BE / trail</p></div><div><time>{clock||'เวลาไทย'}</time><small>ข้อมูลแท่งปิดดีเลย์ ≥15 นาที · ดูเวลาอ้างอิงของแต่ละตัว</small></div></header>
   {!enabled?<div className="feature-empty"><p>เข้าสู่ระบบสมาชิกเพื่อดูสัญญาณและผลบันทึก รายการหุ้นโปรดยังใช้งานได้ตามเดิม</p><a href={loginHref}>เปิดบัญชีสมาชิก LINE</a></div>:<>
-   <div className="signal-toolbar"><label>ค้นหา<input value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}} placeholder="Symbol หรือชื่อหุ้น"/></label><label>กลยุทธ์<select value={mode} onChange={e=>{setMode(e.target.value);setPage(1);}}><option value="all">ทั้งสองแบบ</option><option value="breakout">Breakout</option><option value="pullback">Pullback</option></select></label><label className="signal-check"><input type="checkbox" checked={favoritesOnly} onChange={e=>{setFavoritesOnly(e.target.checked);setPage(1);}}/>เฉพาะหุ้นโปรดและการแจ้งเตือน</label><button disabled={busy||!scanSymbols.length} onClick={()=>act({action:'scan',market:marketId,symbols:scanSymbols})}>{busy?'กำลังทำงาน…':'สแกน 6 ตัวในหน้านี้'}</button><button onClick={()=>setRevision(v=>v+1)}>โหลดผลล่าสุด</button><button aria-pressed={voice} onClick={()=>{const next=['blocked','failed'].includes(speechState)||!voice;setVoice(next);if(next)speaker.current?.play('เปิดเสียงแจ้งเตือนสัญญาณแล้ว');else speaker.current?.stop();}}>{['blocked','failed'].includes(speechState)?'เปิดเสียงอีกครั้ง':voice?'ปิดเสียง':'เปิดเสียง'}</button></div>
+   <div className="signal-toolbar"><label>ค้นหา<input value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}} placeholder="Symbol หรือชื่อหุ้น"/></label><label>กลยุทธ์<select value={mode} onChange={e=>{setMode(e.target.value);setPage(1);}}><option value="all">ทั้งสองแบบ</option><option value="breakout">Breakout</option><option value="pullback">Pullback</option></select></label><label className="signal-check"><input type="checkbox" checked={favoritesOnly} onChange={e=>{setFavoritesOnly(e.target.checked);setPage(1);}}/>เฉพาะหุ้นโปรดและการแจ้งเตือน</label><button disabled={busy||!scanSymbols.length} onClick={()=>act({action:'scan',market:marketId,symbols:scanSymbols})}>{busy?'กำลังทำงาน…':'สแกน 6 ตัวในหน้านี้'}</button><button onClick={()=>setRevision(v=>v+1)}>โหลดผลล่าสุด</button></div>
    <p className="signal-note">ป๊อปอัปและเสียงทำงานขณะเปิดหน้านี้ · {speechState==='blocked'||speechState==='failed'?'อุปกรณ์ยังเล่นเสียงไม่ได้ กดเปิดเสียงอีกครั้ง':''} ป้าย “ผ่านเกณฑ์” คือแผนรอยืนยัน สถานะ “เข้าเงื่อนไขแล้ว” ต้องมี ENTRY จากแท่ง 15m หลังเผยแพร่: ปิดเขียวเหนือราคาแผนและไม่ไล่เกิน 0.5 ATR</p>
    {marketId==='us'&&<details className="signal-costs" open={!data?.usCosts}><summary>ต้นทุนสัญญาณ US / ETF {data?.usCosts?'· ตั้งแล้ว':'· ต้องกรอกก่อนสร้างแผน'}</summary><form onSubmit={e=>{e.preventDefault();act({action:'costs',costs:Object.fromEntries(COST_FIELDS.map(([key])=>[key,Number(costs[key])]))});}}>{COST_FIELDS.map(([key,label])=><label key={key}>{label}<input type="number" min="0" max={key==='commissionVatPercent'?100:5} step="any" required value={costs[key]} onChange={e=>setCosts(v=>({...v,[key]:e.target.value}))}/></label>)}<button disabled={busy}>บันทึกต้นทุนสัญญาณ</button></form><p>คิดต่อข้าง รองรับค่าธรรมเนียมแบบเปอร์เซ็นต์เท่านั้น · ไม่รองรับค่าขั้นต่ำ/ค่าคงที่/FX cash flow · เปลี่ยนต้นทุนแล้วใช้กับแผนใหม่ ผลเดิมเก็บตามต้นทุนเดิม ไม่อ่านข้อมูลพอร์ต</p></details>}
    {error&&<p role="alert" className="signal-error">{error}</p>}
@@ -99,7 +76,7 @@ function LegacySignalDesk({marketId,memberId,rights,favorites=[],onToggleFavorit
    </>}
    {replay&&<section className="signal-replay"><header><h3>จำลอง {replay.symbol} จากช่วงที่มีข้อมูลจริง</h3><button onClick={()=>setReplay(null)}>ปิดผลจำลอง</button></header><p>{at(replay.period?.from)} – {at(replay.period?.to)} · D1 {replay.counts?.daily} / 4H {replay.counts?.fourHour} / 15m {replay.counts?.execution} แท่ง</p><p>ใช้กติกาสัญญาณรุ่นเดียวกัน ไม่มีการยืนยันว่าข้อมูลครบทุก session หรือทำนายผลในอนาคต กรณีข้อมูลขาด/ลำดับราคาไม่ชัดจะพักผล</p><div className="signal-stats-grid">{replay.variants?.map(v=><div key={v.mode}><Stats title={`${MODE[v.mode]} · ย้อนหลัง`} value={v.statistics}/><details><summary>ดูรายการจำลอง {v.records.length} แผน</summary>{v.records.map(s=><p key={s.id}>{at(s.publishedAt)} · {STATE[s.status]} · เข้า {n(s.entryPrice,4)} · {n(s.netR)} R</p>)}</details></div>)}</div><p>เปรียบเทียบกับผลเดินหน้าด้านบน โดยตรวจจำนวนไม้และช่วงเวลาแยกกัน ไม่รวมสถิติสองชุดเข้าด้วยกัน</p></section>}
   </>}
-  {toast&&<aside className="signal-toast" role="status" aria-live="polite"><strong>{toast.historical?'เหตุการณ์ย้อนหลัง · ':''}{toast.symbol} · {EVENT[toast.type]||toast.type}</strong><p>{toast.detail}</p><small>ราคาอ้างอิง {n(toast.price,4)} · แท่ง {at(toast.priceAt)} · แจ้ง {at(toast.createdAt)}</small><button onClick={()=>dismiss(toast.id)}>ปิดแจ้งเตือน</button></aside>}
+
  </section>;
 }
 

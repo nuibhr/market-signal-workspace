@@ -176,7 +176,10 @@ test('API rejects anonymous users, isolates MT5 owners and preserves existing me
   assert.equal((await api(null).GET(req)).status,401);
   const own=await (await api(member).GET(req)).json();assert.equal(own.coverage.total,1);assert.equal(own.signalAccess,true);
   const other=await (await api({...member,id:'two'}).GET(req)).json();assert.equal(other.coverage.total,0);
-  const noRights=await (await api({id:'one'}).GET(req)).json();assert.equal(noRights.signalAccess,false);assert.equal(noRights.selected.replay,null);
+  store.db.prepare('INSERT INTO daytrade_forward VALUES(?,?,?)').run('mt5:member:one:VantageMarkets-Demo','monitor-fixture',JSON.stringify({id:'monitor-fixture',symbol:'XAUUSD',market:'forex',publishedAt:Date.now(),status:'OPEN',entryTime:Date.now()/1000,trigger:100,side:'LONG',plan:{entry:100,stop:95,target:110}}));
+  const enriched=await (await api(member).GET(req)).json();assert.equal(enriched.universe[0].monitorPlan.entry,100);assert.equal(enriched.monitorEvents.length,2);assert.equal(enriched.selected.symbol,'XAUUSD');
+  const compact=await (await api(member).GET(new Request('https://example.com/api/daytrade?market=forex&compact=1'))).json();assert.equal(compact.selected,null);assert.equal(compact.monitorEvents.length,2);assert.equal(compact.universe[0].monitorPlan.entry,100);
+  const noRights=await (await api({id:'one'}).GET(req)).json();assert.equal(noRights.signalAccess,false);assert.equal(noRights.selected.replay,null);assert.deepEqual(noRights.monitorEvents,[]);assert.equal(noRights.universe[0].monitorPlan,null);assert.equal(noRights.universe[0].side,null);
   assert.equal((await api(member).GET(new Request('https://example.com/api/daytrade?market=bad'))).status,400);
   store.db.close();
 });

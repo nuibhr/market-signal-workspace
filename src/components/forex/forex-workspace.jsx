@@ -1,4 +1,5 @@
 "use client";
+import {SoundControl,AlertHistory} from "../monitor/monitor-provider.jsx";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -293,7 +294,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
               );
             })}
           </div>
-          <div className={styles.topActions}>
+          <div className={styles.topActions}><SoundControl/>
             {hasMt5 ? (
               <span className={styles.demoBadge}>MT5 / READ ONLY</span>
             ) : (
@@ -602,7 +603,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
               )}
               {section === "calendar" && <Calendar preview={preview} />}
               {section === "alerts" && (
-                <Alerts enabled={alertSettings} onChange={setAlertSettings} />
+                <><AlertHistory/><details><summary>ค่าหน้าจอเดิม · ยังไม่ส่งแจ้งเตือน</summary><Alerts enabled={alertSettings} onChange={setAlertSettings} /></details></>
               )}
             </>
           )}
