@@ -7,10 +7,18 @@ import {initializeDaytrade,ingestBars,dashboard,seriesFor,scanJobs} from './stor
 import {ForexStore} from '../forex-mt5/store.mjs';
 import {createDaytradeHandlers} from './handlers.mjs';
 import {createNativeScanner} from './native-worker.mjs';
+import {nativeTradingDay} from './calendar.mjs';
 const base=Date.parse('2026-10-12T01:00:00Z')/1000;
 const asset={id:'fx',instrumentId:'gold',symbol:'XAUUSD',name:'Gold',market:'forex',source:'mt5',point:0.01,trade_mode:4,category:'metals',canonical_symbol:'XAUUSD',broker_symbol:'XAUUSD'};
 const rows=(count=120)=>Array.from({length:count},(_,i)=>{const close=100+i*.12;return {time:base+i*900,open:close-.05,high:close+.1,low:close-.4,close,volume:1};});
 const memory=()=>{const db=new DatabaseSync(':memory:');initializeDaytrade(db);return db;};
+test('official special holiday is distinguished from a broken source and suppresses Thai daytrade setups',()=>{
+  assert.equal(nativeTradingDay(Date.parse('2026-10-16T08:00:00Z')/1000).closedReason,'EXCHANGE_HOLIDAY');
+  assert.equal(nativeTradingDay(Date.parse('2026-10-15T08:00:00Z')/1000).closedReason,null);
+  assert.equal(nativeTradingDay(Date.parse('2027-01-05T08:00:00Z')/1000).calendarVerified,false);
+  const bars=rows(70).map((b,i)=>({...b,time:Date.parse('2026-10-16T08:00:00Z')/1000-(69-i)*900}));
+  assert.equal(setupAt({...asset,market:'thai'},bars,69),null);
+});
 
 test('US classification needs exchange or broker region; USD alone and foreign ticker collisions are excluded',()=>{
   assert.equal(usListing({category:'share_cfds',currency_profit:'USD',broker_symbol:'AAL'}),false);

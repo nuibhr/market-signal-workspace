@@ -1,5 +1,6 @@
 import { thaiEquityTick } from '../analysis/thai-tick.mjs';
 import { canShort } from './universe.mjs';
+import { nativeTradingDay } from './calendar.mjs';
 
 // One versioned, price-only research rule. Volume confirmation is a separate input.
 export const RULE = 'daytrade-trend-15m-v1';
@@ -48,7 +49,7 @@ function localSession(asset, seconds, offsetMinutes=0) {
     // Day session only, including TFEX; night sessions are deliberately outside v1.
     const close=asset.market==='tfex'?1015:990;
     const start=asset.market==='tfex'?585:600;
-    return {key:day,open:![0,6].includes(d.getUTCDay())&&((m>=start&&m<750)||(m>=840&&m<close)),last:(m<750&&m+15>=750)||m+15>=close};
+    return {key:day,open:!nativeTradingDay(seconds).closedReason&&((m>=start&&m<750)||(m>=840&&m<close)),last:(m<750&&m+15>=750)||m+15>=close};
   }
   if(asset.session?.intervals?.length){
     const minuteOf=text=>{const [h,m]=text.split(':').map(Number);return h*60+m;};

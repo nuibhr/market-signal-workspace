@@ -1,5 +1,6 @@
 import { cleanBars, features, setupAt, entryPlan, exitOnBar, replayDaytrade, RULE, SETTINGS, summarize } from './engine.mjs';
 import { cfdUniverse, nativeUniverse } from './universe.mjs';
+import { nativeTradingDay } from './calendar.mjs';
 
 const cfdScope = connection => `mt5:${connection.owner}:${connection.server}`;
 
@@ -91,7 +92,10 @@ export function scanJobs(db,connection,now=Date.now()) {
   for(const symbol of symbols)add.run(connection.id,symbol);
   for(const row of db.prepare('SELECT symbol FROM daytrade_jobs WHERE connection_id=?').all(connection.id))if(!symbols.has(row.symbol))
     db.prepare('DELETE FROM daytrade_jobs WHERE connection_id=? AND symbol=?').run(connection.id,row.symbol);
-  const jobs=db.prepare('SELECT symbol FROM daytrade_jobs WHERE connection_id=? AND attempt<? ORDER BY attempt,symbol LIMIT 8').all(connection.id,now-180000);
+  const core=cfdUniverse(instruments,'forex').map(a=>a.symbol);
+  const priorities=core.length?core:[''];
+  const jobs=db.prepare(`SELECT symbol FROM daytrade_jobs WHERE connection_id=? AND attempt<? ORDER BY attempt,
+    CASE WHEN symbol IN (${priorities.map(()=>'?').join(',')}) THEN 0 ELSE 1 END,symbol LIMIT 8`).all(connection.id,now-180000,...priorities);
   for(const j of jobs)db.prepare('UPDATE daytrade_jobs SET attempt=? WHERE connection_id=? AND symbol=?').run(now,connection.id,j.symbol);
   return jobs.map(j=>Buffer.from(j.symbol).toString('hex')).join(',');
 }
@@ -126,6 +130,7 @@ export function dashboard(db,connection,market,{symbol,now=Date.now()}={}) {
   const symbols=new Set(assets.map(a=>a.symbol));
   const forward=scope?db.prepare('SELECT body FROM daytrade_forward WHERE scope=?').all(scope).map(r=>JSON.parse(r.body)).filter(t=>symbols.has(t.symbol)).sort((a,b)=>b.publishedAt-a.publishedAt):[];
   return {market,rule:RULE,settings:SETTINGS,source:cfd?'Vantage MT5':market==='tfex'?'TFEX Open API':'Settrade Market API',
+    marketCalendar:cfd?null:nativeTradingDay(Math.floor(now/1000)),
     connection:cfd?connection?(connection.expires<=now?'expired':now-connection.last_seen>30000?'stale':'connected'):'required':'server',
     universe:rows,coverage:{total:rows.length,ready:rows.filter(r=>r.status==='READY').length,warmup:rows.filter(r=>r.status==='WARMUP').length,
       queued:rows.filter(r=>r.status==='QUEUED').length,unavailable:rows.filter(r=>r.status==='UNAVAILABLE').length,fresh:rows.filter(r=>r.status==='READY'&&!r.stale).length},
