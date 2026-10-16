@@ -75,6 +75,22 @@ services:
     depends_on:
       web:
         condition: service_healthy
+  backup:
+    profiles: ['maintenance']
+    image: nugaom-workspace:${RELEASE_TAG:-local}
+    command: ['node', 'src/forex-mt5/hosting/backup.mjs']
+    logging: *logging
+    env_file:
+      - ${FOREX_ENV_FILE:?Set FOREX_ENV_FILE to the absolute private customer env path}
+    environment:
+      DATABASE_PATH: /var/lib/nugaom/membership/nugaom.sqlite
+      FOREX_MT5_DATABASE_PATH: /var/lib/nugaom/forex/bridge.sqlite
+      FOREX_MT5_PREVIEW: 'false'
+      BACKUP_DIRECTORY: /var/backups/nugaom
+    volumes:
+      - customer_data:/var/lib/nugaom:ro
+      - ${BACKUP_HOST_DIRECTORY:-/var/backups/nugaom/encrypted}:/var/backups/nugaom
+      - ./backup.mjs:/app/src/forex-mt5/hosting/backup.mjs:ro
 volumes:
   customer_data:
   certificates:

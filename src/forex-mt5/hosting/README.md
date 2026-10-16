@@ -4,6 +4,28 @@ The integration includes **all application source from `main` at `07990da`** and
 
 The existing Compose project name and volume names are retained. Never use `down -v` during upgrades. Set `RELEASE_TAG` to the deployed commit for an immutable local image tag. The web and optional scanner use that same image. Web, proxy and scanner logs rotate at 10 MB × 3 files per service, and services restart after process or host restart unless explicitly stopped.
 
+## Customer pilot — 16 October 2026
+
+The VPS at `https://76.13.20.122.sslip.io/` now uses the operator's new **nugaompick** LINE Login channel (`2012039093`). Its HTTPS callback was saved, the operator authorized the profile/subject scopes, and a real login returned to `/account` and created a member. Existing membership onboarding still requires a stock portfolio submission; no trial, subscription, admin role or session was fabricated. The old LINE channel and Cloudflare deployment were not changed.
+
+The receiver is now enabled with the exact 19-server Vantage allowlist, private separate persistent databases and development shortcuts disabled. Customer pairing was created through that actual member's browser. A fresh anonymous request contains no member snapshot, prices or chart, and anonymous pairing returns HTTP 401 `SIGN_IN_REQUIRED`. Native customer MT5 ingestion is a separate acceptance step, not proved merely by enabled configuration or a generated key.
+
+The operator confirmed Settrade/TFEX/FMP display rights. Private production probes and public chart endpoints received Thai/DR 15m bars, TFEX Z-series candles and FMP US closed daily bars. The Thai/DR Swing worker is running against the persistent ledger; stored observations and a WAITING reference signal were verified. Coverage is progressing, with per-symbol failures for short/stale history or unavailable native frames retained. No valid signal is invented for missing data. TFEX is still chart-only. US Swing stays disabled because its current implementation requires intraday Yahoo frames; the FMP EOD permission does not satisfy that requirement. Yahoo rights were not enabled.
+
+Public HTTP verification passed 24/24 checks. LINE sign-in and the authenticated connection UI were also verified in the browser. Application source remains the merged main release; this operations change adds backup tooling only and does not rewrite workspace, market, auth, membership, admin, migration or signal code. Earlier preview notes below describe historical restrictions and are superseded by this section.
+
+## Encrypted backup and recovery
+
+`backup.mjs` snapshots both member/signal and Forex stores through SQLite `VACUUM INTO`, including committed WAL writes. The archive is AES-256-GCM encrypted with the private `BACKUP_ENCRYPTION_KEY`, written with mode 0600 in a private 0700 directory, restored into a new temporary directory, and checked for hashes, SQLite integrity and foreign keys before the final `.enc` filename is published. The tool never restores over live stores. Each database is consistent individually; pause writes and receiver ingestion before using snapshots for migration cutover.
+
+The `maintenance` Compose profile mounts the data volume read-only and exposes no port. Create `/var/backups/nugaom/encrypted` with UID/GID 1000 and mode 0700 first. Use the private env file as with the web service. Run `docker compose ... --profile maintenance run --rm --no-deps backup` for a snapshot, or append `node src/forex-mt5/hosting/backup.mjs --verify /var/backups/nugaom/NAME.enc` to verify an existing archive. Preview mode alone permits a missing Forex database and explicitly reports it; customer mode requires both stores.
+
+On this VPS, the reviewed helper/Compose files are installed separately at `/opt/nugaom-forex/operations/pilot-backup/`, so the application image need not be rebuilt for backup maintenance. The supplied `backup-on-vps.sh` chooses the actual running receiver mode. `nugaom-backup.service` and `.timer` are installed under `/etc/systemd/system/` and run daily around **03:15–03:25 Asia/Bangkok**, with catch-up after a missed run. Manual service execution and restore checks of the actual databases passed. Check `systemctl status nugaom-backup.timer` and `journalctl -u nugaom-backup.service`; a failed job must be investigated, not treated as a successful backup.
+
+An encrypted snapshot and the private recovery configuration were also copied over authenticated SSH to separate private locations on the operator's Mac; off-VPS decrypt/restore checks passed. This is a verified manual offsite copy, not an automated remote backup service. Maintain offsite copies and the recovery configuration separately as users/data grow. No credentials, archive contents, customer presets or recovery configuration are committed to Git or shipped in the source ZIP. Archives are not automatically deleted. The current helper deliberately refuses a single database larger than 256 MiB; revisit the snapshot format/streaming and retention before crossing that bound.
+
+The hosting regression suite passed 8 Node tests, including committed-WAL restoration, tamper/wrong-key rejection, preview-only missing-store handling and directory privacy. The new backup tests also passed inside the Linux deployment image.
+
 ## Continuous Swing scanner
 
 The `scanner` Compose profile is opt-in. It runs main's `scripts/signal-worker.mjs`, shares only the membership/signal database with the web, and publishes no port. It handles Thai, DR and US; TFEX currently provides charts only. The default preview deployment does not start this service.
