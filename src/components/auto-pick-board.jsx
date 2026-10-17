@@ -41,6 +41,7 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
   const [persistenceError, setPersistenceError] = useState(false);
   const [deliveryError, setDeliveryError] = useState(false);
   const speaker = useRef(null);
+  const voiceJob=useRef(null);
   const spokenId = useRef(null);
   const inbox = useRef(null);
   const alertRef = useRef(null);
@@ -49,7 +50,7 @@ export default function AutoPickBoard({ onSelect, marketId=null }) {
 
   useEffect(() => {
     let mounted = true;
-    const adapter={supported:Boolean(window.speechSynthesis&&window.SpeechSynthesisUtterance),stop:()=>{},play:text=>{const item=alertRef.current;return soundRef.current?.speak(text,value=>{if(!mounted)return;setSpeechState(value==='ended'?'idle':value);if(item&&!item.demo)inbox.current?.voice(item.id,value);});}};
+    const adapter={supported:Boolean(window.speechSynthesis&&window.SpeechSynthesisUtterance),stop:()=>soundRef.current?.cancelSpeech(voiceJob.current),get pending(){return soundRef.current?.isSpeechPending(voiceJob.current);},play:text=>{const item=alertRef.current;voiceJob.current=item?.id||'autopick-preview';soundRef.current?.cancelSpeech(voiceJob.current);return soundRef.current?.speak(text,value=>{if(!mounted)return;setSpeechState(value==='ended'?'idle':value);if(item&&!item.demo)inbox.current?.voice(item.id,value);},()=>Boolean(item?.demo||!item?.historical),voiceJob.current);}};
     speaker.current = adapter;
     setSpeechSupported(adapter.supported);
     return () => { mounted = false; adapter.stop(); };

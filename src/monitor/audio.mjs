@@ -18,7 +18,9 @@ export function createMonitorAudio(browser,{onState=()=>{},visible=()=>true,setT
   return {
     supported:speaker.supported,
     enable(value){enabled=value;paused=false;if(!value){clearTimer(timer);queue.splice(0).forEach(p=>p.done('muted'));current?.done('interrupted');current=null;speaker.stop();}else drain();},
-    play(text,done=()=>{},eligible=()=>true){if(!enabled){done('muted');return false;}queue.push({text,done,eligible});drain();return true;},
+    play(text,done=()=>{},eligible=()=>true,key=null){if(!enabled){done('muted');return false;}queue.push({text,done,eligible,key});drain();return true;},
+    cancel(key){if(!key)return;for(let i=queue.length-1;i>=0;i--)if(queue[i].key===key)queue.splice(i,1)[0].done('interrupted');if(current?.key===key){clearTimer(timer);const p=current;current=null;speaker.stop();p.done('interrupted');drain();}},
+    has(key){return Boolean(key&&(current?.key===key||queue.some(p=>p.key===key)));},
     visible:drain,
     stop(){this.enable(false);},
     get enabled(){return enabled;},get pending(){return queue.length+(current?1:0);}

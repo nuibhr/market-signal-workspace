@@ -21,3 +21,7 @@ test('background tab defers speech and delayed queue never reads an expired even
  let visible=false,fresh=true;const spoken=[];class Utterance{};const audio=createMonitorAudio({SpeechSynthesisUtterance:Utterance,speechSynthesis:{getVoices:()=>[],cancel(){},speak:u=>spoken.push(u)}},{visible:()=>visible});
  const done=[];audio.enable(true);audio.play('NTES',v=>done.push(v),()=>fresh);assert.equal(spoken.length,0);fresh=false;visible=true;audio.visible();assert.equal(spoken.length,0);assert.deepEqual(done,['historical']);audio.stop();
 });
+test('closing a legacy alert cancels its voice only, preserving other market deliveries',()=>{
+ const {audio,spoken}=fixture(),done=[];audio.enable(true);audio.play('NTES',v=>done.push(['NTES',v]),()=>true,'ntes');audio.play('PTT',v=>done.push(['PTT',v]),()=>true,'ptt');audio.play('DR',v=>done.push(['DR',v]),()=>true,'dr');
+ assert.equal(audio.has('ntes'),true);audio.cancel('ntes');assert.deepEqual(done,[['NTES','interrupted']]);assert.equal(spoken[1].text,'PTT');assert.equal(audio.has('ntes'),false);assert.equal(audio.has('dr'),true);audio.cancel('dr');spoken[1].onend();assert.equal(audio.pending,0);assert.deepEqual(done,[['NTES','interrupted'],['DR','interrupted'],['PTT','ended']]);
+});

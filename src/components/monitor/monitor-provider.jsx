@@ -15,7 +15,7 @@ export default function MonitorProvider({children}) {
   const [snapshots,setSnapshots]=useState({}),[errors,setErrors]=useState({}),[events,setEvents]=useState([]),[enabled,setEnabled]=useState(false),[audio,setAudio]=useState('idle'),[durable,setDurable]=useState(true),[now,setNow]=useState(null);
   const externalBoxes=useRef(new Map());
   const boxes=useRef(new Map()),adapter=useRef(null),sound=useRef(false),identity=useRef(null);
-  const speak=(text,done=()=>{},eligible)=>adapter.current?.play(text,done,eligible)??false;
+  const speak=(text,done=()=>{},eligible,key)=>adapter.current?.play(text,done,eligible,key)??false;
   const toggle=()=>{
     const next=!sound.current||['blocked','failed'].includes(audio);sound.current=next;setEnabled(next);adapter.current?.enable(next);
     if(next)speak('ทดสอบเสียงแจ้งเตือนทุกตลาด');
@@ -83,7 +83,7 @@ export default function MonitorProvider({children}) {
     };poll();
     return()=>{disposed=true;clearTimeout(timer);controller.abort();for(const box of boxes.current.values())box.release();boxes.current.clear();};
   },[active,revision]);
-  return <Context.Provider value={{snapshots,errors,events,enabled,audio,durable,now,toggle,speak,refresh:()=>setRevision(v=>v+1),registerInbox:box=>externalBoxes.current.set(box.scope,box)}}>{children}</Context.Provider>;
+  return <Context.Provider value={{snapshots,errors,events,enabled,audio,durable,now,toggle,speak,refresh:()=>setRevision(v=>v+1),registerInbox:box=>externalBoxes.current.set(box.scope,box),cancelSpeech:key=>adapter.current?.cancel(key),isSpeechPending:key=>adapter.current?.has(key)}}>{children}</Context.Provider>;
 }
 export function SoundControl(){
   const monitor=useMonitor();if(!monitor)return null;
