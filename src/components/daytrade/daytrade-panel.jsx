@@ -101,7 +101,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
       <p className={styles.caption}>Bid quote คือราคาที่ broker ส่งล่าสุด · ปิดแท่ง 15m คือราคาประเมินเดิม · ราคาเข้าเป็นแผนของระบบ แก้เองไม่ได้ตามสิทธิเดิม</p>
       <MarketTable rows={rows.slice((currentPage-1)*25,currentPage*25)} selected={{symbol:chosen?.symbol,market:selectedMarket}} highlights={highlights} choose={r=>{choose(r);navigate('chart');}} reason={reason} emptyMessage={filter==='near'?'ยังไม่มีเกณฑ์ใกล้เข้าที่กำหนดไว้ในกลยุทธ์':allRows.length?'ไม่พบรายการตามตัวกรอง':'รอรายการจริงจากแหล่งข้อมูล'}/>
       <div className={styles.pager}><span>{rows.length} รายการ · หน้า {currentPage} / {pageCount} · เข้าเงื่อนไขก่อน</span><button disabled={currentPage<=1} onClick={()=>setPage(currentPage-1)}>ก่อนหน้า</button><button disabled={currentPage>=pageCount} onClick={()=>setPage(currentPage+1)}>ถัดไป</button></div>
-      <p className={styles.caption}>โลโก้บริษัท: <a href="https://site.financialmodelingprep.com/developer/docs/company-image-api" target="_blank" rel="noreferrer">FMP</a> · ไม่มีภาพใช้ชื่อย่อ · FX / Futures ใช้สัญลักษณ์ประเภทสินทรัพย์</p>
+      <p className={styles.caption}>โลโก้บริษัท: <a href="https://site.financialmodelingprep.com/developer/docs/company-image-api" target="_blank" rel="noreferrer">FMP</a> · DR ใช้โลโก้บริษัทอ้างอิงที่ยืนยันได้ · ไม่มีภาพใช้ชื่อย่อ · FX / Futures ใช้สัญลักษณ์ประเภทสินทรัพย์</p>
       </section>
       <AlertHistory/>
     </>}

@@ -37,7 +37,8 @@ test('actual dashboard ranks fresh engine setups read-only and drops stale/disco
 });
 test('listing identities preserve broker labels and do not invent ambiguous company mappings',()=>{
  assert.match(instrumentIdentity({market:'thai',symbol:'PTT'}).url,/PTT.BK.png$/);
- assert.match(instrumentIdentity({market:'dr',symbol:'NVDA80'}).url,/NVDA80.BK.png$/);
+ assert.match(instrumentIdentity({market:'dr',symbol:'NVDA80'}).url,/NVDA.png$/);
+ assert.equal(instrumentIdentity({market:'dr',symbol:'UNKNOWN80'}).url,null);
  assert.match(instrumentIdentity({market:'us',symbol:'NTES.24H'}).url,/NTES.png$/);
  assert.match(instrumentIdentity({market:'us',symbol:'BRK.B'}).url,/BRK-B.png$/);
  assert.equal(instrumentIdentity({market:'us',symbol:'AAPL.a'}).url,null);
