@@ -14,9 +14,10 @@ export async function GET(request){
   const m=await member();if(!m)return denied();
   const limited=await rateLimit('signal-desk-read',m.id,90);if(limited)return limited;
   const p=new URL(request.url).searchParams,market=p.get('market')||'thai',mode=p.get('mode')||'all';
+  if(p.has('record')&&(!p.get('record').trim()||p.get('record').length>300))return Response.json({code:'INVALID_RECORD'},{status:400,headers:privateHeaders});
   if(!['thai','dr','us'].includes(market)||!['all','breakout','pullback'].includes(mode))return Response.json({code:'INVALID_MARKET_OR_MODE'},{status:400,headers:privateHeaders});
   if(!signalProviderAllowed(market))return Response.json({code:'DISPLAY_RIGHTS_NOT_CONFIRMED'},{status:503,headers:privateHeaders});
-  try{const [feed,overview]=await Promise.all([signalDeskFeed(m.id,{market,mode,page:p.get('page'),query:(p.get('q')||'').slice(0,40),after:p.get('after'),favorites:p.has('favorites')?p.get('favorites').split(',').filter(Boolean).slice(0,500):null}),signalMarketOverview(market)]);return Response.json({...feed,overview},{headers:privateHeaders});}
+  try{const [feed,overview]=await Promise.all([signalDeskFeed(m.id,{market,mode,page:p.get('page'),query:(p.get('q')||'').slice(0,40),after:p.get('after'),recordId:p.get('record'),favorites:p.has('favorites')?p.get('favorites').split(',').filter(Boolean).slice(0,500):null}),signalMarketOverview(market)]);return Response.json({...feed,overview},{headers:privateHeaders});}
   catch(e){return Response.json({code:e.code==='INVALID_EVENT_CURSOR'?e.code:'SIGNAL_STORE_UNAVAILABLE'},{status:e.code==='INVALID_EVENT_CURSOR'?400:503,headers:privateHeaders});}
 }
 export async function POST(request){

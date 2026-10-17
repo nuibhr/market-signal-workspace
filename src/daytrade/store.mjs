@@ -51,14 +51,14 @@ function advanceForward(db,scope,asset,bars,{now,offsetMinutes,costs,spreadKnown
         const plan=entryPlan(asset,p,b.open,costs);
         if(plan){state.active={...p,plan,status:'OPEN',entryTime:b.time,heldBars:0,lastBar:null,origin:'forward',costBasis:'configured-assumptions'};save(state.active);}
       }
-      if(!state.active)save({...p,status:'EXPIRED'});
+      if(!state.active)save({...p,status:'EXPIRED',expiredAt:now});
       state.pending=null;
     }
     if(state.active){
       state.active.heldBars++;
       const outcome=exitOnBar(asset,state.active,b,state.active.lastBar);
       state.active.lastBar=b.time;
-      if(outcome){save({...state.active,...outcome});state.active=null;state.cooldown=SETTINGS.cooldownBars;}
+      if(outcome){save({...state.active,...outcome,...(outcome.status==='REVIEW'?{reviewedAt:now,reviewBarTime:b.time}:{})});state.active=null;state.cooldown=SETTINGS.cooldownBars;}
       else save(state.active);
     }
     state.last=b.time;
@@ -82,7 +82,7 @@ function advanceForward(db,scope,asset,bars,{now,offsetMinutes,costs,spreadKnown
     }
   }
   // A plan that never reached a later eligible bar remains explicitly expired.
-  if(state.pending&&now>(state.pending.availableAt+2700)*1000){save({...state.pending,status:'EXPIRED'});state.pending=null;}
+  if(state.pending&&now>(state.pending.availableAt+2700)*1000){save({...state.pending,status:'EXPIRED',expiredAt:now});state.pending=null;}
   db.prepare('INSERT INTO daytrade_cursor VALUES(?,?,?) ON CONFLICT(scope,symbol) DO UPDATE SET body=excluded.body')
     .run(scope,asset.symbol,JSON.stringify(state));
 }
@@ -119,7 +119,7 @@ export function ingestScanCharts(db,row,charts,quotes,now) {
       spread:q&&now-q.time*1000<30000?q.ask-q.bid:null});
   }
 }
-export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=false}={}) {
+export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=false,recordId=null}={}) {
   const cfd=['us','forex'].includes(market),scope=cfd?(connection?cfdScope(connection):null):`native:${market}`;
   const instruments=connection?.snapshot?JSON.parse(connection.snapshot).instruments:[];
   const assets=cfd?cfdUniverse(instruments,market):nativeUniverse(market);
@@ -153,6 +153,7 @@ export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=fa
       updated:series?.updated??null,spreadKnown:series?.spreadKnown??false,costs:series?.costs??null,
       replay,forward:forward.filter(t=>t.symbol===chosen.symbol)}:null,
     monitorEvents:forwardEvents(forward).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id)),
+    record:recordId?forward.find(t=>t.id===recordId)??null:null,
     forward:forward.slice(0,200),summary:summarize(forward),volumeStatus:market==='us'?'FMP_INTRADAY_PENDING':'PRICE_ONLY',
     generatedAt:new Date(now).toISOString()};
 }

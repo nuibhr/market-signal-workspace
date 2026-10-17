@@ -19,6 +19,7 @@ function component(file) {
 const Table=component('../components/monitor/market-table.jsx').default;
 const Cards=component('../components/monitor/opportunity-cards.jsx').default;
 const Logo=component('../components/monitor/instrument-logo.jsx').default;
+const RecordDetails=component('../components/monitor/trade-record.jsx').TradeRecordDetails;
 const now=Date.parse('2026-10-15T15:00:00Z');
 const row={symbol:'NTES',name:'NETEASE INC-ADR',kind:'stock_cfd',status:'READY',price:100,latestBar:now/1000-900,receivedAt:now,bars:100,stale:false,side:null,monitorPlan:{entry:100,side:'LONG',status:'WAITING'}};
 test('real table component renders NTES target touch with accessible button and truthful time/price labels',()=>{
@@ -44,4 +45,19 @@ test('MVP has explicit empty/loading/member states and no sample picks',()=>{
 test('unknown logo stays a local monogram and known logo uses no-referrer without secrets',()=>{
  const unknown=renderToStaticMarkup(React.createElement(Logo,{asset:{market:'us',symbol:'UNKNOWN.a'}}));assert.ok(!unknown.includes('<img'));assert.ok(unknown.includes('UN'));
  const known=renderToStaticMarkup(React.createElement(Logo,{asset:{market:'thai',symbol:'PTT'}}));assert.ok(known.includes('image-stock/PTT.BK.png'));assert.ok(known.includes('referrerPolicy="no-referrer"'));assert.ok(!known.includes('apikey'));
+});
+test('actual record details show entry, exit, timeline, counted state and same ledger summary',()=>{
+  const t={id:'exact-record',market:'us',symbol:'NTES',side:'SHORT',status:'CLOSED',publishedAt:now,entryTime:now/1000+900,exitTime:now/1000+1800,trigger:100,stop:105,plan:{entry:100,stop:105,target:90},exit:90,reason:'TP',netR:2};
+  const html=renderToStaticMarkup(React.createElement(RecordDetails,{reference:{ledger:'daytrade'},data:{record:t,rule:'daytrade-trend-15m-v1',summary:{closed:1,winRate:100,averageR:2,review:0}}}));
+  for(const copy of ['exact-record','NTES','SHORT','นับในสถิติแล้ว 1 ไม้','Exit 90','ถึง TP · ปิดไม้','หนึ่งไม้มีหลายแจ้งเตือนได้','สถิติจากบันทึกชุดเดียวกัน'])assert.ok(html.includes(copy),copy);
+  const review=renderToStaticMarkup(React.createElement(RecordDetails,{reference:{ledger:'daytrade'},data:{record:{...t,status:'REVIEW',exitTime:null,netR:null},summary:{closed:0,review:1}}}));
+  assert.ok(review.includes('ยังไม่นับในสถิติไม้ปิด'));assert.ok(!review.includes('นับในสถิติแล้ว 1 ไม้'));
+});
+test('enabled legacy Swing shell renders with centralized audio state, without a missing speechState variable',()=>{
+  const path=new URL('../components/signal-desk.jsx',import.meta.url),nativeRequire=createRequire(path);
+  const source=readFileSync(path,'utf8').replace(/import DaytradePanel from .*?;/,"const DaytradePanel=()=>null;").replace(/import \{useMonitor\} from .*?;/,"const useMonitor=()=>({audio:'blocked'});")+"\nexport {LegacySignalDesk};";
+  const compiled=transformSync(source,{jsc:{parser:{syntax:'ecmascript',jsx:true},transform:{react:{runtime:'automatic'}}},module:{type:'commonjs'}}).code;
+  const module={exports:{}};new Function('require','module','exports',compiled)(nativeRequire,module,module.exports);
+  const html=renderToStaticMarkup(React.createElement(module.exports.LegacySignalDesk,{marketId:'thai',memberId:'fixture',rights:{capabilities:{autoPickFeed:true}}}));
+  assert.ok(html.includes('อุปกรณ์ยังเล่นเสียงไม่ได้'));assert.ok(html.includes('กดเปิดเสียงที่แถบบนอีกครั้ง'));assert.ok(html.includes('สแกนและติดตามสัญญาณ'));
 });

@@ -52,7 +52,7 @@ export async function saveReferenceAdvance(previous, signal, events) {
   }
   await storage.batch(queries);
 }
-export async function signalDeskFeed(memberId, { market='thai',page=1,query='',mode='all',favorites=null,after=null } = {}) {
+export async function signalDeskFeed(memberId, { market='thai',page=1,query='',mode='all',favorites=null,after=null,recordId=null } = {}) {
   const profile = await usCostProfile(memberId), profileId = market==='us'?profile?.id??'unconfigured':'standard';
   const universe = signalUniverse(market), known=new Set(universe.map(a=>a.symbol));
   const snapshots = (await storage.all('SELECT * FROM signal_desk_observations WHERE market=?',market)).map(r=>JSON.parse(r.payload_json)).filter(r=>known.has(r.symbol));
@@ -68,7 +68,10 @@ export async function signalDeskFeed(memberId, { market='thai',page=1,query='',m
   const cursor = after === null ? null : Number(after);
   if(cursor!==null&&(!Number.isSafeInteger(cursor)||cursor<0))throw fault('INVALID_EVENT_CURSOR');
   const high=(await storage.first('SELECT COALESCE(MAX(seq),0) AS seq FROM signal_desk_events')).seq;
-  const eventRows=cursor===null?[]:await storage.all(`SELECT e.*,s.mode AS mode FROM signal_desk_events e JOIN signal_desk_signals s ON s.id=e.signal_id WHERE e.seq>? AND e.market=? AND s.cost_profile IN (SELECT value FROM json_each(?)) ORDER BY e.seq LIMIT 100`,cursor,market,JSON.stringify(allowedProfiles));
+  const eventRows=cursor===null?[]:await storage.all(`SELECT e.*,s.mode AS mode FROM signal_desk_events e JOIN signal_desk_signals s ON s.id=e.signal_id WHERE e.seq>? AND e.market=? AND s.cost_profile IN (SELECT value FROM json_each(?)) AND s.rule_version=? ORDER BY e.seq LIMIT 100`,cursor,market,JSON.stringify(allowedProfiles),SIGNAL_RULE);
+  const record=recordId?records.find(s=>s.id===recordId)??null:null;
+  const recordEvents=record?await storage.all('SELECT * FROM signal_desk_events WHERE signal_id=? ORDER BY seq',record.id):[];
+  const projectEvent=(r,m)=>({...JSON.parse(r.payload_json),id:r.id,seq:r.seq,signalId:r.signal_id,ledger:'swing',side:'LONG',symbol:r.symbol,market:r.market,mode:m});
   return { status:'available',ruleVersion:SIGNAL_RULE,notificationScope:`swing:${memberId}:${market}`,market,usCosts:profile,
     costs:market==='us'?profile?.costs:defaultSignalCosts({id:market}), scannedAt:new Date().toISOString(),
     rows:rows.slice((currentPage-1)*20,currentPage*20),page:currentPage,pageSize:20,totalRows:rows.length,
@@ -78,7 +81,9 @@ export async function signalDeskFeed(memberId, { market='thai',page=1,query='',m
     worker:await storage.first('SELECT heartbeat_ms AS heartbeatMs,until_ms AS busyUntil,? AS idleAfterMs FROM signal_desk_leases WHERE market=?',process.env.AUTO_PICK_RUNTIME==='cloudflare'?420000:180000,market),
     signals:relevant.filter(s=>ACTIVE_SIGNAL_STATES.includes(s.status)).map(s=>({...s,...referenceMark(s)})),history:relevant.filter(s=>!ACTIVE_SIGNAL_STATES.includes(s.status)).slice(0,100),
     statistics:summarizeSignals(relevant.filter(s=>s.profile===profileId)),statisticsByMode:Object.fromEntries(['breakout','pullback'].map(m=>[m,summarizeSignals(relevant.filter(s=>s.mode===m&&s.profile===profileId))])),
-    events:eventRows.map(r=>({id:r.id,seq:r.seq,signalId:r.signal_id,symbol:r.symbol,market:r.market,mode:r.mode,...JSON.parse(r.payload_json)})),
+    record,recordEvents:recordEvents.map(r=>projectEvent(r,record.mode)),
+    recordStatistics:record?summarizeSignals(records.filter(s=>s.mode===record.mode&&s.profile===record.profile)):null,
+    events:eventRows.map(r=>projectEvent(r,r.mode)),
     nextCursor:eventRows.length===100?eventRows.at(-1).seq:Math.max(high,eventRows.at(-1)?.seq||0),
     note:'ผลสัญญาณอ้างอิง ไม่ใช่พอร์ตหรือราคา fill ของลูกค้า · ข้อมูลปิดดีเลย์อย่างน้อย 15 นาที' };
 }

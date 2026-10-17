@@ -179,9 +179,20 @@ test('API rejects anonymous users, isolates MT5 owners and preserves existing me
   store.db.prepare('INSERT INTO daytrade_forward VALUES(?,?,?)').run('mt5:member:one:VantageMarkets-Demo','monitor-fixture',JSON.stringify({id:'monitor-fixture',symbol:'XAUUSD',market:'forex',publishedAt:Date.now(),status:'OPEN',entryTime:Date.now()/1000,trigger:100,side:'LONG',plan:{entry:100,stop:95,target:110}}));
   const enriched=await (await api(member).GET(req)).json();assert.equal(enriched.universe[0].monitorPlan.entry,100);assert.equal(enriched.monitorEvents.length,2);assert.equal(enriched.selected.symbol,'XAUUSD');
   const compact=await (await api(member).GET(new Request('https://example.com/api/daytrade?market=forex&compact=1'))).json();assert.equal(compact.selected,null);assert.equal(compact.monitorEvents.length,2);assert.equal(compact.universe[0].monitorPlan.entry,100);
+  const recordReq=new Request('https://example.com/api/daytrade?market=forex&compact=1&record=monitor-fixture');
+  assert.equal((await (await api(member).GET(recordReq)).json()).record.id,'monitor-fixture');
+  assert.equal((await (await api({...member,id:'two'}).GET(recordReq)).json()).record,null);
+  assert.equal((await (await api({id:'one'}).GET(recordReq)).json()).record,null);
   const noRights=await (await api({id:'one'}).GET(req)).json();assert.equal(noRights.signalAccess,false);assert.equal(noRights.selected.replay,null);assert.deepEqual(noRights.monitorEvents,[]);assert.equal(noRights.universe[0].monitorPlan,null);assert.equal(noRights.universe[0].side,null);assert.equal(noRights.universe[0].ranking,null);
   assert.equal((await api(member).GET(new Request('https://example.com/api/daytrade?market=bad'))).status,400);
   store.db.close();
+});
+test('record lookup reaches beyond the displayed 200 rows and shares the full authoritative statistics',()=>{
+  const db=memory(),scope='native:thai',symbol=nativeUniverse('thai')[0].symbol;
+  for(let i=0;i<205;i++)db.prepare('INSERT INTO daytrade_forward VALUES(?,?,?)').run(scope,`record-${i}`,JSON.stringify({id:`record-${i}`,market:'thai',symbol,publishedAt:100000+i,trigger:100,status:'CLOSED',entryTime:100+i,plan:{entry:100,stop:95,target:110},exit:110,exitTime:1000+i,netR:2,reason:'TP'}));
+  const feed=dashboard(db,null,'thai',{compact:true,recordId:'record-0'});
+  assert.equal(feed.forward.length,200);assert.ok(!feed.forward.some(t=>t.id==='record-0'));assert.equal(feed.record.id,'record-0');assert.equal(feed.summary.closed,205);assert.equal(feed.summary.netR,410);
+  assert.equal(dashboard(db,null,'dr',{compact:true,recordId:'record-0'}).record,null);db.close();
 });
 test('native worker filters incomplete/delayed bars, records failures and never falls back to Yahoo',async()=>{
   const db=memory(),a=rows(90),now=(a.at(-1).time+1000)*1000;

@@ -26,11 +26,13 @@ export function filterRows(rows,{query='',group='all',status='all'}={}) {
 // No ledger writes, invented price-crossing conditions, or replay records.
 export function forwardEvents(records) {
   return records.flatMap(t=>{
-    const base={symbol:t.symbol,market:t.market,mode:'daytrade',rule:'daytrade-trend-15m-v1',detail:'ตามเทรนด์ EMA20/50 · ยืนยันแท่งปิด 15m · ราคาอ้างอิง',stopLoss:t.plan?.stop??t.stop,tp1:t.plan?.target};
+    const base={symbol:t.symbol,market:t.market,mode:'daytrade',ledger:'daytrade',tradeId:t.id,side:t.side,rule:t.rule||'daytrade-trend-15m-v1',detail:'ตามเทรนด์ EMA20/50 · ยืนยันแท่งปิด 15m · ราคาอ้างอิง',stopLoss:t.plan?.stop??t.stop,tp1:t.plan?.target};
     const event=(type,at,price,stage)=>({...base,id:`${t.id}:${stage}`,type,price,createdAt:new Date(at).toISOString(),priceAt:new Date(at).toISOString()});
-    const out=[event('PICK_READY',t.publishedAt,t.trigger,'plan')];
+    const out=[{...event('PICK_READY',t.publishedAt,t.trigger,'plan'),stopLoss:t.stop,tp1:null}];
     if(t.entryTime&&t.plan)out.push(event('ENTRY',t.entryTime*1000,t.plan.entry,'entry'));
     if(t.exitTime)out.push(event(t.status==='REVIEW'?t.reason==='AMBIGUOUS_TP_SL'?'AMBIGUOUS':'DATA_GAP':t.reason==='TP'?'TARGET':['SL','SL_GAP'].includes(t.reason)?'STOP':'EXIT',t.exitTime*1000,t.exit??null,'exit'));
+    else if(t.status==='REVIEW'&&t.reviewedAt)out.push({...event(t.reason==='AMBIGUOUS_TP_SL'?'AMBIGUOUS':'DATA_GAP',t.reviewedAt,null,'review'),priceAt:t.reviewBarTime?new Date((t.reviewBarTime+900)*1000).toISOString():null});
+    if(t.status==='EXPIRED'&&t.expiredAt)out.push({...event('EXPIRED',t.expiredAt,null,'expired'),priceAt:null});
     return out;
   });
 }
