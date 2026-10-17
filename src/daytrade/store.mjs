@@ -3,6 +3,7 @@ import { cfdUniverse, nativeUniverse, listingRegion } from './universe.mjs';
 import { nativeTradingDay } from './calendar.mjs';
 import { thaiEquityTick } from '../analysis/thai-tick.mjs';
 import { forwardEvents } from '../monitor/view.mjs';
+import { rankSetup } from './ranking.mjs';
 
 const cfdScope = connection => `mt5:${connection.owner}:${connection.server}`;
 
@@ -128,11 +129,12 @@ export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=fa
     let data=row?JSON.parse(row.body):{status:'QUEUED',code:'WAITING_COLLECTOR',bars:0};
     if(cfd&&![1,2,4].includes(asset.trade_mode))data={...data,status:'UNAVAILABLE',code:asset.trade_mode===3?'BROKER_CLOSE_ONLY':asset.trade_mode===0?'BROKER_TRADE_DISABLED':'BROKER_TRADE_MODE_UNKNOWN'};
     const series=seriesFor(db,scope||'',asset.symbol);
-    const last=series?.bars.at(-1),latest=last&&setupAt(asset,series.bars,series.bars.length-1,undefined,series.offsetMinutes);
+    const last=series?.bars.at(-1),values=last?features(series.bars):null,latest=last&&setupAt(asset,series.bars,series.bars.length-1,values,series.offsetMinutes);
     const stale=last&&now-(last.time+900)*1000>30*60000;
-    return {symbol:asset.symbol,name:asset.name,kind:asset.instrumentType,...data,checkedAt:row?.checked??null,
+    return {symbol:asset.symbol,name:asset.name,kind:asset.instrumentType,underlyingSymbol:asset.underlyingSymbol??null,canonical_symbol:asset.canonical_symbol??null,...data,checkedAt:row?.checked??null,
       latestBar:last?.time??null,price:last?.close??null,stale:Boolean(stale),receivedAt:series?.updated??null,quote:quotes[asset.symbol]??null,
       side:!stale&&data.status==='READY'?latest?.side??null:null,volumeSource:asset.volumeSource,
+      ranking:!stale&&last&&(last.time+900)*1000<=now&&data.status==='READY'&&(!cfd||connection.expires>now&&now-connection.last_seen<=30000)?rankSetup(series.bars,values,latest):null,
       spreadKnown:series?.spreadKnown??false};
   });
   const chosen=compact?null:assets.find(a=>a.symbol===symbol)||assets[0],series=chosen&&seriesFor(db,scope,chosen.symbol);
@@ -146,7 +148,7 @@ export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=fa
     universe:rows,coverage:{total:rows.length,ready:rows.filter(r=>r.status==='READY').length,warmup:rows.filter(r=>r.status==='WARMUP').length,
       queued:rows.filter(r=>r.status==='QUEUED').length,unavailable:rows.filter(r=>r.status==='UNAVAILABLE').length,fresh:rows.filter(r=>r.status==='READY'&&!r.stale).length},
     mappingPending:cfd&&market==='us'?instruments.filter(i=>listingRegion(i)==='UNKNOWN').length:0,
-    selected:chosen?{symbol:chosen.symbol,name:chosen.name,digits:chosen.digits??2,
+    selected:chosen?{symbol:chosen.symbol,name:chosen.name,underlyingSymbol:chosen.underlyingSymbol??null,canonical_symbol:chosen.canonical_symbol??null,digits:chosen.digits??2,
       point:chosen.point||(['thai','dr'].includes(market)&&series?.bars.length?thaiEquityTick(series.bars.at(-1).close):null),bars:series?.bars??[],
       updated:series?.updated??null,spreadKnown:series?.spreadKnown??false,costs:series?.costs??null,
       replay,forward:forward.filter(t=>t.symbol===chosen.symbol)}:null,

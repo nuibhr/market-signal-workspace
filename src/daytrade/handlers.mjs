@@ -21,7 +21,7 @@ export function createDaytradeHandlers({currentMember,getStore=storeFor,env=proc
       data.historicalTimePolicy=config.historyPolicy||'observed-clock-only';
       data.signalAccess=membershipFor(member).capabilities.autoPickFeed;
       if(!data.signalAccess){
-        data.universe=data.universe.map(r=>({...r,side:null,monitorPlan:null}));
+        data.universe=data.universe.map(r=>({...r,side:null,monitorPlan:null,ranking:null}));
         data.monitorEvents=[];
         data.forward=[];data.summary=null;
         if(data.selected){data.selected.replay=null;data.selected.forward=[];}
