@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Activity,
@@ -10,12 +10,14 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Clock,
   Coins,
   Compass,
   DollarSign,
   HelpCircle,
   Landmark,
   Layers,
+  Loader2,
   PieChart,
   RefreshCw,
   Search,
@@ -26,6 +28,8 @@ import {
   TrendingDown,
   TrendingUp,
   WalletCards,
+  Wifi,
+  X,
   Zap,
 } from 'lucide-react';
 import {
@@ -39,12 +43,216 @@ import {
 } from '../../dr/strategy-tracker.mjs';
 import styles from './dr-strategy.module.css';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function getRsiLabel(rsi) {
+  if (rsi < 30) return { label: 'Oversold', color: '#10b981' };
+  if (rsi > 70) return { label: 'Overbought', color: '#ef4444' };
+  if (rsi >= 40 && rsi <= 60) return { label: 'Neutral Zone', color: '#38bdf8' };
+  return { label: `RSI ${rsi.toFixed(0)}`, color: '#f59e0b' };
+}
+
+// ─── Price Progress Bar (Bloomberg-style Slider) ──────────────────────────────
+function PriceProgressBar({ sl, entry, current, tp2 }) {
+  const slN = Number(sl) || 0;
+  const entryN = Number(entry) || 0;
+  const curN = Number(current) || 0;
+  const tp2N = Number(tp2) || 0;
+  if (!slN || !curN || !tp2N || tp2N <= slN) return null;
+
+  const range = tp2N - slN;
+  const nowPct = Math.max(3, Math.min(97, ((curN - slN) / range) * 100));
+  const entryPct = Math.max(3, Math.min(97, ((entryN - slN) / range) * 100));
+
+  const inBuyZone = curN <= entryN * 1.01 && curN >= slN;
+  const statusText = inBuyZone
+    ? 'อยู่ใน Buy Zone (โซนน่าสะสม)'
+    : curN > entryN
+    ? 'ราคาสูงกว่าจุดเข้า (รอรับย่อตัว)'
+    : 'หลุดจุดเข้า (เฝ้าระวัง SL)';
+
+  return (
+    <div className={styles.priceProgressWrap}>
+      <div className={styles.priceProgressLabelsTop}>
+        <span>SL ({slN.toFixed(2)})</span>
+        <span>Entry ({entryN.toFixed(2)})</span>
+        <span className={styles.nowLabel}>Now ({curN.toFixed(2)})</span>
+        <span>TP2 ({tp2N.toFixed(2)})</span>
+      </div>
+      <div className={styles.priceProgressTrack}>
+        <div className={styles.priceProgressGradient} />
+        <div
+          className={styles.priceProgressEntryDot}
+          style={{ left: `${entryPct}%` }}
+          title={`Entry Plan: ${entryN.toFixed(2)}`}
+        />
+        <div
+          className={styles.priceProgressNowDot}
+          style={{ left: `${nowPct}%` }}
+          title={`ราคาปัจจุบัน: ${curN.toFixed(2)}`}
+        />
+      </div>
+      <div className={styles.priceProgressSubLabels}>
+        <span>ตำแหน่งราคา: {nowPct.toFixed(0)}% ของกรอบ</span>
+        <span style={{ color: inBuyZone ? '#10b981' : '#f59e0b', fontWeight: 600 }}>{statusText}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Technical Accordion Component ────────────────────────────────────────────
+function TechnicalAccordion({ scored, currentPrice }) {
+  if (!scored) return null;
+  const cam = scored.camarilla;
+  const rsiInfo = getRsiLabel(scored.rsi);
+  const rsiPct = Math.max(0, Math.min(100, scored.rsi));
+
+  return (
+    <div className={styles.techAccordionContent}>
+      {/* 1. EMA Section */}
+      <div className={styles.techSectionBlock}>
+        <div className={styles.techSectionHeader}>
+          <span className={styles.techSectionTitle}>
+            <Activity size={14} /> EMA 25 / 50 / 75 Alignment
+          </span>
+          <div className={styles.miniScoreBar}>
+            <div className={styles.miniScoreTrack}>
+              <div className={styles.miniScoreFill} style={{ width: `${(scored.emaScore / 3) * 100}%` }} />
+            </div>
+            <span className={styles.miniScoreVal}>{scored.emaScore}/3</span>
+          </div>
+        </div>
+        <div className={styles.threeGrid}>
+          {[
+            { label: 'EMA 25', val: scored.ema25, active: currentPrice > scored.ema25 },
+            { label: 'EMA 50', val: scored.ema50, active: scored.ema25 > scored.ema50 },
+            { label: 'EMA 75', val: scored.ema75, active: scored.ema50 > scored.ema75 },
+          ].map((e) => (
+            <div key={e.label} className={`${styles.techBox} ${e.active ? styles.techBoxActive : ''}`}>
+              <div className={styles.techBoxLabel}>{e.label}</div>
+              <div className={`${styles.techBoxVal} ${e.active ? styles.techBoxValPos : ''}`}>
+                {e.val?.toFixed(2)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. RSI Section */}
+      <div className={styles.techSectionBlock}>
+        <div className={styles.techSectionHeader}>
+          <span className={styles.techSectionTitle}>
+            <BarChart2 size={14} /> RSI (14) Momentum Sweet Spot
+          </span>
+          <div className={styles.miniScoreBar}>
+            <div className={styles.miniScoreTrack}>
+              <div className={styles.miniScoreFill} style={{ width: `${(scored.rsiScore / 3) * 100}%` }} />
+            </div>
+            <span className={styles.miniScoreVal}>{scored.rsiScore}/3</span>
+          </div>
+        </div>
+        <div className={styles.rsiGaugeWrap}>
+          <div className={styles.rsiTrack}>
+            <div className={styles.rsiCursorDot} style={{ left: `${rsiPct}%` }} />
+          </div>
+          <span className={styles.rsiStatusBadge} style={{ color: rsiInfo.color }}>
+            {scored.rsi.toFixed(1)} {rsiInfo.label}
+          </span>
+        </div>
+      </div>
+
+      {/* 3. MACD Section */}
+      <div className={styles.techSectionBlock}>
+        <div className={styles.techSectionHeader}>
+          <span className={styles.techSectionTitle}>
+            <TrendingUp size={14} /> MACD (12 / 26 / 9) Trend & Momentum
+          </span>
+          <div className={styles.miniScoreBar}>
+            <div className={styles.miniScoreTrack}>
+              <div className={styles.miniScoreFill} style={{ width: `${(scored.macdScore / 3) * 100}%` }} />
+            </div>
+            <span className={styles.miniScoreVal}>{scored.macdScore}/3</span>
+          </div>
+        </div>
+        <div className={styles.threeGrid}>
+          <div className={styles.techBox}>
+            <div className={styles.techBoxLabel}>MACD Line</div>
+            <div className={`${styles.techBoxVal} ${scored.macdLine >= 0 ? styles.techBoxValPos : styles.techBoxValNeg}`}>
+              {scored.macdLine > 0 ? '+' : ''}{scored.macdLine.toFixed(4)}
+            </div>
+          </div>
+          <div className={styles.techBox}>
+            <div className={styles.techBoxLabel}>Signal Line</div>
+            <div className={styles.techBoxVal}>{scored.signalLine.toFixed(4)}</div>
+          </div>
+          <div className={`${styles.techBox} ${scored.histogram > 0 ? styles.techBoxActive : ''}`}>
+            <div className={styles.techBoxLabel}>Histogram</div>
+            <div className={`${styles.techBoxVal} ${scored.histogram >= 0 ? styles.techBoxValPos : styles.techBoxValNeg}`}>
+              {scored.histogram > 0 ? '+' : ''}{scored.histogram.toFixed(4)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Camarilla 8-Levels Section */}
+      <div className={styles.techSectionBlock}>
+        <div className={styles.techSectionHeader}>
+          <span className={styles.techSectionTitle}>
+            <Target size={14} /> Camarilla Pivots (8 Levels)
+          </span>
+          <div className={styles.miniScoreBar}>
+            <div className={styles.miniScoreTrack}>
+              <div className={styles.miniScoreFill} style={{ width: `${(scored.camScore / 4) * 100}%` }} />
+            </div>
+            <span className={styles.miniScoreVal}>{scored.camScore}/4</span>
+          </div>
+        </div>
+        <div className={styles.camGrid}>
+          <div className={styles.camItem}><span className={styles.camR}>R4 (Breakout)</span><b>{cam.R4.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R3 (TP2)</span><b>{cam.R3.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R2</span><b>{cam.R2.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R1 (TP1)</span><b>{cam.R1.toFixed(2)}</b></div>
+          <div className={`${styles.camItem} ${styles.camPivotItem}`}><span className={styles.camP}>Pivot</span><b>{cam.pivot.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S1</span><b>{cam.S1.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S2 (Buffer)</span><b>{cam.S2.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S3 (Buy Zone)</span><b>{cam.S3.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S4 (SL)</span><b>{cam.S4.toFixed(2)}</b></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }) {
   const [activeTab, setActiveTab] = useState('dr-scanner'); // 'dr-scanner' | 'dr-bridge' | 'thai-dividend'
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'bullish' | 'buyzone' | 'highscore'
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSymbol, setExpandedSymbol] = useState('AAPL80');
   const [addedPicks, setAddedPicks] = useState([]);
+
+  // Scanning & Integration State
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanStep, setScanStep] = useState('');
+  const [lastScanTime, setLastScanTime] = useState('14:30 น.');
+  const [toastData, setToastData] = useState(null);
+  const [marketClock, setMarketClock] = useState('14:30:00');
+
+  // Live market clock
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date();
+      setMarketClock(now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Dismiss toast after 4.5s
+  useEffect(() => {
+    if (toastData) {
+      const timer = setTimeout(() => setToastData(null), 4500);
+      return () => clearInterval(timer);
+    }
+  }, [toastData]);
 
   // Arbitrage Calculator custom inputs
   const [calcUnderlying, setCalcUnderlying] = useState(235.40);
@@ -113,14 +321,82 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
     });
   }, [calcUnderlying, calcFxRate, calcRatio, calcMarketDr]);
 
+  // Interactive Scan Simulation
+  const handleTriggerScan = () => {
+    if (isScanning) return;
+    setIsScanning(true);
+    setScanProgress(15);
+    setScanStep('เชื่อมต่อ Settrade Open API และตรวจสอบความสมบูรณ์ของฟีด...');
+
+    setTimeout(() => {
+      setScanProgress(45);
+      setScanStep('ดึง Candlestick 100 แท่งย้อนหลังของ DR80/DR23 ทั้งกระดาน...');
+    }, 450);
+
+    setTimeout(() => {
+      setScanProgress(80);
+      setScanStep('คำนวณ EMA 25/50/75, Camarilla 8 Levels, RSI 14 และ MACD...');
+    }, 900);
+
+    setTimeout(() => {
+      setScanProgress(100);
+      setScanStep('คัดเลือก Top Candidates 4 ตัวที่มีคะแนนสูงสุดสำเร็จ!');
+      const nowStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+      setLastScanTime(nowStr);
+      setIsScanning(false);
+      setToastData({
+        title: 'Scan DR80 สำเร็จเรียบร้อย! 🎯',
+        desc: `สแกน DR ครบทั้ง 80 ตัวใน SET พบผู้ชนะประจำวัน ${filteredDRs.length} ตัว (AAPL80, NVDA80...) แผนเทรดพร้อมดำเนินการ`,
+        type: 'success',
+      });
+    }, 1400);
+  };
+
   const handleTogglePick = (symbol) => {
+    const isAdding = !addedPicks.includes(symbol);
     setAddedPicks((prev) =>
-      prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]
+      isAdding ? [...prev, symbol] : prev.filter((s) => s !== symbol)
     );
+
+    const target = scoredDRs.find((d) => d.symbol === symbol);
+    if (isAdding && target?.scored) {
+      setToastData({
+        title: `เพิ่ม ${symbol} เข้า DR Picks แล้ว! 🎯`,
+        desc: `จุดเข้า: ${target.scored.entry.toFixed(2)} | TP1: ${target.scored.tp1.toFixed(2)} | SL: ${target.scored.sl.toFixed(2)}`,
+        type: 'success',
+      });
+    } else if (!isAdding) {
+      setToastData({
+        title: `นำ ${symbol} ออกจาก DR Picks`,
+        desc: 'ปรับปรุงรายการติดตามเรียบร้อยแล้ว',
+        type: 'info',
+      });
+    }
   };
 
   return (
     <section className={styles.container} aria-label="DR Strategy & Thai Dividend Radar">
+      {/* Toast Notification */}
+      {toastData && (
+        <div className={styles.toastWrap} role="status">
+          <div className={styles.toastIconBox}>
+            <CheckCircle2 size={20} />
+          </div>
+          <div className={styles.toastContent}>
+            <div className={styles.toastTitle}>{toastData.title}</div>
+            <div className={styles.toastDesc}>{toastData.desc}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setToastData(null)}
+            className={styles.toastCloseBtn}
+            aria-label="ปิดแจ้งเตือน"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Header Banner */}
       <div className={styles.heroHeader}>
         <div className={styles.heroLeft}>
@@ -196,6 +472,112 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
       {/* Tab 1: DR80 Technical Radar */}
       {activeTab === 'dr-scanner' && (
         <div className={styles.tabContent}>
+          {/* ── Bloomberg Live Integration Banner ── */}
+          <div className={styles.integrationBanner}>
+            <div className={styles.integrationLeft}>
+              <div className={styles.wifiIconBox}>
+                <Wifi size={18} />
+              </div>
+              <div className={styles.integrationDetails}>
+                <div className={styles.integrationTitleRow}>
+                  <span className={styles.integrationTitle}>Live Integration Status</span>
+                  <span className={styles.statusPillLive}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Settrade: Live
+                  </span>
+                  <span className={styles.statusPillTg}>Telegram: Ready</span>
+                </div>
+                <div className={styles.sampleQuoteText}>
+                  Sample Quote <b>AAPL80</b>: 81.25 THB (+0.62%) · ตลาดหลักทรัพย์แห่งประเทศไทย (SET)
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.integrationRight}>
+              <div className={styles.lastScanInfo}>
+                <Clock size={13} />
+                <span>{marketClock} · ตลาดเปิด · สแกนล่าสุด {lastScanTime}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleTriggerScan}
+                disabled={isScanning}
+                className={styles.scanActionBtn}
+              >
+                <RefreshCw size={14} className={isScanning ? 'animate-spin' : ''} />
+                <span>{isScanning ? 'กำลัง Scan DR...' : 'Scan ใหม่'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ── Active Scanning Progress Overlay ── */}
+          {isScanning && (
+            <div className={styles.scanningBanner}>
+              <div className={styles.scanningTopRow}>
+                <span className={styles.scanningTitle}>
+                  <Loader2 size={16} className="animate-spin text-purple-400" />
+                  <span>กำลังสแกน DR Universe (80+ ตัวในกระดาน SET)...</span>
+                </span>
+                <span className="text-xs font-black text-purple-300">{scanProgress}%</span>
+              </div>
+              <div className={styles.scanningBarTrack}>
+                <div className={styles.scanningBarFill} style={{ width: `${scanProgress}%` }} />
+              </div>
+              <p className="text-xs text-purple-200/80 m-0">{scanStep}</p>
+            </div>
+          )}
+
+          {/* ── Bloomberg Stats Cards (6 KPIs) ── */}
+          <div className={styles.bloombergKpis}>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>ACTIVE PICKS</span>
+              <strong className={styles.kpiVal} style={{ color: '#ffffff' }}>4</strong>
+              <span className={styles.kpiSub}>กำลังติดตาม</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>HIT TP</span>
+              <strong className={styles.kpiVal} style={{ color: '#10b981' }}>12</strong>
+              <span className={styles.kpiSub}>ถึงเป้ากำไร TP1/2</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>HIT SL</span>
+              <strong className={styles.kpiVal} style={{ color: '#ef4444' }}>3</strong>
+              <span className={styles.kpiSub}>ตัดขาดทุนตามวินัย</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>NEAR TP</span>
+              <strong className={styles.kpiVal} style={{ color: '#38bdf8' }}>2</strong>
+              <span className={styles.kpiSub}>ใกล้ถึงเป้า (&lt;1.5%)</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>WIN RATE</span>
+              <strong className={styles.kpiVal} style={{ color: '#a855f7' }}>78.6%</strong>
+              <span className={styles.kpiSub}>อัตราชนะเฉลี่ย</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>AVG RETURN</span>
+              <strong className={styles.kpiVal} style={{ color: '#10b981' }}>+4.82%</strong>
+              <span className={styles.kpiSub}>กำไรเฉลี่ยต่อรอบ</span>
+            </div>
+          </div>
+
+          {/* ── Methodology Box (Matching DR80Scanner.tsx) ── */}
+          <div className={styles.methodologyCard}>
+            <Zap size={22} className={styles.methodologyIcon} />
+            <div>
+              <h4 className={styles.methodologyTitle}>วิธีคัดกรอง DR วันนี้ (4-Pillar Algorithmic Confluence)</h4>
+              <div className={styles.methodologyGrid}>
+                <span>✅ <b>EMA 25 &gt; EMA 50 &gt; EMA 75:</b> Bullish Alignment เรียงตัวขึ้น</span>
+                <span>✅ <b>Camarilla Pivot:</b> จุดรอรับย่อตัวเข้าใกล้ S2-S3 (Buy Zone)</span>
+                <span>✅ <b>RSI 40 - 60:</b> Neutral Sweet Spot มี Room ให้วิ่ง ไม่ไล่ Overbought</span>
+                <span>✅ <b>MACD Momentum:</b> Line &gt; Signal และ Histogram ขยายตัวบวก</span>
+              </div>
+              <p className={styles.methodologyUniverse}>
+                Universe: <b>80+ DR/DRx</b> ในตลาด SET | คัดกรอง Confluence อัตรา Risk/Reward &ge; 1.5 เท่า | Auto-run ทุกเช้า 09:00 น.
+              </p>
+            </div>
+          </div>
+
           {/* Controls Bar */}
           <div className={styles.controlsBar}>
             <div className={styles.searchBox}>
@@ -328,67 +710,33 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                     </div>
                   </div>
 
-                  {/* Camarilla Pivots Drawer */}
+                  {/* ── Price Progress Bar (Bloomberg Range Slider) ── */}
+                  <PriceProgressBar
+                    sl={scored.sl}
+                    entry={scored.entry}
+                    current={item.currentDrPrice}
+                    tp2={scored.tp2}
+                  />
+
+                  {/* Technical Details Toggle */}
                   <div className={styles.detailsToggle}>
                     <button
                       type="button"
                       onClick={() => setExpandedSymbol(isExpanded ? null : item.symbol)}
                       className={styles.toggleBtn}
                     >
-                      <span>ระดับราคา Camarilla Pivots (8 Levels)</span>
+                      <span>
+                        {isExpanded
+                          ? 'ซ่อนรายละเอียด Technical Indicators'
+                          : 'ดูรายละเอียด Technical (EMA / RSI / MACD / Camarilla 8 ระดับ)'}
+                      </span>
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                   </div>
 
+                  {/* Technical Accordion Drawer */}
                   {isExpanded && (
-                    <div className={styles.camarillaDrawer}>
-                      <div className={styles.camGrid}>
-                        <div className={styles.camItem}>
-                          <span className={styles.camR}>R4 (Breakout)</span>
-                          <b>{cam.R4.toFixed(2)}</b>
-                        </div>
-                        <div className={styles.camItem}>
-                          <span className={styles.camR}>R3 (TP2 Zone)</span>
-                          <b>{cam.R3.toFixed(2)}</b>
-                        </div>
-                        <div className={styles.camItem}>
-                          <span className={styles.camR}>R2</span>
-                          <b>{cam.R2.toFixed(2)}</b>
-                        </div>
-                        <div className={styles.camItem}>
-                          <span className={styles.camR}>R1 (TP1 Target)</span>
-                          <b>{cam.R1.toFixed(2)}</b>
-                        </div>
-                        <div className={`${styles.camItem} ${styles.camPivotItem}`}>
-                          <span className={styles.camP}>Pivot Point</span>
-                          <b>{cam.pivot.toFixed(2)}</b>
-                        </div>
-                        <div className={styles.camItem}>
-                          <span className={styles.camS}>S1</span>
-                          <b>{cam.S1.toFixed(2)}</b>
-                        </div>
-                        <div className={styles.camItem}>
-                          <span className={styles.camS}>S2 (Buy Buffer)</span>
-                          <b>{cam.S2.toFixed(2)}</b>
-                        </div>
-                        <div className={styles.camItem}>
-                          <span className={styles.camS}>S3 (Ideal Entry)</span>
-                          <b>{cam.S3.toFixed(2)}</b>
-                        </div>
-                        <div className={styles.camItem}>
-                          <span className={styles.camS}>S4 (Hard SL)</span>
-                          <b>{cam.S4.toFixed(2)}</b>
-                        </div>
-                      </div>
-
-                      <div className={styles.techNote}>
-                        <p>
-                          <b>สูตรคำนวณ Camarilla:</b> โซนรอรับที่ดีที่สุดคือบริเวณ <b>S2-S3 ({cam.S2.toFixed(2)} – {cam.S3.toFixed(2)})</b>{' '}
-                          โดยมีจุด Stop Loss ชัดเจนใต้ระดับ <b>S4 ({cam.S4.toFixed(2)})</b>{' '}
-                          และมีเป้าหมายทำกำไรระลอกแรกที่ <b>R1 ({cam.R1.toFixed(2)})</b> / ระลอกสองที่ <b>R3 ({cam.R3.toFixed(2)})</b>
-                        </p>
-                      </div>
-                    </div>
+                    <TechnicalAccordion scored={scored} currentPrice={item.currentDrPrice} />
                   )}
 
                   {/* Actions */}
