@@ -10,15 +10,52 @@ import { ALL_ASSETS } from '../markets/catalog.mjs';
 
 // Keep every destination in one map so desktop and mobile expose the same tools.
 const GROUPS = [
-  { id: 'today', label: 'เริ่มวันนี้', icon: Compass, items: [['overview', 'หน้าต้อนรับ', LayoutDashboard], ['daily', 'สำรวจวันนี้', Radar], ['autopick', 'จังหวะที่ระบบพบ', Bell]] },
-  { id: 'explore', label: 'สำรวจราคา', icon: CandlestickChart, items: [['watchlist', 'มุมโฟกัส', Star], ['search', 'ค้นหาสินทรัพย์', Search], ['chart', 'กราฟและตัวชี้วัด', CandlestickChart], ['analysis-tools', 'ชุดสแกนเชิงลึก', Activity], ['signals', 'แผนจากกราฟ', Sparkles]] },
-  { id: 'context', label: 'ก่อนตัดสินใจ', icon: Newspaper, items: [['news', 'ข่าวไทยและสหรัฐฯ', Newspaper], ['calendar', 'วันข่าวเศรษฐกิจ', CalendarDays], ['dividends', 'ปันผลและ XD', CalendarDays], ['news-guide', 'อ่านข่าวอย่างไร', BookOpen]] },
-  { id: 'plan', label: 'ผลสัญญาณ', icon: Wallet, items: [['results', 'ผลงานสัญญาณ', ChartNoAxesCombined], ['financial', 'คำนวณความเสี่ยง', Gauge]] },
-  { id: 'more', label: 'เพิ่มเติม', icon: CircleHelp, items: [['learn', 'วิธีเริ่มใช้', GraduationCap], ['roadmap', 'สถานะระบบ', Compass]] },
+  {
+    id: 'core',
+    label: 'เริ่มต้น & สแกน',
+    icon: Compass,
+    items: [
+      ['overview', 'หน้าต้อนรับ & ตลาด', LayoutDashboard],
+      ['scanner', 'สแกนตามสไตล์ (Swing/Scalp)', Radar],
+      ['watchlist', 'หุ้นโปรด & เฝ้าราคา', Star],
+    ],
+  },
+  {
+    id: 'charts-signals',
+    label: 'กราฟ & แผนเทรด',
+    icon: CandlestickChart,
+    items: [
+      ['chart', 'กราฟและตัวชี้วัด', CandlestickChart],
+      ['results', 'ประวัติ & ผลงานสัญญาณ', ChartNoAxesCombined],
+      ['search', 'ค้นหาสินทรัพย์ 5 ตลาด', Search],
+    ],
+  },
+  {
+    id: 'intel-tools',
+    label: 'เครื่องมือวิเคราะห์',
+    icon: Newspaper,
+    items: [
+      ['risk', 'คำนวณความเสี่ยง & Lot', Gauge],
+      ['calendar', 'ปฏิทินเศรษฐกิจ & ข่าวกรอง', CalendarDays],
+      ['developers', 'SMC Developer API', Activity],
+      ['news', 'ข่าวสารไทย & สหรัฐฯ', Newspaper],
+      ['dividends', 'ปันผลและ XD', CalendarDays],
+    ],
+  },
+  {
+    id: 'more',
+    label: 'สมาชิก & ช่วยเหลือ',
+    icon: CircleHelp,
+    items: [
+      ['account', 'บัญชีของฉัน & สิทธิ', Wallet],
+      ['learn', 'วิธีเริ่มใช้งาน', GraduationCap],
+      ['roadmap', 'สถานะและแผนพัฒนา', Compass],
+    ],
+  },
 ];
 
 export function WorkspaceSidebar({ marketId, activeNav, onNavigate, rights, account, loginHref = '/account', hasRealBars, favoriteCount }) {
-  const [expanded, setExpanded] = useState(['today', 'explore']);
+  const [expanded, setExpanded] = useState(['core', 'charts-signals', 'intel-tools']);
   const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => {
     const group = GROUPS.find(item => item.items.some(([id]) => id === activeNav));
@@ -39,12 +76,12 @@ export function WorkspaceSidebar({ marketId, activeNav, onNavigate, rights, acco
       <a className="hub-account-card" href={loginHref}><span className="hub-account-avatar"><MemberAvatar account={isGuest ? null : account} size={40} /></span><span><strong>{isGuest ? 'เริ่มด้วย LINE' : account?.displayName || 'มุมสมาชิกของฉัน'}</strong><small>{isGuest ? 'เชื่อมบัญชี · แจ้งพอร์ต · ทดลอง 14 วัน' : rights?.label}</small></span><span className="hub-account-arrow">↗</span></a>
       <MarketNavigation current={marketId}/><div className="hub-sidebar-caption">เครื่องมือประจำตลาด</div>
       <nav className="hub-group-list" aria-label="เมนูหลัก">
-        {GROUPS.map((group, index) => <section key={group.id} className="hub-menu-group"><button className="hub-group-toggle" aria-expanded={expanded.includes(group.id)} onClick={() => toggle(group.id)}><span className="hub-group-index">0{index + 1}</span><span className="hub-nav-glyph"><group.icon size={17} strokeWidth={1.9} /></span><span>{group.label}</span><ChevronDown size={14} className={expanded.includes(group.id) ? 'hub-chevron open' : 'hub-chevron'} /></button>{expanded.includes(group.id) && <div className="hub-group-items">{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'hub-subnav active' : 'hub-subnav'} onClick={() => onNavigate(id)}><Icon size={15} strokeWidth={1.9} /><span>{label}</span>{id === 'watchlist' && favoriteCount > 0 && <em>{favoriteCount}</em>}{id === 'analysis-tools' && <em>3 เครื่องมือ</em>}</button>)}</div>}</section>)}
+        {GROUPS.map((group, index) => <section key={group.id} className="hub-menu-group"><button className="hub-group-toggle" aria-expanded={expanded.includes(group.id)} onClick={() => toggle(group.id)}><span className="hub-group-index">0{index + 1}</span><span className="hub-nav-glyph"><group.icon size={17} strokeWidth={1.9} /></span><span>{group.label}</span><ChevronDown size={14} className={expanded.includes(group.id) ? 'hub-chevron open' : 'hub-chevron'} /></button>{expanded.includes(group.id) && <div className="hub-group-items">{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'hub-subnav active' : 'hub-subnav'} onClick={() => onNavigate(id)}><Icon size={15} strokeWidth={1.9} /><span>{label}</span>{id === 'watchlist' && favoriteCount > 0 && <em>{favoriteCount}</em>}</button>)}</div>}</section>)}
       </nav>
       <div className="engine-card"><div className="engine-heading">สถานะข้อมูล <span className={hasRealBars ? 'real-pill' : 'demo-pill'}>{hasRealBars ? 'OHLC จริง' : 'รอฟีด'}</span></div><p>ราคาและผลสัญญาณแสดงเฉพาะข้อมูลที่เชื่อมได้ พร้อมที่มาและเวลา</p></div>
     </div>
     <div className="sidebar-foot">NUGAOM <span>ทุกวัน เริ่มจากข้อมูล</span></div>
-  </aside><nav className="hub-mobile-dock" aria-label="เมนูมือถือ"><button className={activeNav === 'overview' ? 'active' : ''} onClick={() => onNavigate('overview')}><LayoutDashboard size={20} /><span>วันนี้</span></button><button className={activeNav === 'daily' ? 'active' : ''} onClick={() => onNavigate('daily')}><Radar size={20} /><span>สำรวจ</span></button><button className={activeNav === 'autopick' ? 'active' : ''} onClick={() => onNavigate('autopick')}><Bell size={20} /><span>จังหวะ</span></button><a className="hub-mobile-line" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้า LINE' : 'บัญชี'}</span></a><button onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen}><Compass size={20} /><span>ทั้งหมด</span></button></nav>{mobileOpen && <div className="hub-mobile-scrim" onClick={() => setMobileOpen(false)}><div className="hub-mobile-sheet" role="dialog" aria-modal="true" aria-label="เครื่องมือทั้งหมดของ Nugaom" onClick={event => event.stopPropagation()}><div className="hub-mobile-sheet-head"><strong>เครื่องมือทั้งหมด</strong><button onClick={() => setMobileOpen(false)} aria-label="ปิดเมนู">×</button></div><a className="hub-mobile-membership" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้าสู่ระบบด้วย LINE · ทดลอง 14 วัน' : `มุมสมาชิก · ${rights?.label}`}</span><span>↗</span></a><MarketNavigation current={marketId}/>{GROUPS.map((group, index) => <div key={group.id} className="hub-mobile-group"><strong>0{index + 1} / {group.label}</strong><div>{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'active' : ''} onClick={() => mobileNavigate(id)}><Icon size={18} />{label}</button>)}</div></div>)}</div></div>}</>;
+  </aside><nav className="hub-mobile-dock" aria-label="เมนูมือถือ"><button className={activeNav === 'overview' ? 'active' : ''} onClick={() => onNavigate('overview')}><LayoutDashboard size={20} /><span>วันนี้</span></button><button className={activeNav === 'scanner' ? 'active' : ''} onClick={() => onNavigate('scanner')}><Radar size={20} /><span>สแกน</span></button><button className={activeNav === 'results' ? 'active' : ''} onClick={() => onNavigate('results')}><ChartNoAxesCombined size={20} /><span>ผลงาน</span></button><a className="hub-mobile-line" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้า LINE' : 'บัญชี'}</span></a><button onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen}><Compass size={20} /><span>ทั้งหมด</span></button></nav>{mobileOpen && <div className="hub-mobile-scrim" onClick={() => setMobileOpen(false)}><div className="hub-mobile-sheet" role="dialog" aria-modal="true" aria-label="เครื่องมือทั้งหมดของ Nugaom" onClick={event => event.stopPropagation()}><div className="hub-mobile-sheet-head"><strong>เครื่องมือทั้งหมด</strong><button onClick={() => setMobileOpen(false)} aria-label="ปิดเมนู">×</button></div><a className="hub-mobile-membership" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้าสู่ระบบด้วย LINE · ทดลอง 14 วัน' : `มุมสมาชิก · ${rights?.label}`}</span><span>↗</span></a><MarketNavigation current={marketId}/>{GROUPS.map((group, index) => <div key={group.id} className="hub-mobile-group"><strong>0{index + 1} / {group.label}</strong><div>{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'active' : ''} onClick={() => mobileNavigate(id)}><Icon size={18} />{label}</button>)}</div></div>)}</div></div>}</>;
 }
 
 const PRESETS = [

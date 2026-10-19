@@ -228,7 +228,7 @@ export async function signalPerformance(market='all') {
   return {summary:summarizeRecordedTrades(trades),recentTrades:trades};
 }
 
-export async function signalResults({ market = 'all', status = 'all', scope = 'history', page = 1, pageSize = 7 } = {}) {
+export async function signalResults({ market = 'all', status = 'all', scope = 'history', page = 1, pageSize = 7, strategy = 'all' } = {}) {
   const performance = (await signalPerformance(market));
   const markets = new Set(['thai', 'dr', 'us', 'tfex', 'forex']);
   const statuses = new Set(['WAITING_FOR_ENTRY', 'OPEN', 'TARGET', 'STOP', 'EXIT', 'EXPIRED', 'REVIEW', 'AMBIGUOUS']);
@@ -236,6 +236,15 @@ export async function signalResults({ market = 'all', status = 'all', scope = 'h
   const params = [];
   if (markets.has(market)) { where.push('market=?'); params.push(market); }
   if (statuses.has(status)) { where.push('status=?'); params.push(status); }
+  if (strategy === 'orb') {
+    where.push("(market IN ('thai','dr') AND (plan_json LIKE '%OPENING_RANGE_BREAKOUT%' OR plan_json LIKE '%DR_ORB%' OR plan_json LIKE '%ORB%'))");
+  } else if (strategy === 'eod') {
+    where.push("(market = 'us' OR plan_json LIKE '%US_EOD%' OR plan_json LIKE '%EOD%')");
+  } else if (strategy === 'swing') {
+    where.push("(plan_json LIKE '%SWING%' OR plan_json LIKE '%PULLBACK%' OR plan_json LIKE '%BREAKOUT%')");
+  } else if (strategy === 'scalp') {
+    where.push("(plan_json LIKE '%DAYTRADE%' OR plan_json LIKE '%SCALP%' OR market IN ('forex','tfex'))");
+  }
   if (scope === 'closed') {
     if (performance.recentTrades.length) {
       where.push('id IN (SELECT value FROM json_each(?))');

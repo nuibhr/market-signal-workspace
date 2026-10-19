@@ -2,7 +2,7 @@
 export function customerPlan(plan) {
   if (!plan) return null;
   return Object.fromEntries(['side', 'entry', 'entryZone', 'stopLoss', 'tp1', 'tp2', 'signalTimeframe',
-    'signalScore', 'riskReward1', 'tradeAllowed'].filter(key => plan[key] !== undefined).map(key => [key, plan[key]]));
+    'signalScore', 'riskReward1', 'tradeAllowed', 'setupType', 'strategy'].filter(key => plan[key] !== undefined).map(key => [key, plan[key]]));
 }
 export function customerSignal(signal) {
   const row = Object.fromEntries(['id', 'symbol', 'market', 'status', 'sessionDay', 'publishedAt',

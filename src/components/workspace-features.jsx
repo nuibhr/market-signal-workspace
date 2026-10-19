@@ -60,7 +60,14 @@ export function AmbientDepth() {
   return <div ref={surface} className="ambient-depth scroll-depth" aria-hidden="true"><div className="parallax-layer parallax-far"><div className="ambient-depth-grid" /></div><div className="parallax-layer parallax-near"><div className="ambient-depth-orbit orbit-a" /><div className="ambient-depth-orbit orbit-b" /><div className="ambient-depth-point point-a" /><div className="ambient-depth-point point-b" /></div></div>;
 }
 
+const SCAN_STYLES = [
+  { id: 'swing', label: '🎯 Swing Trading (2-5 วัน)', frame: '4h', desc: 'คัดโครงสร้างยก High/Low ย่อแตะ EMA20/50 หรือเบรกแนวต้าน พร้อมเป้าหมาย 2R' },
+  { id: 'scalp', label: '⚡ Scalping / Daytrade (15m)', frame: '15m', desc: 'สแกน 15m ORB ทะลุกรอบ 30 นาทีแรก + เหนือ VWAP พร้อม Volume จบในวัน' },
+  { id: 'eod', label: '📊 EOD / Position (ปิดวัน)', frame: '1d', desc: 'สแกนแท่งปิดวัน New High 20 วัน + วอลุ่มสะสมผิดปกติ (RVOL > 1.2x)' },
+];
+
 export function MarketScanner({ asset, market, favorites, timeframe, onSelect }) {
+  const [scanStyle, setScanStyle] = useState('swing');
   const [category, setCategory] = useState(market.id);
   const [usKind,setUsKind]=useState(asset.sectionId==='US_ETFS'?'etf':'stock');
   const [query, setQuery] = useState('');
@@ -69,6 +76,10 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
   const [results, setResults] = useState({});
   const [expanded, setExpanded] = useState(asset.symbol);
   const [conditionFilter, setConditionFilter] = useState('');
+
+  const effectiveTimeframe = scanStyle === 'scalp' ? '15m' : scanStyle === 'swing' ? (category === 'us' ? '1d' : '4h') : '1d';
+  const currentStyleObj = SCAN_STYLES.find(s => s.id === scanStyle) || SCAN_STYLES[0];
+
   const candidates = useMemo(() => {
     const list = MARKET_ASSETS[category] ?? [];
     const matched = query.trim() ? list.filter(item => `${item.symbol} ${item.name}`.toLowerCase().includes(query.trim().toLowerCase())) : list;
@@ -77,20 +88,20 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
         && (category!=='us'||(item.sectionId==='US_ETFS'?'etf':'stock')===usKind)
         && (!query.trim() || `${item.symbol} ${item.name}`.toLowerCase().includes(query.trim().toLowerCase())));
     return preferred.filter((item, index, all) => all.findIndex(entry => entry.symbol === item.symbol) === index).slice(0, 6);
-  }, [asset, category, favorites, query,usKind]);
+  }, [asset, category, favorites, query, usKind]);
   const symbols = candidates.map(item => item.symbol).join(',');
   const conditions = useMemo(() => {
     const counts = new Map();
     for (const item of candidates) {
       const series = results[item.symbol];
-      const scan = series ? analyzeCandles(series.bars, series.quote?.price ?? null, timeframe, {timeframe}) : null;
+      const scan = series ? analyzeCandles(series.bars, series.quote?.price ?? null, effectiveTimeframe, {timeframe: effectiveTimeframe}) : null;
       for (const event of scan?.events ?? []) if (event.tone !== 'flat') counts.set(event.label, (counts.get(event.label) ?? 0) + 1);
     }
     return [...counts].sort((left, right) => right[1] - left[1]).slice(0, 5);
-  }, [candidates, results, timeframe]);
+  }, [candidates, results, effectiveTimeframe]);
   const visibleCandidates = conditionFilter ? candidates.filter(item => {
     const series = results[item.symbol];
-    return series && analyzeCandles(series.bars, series.quote?.price ?? null, timeframe, {timeframe})?.events.some(event => event.label === conditionFilter);
+    return series && analyzeCandles(series.bars, series.quote?.price ?? null, effectiveTimeframe, {timeframe: effectiveTimeframe})?.events.some(event => event.label === conditionFilter);
   }) : candidates;
 
   useEffect(() => {
@@ -99,23 +110,43 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
     const timeout = window.setTimeout(async () => {
       setState('loading');
       const loaded = await Promise.all(candidates.map(async item => {
-        try { return [item.symbol, await readSeries(item.symbol, timeframe, controller.signal,item.feed)]; }
+        try { return [item.symbol, await readSeries(item.symbol, effectiveTimeframe, controller.signal,item.feed)]; }
         catch { return [item.symbol, null]; }
       }));
       if (!controller.signal.aborted) { setResults(Object.fromEntries(loaded)); setState('ready'); }
     }, 250);
     return () => { controller.abort(); window.clearTimeout(timeout); };
-  }, [symbols, timeframe, revision, category]);
+  }, [symbols, effectiveTimeframe, revision, category]);
 
   return <div className="feature-body scanner-view">
-    <div className="feature-intro"><div><span className="feature-kicker">REGIME SCANNER / RULE ENGINE</span><p>อ่านแนวโน้มของสินทรัพย์ที่เลือกจากแท่ง {timeframe.toUpperCase()} · กราฟสำรองไม่ใช้ยืนยัน AutoPick</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ สแกนอีกครั้ง</button></div>
+    <div className="feature-intro"><div><span className="feature-kicker">REGIME SCANNER · MULTI-STRATEGY ENGINE</span><p>เลือกสไตล์การสแกนและอ่านแนวโน้มจากแท่ง {effectiveTimeframe.toUpperCase()} อัตโนมัติ</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ สแกนอีกครั้ง</button></div>
+
+    {/* Style Selector */}
+    <div className="ng-strategy-tabs-bar" role="tablist" style={{margin:'8px 0 12px 0'}}>
+      {SCAN_STYLES.map(style => (
+        <button
+          key={style.id}
+          type="button"
+          role="tab"
+          aria-selected={scanStyle === style.id}
+          className={`ng-strategy-tab-btn ${scanStyle === style.id ? 'is-active' : ''}`}
+          onClick={() => { setScanStyle(style.id); setConditionFilter(''); }}
+        >
+          <span>{style.label}</span>
+        </button>
+      ))}
+    </div>
+    <div className="ng-strategy-desc-banner" style={{marginBottom:'14px'}}>
+      <strong>{currentStyleObj.label}</strong>: {currentStyleObj.desc}
+    </div>
+
     <div className="feature-market-tabs">{market.id==='us'?<UsAssetTabs value={usKind} onChange={value=>{setUsKind(value);setQuery('');setExpanded('');setConditionFilter('');}}/>:MARKET_GROUPS.filter(group=>group.id===market.id).map(group => <button key={group.id} className={category === group.id ? 'selected' : ''} onClick={() => { setCategory(group.id); setQuery(''); setExpanded(''); setConditionFilter(''); }}>{group.label}</button>)}</div>
     <div className="scanner-controls"><label><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder={`ค้นหาใน ${MARKET_GROUPS.find(item => item.id === category)?.label ?? ''}`} /></label><span>{state === 'loading' ? 'กำลังสแกน…' : `ตรวจ ${candidates.length} symbols`}</span></div>
-    <StatusNote>สแกนสูงสุด 6 ตัวต่อครั้งจากรายการที่เห็น · {market.id==='us'&&usKind==='etf'?'ETF ใช้อ่านภาพเทคนิค ยังไม่รวมสัญญาณ AutoPick':'AutoPick ตรวจเฉพาะรายชื่อที่เปิดใช้งานตามรอบตลาด'} · ไม่มีอัตราชนะที่ยังไม่ได้วัด</StatusNote>
+    <StatusNote>สแกนสูงสุด 6 ตัวต่อครั้งจากรายการที่เห็น · กรอบเวลา {effectiveTimeframe.toUpperCase()} สำหรับสไตล์ {currentStyleObj.label} · <a href="/risk" style={{color:'#0284c7',fontWeight:600}}>คำนวณขนาดไม้ &amp; Stop Loss ↗</a></StatusNote>
     {conditions.length > 0 && <div className="scanner-condition-chips"><strong>เงื่อนไขที่พบ</strong><button className={!conditionFilter ? 'selected' : ''} onClick={() => setConditionFilter('')}>ทั้งหมด {candidates.length}</button>{conditions.map(([label, count]) => <button key={label} className={conditionFilter === label ? 'selected' : ''} onClick={() => setConditionFilter(label)}>{label} <b>{count}</b></button>)}</div>}
     <div className="scanner-table-wrap" aria-busy={state === 'loading'}><table className="scanner-table"><thead><tr><th>ASSET</th><th>STRUCTURE</th><th>RSI 14</th><th>PRICE</th><th>CONDITIONS</th><th aria-label="รายละเอียด" /></tr></thead><tbody>{state === 'loading' ? candidates.map(item => <tr className="scanner-skeleton-row" key={item.symbol}><td><strong>{item.symbol}</strong><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td><i className="ui-skeleton-line" /></td><td /></tr>) : visibleCandidates.map(item => {
       const series = results[item.symbol];
-      const evidence = series ? analyzeCandles(series.bars, series.quote?.price ?? null, timeframe, {timeframe}) : null;
+      const evidence = series ? analyzeCandles(series.bars, series.quote?.price ?? null, effectiveTimeframe, {timeframe: effectiveTimeframe}) : null;
       const trend = evidence?.trend === 'up' ? 'ขาขึ้น' : evidence?.trend === 'down' ? 'ขาลง' : evidence ? 'ออกข้าง' : 'รอฟีด';
       const open = expanded === item.symbol;
       return <FragmentRow key={item.symbol} item={item} series={series} evidence={evidence} trend={trend} open={open} loading={state === 'loading'} onExpand={() => setExpanded(open ? '' : item.symbol)} onSelect={() => onSelect(item)} />;
