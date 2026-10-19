@@ -263,6 +263,15 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
     return () => speakerRef.current?.stop();
   }, []);
 
+  // Sync activeTab when currentMarket prop changes
+  useEffect(() => {
+    if (currentMarket === 'thai') {
+      setActiveTab('thai-scanner');
+    } else if (currentMarket === 'dr') {
+      setActiveTab('dr-scanner');
+    }
+  }, [currentMarket]);
+
   // Live market clock
   useEffect(() => {
     const timer = setInterval(() => {
@@ -708,15 +717,28 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
 
                 <div className={styles.morningPickFooter}>
                   <span className="text-[10px] text-slate-400">R:R 1 : {p.riskReward.toFixed(2)}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleSpeakSingle(p)}
-                    className={styles.singleSpeakBtn}
-                    title="คลิกเพื่อฟังเสียงสัญญาณของตัวนี้"
-                  >
-                    <Volume2 size={12} />
-                    <span>ฟังตัวนี้</span>
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {onSelectSymbol && (
+                      <button
+                        type="button"
+                        onClick={() => onSelectSymbol(p)}
+                        className={styles.singleSpeakBtn}
+                        title="เปิดดูกราฟเทคนิค"
+                      >
+                        <ArrowUpRight size={12} />
+                        <span>กราฟ</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleSpeakSingle(p)}
+                      className={styles.singleSpeakBtn}
+                      title="คลิกเพื่อฟังเสียงสัญญาณของตัวนี้"
+                    >
+                      <Volume2 size={12} />
+                      <span>ฟังตัวนี้</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -1493,6 +1515,16 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                           </td>
                           <td>
                             <div className="flex items-center gap-1.5">
+                              {onSelectSymbol && (
+                                <button
+                                  type="button"
+                                  onClick={() => onSelectSymbol(pick)}
+                                  className={styles.singleSpeakBtn}
+                                  title="เปิดดูกราฟเทคนิค"
+                                >
+                                  <ArrowUpRight size={13} />
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => handleSpeakSingle({ symbol: pick.symbol, entry: pick.entryPrice, tp1: pick.tp1, sl: pick.sl, status: pick.status, market: pick.market })}

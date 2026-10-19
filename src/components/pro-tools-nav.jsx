@@ -65,6 +65,15 @@ export const PRO_TOOLS_CONFIG = [
     badge: 'Scanner',
     color: '#059669', // Emerald
   },
+  {
+    id: 'dr-strategy',
+    href: '/dr-strategy',
+    label: 'DR & หุ้นไทย Radar',
+    sublabel: 'Camarilla + Picks Ledger',
+    icon: Sparkles,
+    badge: 'Picks + Audio',
+    color: '#f59e0b', // Amber
+  },
 ];
 
 export default function ProToolsNav({ current = 'risk' }) {
@@ -178,7 +187,7 @@ export default function ProToolsNav({ current = 'risk' }) {
           <span className="ng-fab-pulse" />
           <Zap size={16} />
           <span className="ng-fab-text">สลับเครื่องมือสถาบัน</span>
-          <span className="ng-fab-count">5</span>
+          <span className="ng-fab-count">{PRO_TOOLS_CONFIG.length}</span>
         </button>
 
         {drawerOpen && (

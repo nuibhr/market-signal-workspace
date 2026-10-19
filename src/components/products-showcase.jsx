@@ -30,7 +30,7 @@ export const CORE_PRODUCTS = [
     badge: 'REALTIME CORE',
     accent: '#0284c7',
     icon: Scan,
-    targetUrl: '/daytrade',
+    targetUrl: '/dr-strategy',
     features: [
       'สแกนตลาดหุ้นไทยและ DR พร้อมกันในแผงควบคุมเดียว',
       'จัดอันดับด้วย AI Score, ATR Volatility และ RVOL',
@@ -84,7 +84,7 @@ export const CORE_PRODUCTS = [
     badge: 'THAI & DR ECOSYSTEM',
     accent: '#f59e0b',
     icon: Compass,
-    targetUrl: '/dr',
+    targetUrl: '/dr-strategy',
     features: [
       'สแกน DR80 ด้วยคะแนนเต็ม 16 แต้ม (Camarilla + EMA 25/50/75 + RSI + MACD)',
       'คำนวณ Indicative Fair Value และ Arbitrage Spread (Premium / Discount %)',
