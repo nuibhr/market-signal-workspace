@@ -72,11 +72,35 @@ export default function ConnectionPanel({ bridge }) {
         </div>
         <div>
           <dt>Server</dt>
-          <dd>{bridge.server ?? "ยังไม่ได้จับคู่"}</dd>
+          <dd>{bridge.server ? `${bridge.server} (จาก ${available.length} Server ที่อนุญาต)` : `ยังไม่ได้จับคู่ (รองรับ ${available.length} Server)`}</dd>
+        </div>
+        <div>
+          <dt>สถานะ Heartbeat</dt>
+          <dd>
+            {bridge.last_seen_at
+              ? `${new Date(bridge.last_seen_at).toLocaleTimeString("th-TH")} · ${bridge.status === "stale" ? "ดีเลย์ (>30s)" : "ปกติ (≤30s)"}`
+              : "ยังไม่มี Heartbeat"}
+          </dd>
         </div>
         <div>
           <dt>สินทรัพย์ที่ซิงก์</dt>
-          <dd>{bridge.snapshot?.instruments.length ?? "—"}</dd>
+          <dd>{bridge.snapshot?.instruments.length ? `${bridge.snapshot.instruments.length} รายการ` : "—"}</dd>
+        </div>
+        <div>
+          <dt>Quotes ที่รับข้อมูล</dt>
+          <dd>{Object.keys(bridge.quotes || {}).length ? `${Object.keys(bridge.quotes).length} คู่สกุลเงิน / สินทรัพย์` : "รอข้อมูล Quote"}</dd>
+        </div>
+        <div>
+          <dt>อายุการเชื่อมต่อ (Token)</dt>
+          <dd>
+            {bridge.expires_at
+              ? `หมดอายุ ${new Date(bridge.expires_at).toLocaleDateString("th-TH")}`
+              : "ยังไม่มี Token ที่ผูกไว้"}
+          </dd>
+        </div>
+        <div>
+          <dt>นโยบายแท่งราคา</dt>
+          <dd>Strict Closed Bars 15m / 1h · อ่านเฉพาะแท่งปิดสมบูรณ์</dd>
         </div>
         <div>
           <dt>ซิงก์ล่าสุด</dt>

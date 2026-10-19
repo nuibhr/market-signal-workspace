@@ -17,10 +17,25 @@ export function monitorRow(row,market,connection,now=Date.now()) {
     evaluationPrice:row.price,target,distance,touched,met,abnormal:!evaluationValid,
     condition:!evaluationValid?'ตรวจเงื่อนไขไม่ได้':met?plan?.status==='OPEN'?'เข้าเงื่อนไขแล้ว':'เข้าเงื่อนไขเทคนิค · รอแท่งเข้า':touched?'แตะระดับราคา · รอเงื่อนไขครบ':plan?'รอแท่งเข้า':'รอเงื่อนไข'};
 }
-export function filterRows(rows,{query='',group='all',status='all'}={}) {
+export function filterRows(rows,{query='',group='all',status='all',sortBy='default'}={}) {
   return rows.filter(r=>(group==='all'||r.market===group||group==='etf'&&r.kind==='etf_cfd')&&`${r.symbol} ${r.name}`.toLowerCase().includes(query.trim().toLowerCase())&&
     (status==='all'||status==='met'&&r.met||status==='abnormal'&&r.abnormal||status==='waiting'&&!r.met&&!r.abnormal||status==='near'&&r.near===true))
-    .sort((a,b)=>(a.met?0:a.near===true?1:2)-(b.met?0:b.near===true?1:2)||a.symbol.localeCompare(b.symbol)||a.market.localeCompare(b.market));
+    .sort((a,b)=>{
+      if(sortBy==='score_desc'){
+        const sa=a.ranking?.score??-1,sb=b.ranking?.score??-1;
+        if(sb!==sa)return sb-sa;
+      }else if(sortBy==='symbol_asc'){
+        const sc=a.symbol.localeCompare(b.symbol);
+        if(sc!==0)return sc;
+      }else if(sortBy==='change_desc'){
+        const ca=a.changePercent??a.change??-9999,cb=b.changePercent??b.change??-9999;
+        if(cb!==ca)return cb-ca;
+      }else if(sortBy==='atr_desc'){
+        const aa=a.atr??0,ab=b.atr??0;
+        if(ab!==aa)return ab-aa;
+      }
+      return (a.met?0:a.near===true?1:2)-(b.met?0:b.near===true?1:2)||a.symbol.localeCompare(b.symbol)||a.market.localeCompare(b.market);
+    });
 }
 // Project the existing forward records, including intermediate entry/exit fields.
 // No ledger writes, invented price-crossing conditions, or replay records.

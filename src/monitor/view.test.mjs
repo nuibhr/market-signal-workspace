@@ -37,6 +37,15 @@ test('short target comparison, no target and zero target distance remain explici
 test('group/name filters and stable priority do not fabricate a near threshold',()=>{
   const rows=[monitorRow(row,'us','connected',now),monitorRow({...row,symbol:'PTT',name:'PTT',side:'LONG'},'thai','server',now),monitorRow({...row,symbol:'GLD',name:'SPDR Gold',kind:'etf_cfd'},'us','connected',now)];
   assert.equal(filterRows(rows)[0].symbol,'PTT');assert.equal(filterRows(rows,{query:'netease'})[0].symbol,'NTES');assert.equal(filterRows(rows,{group:'etf'}).length,1);assert.equal(filterRows(rows,{status:'near'}).length,0);
+  const sortRows=[
+    {symbol:'AAPL',name:'Apple',market:'us',met:false,ranking:{score:80},changePercent:2.5,atr:1.2},
+    {symbol:'MSFT',name:'Microsoft',market:'us',met:false,ranking:{score:95},changePercent:1.1,atr:2.4},
+    {symbol:'AMZN',name:'Amazon',market:'us',met:false,ranking:{score:60},changePercent:3.8,atr:0.8},
+  ];
+  assert.equal(filterRows(sortRows,{sortBy:'score_desc'})[0].symbol,'MSFT');
+  assert.equal(filterRows(sortRows,{sortBy:'symbol_asc'})[0].symbol,'AAPL');
+  assert.equal(filterRows(sortRows,{sortBy:'change_desc'})[0].symbol,'AMZN');
+  assert.equal(filterRows(sortRows,{sortBy:'atr_desc'})[0].symbol,'MSFT');
 });
 test('projection preserves entry and exit between polls; repeated input stays immutable',()=>{
   const t={...trade(),status:'CLOSED',exitTime:now/1000+900,exit:110,reason:'TP'};const before=structuredClone(t),e=forwardEvents([t]);assert.deepEqual(t,before);assert.deepEqual(e.map(e=>e.type),['PICK_READY','ENTRY','TARGET']);assert.equal(new Set(e.map(e=>e.id)).size,3);assert.equal(e[1].price,100);

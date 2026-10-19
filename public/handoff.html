@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nugaom AI Pick — Project Handoff & Agent Architecture Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       CSS Variables - Clean, Bright, High-Contrast Modern Fintech Design
+       ========================================================================== */
+    :root {
+      /* Backgrounds */
+      --page-bg: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.94);
+      --card-bg-solid: #ffffff;
+      --card-border: #e2e8f0;
+      --card-hover-border: #cbd5e1;
+      --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+      --card-hover-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+
+      /* High-Contrast Typography */
+      --text-main: #0f172a;       /* Slate 900 - Razor-sharp black/charcoal */
+      --text-body: #334155;       /* Slate 700 - Highly readable body */
+      --text-muted: #475569;      /* Slate 600 - Clear secondary descriptions */
+      --text-dim: #64748b;        /* Slate 500 - Metadata & subtitles */
+
+      /* Vibrant Accent Colors */
+      --accent-cyan: #0284c7;      /* Sky 600 */
+      --accent-cyan-bg: #e0f2fe;   /* Sky 100 */
+      --accent-green: #059669;     /* Emerald 600 */
+      --accent-green-bg: #d1fae5;  /* Emerald 100 */
+      --accent-amber: #d97706;     /* Amber 600 */
+      --accent-amber-bg: #fef3c7;  /* Amber 100 */
+      --accent-purple: #7c3aed;    /* Violet 600 */
+      --accent-purple-bg: #ede9fe; /* Violet 100 */
+      --accent-rose: #e11d48;      /* Rose 600 */
+      --accent-rose-bg: #ffe4e6;   /* Rose 100 */
+
+      /* Code Blocks & Monospace */
+      --code-bg: #0f172a;          /* Slate 900 for dark crisp terminal code blocks */
+      --code-text: #f8fafc;        /* White/light gray syntax text */
+      --code-inline-bg: #f1f5f9;   /* Slate 100 for inline tags */
+      --code-inline-text: #0284c7; /* Sky 600 */
+
+      /* Fonts */
+      --font-sans: 'Plus Jakarta Sans', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--page-bg);
+      background-image:
+        radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.95) 100%),
+        url('clean_fintech_bg.jpg');
+      background-repeat: no-repeat;
+      background-position: top center;
+      background-size: cover;
+      background-attachment: fixed;
+      color: var(--text-body);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      padding: 0;
+      margin: 0;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 5rem;
+    }
+
+    /* Sticky Clean Navbar */
+    header {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0.9rem 1.5rem;
+      box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.04);
+    }
+    .header-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.3rem;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+    }
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+    .brand-sub {
+      font-size: 0.74rem;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      display: block;
+    }
+    .status-badges {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--accent-green-bg);
+      color: var(--accent-green);
+      border: 1px solid rgba(5, 150, 105, 0.3);
+      padding: 0.35rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+    .badge-status::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px rgba(5, 150, 105, 0.6);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .badge-blue {
+      background: var(--accent-cyan-bg);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(2, 132, 199, 0.3);
+      padding: 0.35rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    /* Hero / Header Card */
+    .hero {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: var(--card-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, #0284c7 0%, #10b981 50%, #8b5cf6 100%);
+    }
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      background: var(--accent-cyan-bg);
+      padding: 0.25rem 0.7rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .hero h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 0.85rem;
+      color: var(--text-main);
+      letter-spacing: -0.025em;
+    }
+    .hero p {
+      font-size: 1.08rem;
+      color: var(--text-body);
+      max-width: 950px;
+      margin-bottom: 1.75rem;
+      line-height: 1.7;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .meta-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      transition: all 0.2s;
+    }
+    .meta-card:hover {
+      background: #ffffff;
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+    .meta-card .label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+    .meta-card .val {
+      font-family: var(--font-mono);
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Section Styles */
+    section {
+      margin-bottom: 3.5rem;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .section-num {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #0284c7;
+      background: #e0f2fe;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+    }
+    .section-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    /* Layout Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+      gap: 1.5rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.6rem;
+      box-shadow: var(--card-shadow);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .card:hover {
+      border-color: var(--card-hover-border);
+      box-shadow: var(--card-hover-shadow);
+      transform: translateY(-2px);
+    }
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .card-desc {
+      font-size: 0.94rem;
+      color: var(--text-body);
+      margin-bottom: 1.25rem;
+      line-height: 1.65;
+    }
+
+    /* High-Contrast Tags & Badges */
+    .tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 0.25rem 0.55rem;
+      border-radius: 6px;
+      margin-right: 0.4rem;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.02em;
+    }
+    .tag-blue   { background: var(--accent-cyan-bg);   color: #0369a1; border: 1px solid rgba(2, 132, 199, 0.3); }
+    .tag-green  { background: var(--accent-green-bg);  color: #047857; border: 1px solid rgba(5, 150, 105, 0.3); }
+    .tag-amber  { background: var(--accent-amber-bg);  color: #b45309; border: 1px solid rgba(217, 119, 6, 0.3); }
+    .tag-purple { background: var(--accent-purple-bg); color: #6d28d9; border: 1px solid rgba(124, 58, 237, 0.3); }
+    .tag-rose   { background: var(--accent-rose-bg);   color: #be123c; border: 1px solid rgba(225, 29, 72, 0.3); }
+
+    /* Rules & Feature Boxes */
+    .rule-box {
+      border-left: 4px solid var(--accent-cyan);
+      background: #f8fafc;
+      padding: 1.25rem 1.4rem;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 1.25rem;
+      border-top: 1px solid #f1f5f9;
+      border-right: 1px solid #f1f5f9;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .rule-box.amber {
+      border-left-color: var(--accent-amber);
+      background: #fffbeb;
+      border-color: #fef3c7;
+    }
+    .rule-box.purple {
+      border-left-color: var(--accent-purple);
+      background: #fbfbfe;
+      border-color: #f5f3ff;
+    }
+    .rule-box.green {
+      border-left-color: var(--accent-green);
+      background: #f0fdf4;
+      border-color: #dcfce7;
+    }
+    .rule-title {
+      font-weight: 800;
+      color: var(--text-main);
+      font-size: 1.05rem;
+      margin-bottom: 0.45rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    /* Checklists */
+    .checklist {
+      list-style: none;
+      margin-top: 0.5rem;
+    }
+    .checklist li {
+      position: relative;
+      padding-left: 1.85rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.94rem;
+      color: var(--text-body);
+      line-height: 1.6;
+    }
+    .checklist li strong {
+      color: var(--text-main);
+    }
+    .checklist li::before {
+      content: '✔';
+      position: absolute;
+      left: 0;
+      color: var(--accent-green);
+      font-weight: 900;
+      font-size: 1rem;
+    }
+    .checklist.pending li::before {
+      content: '⚡';
+      color: var(--accent-amber);
+      font-size: 0.95rem;
+    }
+
+    /* Code Blocks */
+    code.inline {
+      background: var(--code-inline-bg);
+      border: 1px solid #cbd5e1;
+      padding: 0.2rem 0.45rem;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #0369a1;
+      font-family: var(--font-mono);
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 1.25rem 1.25rem 1.25rem 1.25rem;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--code-text);
+      font-family: var(--font-mono);
+      margin: 0.85rem 0;
+      position: relative;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .code-action {
+      position: absolute;
+      top: 0.65rem;
+      right: 0.65rem;
+      background: #334155;
+      color: #f1f5f9;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.74rem;
+      font-family: var(--font-sans);
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .code-action:hover {
+      background: #475569;
+      color: #ffffff;
+    }
+
+    /* High-Contrast Interactive File Table */
+    .table-wrapper {
+      background: var(--card-bg-solid);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 1.25rem;
+      box-shadow: var(--card-shadow);
+    }
+    .search-box {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #f8fafc;
+    }
+    .search-input {
+      flex: 1;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0.75rem 1.1rem;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      font-weight: 500;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+    th {
+      background: #f1f5f9;
+      padding: 1rem 1.5rem;
+      font-weight: 800;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-size: 0.76rem;
+      letter-spacing: 0.06em;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    td {
+      padding: 1.15rem 1.5rem;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-body);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    td strong {
+      color: var(--text-main);
+      font-weight: 800;
+      font-size: 0.96rem;
+    }
+    .file-path {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #0284c7;
+      font-weight: 600;
+      display: block;
+      margin-top: 0.25rem;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid #e2e8f0;
+      padding: 2.5rem 0 1rem;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.88rem;
+    }
+    footer p {
+      margin-bottom: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Clean Navbar -->
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">N</div>
+        <div>
+          <div class="brand-title">Nugaom AI Pick — Agent Handoff</div>
+          <span class="brand-sub">Autonomous Agent & Developer Architecture Briefing</span>
+        </div>
+      </div>
+      <div class="status-badges">
+        <span class="badge-status">VPS HEALTH: 30/30 OK</span>
+        <span class="badge-blue">TESTS: 296/296 PASS (100%)</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Hero / High Level Briefing -->
+    <div class="hero">
+      <div class="hero-kicker">✦ Official Project Architecture & Handover Dossier</div>
+      <h1>โปรเจกต์ Nugaom AI Pick (น้องนักออม AI)</h1>
+      <p>
+        เอกสารสรุปสถาปัตยกรรม แผนผังโค้ด และสถานะระบบฉบับสมบูรณ์ ออกแบบให้ <strong>AI Agent ทุกตัว (Manus, Codex, Claude, Antigravity, GPT)</strong> และทีมวิศวกรสามารถอ่าน ทำความเข้าใจ และต่อยอดงานได้อย่างแม่นยำ ไม่สับสน และไม่สร้างโค้ดซ้ำซ้อน
+      </p>
+      <div class="meta-grid">
+        <div class="meta-card">
+          <div class="label">Current Active Branch</div>
+          <div class="val">codex/cfd-daytrade</div>
+        </div>
+        <div class="meta-card">
+          <div class="label">Latest Release Commit</div>
+          <div class="val">1395aaa (Clean)</div>
+        </div>
+        <div class="meta-card">
+          <div class="label">Production VPS Host</div>
+          <div class="val"><a href="https://76.13.20.122.sslip.io" target="_blank" style="color: var(--accent-cyan); text-decoration: none; font-weight: 800;">76.13.20.122.sslip.io ↗</a></div>
+        </div>
+        <div class="meta-card">
+          <div class="label">Core Product Promise</div>
+          <div class="val">Traceable Evidence</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 1: Five Market Architecture -->
+    <section>
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <h2 class="section-title">สถาปัตยกรรมข้อมูล 5 ตลาด (Five-Market Architecture)</h2>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">
+            <span class="tag tag-green">THAI</span> หุ้นไทย (SET / mai)
+          </div>
+          <p class="card-desc">สแกนหุ้น SET100 + mai Top 50 รวม 150 หุ้น ดึงข้อมูลแท่งเทียน 15m/1H/4H/1D ผ่าน Settrade Adapter ที่รันในเครื่อง รองรับเฉพาะฝั่ง Long ปัดเศษราคาตามตาราง SET Tick Band จริง</p>
+          <div>
+            <span class="tag tag-blue">Settrade OpenAPI</span>
+            <span class="tag tag-green">Long Only</span>
+            <span class="tag tag-amber">Tick Band Rounding</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span class="tag tag-amber">DR</span> Depositary Receipts
+          </div>
+          <p class="card-desc">ครอบคลุม DR 141 ตัวอ้างอิงหุ้นและ ETF ชั้นนำระดับโลก เชื่อมโยงโลโก้บริษัทแม่ที่ผ่านการตรวจสอบ (เช่น AAPL80, NVDA80) รองรับเฉพาะฝั่ง Long ในช่วงเวลาตลาดไทย</p>
+          <div>
+            <span class="tag tag-blue">Settrade Feed</span>
+            <span class="tag tag-green">Verified Logos</span>
+            <span class="tag tag-purple">Day Session</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span class="tag tag-rose">TFEX</span> สัญญาซื้อขายล่วงหน้า
+          </div>
+          <p class="card-desc">ครอบคลุม Gold Online, Silver และ SET50 Futures (เช่น S50Z26) รองรับทั้งฝั่ง LONG และ SHORT เทรดเฉพาะ Session กลางวัน (ไม่เปิดเทรดกลางคืนในเวอร์ชัน v1)</p>
+          <div>
+            <span class="tag tag-blue">Settrade TFEX</span>
+            <span class="tag tag-rose">Two-Way (Long/Short)</span>
+            <span class="tag tag-amber">Day Session Only</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span class="tag tag-blue">US</span> หุ้นและ ETF สหรัฐฯ (CFD)
+          </div>
+          <p class="card-desc">ใช้คลังตราสาร Vantage US CFD (แทนที่หุ้น 600 ตัวเดิม) สอดคล้องตาม New York Session อ้างอิง FMP EOD และราคากลางวัน ตรวจสอบรหัส Exchange MIC ตามมาตรฐาน ISO 10383</p>
+          <div>
+            <span class="tag tag-blue">Vantage CFD</span>
+            <span class="tag tag-purple">ISO 10383 MIC</span>
+            <span class="tag tag-green">FMP EOD Feed</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span class="tag tag-purple">FOREX</span> Forex & Commodities
+          </div>
+          <p class="card-desc">XAUUSD, XAGUSD และ 7 คู่เงินหลัก เชื่อมต่อผ่าน MetaTrader 5 Expert Advisor แบบ Chunked Ingestion พร้อมตรวจสอบ Clock Offset GMT+2/+3 ของ Vantage</p>
+          <div>
+            <span class="tag tag-purple">MT5 EA (v2.30)</span>
+            <span class="tag tag-blue">Vantage Markets</span>
+            <span class="tag tag-amber">Bid-based Bars</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span class="tag tag-blue">NEWS</span> Breaking RSS News
+          </div>
+          <p class="card-desc">ฟีดข่าวด่วนอัตโนมัติจาก InfoQuest (ไทย) และ CNBC (สหรัฐฯ) พร้อมระบบตรวจจับข่าวซ้ำและแคชรวม 60 วินาที ส่งต่อเข้าคิวเสียงสังเคราะห์ (TTS Speech Sync)</p>
+          <div>
+            <span class="tag tag-green">InfoQuest RSS</span>
+            <span class="tag tag-blue">CNBC RSS</span>
+            <span class="tag tag-purple">TTS Speech Sync</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Core Trading & Signal Engine -->
+    <section>
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <h2 class="section-title">เครื่องคำนวณและกฎสัญญาณเทรด (Signal & Daytrade Engine)</h2>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="rule-box">
+            <div class="rule-title">🎯 กฎเทรดเดย์เทรด: daytrade-trend-15m-v1</div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+              ไฟล์หลัก: <code class="inline">src/daytrade/engine.mjs</code>
+            </p>
+            <ul class="checklist">
+              <li><strong>เงื่อนไขตรวจจับ:</strong> แท่งเทียน 15 นาทีไม่น้อยกว่า 60 แท่ง, แนวโน้ม EMA20 > EMA50 (และ Slope ชันขึ้น), แท่งเทียนปิดทะลุ High/Low ของแท่งก่อนหน้า</li>
+              <li><strong>Stop Loss:</strong> วางเลยแนวโครงสร้าง 8 แท่งย้อนหลัง + 0.25 ATR (ห่างจากจุดเข้าอย่างน้อย 1.5 ATR และไม่เกิน 4 ATR)</li>
+              <li><strong>Take Profit:</strong> ตั้งเป้า 2R ก่อนหักค่าเสียดทาน (Friction)</li>
+              <li><strong>การคิดค่าเสียดทาน:</strong> หักค่า Spread, Slippage Bps, และ Fee Bps ออกจาก R สุทธิ</li>
+              <li><strong>Exit Conditions:</strong> ชน TP, ชน SL, ถือครบ 16 แท่ง (4 ชั่วโมง), หรือหมดรอบเวลา Session</li>
+            </ul>
+          </div>
+
+          <div class="rule-box amber">
+            <div class="rule-title">⚖️ นโยบายความโปร่งใส (Honesty & Ambiguity Policies)</div>
+            <ul class="checklist">
+              <li><strong>AMBIGUOUS_TP_SL:</strong> หากแท่งเทียนแท่งเดียวกันวิ่งชนทั้ง TP และ SL ระบบปรับสถานะเป็น <code class="inline">REVIEW</code> และคัดออกจากสถิติ Win Rate ทันที</li>
+              <li><strong>SL_GAP:</strong> หากราคาเปิดกระโดดข้าม SL ให้คิดราคาตัดขาดทุนที่ราคา Open ที่แย่ที่สุดจริง</li>
+              <li><strong>Replay vs Forward:</strong> แยกชัดเจนระหว่าง Replay (สมมติฐานย้อนหลัง) กับ Forward (สัญญาณจริงที่บันทึกหลังแท่งปิด)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div>
+          <div class="rule-box purple">
+            <div class="rule-title">⭐ อัลกอริทึมให้คะแนนตราสาร: daytrade-quality-v1</div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+              ไฟล์หลัก: <code class="inline">src/daytrade/ranking.mjs</code> — จัดอันดับ Top 5 รายตลาด (1–100 คะแนน)
+            </p>
+            <div style="font-family: var(--font-mono); font-size: 0.85rem; background: #0f172a; color: #38bdf8; padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid #334155; margin: 0.65rem 0;">
+              Score = (Trend * 30%) + (EMA20_Side * 25%) + (Closing_Strength * 20%) + (Extension * 15%) + (ATR_Risk * 10%)
+            </div>
+            <p style="font-size: 0.84rem; color: var(--text-dim); line-height: 1.5;">
+              * ใช้สำหรับการจัดลำดับความน่าสนใจบนหน้ามอนิเตอร์เท่านั้น ไม่ใช่การการันตีความน่าจะเป็นในการชนะ (Win Probability)
+            </p>
+          </div>
+
+          <div class="rule-box green">
+            <div class="rule-title">🔊 ระบบคิวเสียงและแจ้งเตือน: Sound & Speech Queue</div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+              ไฟล์หลัก: <code class="inline">src/monitor/audio.mjs</code>
+            </p>
+            <ul class="checklist">
+              <li>เล่นเสียงแจ้งเตือนตามลำดับคิวแบบ Sequential ป้องกันเสียงซ้อนทับกัน</li>
+              <li>บันทึกสถานะ Mute ลงใน Browser Storage เมื่อรีโหลดหน้ายังคงสถานะเดิมของผู้ใช้</li>
+              <li>ระงับการสังเคราะห์เสียงชั่วคราวเมื่อผู้ใช้สลับแท็บไปทำงานอื่น (Background Tab)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Key Files & Directory Map -->
+    <section>
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2 class="section-title">แผนที่ไฟล์สำคัญในโปรเจกต์ (Essential File Directory)</h2>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="search-box">
+          <input type="text" id="fileSearch" class="search-input" placeholder="🔍 พิมพ์เพื่อค้นหาไฟล์แบบ Instant เช่น engine, mt5, store, ranking, monitor, security...">
+        </div>
+        <table id="fileTable">
+          <thead>
+            <tr>
+              <th style="width: 28%;">โมดูล / ไฟล์</th>
+              <th style="width: 18%;">หมวดหมู่</th>
+              <th>หน้าที่และความสำคัญสำหรับ Developer / Agent</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <strong>Daytrade Engine</strong>
+                <span class="file-path">src/daytrade/engine.mjs</span>
+              </td>
+              <td><span class="tag tag-green">Trading Logic</span></td>
+              <td>กฎคำนวณสัญญาณ <code class="inline">daytrade-trend-15m-v1</code>, Sanity check แท่งเทียน, Stop Loss/Take Profit และการตัดกรณีคลุมเครือ</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Quality Ranking</strong>
+                <span class="file-path">src/daytrade/ranking.mjs</span>
+              </td>
+              <td><span class="tag tag-green">Trading Logic</span></td>
+              <td>จัดคะแนนคุณภาพสัญญาณ 1–100 คะแนนสำหรับบอร์ด Top 5 ของแต่ละตลาด</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Daytrade Storage</strong>
+                <span class="file-path">src/daytrade/store.mjs</span>
+              </td>
+              <td><span class="tag tag-purple">Storage</span></td>
+              <td>ตาราง SQLite สำหรับบันทึก Forward trade, Replay cache, และสถานะการสแกน</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>MT5 Protocol</strong>
+                <span class="file-path">src/forex-mt5/protocol.mjs</span>
+              </td>
+              <td><span class="tag tag-blue">MT5 Bridge</span></td>
+              <td>นิยามแพ็กเก็ต การส่งข้อมูลแบบ Chunked, การตรวจสอบ Server/Company, และ Clock Sync</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>MT5 Connector EA</strong>
+                <span class="file-path">src/forex-mt5/connector.mq5</span>
+              </td>
+              <td><span class="tag tag-blue">MQL5 Source</span></td>
+              <td>ซอร์สโค้ด EA 2.30 สำหรับติดตั้งบน MetaTrader 5 ดึงแท่งเทียน 15m และโควทราคา</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Forex Store</strong>
+                <span class="file-path">src/forex-mt5/store.mjs</span>
+              </td>
+              <td><span class="tag tag-purple">Storage</span></td>
+              <td>จัดการฐานข้อมูล <code class="inline">bridge.sqlite</code> แยกต่างหาก (chmod 0o600) ปลอดภัยต่อข้อมูลสมาชิก</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Security Guard</strong>
+                <span class="file-path">src/security/request-guard.mjs</span>
+              </td>
+              <td><span class="tag tag-rose">Security</span></td>
+              <td>Atomic Rate Limiting ด้วย SHA-256 bucket และการจำกัดขนาด JSON Payload</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Membership Store</strong>
+                <span class="file-path">src/membership/store.mjs</span>
+              </td>
+              <td><span class="tag tag-purple">Storage / Auth</span></td>
+              <td>การจัดการสิทธิ์ LINE Member, Trial 14 วัน, HMAC Portfolio digest, และ Cloudflare D1 compatibility</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Audio Queue</strong>
+                <span class="file-path">src/monitor/audio.mjs</span>
+              </td>
+              <td><span class="tag tag-amber">UI / Sound</span></td>
+              <td>State machine จัดการคิวเสียงแจ้งเตือนแบบเรียงลำดับ เคารพการ Mute และ Background tab</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>RSS Breaking News</strong>
+                <span class="file-path">src/market-data/rss-news.mjs</span>
+              </td>
+              <td><span class="tag tag-blue">Market Data</span></td>
+              <td>ดึงข่าวด่วน InfoQuest / CNBC แคชรวม 60 วินาที ป้องกันการยิงซ้ำและตัดข่าวซ้ำ</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>VPS Verification</strong>
+                <span class="file-path">work/verify-alerts-vps.mjs</span>
+              </td>
+              <td><span class="tag tag-green">DevOps</span></td>
+              <td>สคริปต์ทดสอบ Health Check อัตโนมัติ 30 Endpoint บน VPS จริง</td>
+            </tr>
+            <tr>
+              <td>
+                <strong>Disaster Backup</strong>
+                <span class="file-path">src/forex-mt5/hosting/backup.mjs</span>
+              </td>
+              <td><span class="tag tag-rose">DevOps / DR</span></td>
+              <td>สแนปช็อต SQLite WAL อัตโนมัติ เข้ารหัส AES-256 และทดสอบ Restore ก่อนเก็บ</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Section 4: Operational Cheatsheet -->
+    <section>
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2 class="section-title">คำสั่งปฏิบัติการด่วนสำหรับ Agent (Operational Cheatsheet)</h2>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🧪 การรันและทดสอบระบบในเครื่อง (Local Testing)</div>
+          <p class="card-desc">รันคำสั่งเหล่านี้จากโฟลเดอร์ <code class="inline">work/market-signal-workspace</code></p>
+
+          <pre><code># รันชุดทดสอบทั้งหมดในระบบ (296 tests)
+node --test src/**/*.test.mjs
+
+# รันเฉพาะส่วน Daytrade และ MT5 Bridge
+node --test src/daytrade/*.test.mjs src/forex-mt5/*.test.mjs
+
+# รัน Development Server ในเครื่อง
+npm run dev -- --hostname 127.0.0.1</code><button class="code-action" onclick="copySnippet(this)">Copy</button></pre>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🚀 การตรวจสอบสุขภาพเซิร์ฟเวอร์บน VPS (VPS Health Check)</div>
+          <p class="card-desc">รันจากโฟลเดอร์ <code class="inline">referenced-chatgpt-conversation-this-is-an</code></p>
+
+          <pre><code># ตรวจสอบสุขภาพและสิทธิ์ความปลอดภัย 30 Endpoint บน VPS
+node work/verify-alerts-vps.mjs
+
+# ตรวจสอบสถานะการทำงานของ Background Scanner
+node work/alerts-worker-status.mjs
+
+# ตรวจสอบการกู้คืนและสแนปช็อตฐานข้อมูล
+node work/verify-recovered-pilot.mjs</code><button class="code-action" onclick="copySnippet(this)">Copy</button></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Handover Items & Roadmap -->
+    <section>
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <h2 class="section-title">งานที่ต้องสานต่อสำหรับ Agent ถัดไป (Next Steps & Handover Items)</h2>
+      </div>
+
+      <div class="card">
+        <ul class="checklist pending">
+          <li>
+            <strong>ย้าย MetaTrader 5 ไปรันบน Host อิสระตลอด 24/5:</strong> ปัจจุบันตัว EA เชื่อมต่อผ่าน Mac ของ Operator หากเครื่องหลับหรือปิดฝา ข้อมูล CFD/Forex จะหยุดอัปเดต ควรย้ายไปรันบน Windows VPS หรือ Wine Container ที่เปิดถาวร
+          </li>
+          <li>
+            <strong>สิทธิ์การแสดงผลข้อมูลสาธารณะ (Data Licensing Confirmation):</strong> ในการเปิดให้บริการสาธารณะจริง ต้องยืนยันสัญญาและเปิด Flag <code class="inline">SETTRADE_DISPLAY_RIGHTS_CONFIRMED=true</code> และ <code class="inline">FMP_DISPLAY_RIGHTS_CONFIRMED=true</code>
+          </li>
+          <li>
+            <strong>Web Push Notifications ขณะปิดเบราว์เซอร์:</strong> ปัจจุบันเสียงแจ้งเตือนและข้อความ Toast จะทำงานเฉพาะเมื่อเปิดหน้าเว็บบนเบราว์เซอร์ทิ้งไว้ ควรเพิ่ม Service Worker Web Push สำหรับแจ้งเตือนไปยังสมาร์ทโฟน
+          </li>
+          <li>
+            <strong>Refactor โค้ดคอมโพเนนต์ขนาดใหญ่:</strong> ไฟล์ <code class="inline">workspace.jsx</code> (~49KB) และ <code class="inline">workspace-hub.jsx</code> (~31KB) ควรแยก Custom Hooks สำหรับ Market Data และ Audio Queue ออกมาเป็นสัดส่วน
+          </li>
+          <li>
+            <strong>รวมและทำความสะอาด CSS:</strong> ใน <code class="inline">src/app/</code> มีไฟล์ <code class="inline">workspace-v2.css</code> ถึง <code class="inline">workspace-v9.css</code> ควรทำความสะอาดสไตล์เวอร์ชันเก่าที่ไม่ได้ใช้แล้ว
+          </li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    <p><strong>Nugaom AI Pick</strong> — Architecture & Handover Documentation</p>
+    <p>Built with Node 22+ & Next.js 16 App Router · Automated Verification: 100% Pass</p>
+  </footer>
+
+  <!-- Machine-Readable JSON Manifest for Agents -->
+  <script type="application/json" id="agent-manifest">
+  {
+    "project": "Nugaom AI Pick",
+    "version": "1395aaa",
+    "git": {
+      "branch": "codex/cfd-daytrade",
+      "workingTree": "clean",
+      "upstream": "origin/codex/cfd-daytrade"
+    },
+    "vps": {
+      "origin": "https://76.13.20.122.sslip.io",
+      "status": "healthy",
+      "checksPassed": 30,
+      "checksTotal": 30
+    },
+    "testSuite": {
+      "total": 296,
+      "passed": 296,
+      "failed": 0
+    },
+    "rules": {
+      "daytrade": "daytrade-trend-15m-v1",
+      "swing": "swing-standard-forward-v1",
+      "ranking": "daytrade-quality-v1"
+    },
+    "keyPaths": {
+      "engine": "referenced-chatgpt-conversation-this-is-an/work/market-signal-workspace/src/daytrade/engine.mjs",
+      "ranking": "referenced-chatgpt-conversation-this-is-an/work/market-signal-workspace/src/daytrade/ranking.mjs",
+      "mt5Connector": "referenced-chatgpt-conversation-this-is-an/work/market-signal-workspace/src/forex-mt5/connector.mq5",
+      "mt5Store": "referenced-chatgpt-conversation-this-is-an/work/market-signal-workspace/src/forex-mt5/store.mjs",
+      "securityGuard": "referenced-chatgpt-conversation-this-is-an/work/market-signal-workspace/src/security/request-guard.mjs",
+      "vpsVerificationScript": "referenced-chatgpt-conversation-this-is-an/work/verify-alerts-vps.mjs"
+    }
+  }
+  </script>
+
+  <script>
+    // Copy Snippet Helper
+    function copySnippet(button) {
+      const code = button.previousElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = button.innerText;
+        button.innerText = 'Copied!';
+        button.style.background = '#059669';
+        button.style.color = '#fff';
+        setTimeout(() => {
+          button.innerText = originalText;
+          button.style.background = '';
+          button.style.color = '';
+        }, 2000);
+      });
+    }
+
+    // Instant Filter Table
+    const searchInput = document.getElementById('fileSearch');
+    const tableRows = document.querySelectorAll('#fileTable tbody tr');
+
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      tableRows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

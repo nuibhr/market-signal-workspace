@@ -26,7 +26,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
   const priorMet=useRef(null);
   const [view,setView]=useState('mvp'),[activeSection,setActiveSection]=useState('picks');
   const navigate=section=>{setView('mvp');setActiveSection(section);requestAnimationFrame(()=>{const target=document.getElementById(`${id}-${section}`);target?.scrollIntoView({block:'start'});target?.focus({preventScroll:true});});};
-  const [data,setData]=useState(null),[error,setError]=useState(null),[symbol,setSymbol]=useState(initialSymbol),[query,setQuery]=useState(''),[filter,setFilter]=useState('all'),[page,setPage]=useState(1),[revision,setRevision]=useState(0),[tab,setTab]=useState('forward');
+  const [data,setData]=useState(null),[error,setError]=useState(null),[symbol,setSymbol]=useState(initialSymbol),[query,setQuery]=useState(''),[filter,setFilter]=useState('all'),[sortBy,setSortBy]=useState('default'),[page,setPage]=useState(1),[revision,setRevision]=useState(0),[tab,setTab]=useState('forward');
   useEffect(()=>{setSymbol(initialSymbol);setSelectedMarket(market);setGroup(market);setData(null);setPage(1);},[market,initialSymbol]);
   useEffect(()=>{
     let disposed=false,timer,controller;
@@ -48,7 +48,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
   const allRows=Object.entries(source).flatMap(([id,d])=>d.universe.map(r=>monitorRow(r,id,d.connection,monitor?.now||Date.now())));
   const picks=topOpportunities(allRows,market);
   useEffect(()=>{if(!symbol&&picks[0])setSymbol(picks[0].symbol);},[symbol,picks[0]?.symbol]);
-  const rows=filterRows(allRows,{query,group,status:filter});
+  const rows=filterRows(allRows,{query,group,status:filter,sortBy});
   const relevant=filterRows(allRows,{group});
   const pageCount=Math.max(1,Math.ceil(rows.length/25)),currentPage=Math.min(page,pageCount);
   useEffect(()=>{
@@ -90,12 +90,17 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
       {Object.keys(monitor?.errors||{}).filter(k=>!k.startsWith('swing-')).length>0&&<p className={styles.caption} role="status">บางตลาดโหลดไม่ได้ รายการตลาดนั้นจะไม่ใช้ข้อมูลค้างแสดงเงื่อนไข · ลองอัปเดตอีกครั้ง</p>}
       {['us','forex'].includes(data.market)&&data.connection!=='connected'&&<div className={styles.notice}>MT5 {data.connection==='required'?'ยังไม่เชื่อมต่อ':data.connection==='expired'?'กุญแจหมดอายุ':'ไม่มี heartbeat ล่าสุด'} · <Link href="/forex">ตรวจการเชื่อมต่อ Vantage ↗</Link></div>}
       {data.mappingPending>0&&<div className={styles.notice}>มีหุ้น/ETF CFD อีก {data.mappingPending} รายการที่ยังยืนยันตลาด US ไม่ได้ รอข้อมูล Exchange/Path จาก EA รุ่นใหม่</div>}
+      {data.market==='us'&&<div className={styles.notice}>
+        <strong>US EOD &amp; Technical Drill-down</strong>
+        <p>สัญญาณเดย์เทรดอ้างอิงราคาปิดแท่ง 15m จาก Vantage CFD · ข้อมูลสรุปและตัวชี้วัดรายวันใช้ FMP EOD ภายใต้สิทธิ์การแสดงผล · ETF CFD เป็นการวิเคราะห์เพื่อการศึกษาค้นคว้า (Research-only) · ไม่มีข้อมูล Intraday Order Book หรือ Level 2</p>
+      </div>}
       {data.market==='us'&&<p className={styles.caption}>ราคา: Vantage CFD · Volume หุ้นอ้างอิง: รอเชื่อม FMP ระหว่างวัน · สแกนเฉพาะช่วงหลัก US · ใช้ราคา ไม่ใช้ tick volume แทน volume หุ้น</p>}
     <div className={styles.rules}><span>EMA20 / EMA50</span><span>ยืนยันด้วยแท่งปิด 15m</span><span>SL ตามโครงสร้าง ≥ 1.5 ATR</span><span>TP 2R · ถือไม่เกิน 16 แท่ง</span><span>ไม่เลื่อนคุ้มทุนก่อนเป้า</span></div>
       <div className={styles.toolbar}>
         <label>ค้นหา<input aria-label="ค้นหาสินทรัพย์เดย์เทรด" placeholder="NTES, symbol หรือชื่อสินทรัพย์…" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/></label>
         <label>กลุ่มสินทรัพย์<select aria-label="กลุ่มสินทรัพย์" value={group} onChange={e=>{setGroup(e.target.value);setPage(1);}}><option value="all">ทุกตลาด</option>{Object.entries(MARKET_LABELS).map(([v,l])=><option key={v} value={v}>{l}</option>)}<option value="etf">ETF CFDs</option></select></label>
         <label>สถานะ<select aria-label="สถานะการสแกน" value={filter} onChange={e=>{setFilter(e.target.value);setPage(1);}}>{[['all','ทั้งหมด'],['met','เข้าเงื่อนไขแล้ว'],['near','ใกล้ถึงราคาเข้า'],['waiting','รอเงื่อนไข'],['abnormal','ข้อมูลผิดปกติ']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+        <label>เรียงตาม<select aria-label="เรียงลำดับ" value={sortBy} onChange={e=>{setSortBy(e.target.value);setPage(1);}}>{[['default','ค่าเริ่มต้น (เข้าเงื่อนไขก่อน)'],['score_desc','คะแนนเทคนิคสูงสุด'],['symbol_asc','ชื่อย่อ A–Z'],['change_desc','% เปลี่ยนแปลง'],['atr_desc','ความผันผวน ATR']].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
       </div>
       {filter==='near'&&<p className={styles.caption}>กติกาเดิมไม่มีระยะ “ใกล้เข้า” จึงยังไม่จัดรายการเข้ากลุ่มนี้ ดูระยะห่างจริงในตารางได้</p>}
       <p className={styles.caption}>Bid quote คือราคาที่ broker ส่งล่าสุด · ปิดแท่ง 15m คือราคาประเมินเดิม · ราคาเข้าเป็นแผนของระบบ แก้เองไม่ได้ตามสิทธิเดิม</p>

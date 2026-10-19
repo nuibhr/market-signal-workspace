@@ -92,10 +92,10 @@ export async function submitPortfolio(member,brokerInput,numberInput) {
   const number=normalizePortfolio(numberInput),hash=portfolioDigest(broker,number);
   try { return await mutateMember(member.id,member.id,'portfolio_submitted',current=>{
     if(current.portfolio_hash&&current.portfolio_hash!==hash)throw new Error('PORTFOLIO_CHANGE_REQUIRES_ADMIN');
-    const now=new Date().toISOString();
+    const started=Date.now(),now=new Date(started).toISOString();
     return {set:`broker=?,portfolio_hash=?,portfolio_last4=?,portfolio_status=CASE WHEN portfolio_status='verified' THEN 'verified' ELSE 'pending' END,
       portfolio_submitted_at=COALESCE(portfolio_submitted_at,?),trial_started_at=COALESCE(trial_started_at,?),trial_ends_at=COALESCE(trial_ends_at,?)`,
-      params:[broker,hash,number.slice(-4),now,now,new Date(Date.now()+14*DAY).toISOString()],details:broker};
+      params:[broker,hash,number.slice(-4),now,now,new Date(started+14*DAY).toISOString()],details:broker};
   }); } catch(error) {
     if(String(error.message).includes('members.portfolio_hash'))throw new Error('PORTFOLIO_ALREADY_USED');
     throw error;

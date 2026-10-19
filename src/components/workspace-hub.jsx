@@ -121,17 +121,22 @@ export function LearningPanel({ onOpen }) {
 
 export function RoadmapPanel({ onOpen }) {
   const items = [
-    ['นำร่อง', 'สแกนรายวันและ AutoPick หุ้นไทย', 'อ่านแท่ง Settrade ได้ในเครื่อง · ต้องยืนยันสิทธิข้อมูล เซิร์ฟเวอร์ถาวร และผลรันวันทำการก่อนเปิดให้สมาชิก', 'autopick'],
-    ['พร้อมใช้', 'Watchlist + กราฟ + วิเคราะห์เทคนิค', 'บันทึกคู่โปรดในเครื่อง เปิดกราฟและตรวจเงื่อนไขจากแท่งที่เชื่อมได้', 'watchlist'],
-    ['พร้อมตั้งค่า', 'บัญชี LINE และสิทธิสมาชิก', 'ทดลอง 14 วัน ตรวจพอร์ต และต่ออายุผ่านแอดมิน · รอค่า LINE และฐานข้อมูลถาวร', 'account'],
-    ['ขั้นถัดไป', 'ชำระเงินอัตโนมัติ', 'ปัจจุบันแอดมินตรวจและอนุมัติการต่ออายุ · ระบบชำระเงินอัตโนมัติยังไม่เชื่อม', 'account'],
-    ['นำร่อง', 'แจ้งเตือนในเว็บ', 'บันทึกเหตุการณ์เข้า/TP/SL และแสดงขณะเปิดเว็บ · ต้องยืนยันความเสถียรและการอ่านย้อนหลัง', 'autopick'],
-    ['บันทึกผล', 'ผลงานสัญญาณ', 'สรุป 100 ไม้ที่ปิดล่าสุดจากราคาเข้า/ออกที่บันทึกไว้ · ไม้รอเข้าและข้อมูลไม่ครบไม่นับเป็นชนะหรือแพ้', 'results'],
-    ['บางส่วน', 'ข่าว ปฏิทินเศรษฐกิจ และ XD', 'ข่าวไทย/สหรัฐฯ จาก MarketDX · วันประกาศและตัวเลขสหรัฐฯ จาก FRED · XD เปิดดูต้นทาง SET', 'calendar'],
-    ['รอข้อมูล', 'TFEX · Forex AutoPick', 'TFEX มีกราฟ OHLC แล้ว แต่ยังต้องยืนยันสัญญานำและกติกาความเสี่ยง · Forex รอฟีด bid/ask กับแท่งจริง', 'autopick'],
-    ['พื้นที่สมาชิก', 'ช่องคุยกับทีมและชุมชน', 'เข้าใช้ห้องสมาชิกและส่งหัวข้อส่วนตัวกับทีมจากหน้าบัญชี', 'learn'],
+    ['นำร่อง', 'สแกนรายวันและ AutoPick หุ้นไทย', 'อ่านแท่ง Settrade ได้ในเครื่อง · ต้องยืนยันสิทธิข้อมูล เซิร์ฟเวอร์ถาวร และผลรันวันทำการก่อนเปิดให้สมาชิก', 'autopick', 'src/auto-pick/runner.mjs', 'Thai (SET100/mai)', 'Settrade Open API · 60 bars 15m · Fail-closed'],
+    ['พร้อมใช้', 'Watchlist + กราฟ + วิเคราะห์เทคนิค', 'บันทึกคู่โปรดในเครื่อง เปิดกราฟและตรวจเงื่อนไขจากแท่งที่เชื่อมได้', 'watchlist', 'src/components/candlestick-chart.jsx', '5 ตลาด', 'OHLC Canvas + Pivot/EMA + Indicators'],
+    ['พร้อมตั้งค่า', 'บัญชี LINE และสิทธิสมาชิก', 'ทดลอง 14 วัน ตรวจพอร์ต และต่ออายุผ่านแอดมิน · รอค่า LINE และฐานข้อมูลถาวร', 'account', 'src/membership/server.mjs', 'ระบบสมาชิกกลาง', 'LINE OAuth2 + SHA-256 Portfolio Hash'],
+    ['นำร่อง', 'US CFD Daytrade Scanner', 'สแกนหุ้นและ ETF US 500 ตัว พร้อมจุดเข้า SL/TP 2R อ้างอิงแท่งปิด 15m', 'autopick', 'src/daytrade/engine.mjs', 'US CFD (500 หุ้น+ETF)', 'Vantage MT5 closed bars + FMP EOD indicators'],
+    ['นำร่อง', 'Forex Vantage MT5 Command Center', 'เชื่อมต่อ EA Vantage MT5 แบบ Read-only ดึงราคาและแท่งปิดเข้าเวิร์กสเปซ', 'watchlist', 'src/forex-mt5/handlers.mjs', 'Forex / Metals (19 คู่)', 'WebRequest/Local file bridge · Read-only token'],
+    ['บันทึกผล', 'ผลงานสัญญาณ (Forward Ledger)', 'สรุป 100 ไม้ที่ปิดล่าสุดจากราคาเข้า/ออกที่บันทึกไว้ · ไม้รอเข้าและข้อมูลไม่ครบไม่นับเป็นชนะหรือแพ้', 'results', 'src/signals/store.mjs', 'Thai / DR / US / Forex', 'Immutable Forward Ledger · ป้องกัน Synthetic Wins'],
+    ['บางส่วน', 'ข่าว ปฏิทินเศรษฐกิจ และ XD', 'ข่าวไทย/สหรัฐฯ จาก MarketDX · วันประกาศและตัวเลขสหรัฐฯ จาก FRED · XD เปิดดูต้นทาง SET', 'calendar', 'src/app/api/macro/route.js', 'Thai & US', 'FRED API + MarketDX EOD Cache'],
+    ['รอข้อมูล', 'TFEX · Forex AutoPick', 'TFEX มีกราฟ OHLC แล้ว แต่ยังต้องยืนยันสัญญานำและกติกาความเสี่ยง · Forex รอฟีด bid/ask กับแท่งจริง', 'autopick', 'src/market-data/tfex.mjs', 'TFEX (S50/Gold/Silver)', 'TFEX Open API Delayed · รอยืนยันสัญญานำ'],
+    ['พื้นที่สมาชิก', 'ช่องคุยกับทีมและชุมชน', 'เข้าใช้ห้องสมาชิกและส่งหัวข้อส่วนตัวกับทีมจากหน้าบัญชี', 'learn', 'src/community/store.mjs', 'ชุมชนสมาชิก', 'SQLite Audit Log + Role-based Access'],
+    ['ขั้นถัดไป', 'ชำระเงินอัตโนมัติ', 'ปัจจุบันแอดมินตรวจและอนุมัติการต่ออายุ · ระบบชำระเงินอัตโนมัติยังไม่เชื่อม', 'account', 'src/app/api/account/route.mjs', 'Payment Gateway', 'Manual Admin Review + Verification Code'],
   ];
-  return <div className="hub-panel roadmap-panel"><div className="hub-intro"><span className="hub-heading-icon"><Compass size={23} /></span><div><h3>สถานะระบบและสิ่งที่ยังขาด</h3><p>รายการนี้ช่วยแยกของที่ใช้ได้ตอนนี้ออกจากงาน fullstack ที่ต้องเชื่อมก่อนเปิดจริง</p></div></div><div className="roadmap-list">{items.map(([status, title, copy, target]) => <button key={title} onClick={() => onOpen(target)}><span className={status === 'พร้อมใช้' ? 'roadmap-state ready' : 'roadmap-state'}>{status}</span><span><strong>{title}</strong><small>{copy}</small></span><span>↗</span></button>)}</div></div>;
+  return <div className="hub-panel roadmap-panel">
+    <div className="hub-intro"><span className="hub-heading-icon"><Compass size={23} /></span><div><h3>สถานะระบบ เครื่องมือ และหลักฐานความพร้อม</h3><p>รายการนี้ช่วยแยกของที่ใช้ได้ตอนนี้ออกจากงาน fullstack ที่ต้องเชื่อมก่อนเปิดจริง</p></div></div>
+    <div className="daily-callout"><ShieldCheck size={17} /><span><b>ข้อชี้แจงความโปร่งใส (Catalog ≠ 27 Completed Features)</b>: แคตตาล็อกและรายการสถาปัตยกรรมระบบรวบรวมขอบเขตของ 5 ตลาด ไม่ได้หมายถึง 27 ฟีเจอร์ที่เสร็จสมบูรณ์พร้อมกันระดับ Production โดยแต่ละโมดูลแสดงที่มาของซอร์ส ขอบเขตตลาด และหลักฐานความพร้อมไว้อย่างตรงไปตรงมา</span></div>
+    <div className="roadmap-list">{items.map(([status, title, copy, target, sourcePath, scope, evidence]) => <button key={title} onClick={() => onOpen(target)}><span className={status === 'พร้อมใช้' ? 'roadmap-state ready' : 'roadmap-state'}>{status}</span><span><strong>{title}</strong><small>{copy}</small><small style={{color:'#72dfb3',marginTop:'2px'}}>ตลาด: {scope} · ซอร์ส: {sourcePath} · หลักฐาน: {evidence}</small></span><span>↗</span></button>)}</div>
+  </div>;
 }
 
 export function CalendarPanel({ onOpenGuide }) {

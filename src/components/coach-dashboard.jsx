@@ -32,7 +32,7 @@ function Statistics({portfolio:p,statistics:s}){
   return <div className="coach-stat-grid">{stats.map(([label,value,hint,pnl])=><article key={label}><span>{label}</span><strong className={pnl>0?'coach-profit':pnl<0?'coach-loss':''}>{value}</strong><small>{hint}</small></article>)}</div>;
 }
 export function CoachPortfolio({id,management=false,admin=false,onBack,onChanged}){
-  const [page,setPage]=useState(1),[filter,setFilter]=useState('all'),[closing,setClosing]=useState(null),[entry,setEntry]=useState(false);
+  const [page,setPage]=useState(1),[filter,setFilter]=useState('all'),[marketFilter,setMarketFilter]=useState('all'),[sideFilter,setSideFilter]=useState('all'),[closing,setClosing]=useState(null),[entry,setEntry]=useState(false);
   const [draft,setDraft]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
   const resource=useAdminResource(`/api/coaches/${id}?${new URLSearchParams({management:management?'1':'0',page:String(page),filter})}`);
   const data=resource.data,p=data?.portfolio;
@@ -42,6 +42,11 @@ export function CoachPortfolio({id,management=false,admin=false,onBack,onChanged
     if(!response.ok){setError(ERRORS[result.error]||'บันทึกไม่สำเร็จ กรุณาตรวจรายการและลองใหม่');return;}
     setMessage('บันทึกแล้ว');setDraft(null);setClosing(null);setEntry(false);resource.reload();onChanged?.();
   }catch{setError('ยังไม่ได้รับคำตอบ กดยืนยันรายการเดิมอีกครั้งได้ ระบบป้องกันรายการซ้ำ');}finally{setBusy(false);}}
+  const visibleTrades = (data?.trades || []).filter(t => {
+    if (marketFilter !== 'all' && t.market !== marketFilter) return false;
+    if (sideFilter === 'SHORT') return false;
+    return true;
+  });
   return <section className="coach-detail">
     <div className="coach-toolbar">{onBack&&<button className="account-secondary" onClick={onBack}><ArrowLeft size={16}/>พอร์ตโค้ชทั้งหมด</button>}<button className="account-secondary" onClick={resource.reload} disabled={resource.loading||busy}><RefreshCw size={16}/>รีเฟรช</button></div>
     <Notice resource={resource}/>
@@ -51,9 +56,28 @@ export function CoachPortfolio({id,management=false,admin=false,onBack,onChanged
       {management&&<div className="coach-toolbar"><span>{p.active?'พอร์ตพร้อมบันทึก':'พอร์ตพักใช้งาน'} · {p.published?'ลูกค้าดูได้':'ยังไม่เปิดให้ลูกค้าดู'}</span>{data.canManage&&<button className="account-primary" disabled={busy||!!draft} onClick={()=>{setEntry(!entry);setClosing(null);}}>บันทึกเข้าไม้จำลอง</button>}{admin&&<><button className="account-secondary" disabled={busy||!!draft||!p.active} onClick={()=>review({action:'visibility',portfolioId:p.id,published:!p.published,active:p.active},p.published?'ซ่อนพอร์ตจากหน้าลูกค้า':'เปิดให้ลูกค้าดูพอร์ตจำลอง')}>{p.published?'ซ่อนจากลูกค้า':'เปิดให้ลูกค้าดู'}</button><button className="account-secondary" disabled={busy||!!draft} onClick={()=>review({action:'visibility',portfolioId:p.id,active:!p.active,published:false},p.active?'พักพอร์ตและซ่อนจากลูกค้า':'เปิดใช้พอร์ตอีกครั้ง')}>{p.active?'พักพอร์ต':'เปิดใช้พอร์ต'}</button></>}</div>}
       {message&&<p className="account-alert success" role="status"><Check size={16}/>{message}</p>}
       {draft?<div className="coach-confirm" role="region" aria-label="ตรวจรายการ"><PaperLabel/><h3>{draft.title}</h3>{['open','close'].includes(draft.body.action)&&<p>ราคา {price(draft.body.price)} {p.currency} · {draft.body.quantity?`${draft.body.quantity} หุ้น/หน่วย · `:''}ค่าธรรมเนียม {money(draft.body.fee,p.currency)}<br/>เหตุผล: {draft.body.note}</p>}<p>รายการเข้า–ออกที่ยืนยันแล้วแก้ไขหรือลบย้อนหลังไม่ได้</p>{error&&<p role="alert" className="coach-loss">{error}</p>}<div className="coach-toolbar"><button className="account-primary" disabled={busy} onClick={confirm}>{busy?'กำลังบันทึก':'ยืนยันรายการจำลอง'}</button><button className="account-secondary" disabled={busy} onClick={()=>{setDraft(null);setError('');resource.reload();}}>ปิดและตรวจประวัติ</button></div></div>:<>{entry&&data.canManage&&<TradeForm portfolio={p} onReview={review}/>} {closing&&data.canManage&&<><TradeForm portfolio={p} trade={closing} onReview={review}/><button className="account-secondary" onClick={()=>setClosing(null)}>ยกเลิกปิดไม้</button></>}</>}
-      <div className="coach-toolbar"><h3>รายการเข้า–ออก</h3><label>แสดง<select value={filter} onChange={e=>{setFilter(e.target.value);setPage(1);}}><option value="all">ทุกไม้</option><option value="open">ยังถือ</option><option value="closed">ปิดแล้ว</option></select></label></div>
-      <div className="coach-trades">{data.trades.map(t=><article key={t.id}><header><strong>{t.symbol}</strong><span>{NAMES[t.market]} · {t.quantity.toLocaleString()} หุ้น/หน่วย</span><b className={t.pnl>0?'coach-profit':t.pnl<0?'coach-loss':''}>{t.pnl===null?'ยังถือ':t.pnl>0?'ชนะ':t.pnl<0?'แพ้':'เสมอ'}</b></header><div className="coach-trade-prices"><span>เข้า <strong>{price(t.entryPrice)}</strong><small>{date(t.openedAt)}</small></span><span>ออก <strong>{price(t.exitPrice)}</strong><small>{date(t.closedAt)}</small></span><span>กำไร/ขาดทุนสุทธิ <strong className={t.pnl>0?'coach-profit':t.pnl<0?'coach-loss':''}>{t.pnl===null?'—':money(t.pnl,p.currency)}</strong><small>ค่าธรรมเนียม {money(t.entryFee+(t.exitFee||0),p.currency)}</small></span></div><p>แผนเข้า: {t.entryNote}</p>{t.exitNote&&<p>เหตุผลออก: {t.exitNote}</p>}{data.canManage&&!t.closedAt&&<button className="account-secondary" disabled={busy||!!draft} onClick={()=>{setClosing(t);setEntry(false);}}>บันทึกปิดไม้ {t.symbol}</button>}</article>)}</div>
-      {!data.trades.length&&<p className="account-empty">ยังไม่มีรายการในหมวดนี้</p>}<Pager data={data} onPage={setPage} loading={resource.loading}/>
+      <div className="coach-toolbar">
+        <h3>รายการเข้า–ออก</h3>
+        <label>ตลาด<select value={marketFilter} onChange={e=>setMarketFilter(e.target.value)}><option value="all">ทุกตลาด</option><option value="thai">หุ้นไทย</option><option value="dr">DR</option><option value="us">หุ้นสหรัฐฯ</option></select></label>
+        <label>ฝั่ง<select value={sideFilter} onChange={e=>setSideFilter(e.target.value)}><option value="all">ทุกฝั่ง</option><option value="LONG">Long (ซื้อ)</option></select></label>
+        <label>สถานะ<select value={filter} onChange={e=>{setFilter(e.target.value);setPage(1);}}><option value="all">ทุกไม้</option><option value="open">ยังถือ</option><option value="closed">ปิดแล้ว</option></select></label>
+      </div>
+      <div className="coach-trades">{visibleTrades.map(t=><article key={t.id}><header><strong>{t.symbol}</strong><span>{NAMES[t.market]} · {t.quantity.toLocaleString()} หุ้น/หน่วย</span><b className={t.pnl>0?'coach-profit':t.pnl<0?'coach-loss':''}>{t.pnl===null?'ยังถือ':t.pnl>0?'ชนะ':t.pnl<0?'แพ้':'เสมอ'}</b></header><div className="coach-trade-prices"><span>เข้า <strong>{price(t.entryPrice)}</strong><small>{date(t.openedAt)}</small></span><span>ออก <strong>{price(t.exitPrice)}</strong><small>{date(t.closedAt)}</small></span><span>กำไร/ขาดทุนสุทธิ <strong className={t.pnl>0?'coach-profit':t.pnl<0?'coach-loss':''}>{t.pnl===null?'—':money(t.pnl,p.currency)}</strong><small>ค่าธรรมเนียม {money(t.entryFee+(t.exitFee||0),p.currency)}</small></span></div><p>แผนเข้า: {t.entryNote}</p>{t.exitNote&&<p>เหตุผลออก: {t.exitNote}</p>}{data.canManage&&!t.closedAt&&<button className="account-secondary" disabled={busy||!!draft} onClick={()=>{setClosing(t);setEntry(false);}}>บันทึกปิดไม้ {t.symbol}</button>}</article>)}</div>
+      {!visibleTrades.length&&<p className="account-empty">ยังไม่มีรายการในหมวดนี้</p>}<Pager data={data} onPage={setPage} loading={resource.loading}/>
+      <section className="coach-audit-section" aria-label="ประวัติและบันทึกการตรวจสอบ" style={{marginTop:'28px'}}>
+        <div className="coach-toolbar"><div><h3>บันทึกการตรวจสอบ (Audit Activity Log)</h3><PaperLabel/></div></div>
+        <div className="coach-trades">
+          {visibleTrades.map(t=><article key={`audit-${t.id}`} style={{padding:'14px 18px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'10px'}}>
+            <div><strong>{t.closedAt?`ปิดไม้: ${t.symbol} @ ${price(t.exitPrice)} ${p.currency}`:`เปิดไม้: ${t.symbol} @ ${price(t.entryPrice)} ${p.currency}`}</strong><p style={{margin:'4px 0 0',fontSize:'11px',color:'#8ea2b9'}}>เวลาเซิร์ฟเวอร์: {date(t.closedAt||t.openedAt)} · ตลาด: {NAMES[t.market]||t.market} · {t.quantity.toLocaleString()} หุ้น/หน่วย · แผน: {t.closedAt?t.exitNote:t.entryNote}</p></div>
+            <span className={t.pnl>0?'coach-profit':t.pnl<0?'coach-loss':'coach-paper-label'} style={{fontSize:'12px',fontWeight:'bold'}}>{t.closedAt?`PnL: ${money(t.pnl,p.currency)}`:'กำลังถือ (Open)'}</span>
+          </article>)}
+          <article style={{padding:'14px 18px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:'10px'}}>
+            <div><strong>เริ่มต้นพอร์ตจำลอง: {p.name}</strong><p style={{margin:'4px 0 0',fontSize:'11px',color:'#8ea2b9'}}>เวลาเซิร์ฟเวอร์: {date(p.createdAt)} · สกุลเงิน: {p.currency} · โค้ช: {p.coachName}</p></div>
+            <span className="coach-paper-label">ทุนเริ่มต้น {money(p.initialCapital,p.currency)}</span>
+          </article>
+        </div>
+        <p className="coach-disclosure" style={{marginTop:'14px'}}>บันทึกการตรวจสอบ (Audit Activity Log) จัดทำขึ้นโดยอ้างอิงเวลาจริงจากเซิร์ฟเวอร์ ไม่สามารถแก้ไขหรือลบย้อนหลังได้ เพื่อความโปร่งใสสูงสุด · ผลลัพธ์ทั้งหมดเป็นพอร์ตจำลอง (Paper Trade) ของโค้ช ไม่ใช่การส่งคำสั่งซื้อขายจริง</p>
+      </section>
     </>}
   </section>;
 }
