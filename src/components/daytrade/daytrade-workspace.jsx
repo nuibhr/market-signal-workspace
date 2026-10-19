@@ -40,7 +40,13 @@ export default function DaytradeWorkspace({ market = 'thai', initialSymbol = nul
       </nav>
       {isRadar ? (
         <div style={{ maxWidth: '1440px', margin: '0 auto', width: '100%', padding: '0 1rem 3rem' }}>
-          <DrStrategyRadar currentMarket={market} />
+          <DrStrategyRadar
+            currentMarket={market}
+            onSelectSymbol={(item) => {
+              const targetMarket = (item.market === 'SET' || item.id === 'thai') ? 'thai' : 'dr';
+              window.location.href = `/${targetMarket}?symbol=${encodeURIComponent(item.symbol)}#chart-panel`;
+            }}
+          />
         </div>
       ) : (
         <DaytradePanel key={market} market={market} initialSymbol={initialSymbol} />

@@ -203,25 +203,45 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     setPopup(id);
   }
 
+  function scrollToChart() {
+    setTimeout(() => {
+      const el = document.getElementById('chart-panel') || document.querySelector('.chart-panel');
+      if (el) {
+        const yOffset = -75;
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      }
+    }, 120);
+  }
+
   function selectAsset(item, frame = '1d') {
-    if(item.id!==marketId){router.push(marketHref(item.id,item.symbol));return;}
+    if (item.id !== marketId) {
+      router.push(`${marketHref(item.id, item.symbol)}#chart-panel`);
+      return;
+    }
     setActiveMarket(item.id);
     setSelectedAsset(item);
     setTimeframe(item.id === 'us' ? '1d' : frame);
     setPopup(null);
-    window.requestAnimationFrame(() => document.querySelector('.chart-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    scrollToChart();
   }
 
   function selectFrame(frame) {
     setTimeframe(['us','forex'].includes(asset.id)&&frame==='4h'?'1d':frame);
     setPopup(null);
-    window.requestAnimationFrame(() => document.querySelector('.chart-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    scrollToChart();
   }
 
   function selectLedgerSymbol(symbol) {
     const item = ALL_ASSETS.find(candidate => candidate.symbol === symbol);
     if (item) selectAsset(item);
   }
+
+  useEffect(() => {
+    if (initialSymbol || (typeof window !== 'undefined' && window.location.hash.includes('chart'))) {
+      scrollToChart();
+    }
+  }, [initialSymbol]);
 
   useEffect(() => {
     if (!hasCandleConnection) { setLiveSeries(null); setLiveState('idle'); setChartLoadMs(null); return undefined; }
@@ -407,8 +427,12 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
             <DrStrategyRadar
               currentMarket={marketId}
               onSelectSymbol={(item) => {
-                const match = ALL_ASSETS.find(a => a.symbol === item.symbol);
-                if (match) selectAsset(match);
+                const match = ALL_ASSETS.find(a => a.symbol === item.symbol) || {
+                  id: (item.market === 'SET' || item.market === 'thai') ? 'thai' : 'dr',
+                  symbol: item.symbol,
+                  name: item.name || item.symbol,
+                };
+                selectAsset(match);
               }}
             />
           )}
@@ -435,7 +459,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
           <section className="primary-grid">
 
-            <article className="panel chart-panel">
+            <article id="chart-panel" className="panel chart-panel">
               <div className="chart-header"><div className="chart-header-name"><span className="eyebrow">PRICE CHART / {market.label.toUpperCase()}</span><h2>{asset.symbol} {asset.name !== asset.symbol && <small>{asset.name}</small>}</h2></div><span className={hasRealBars ? 'real-pill' : hasTfexConnection ? 'quote-only-pill' : 'demo-pill'}>{hasRealBars ? liveSeries.chartOnly?'HISTORY':'REAL OHLC' : hasTfexConnection ? liveState === 'loading' ? 'LOADING OHLC' : hasRealQuote ? 'QUOTE · NO OHLC' : 'OHLC UNAVAILABLE' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>
               <div className="chart-meta-row"><span>◉ {sourceLabel}</span><span>{displaySection(asset.sectionId)}</span><span>{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} ล่าสุด ${latestBarLabel}` : 'ยังไม่ใช้ตัดสินสัญญาณ'}</span>{hasRealBars && <span>ประวัติ {liveSeries.bars.length.toLocaleString('th-TH')} แท่ง · ตั้งแต่ {formatHistoryStart(liveSeries.bars[0], timeframe)}</span>}{asset.id === 'thai' && <a href={`https://finance.yahoo.com/quote/${encodeURIComponent(`${asset.symbol}.BK`)}/history/`} target="_blank" rel="noopener noreferrer" title="เปิด Yahoo เพื่อดูย้อนหลังแยกต่างหาก แผนและเสียงแจ้งเตือนในแอปใช้ข้อมูล Settrade">ดูย้อนหลังใน Yahoo ↗</a>}</div>
               <div className="timeframe-bar"><span>{hasTfexConnection ? 'TFEX OHLC' : 'TIMEFRAME'}</span><div className="timeframe-switch">{[['15m','15m'],['1h','1H'],['4h','4H'],['1d','1D']].map(([id,label]) => <button key={id} className={timeframe === id ? 'selected' : ''} disabled={['us','forex'].includes(asset.id)&&id==='4h'} onClick={() => setTimeframe(id)}>{label}</button>)}</div><div className="chart-tools-end"><button aria-label={chartRange === 'recent' ? 'ดูประวัติกราฟทั้งหมด' : 'กลับไปดูแท่งล่าสุด'} aria-pressed={chartRange === 'all'} disabled={!hasRealBars} onClick={() => setChartRange(value => value === 'recent' ? 'all' : 'recent')}>{chartRange === 'recent' ? 'ดูทั้งหมด' : 'ดูล่าสุด'}</button><button aria-label="เปิดกราฟขนาดใหญ่" onClick={() => setPopup('chart')}>⤢</button><button aria-label={hasTfexConnection ? 'รีเฟรชกราฟ TFEX' : 'รีเฟรชแท่งราคา'} disabled={!hasCandleConnection && !hasTfexConnection} onClick={() => setReloadNonce(value => value + 1)}>↻</button></div></div>

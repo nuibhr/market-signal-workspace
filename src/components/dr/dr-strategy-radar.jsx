@@ -573,6 +573,20 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
     }
   };
 
+  const handleGoToChart = (item) => {
+    if (onSelectSymbol) {
+      onSelectSymbol(item);
+    }
+    setTimeout(() => {
+      const el = document.getElementById('chart-panel') || document.querySelector('.chart-panel');
+      if (el) {
+        const yOffset = -75;
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      }
+    }, 120);
+  };
+
   return (
     <section className={styles.container} aria-label="DR Strategy & Thai Equities Radar">
       {/* Toast Notification */}
@@ -721,12 +735,12 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                     {onSelectSymbol && (
                       <button
                         type="button"
-                        onClick={() => onSelectSymbol(p)}
+                        onClick={() => handleGoToChart(p)}
                         className={styles.singleSpeakBtn}
-                        title="เปิดดูกราฟเทคนิค"
+                        title="เปิดดูกราฟเทคนิค TradingView"
                       >
                         <ArrowUpRight size={12} />
-                        <span>กราฟ</span>
+                        <span>ดูกราฟ</span>
                       </button>
                     )}
                     <button
@@ -1084,10 +1098,11 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                     {onSelectSymbol && (
                       <button
                         type="button"
-                        onClick={() => onSelectSymbol(item)}
+                        onClick={() => handleGoToChart(item)}
                         className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                        title="เปิดดูกราฟเทคนิค TradingView"
                       >
-                        กราฟ ↗
+                        ดูกราฟ ↗
                       </button>
                     )}
                   </div>
@@ -1357,10 +1372,11 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                     {onSelectSymbol && (
                       <button
                         type="button"
-                        onClick={() => onSelectSymbol(item)}
+                        onClick={() => handleGoToChart(item)}
                         className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                        title="เปิดดูกราฟเทคนิค TradingView"
                       >
-                        กราฟ ↗
+                        ดูกราฟ ↗
                       </button>
                     )}
                   </div>
@@ -1518,9 +1534,9 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                               {onSelectSymbol && (
                                 <button
                                   type="button"
-                                  onClick={() => onSelectSymbol(pick)}
+                                  onClick={() => handleGoToChart(pick)}
                                   className={styles.singleSpeakBtn}
-                                  title="เปิดดูกราฟเทคนิค"
+                                  title="เปิดดูกราฟเทคนิค TradingView"
                                 >
                                   <ArrowUpRight size={13} />
                                 </button>
