@@ -24,6 +24,8 @@ import { WorkspaceSidebar, FinancialCheck, LearningPanel, RoadmapPanel, Calendar
 import NugaomAssistant from './nugaom-assistant.jsx';
 import AutoPickBoard from './auto-pick-board.jsx';
 import SignalResults from './signal-results.jsx';
+import DrStrategyRadar from './dr/dr-strategy-radar.jsx';
+import ProToolsNav from './pro-tools-nav.jsx';
 
 const DEFAULT_SYMBOLS = { thai: 'PTT', dr: 'AAPL80', tfex: TFEX_SYMBOLS[0] ?? 'S50', us: 'NVDA', forex: 'EUR/USD' };
 const MARKETS = MARKET_GROUPS.map(group => ({
@@ -391,6 +393,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
         <div className="page-content">
           <MarketNavigation current={marketId}/>
+          <ProToolsNav current={marketId} />
           <section id="section-overview" className="workspace-intro nugaom-welcome">
             <div className="welcome-main">
               <span className="eyebrow">{page.eyebrow}</span>
@@ -401,6 +404,15 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           </section>
 
           {['thai','dr','tfex','us'].includes(marketId)&&<SignalDesk marketId={marketId} memberId={memberAccount?.id} rights={rights} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={selectAsset} loginHref={loginHref}/>}
+          {['thai','dr'].includes(marketId) && (
+            <DrStrategyRadar
+              currentMarket={marketId}
+              onSelectSymbol={(item) => {
+                const match = ALL_ASSETS.find(a => a.symbol === item.symbol);
+                if (match) selectAsset(match);
+              }}
+            />
+          )}
           {!['thai','dr','us'].includes(marketId)&&<section id="section-daily" className="market-routine panel"><div><span className="eyebrow">TODAY / {page.short}</span><h2>เครื่องมือประจำตลาด</h2><p>{marketId==='us'?'สัญญาณใช้แท่งรายวันหลังตลาดปิด · กราฟย้อนหลังเลือกดูได้หลายช่วงเวลา':marketId==='forex'?'กราฟย้อนหลังคู่เงิน · AutoPick ยังรอฟีดที่ยืนยันใช้แจ้งเตือนได้':'ดูซีรีส์สัญญาและกราฟจริง · AutoPick ยังรอยืนยันกติกาแต่ละสินค้า'}</p></div><div><button onClick={()=>setPopup('scanner')}>สแกนเชิงลึก</button><button onClick={()=>setPopup('calendar')}>ปฏิทินเศรษฐกิจ</button><button onClick={()=>navigateTo('results')}>ผลงานสัญญาณ</button></div></section>}
           {!['thai','dr','us'].includes(marketId)&&<AutoPickBoard marketId={marketId} onSelect={selectAsset}/>}
 

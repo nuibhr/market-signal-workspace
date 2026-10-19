@@ -7,11 +7,10 @@ import MobileDock from './mobile-dock.jsx';
 import '../app/landing.css';
 
 const markets = [
-  { id: 'thai', number: '01', name: 'หุ้นไทย', en: 'THAI EQUITIES', detail: 'จากหุ้นที่สนใจ สู่จังหวะที่มีแผน', tags: 'สแกนตลาด · สัญญาณ · หุ้นโปรด', tone: '#c8e3a0', glyph: 'TH' },
-  { id: 'dr', number: '02', name: 'DR', en: 'GLOBAL, CLOSE TO HOME', detail: 'ติดตามสินทรัพย์โลก ในกระดานของคุณ', tags: 'Strategy Tracker · แผน · ผลลัพธ์', tone: '#edd5a3', glyph: 'DR' },
-  { id: 'us', number: '03', name: 'หุ้นสหรัฐฯ', en: 'US STOCKS & ETFs', detail: 'มุมมองที่กว้างขึ้น เมื่ออีกตลาดเริ่มต้น', tags: 'หุ้นและ ETF · สัญญาณรายวัน', tone: '#b7cee5', glyph: 'US' },
-  { id: 'tfex', number: '04', name: 'TFEX', en: 'FUTURES WORKSPACE', detail: 'มองกราฟ แยกสัญญา จับภาพตลาด', tags: 'กราฟ · ซีรีส์สัญญา · เครื่องมือวิเคราะห์', tone: '#e9bfb1', glyph: 'FX' },
-  { id: 'forex', number: '05', name: 'Forex / CFD', en: 'VANTAGE MT5 COMMAND CENTER', detail: 'ค้นหาตลาด และเชื่อมข้อมูลจาก Vantage MT5', tags: 'Scanner · กราฟ · เครื่องมือจัดการความเสี่ยง', tone: '#cbc1df', glyph: '↔' },
+  { id: 'thai', number: '01', name: 'หุ้นไทย', en: 'THAI EQUITIES', detail: 'จากหุ้นที่สนใจ สู่จังหวะที่มีแผน', tags: 'สแกนตลาด · สัญญาณ · หุ้นโปรด · ปันผล', tone: '#c8e3a0', glyph: 'TH' },
+  { id: 'dr', number: '02', name: 'DR', en: 'GLOBAL, CLOSE TO HOME', detail: 'ติดตามสินทรัพย์โลก ในกระดานของคุณ', tags: 'Strategy Tracker · Camarilla · Indicative Bridge', tone: '#edd5a3', glyph: 'DR' },
+  { id: 'tfex', number: '03', name: 'TFEX', en: 'FUTURES WORKSPACE', detail: 'มองกราฟ แยกสัญญา จับภาพตลาด', tags: 'กราฟ · ซีรีส์สัญญา · เครื่องมือวิเคราะห์', tone: '#e9bfb1', glyph: 'FX' },
+  { id: 'forex', number: '04', name: 'Forex / CFD', en: 'VANTAGE MT5 COMMAND CENTER', detail: 'ค้นหาตลาด และเชื่อมข้อมูลจาก Vantage MT5', tags: 'Scanner · กราฟ · เครื่องมือจัดการความเสี่ยง', tone: '#cbc1df', glyph: '↔' },
 ];
 
 export default function HomeLanding() {
@@ -39,7 +38,7 @@ export default function HomeLanding() {
         <div className="ng-market-art" aria-hidden="true"><span>{market.glyph}</span><svg viewBox="0 0 360 110"><path d="M0 93 35 82 58 91 92 54 121 67 155 37 180 51 211 23 239 40 274 15 300 31 335 10 360 15" /><path d="M0 108 360 108M0 71 360 71M0 35 360 35" className="ng-art-grid" /></svg></div>
         <div className="ng-market-copy"><h3>{market.name}</h3><p>{market.detail}</p><small>{market.tags}</small></div>
       </Link>)}</div>
-      <p className="ng-data-note">ความสามารถและความถี่ข้อมูลต่างกันในแต่ละตลาด · หุ้นสหรัฐฯ ใช้สัญญาณรายวัน · Forex / CFD แยก Demo จากข้อมูลที่รับผ่าน MT5 · TFEX และ Forex AutoPick ยังไม่เปิดใช้งาน</p>
+      <p className="ng-data-note">ความสามารถและความถี่ข้อมูลต่างกันในแต่ละตลาด · โฟกัสหลักที่กระดานหุ้นไทยและ DR · Forex / CFD แยก Demo จากข้อมูลที่รับผ่าน MT5 · TFEX และ Forex AutoPick ยังไม่เปิดใช้งาน</p>
     </section>
 
     {/* Section 02: Products & Analysis Suite */}
