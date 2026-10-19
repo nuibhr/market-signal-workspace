@@ -130,8 +130,89 @@ export const CORE_PRODUCTS = [
     ],
   },
   {
-    id: 'speech-queue',
+    id: 'risk-manager',
     number: '05',
+    title: 'Risk & Position Manager',
+    subtitle: 'คุมความเสี่ยงทุกไม้ คำนวณ Lot แม่นยำ',
+    tagline: 'คำนวณขนาดออเดอร์ (Shares, Contracts, Lots) ตามวงเงินความเสี่ยงและความคุ้มค่า 2R',
+    badge: 'RISK MATH',
+    accent: '#0d9488',
+    icon: BarChart3,
+    targetUrl: '/risk',
+    features: [
+      'คำนวณ Lot Size / จำนวนหุ้น / สัญญา TFEX อัตโนมัติ',
+      'กำหนดความเสี่ยง 0.5% - 2% ต่อไม้ เพื่อความยั่งยืนของพอร์ต',
+      'คำนวณเป้าหมายกำไร 2R/3R และแสดงอัตราส่วน Risk:Reward ชัดเจน',
+    ],
+    highlights: [
+      { label: 'ครอบคลุม 5 ตลาด', desc: 'หุ้นไทย (Board lot 100), TFEX S50, หุ้นสหรัฐฯ, ทองคำ และ Forex' },
+      { label: 'เห็นตัวเลขจริงก่อนเข้า', desc: 'ทราบผลขาดทุนสูงสุด (Max Loss) และกำไรที่เป้าหมายเป็นบาท/ดอลลาร์ทันที' },
+      { label: 'คำเตือนความเสี่ยง', desc: 'แจ้งเตือนเมื่อระยะ Stop Loss กว้างเกินไปหรือขนาดออเดอร์ไม่ปลอดภัย' },
+    ],
+    whatsInside: [
+      'เครื่องคำนวณ Position Sizing รายตลาด',
+      'ตัวคำนวณ Risk / Reward Ratio แบบ Real-time',
+      'การประเมินเงินมัดจำ (Margin Requirement)',
+      'บันทึกพารามิเตอร์การเทรดก่อนส่งคำสั่ง',
+    ],
+  },
+  {
+    id: 'economic-calendar',
+    number: '06',
+    title: 'Economic Calendar & Macro Impact',
+    subtitle: 'รับมือข่าวเศรษฐกิจและดอกเบี้ยก่อนใคร',
+    tagline: 'ปฏิทินเศรษฐกิจระดับสถาบัน วิเคราะห์ผลกระทบรายตลาดและข้อควรระวังก่อนเทรด',
+    badge: 'MACRO INTEL',
+    accent: '#ea580c',
+    icon: Newspaper,
+    targetUrl: '/calendar',
+    features: [
+      'คัดกรองเฉพาะเหตุการณ์สำคัญสูง (High Impact) เช่น Fed, กนง., CPI',
+      'AI วิเคราะห์ก่อน-หลังประกาศ พร้อมบอกว่ากระทบสินทรัพย์ใด',
+      'Actionable Caution: คำแนะนำความเสี่ยงก่อนและหลังตัวเลขออก',
+    ],
+    highlights: [
+      { label: 'โฟกัสตลาดที่เราเทรด', desc: 'ระบุชัดเจนว่าข่าวกระทบ SET, S50, US Equity, ทองคำ หรือ Forex' },
+      { label: 'Forecast vs Previous', desc: 'เปรียบเทียบตัวเลขคาดการณ์กับครั้งก่อนหน้าอย่างรวดเร็ว' },
+      { label: 'ปลอดภัยรอบข่าว', desc: 'ลดความเสี่ยงจากการถูกลากพอร์ตช่วงสเปรดกว้าง' },
+    ],
+    whatsInside: [
+      'ปฏิทินเศรษฐกิจพร้อมตัวกรองระดับผลกระทบ',
+      'ระบบแจ้งเตือนช่วงเวลาสำคัญ (เวลาไทย)',
+      'บทวิเคราะห์ผลกระทบต่อสภาพคล่องและทัศนคติของตลาด',
+      'ป้ายกำกับสินทรัพย์ที่ได้รับผลกระทบโดยตรง',
+    ],
+  },
+  {
+    id: 'developer-api',
+    number: '07',
+    title: 'Developer API & Structure Playground',
+    subtitle: 'Structure API สำหรับคนเขียน EA และบอท',
+    tagline: 'ส่งแท่งเทียน 40-500 แท่ง รับโครงสร้าง SMC, BOS, Order Block และแผน 2R เป็น JSON',
+    badge: 'DEVELOPER SUITE',
+    accent: '#0891b2',
+    icon: Cpu,
+    targetUrl: '/developers',
+    features: [
+      'POST JSON แท่งเทียน OHLCV รับผลลัพธ์โครงสร้างใน ~15ms',
+      'ตรวจจับ Swing High/Low, BOS, CHoCH, Order Block และ FVG',
+      'สร้างแผนเทรด 2R อัตโนมัติพร้อมเหตุผล Invalidation',
+    ],
+    highlights: [
+      { label: 'Bring Your Own Candles', desc: 'สินทรัพย์และ Timeframe ใดก็ได้ที่คุณมีข้อมูล ไม่เก็บข้อมูลของคุณ' },
+      { label: 'ตัวอย่างพร้อมใช้ 3 ภาษา', desc: 'cURL สำหรับ Terminal, Python Requests, และ MQL5 สำหรับ MT5' },
+      { label: 'Playground ทดสอบสด', desc: 'แก้ไขแท่งเทียนและกดวิเคราะห์โครงสร้างบนหน้าเว็บได้ทันที' },
+    ],
+    whatsInside: [
+      'Interactive API Playground & JSON Editor',
+      'Endpoint: POST /api/developers/structure',
+      'ตัวอย่างโค้ด MQL5 สำหรับ EA เพื่อดึงแผนเทรดอัตโนมัติ',
+      'คำนวณ Breakeven Win Rate ที่ต้องการ (33.3% สำหรับ 2R)',
+    ],
+  },
+  {
+    id: 'speech-queue',
+    number: '08',
     title: 'Voice Alert & Speech Queue',
     subtitle: 'เสียงแจ้งเตือนน้องนักออมอัจฉริยะ',
     tagline: 'อ่านเหตุการณ์ตลาดและข่าวด่วนภาษาไทย จัดคิวเสียง Web Audio ไม่ทับซ้อน',
@@ -158,12 +239,12 @@ export const CORE_PRODUCTS = [
   },
   {
     id: 'coach-audit',
-    number: '06',
+    number: '09',
     title: 'Coach & Signal Audit Ledger',
     subtitle: 'ระบบตรวจสอบผลงานย้อนหลังแบบ Immutable',
     tagline: 'บันทึกประวัติสัญญาณและพอร์ตโค้ชที่แก้ไขย้อนหลังไม่ได้',
     badge: 'TRANSPARENCY',
-    accent: '#06b6d4',
+    accent: '#0284c7',
     icon: ShieldCheck,
     targetUrl: '/coaches',
     features: [
@@ -194,6 +275,7 @@ export const PRO_ANALYSIS_TOOLS = [
     desc: 'จับโครงสร้างราคา Break of Structure (BOS), Change of Character (CHoCH) และ Order Block บนกราฟแท่งเทียน',
     icon: Layers,
     badge: 'STRUCTURE',
+    link: '/developers',
   },
   {
     id: 'causal-trend',
@@ -203,6 +285,7 @@ export const PRO_ANALYSIS_TOOLS = [
     desc: 'คำนวณ Relative Volume และแนวโน้มอย่างเป็นเหตุเป็นผล ปราศจากการดึงข้อมูลในอนาคต (No Look-ahead Bias)',
     icon: TrendingUp,
     badge: 'MOMENTUM',
+    link: '/daytrade',
   },
   {
     id: 'risk-calculator',
@@ -212,6 +295,7 @@ export const PRO_ANALYSIS_TOOLS = [
     desc: 'คำนวณตำแหน่ง Stop Loss และ Take Profit อัตโนมัติโดยอิงจาก Average True Range (ATR) รักษาอัตราผลตอบแทนขั้นต่ำ 2R',
     icon: BarChart3,
     badge: 'RISK MATH',
+    link: '/risk',
   },
   {
     id: 'macro-sentiment',
@@ -221,6 +305,7 @@ export const PRO_ANALYSIS_TOOLS = [
     desc: 'ดึงข้อมูลข่าวสารตลาดและปฏิทินเศรษฐกิจ คัดกรองเฉพาะหัวข้อที่มีผลกระทบต่อสินทรัพย์จริง พร้อมแจ้งเตือนข่าวด่วน',
     icon: Newspaper,
     badge: 'MACRO',
+    link: '/calendar',
   },
   {
     id: 'mtf-confluence',
@@ -230,6 +315,7 @@ export const PRO_ANALYSIS_TOOLS = [
     desc: 'ตรวจสอบความสอดคล้องระหว่างกรอบเวลารายวัน (Day), 4 ชั่วโมง (4H) และ 15 นาที (15M) ก่อนยืนยันแผนเทรด',
     icon: Clock,
     badge: 'CONFLUENCE',
+    link: '/thai#section-auto-pick',
   },
   {
     id: 'ledger-telemetry',
@@ -239,6 +325,7 @@ export const PRO_ANALYSIS_TOOLS = [
     desc: 'วิเคราะห์สถานะบัญชี โควต้าการใช้งาน และแนะนำขั้นตอนถัดไป (Next Action) ที่เหมาะสมสำหรับพอร์ตของคุณ',
     icon: LineChart,
     badge: 'TELEMETRY',
+    link: '/account',
   },
 ];
 
@@ -335,7 +422,7 @@ export default function ProductsShowcase() {
           {PRO_ANALYSIS_TOOLS.map((tool) => {
             const ToolIcon = tool.icon;
             return (
-              <div key={tool.id} className="ng-tool-card">
+              <Link key={tool.id} href={tool.link} className="ng-tool-card" style={{ textDecoration: 'none' }}>
                 <div className="ng-tool-header">
                   <span className="ng-tool-dimension">{tool.dimension}</span>
                   <span className="ng-tool-category">{tool.category}</span>
@@ -347,7 +434,11 @@ export default function ProductsShowcase() {
                   <h4>{tool.title}</h4>
                 </div>
                 <p>{tool.desc}</p>
-              </div>
+                <div style={{ marginTop: 'auto', paddingTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#0284c7' }}>
+                  <span>เปิดเครื่องมือนี้</span>
+                  <ArrowUpRight size={13} />
+                </div>
+              </Link>
             );
           })}
         </div>

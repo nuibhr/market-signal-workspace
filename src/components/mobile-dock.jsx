@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Compass, Home, ShieldCheck, User, Zap } from 'lucide-react';
+import { Compass, Home, Scale, User, Zap } from 'lucide-react';
 
 const DOCK_ITEMS = [
   { label: 'หน้าหลัก', href: '/', icon: Home },
   { label: 'ตลาด', href: '/markets', icon: Compass },
   { label: 'Daytrade', href: '/daytrade', icon: Zap },
-  { label: 'โค้ช', href: '/coaches', icon: ShieldCheck },
+  { label: 'คุมเสี่ยง', href: '/risk', icon: Scale },
   { label: 'บัญชี', href: '/account', icon: User },
 ];
 

@@ -169,6 +169,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
   function navigateTo(id) {
     if (id === 'account' || id === 'membership') { window.location.href = '/account'; return; }
+    if (id === 'risk') { window.location.href = '/risk'; return; }
+    if (id === 'calendar-page') { window.location.href = '/calendar'; return; }
+    if (id === 'developers') { window.location.href = '/developers'; return; }
     setActiveNav(id);
     if (id === 'analysis-tools') { setPopup('scanner'); return; }
     if(id==='favorites')setFavoritesOpenRequest(value=>value+1);
