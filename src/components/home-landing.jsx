@@ -19,6 +19,7 @@ export default function HomeLanding() {
     <header className="ng-header">
       <Link href="/" className="ng-brand" aria-label="Nugaom AI Pick หน้าแรก"><Image src="/nugaom-mascot.png" width={40} height={40} alt="" priority /><span>NUGAOM<small>AI PICK / MARKET INTELLIGENCE</small></span></Link>
       <nav aria-label="เมนูหลัก">
+        <Link href="/dr" style={{ color: '#f59e0b', fontWeight: '800', background: 'rgba(245, 158, 11, 0.12)', padding: '5px 12px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>🎯 DR Strategy & ปันผลไทย</Link>
         <a href="#discover">เลือกตลาด</a>
         <a href="#products-suite">ผลิตภัณฑ์ทั้งหมด</a>
         <a href="#pro-analysis-suite" style={{ color: '#0284c7', fontWeight: '700' }}>เครื่องมือสถาบัน ⚡</a>
@@ -28,6 +29,17 @@ export default function HomeLanding() {
       </nav>
       <Link href="/account" className="ng-login">เข้าใช้ด้วย LINE / ทดลอง <ArrowUpRight size={16} aria-hidden="true" /></Link>
     </header>
+    <div style={{ maxWidth: '1200px', margin: '14px auto 0', padding: '0 20px' }}>
+      <div style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(16, 185, 129, 0.18) 100%)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '16px', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ background: '#f59e0b', color: '#0f172a', fontWeight: '900', fontSize: '11px', padding: '3px 8px', borderRadius: '6px' }}>NEW 2026</span>
+          <span style={{ fontSize: '14px', fontWeight: '700', color: '#ffffff' }}>เปิดใช้งาน DR80 Strategy Tracker & เรดาร์หุ้นปันผลไทย (SETHD) แล้ว!</span>
+        </div>
+        <Link href="/dr" style={{ background: '#f59e0b', color: '#0f172a', fontWeight: '800', fontSize: '13px', padding: '8px 18px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+          เปิดโต๊ะ DR Strategy & ปันผลไทยทันที <span>→</span>
+        </Link>
+      </div>
+    </div>
     <LandingRobot />
     <div className="ng-principles"><span><ScanLine size={15} /> เห็นเงื่อนไขก่อนตัดสินใจ</span><span><BellRing size={15} /> ติดตามสัญญาณผ่านเว็บ</span><span><ShieldCheck size={15} /> ทบทวนจากบันทึกเข้า–ออก</span></div>
 
