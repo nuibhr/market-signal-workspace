@@ -2,9 +2,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, BellRing, Bookmark, ChartNoAxesCombined, Check, ScanLine, ShieldCheck } from 'lucide-react';
 import LandingRobot from './landing-robot.jsx';
+import ProductsShowcase from './products-showcase.jsx';
+import MobileDock from './mobile-dock.jsx';
 import '../app/landing.css';
-
-
 
 const markets = [
   { id: 'thai', number: '01', name: 'หุ้นไทย', en: 'THAI EQUITIES', detail: 'จากหุ้นที่สนใจ สู่จังหวะที่มีแผน', tags: 'สแกนตลาด · สัญญาณ · หุ้นโปรด', tone: '#c8e3a0', glyph: 'TH' },
@@ -19,7 +19,13 @@ export default function HomeLanding() {
     <a className="ng-skip" href="#discover">ข้ามไปเลือกตลาด</a>
     <header className="ng-header">
       <Link href="/" className="ng-brand" aria-label="Nugaom AI Pick หน้าแรก"><Image src="/nugaom-mascot.png" width={40} height={40} alt="" priority /><span>NUGAOM<small>AI PICK / MARKET INTELLIGENCE</small></span></Link>
-      <nav aria-label="เมนูหลัก"><a href="#discover">เลือกตลาด</a><a href="#how-it-works">วิธีใช้งาน</a><Link href="/thai#section-results">ผลงานสัญญาณ</Link><Link href="/community">ชุมชนและทีม</Link></nav>
+      <nav aria-label="เมนูหลัก">
+        <a href="#discover">เลือกตลาด</a>
+        <a href="#products-suite">ผลิตภัณฑ์ &amp; เครื่องมือ</a>
+        <a href="#how-it-works">วิธีใช้งาน</a>
+        <Link href="/thai#section-results">ผลงานสัญญาณ</Link>
+        <Link href="/community">ชุมชนและทีม</Link>
+      </nav>
       <Link href="/account" className="ng-login">เข้าใช้ด้วย LINE <ArrowUpRight size={16} aria-hidden="true" /></Link>
     </header>
     <LandingRobot />
@@ -35,8 +41,11 @@ export default function HomeLanding() {
       <p className="ng-data-note">ความสามารถและความถี่ข้อมูลต่างกันในแต่ละตลาด · หุ้นสหรัฐฯ ใช้สัญญาณรายวัน · Forex / CFD แยก Demo จากข้อมูลที่รับผ่าน MT5 · TFEX และ Forex AutoPick ยังไม่เปิดใช้งาน</p>
     </section>
 
+    {/* Section 02: Products & Analysis Suite */}
+    <ProductsShowcase />
+
     <section id="how-it-works" className="ng-section ng-process" tabIndex={-1} aria-labelledby="ng-process-title">
-      <div className="ng-section-heading"><div><span className="ng-kicker">02 / FROM SIGNAL TO STORY</span><h2 id="ng-process-title">ไม่จบที่สัญญาณ<br /><span>เห็นเส้นทางของทุกจังหวะ</span></h2></div><Link href="/thai#section-auto-pick" className="ng-text-link">เปิดกระดานสัญญาณ <ArrowUpRight size={18} /></Link></div>
+      <div className="ng-section-heading"><div><span className="ng-kicker">03 / FROM SIGNAL TO STORY</span><h2 id="ng-process-title">ไม่จบที่สัญญาณ<br /><span>เห็นเส้นทางของทุกจังหวะ</span></h2></div><Link href="/thai#section-auto-pick" className="ng-text-link">เปิดกระดานสัญญาณ <ArrowUpRight size={18} /></Link></div>
       <div className="ng-process-grid">
         <div className="ng-signal-preview" aria-label="ภาพอธิบายขั้นตอนสัญญาณ ไม่ใช่รายการซื้อขายจริง">
           <div className="ng-preview-head"><span><i /> SIGNAL JOURNEY</span><small>ภาพอธิบายการทำงาน</small></div>
@@ -52,7 +61,7 @@ export default function HomeLanding() {
       </div>
     </section>
 
-    <section className="ng-section ng-start" aria-labelledby="ng-start-title"><div><span className="ng-kicker">03 / MAKE IT YOUR SPACE</span><h2 id="ng-start-title">เปิดมุมมองใหม่<br />ให้การลงทุนของคุณ</h2><p>ใช้บัญชี LINE ของคุณเริ่มต้น<br />แล้วเลือกตลาดที่อยากติดตาม</p><div className="ng-actions"><Link href="/account" className="ng-button ng-button-dark">เริ่มต้นด้วย LINE <ArrowUpRight size={20} /></Link><a href="#discover" className="ng-text-link">สำรวจเครื่องมือก่อน →</a></div></div><div className="ng-start-note"><span>NUGAOM / AI PICK</span><p>ข้อมูลช่วยให้เห็นภาพ<br />แผนช่วยให้มีทิศทาง<br /><b>การตัดสินใจเป็นของคุณ</b></p><span>RESEARCH. PLAN. REFLECT.</span></div></section>
+    <section className="ng-section ng-start" aria-labelledby="ng-start-title"><div><span className="ng-kicker">04 / MAKE IT YOUR SPACE</span><h2 id="ng-start-title">เปิดมุมมองใหม่<br />ให้การลงทุนของคุณ</h2><p>ใช้บัญชี LINE ของคุณเริ่มต้น<br />แล้วเลือกตลาดที่อยากติดตาม</p><div className="ng-actions"><Link href="/account" className="ng-button ng-button-dark">เริ่มต้นด้วย LINE <ArrowUpRight size={20} /></Link><a href="#discover" className="ng-text-link">สำรวจเครื่องมือก่อน →</a></div></div><div className="ng-start-note"><span>NUGAOM / AI PICK</span><p>ข้อมูลช่วยให้เห็นภาพ<br />แผนช่วยให้มีทิศทาง<br /><b>การตัดสินใจเป็นของคุณ</b></p><span>RESEARCH. PLAN. REFLECT.</span></div></section>
 
     <section className="ng-section ng-faq" aria-labelledby="ng-faq-title"><div><span className="ng-kicker">GOOD TO KNOW</span><h2 id="ng-faq-title">ก่อนเริ่มใช้งาน</h2></div><div>
       <details><summary>ระบบส่งคำสั่งซื้อขายให้หรือไม่?</summary><p>แอปนี้ใช้สแกน วิเคราะห์ และแจ้งเตือน ไม่มีการส่งคำสั่งซื้อขายแทนคุณ สัญญาณเป็นข้อมูลประกอบการตัดสินใจ</p></details>
@@ -61,5 +70,8 @@ export default function HomeLanding() {
       <details><summary>เข้าสู่ระบบและเริ่มทดลองอย่างไร?</summary><p>กดเข้าใช้ด้วย LINE แล้วทำขั้นตอนในหน้าบัญชีให้ครบ ตรวจสถานะทดลองใช้ 14 วันและสิทธิสมาชิกได้จากหน้านั้น</p></details>
     </div></section>
     <footer className="ng-footer"><div><Link href="/" className="ng-footer-brand">NUGAOM AI PICK<span>YOUR MARKET. YOUR MOMENT.</span></Link><div><a href="#discover">เลือกตลาด</a><Link href="/forex">Forex / CFD</Link><Link href="/community">ชุมชนและทีม</Link><Link href="/coaches">พอร์ตโค้ช · Paper</Link><Link href="/account">บัญชีของฉัน</Link></div></div><p>เครื่องมือช่วยวิเคราะห์ ไม่ใช่คำแนะนำในการลงทุน การลงทุนมีความเสี่ยง ผู้ใช้งานควรศึกษาข้อมูลและตัดสินใจด้วยตนเอง</p><small>© {new Date().getFullYear()} Nugaom AI Pick <span>3D: Nugaom / Three.js · <a href="/landing-pages/licenses/THREE-LICENSE">MIT License</a></span></small></footer>
+
+    {/* Mobile Navigation Dock */}
+    <MobileDock />
   </main>;
 }
