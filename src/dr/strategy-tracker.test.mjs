@@ -12,6 +12,8 @@ import {
   THAI_DIVIDEND_PORTFOLIO_MODEL,
   TOP_THAI_DIVIDEND_STOCKS,
   FEATURED_DR_UNIVERSE,
+  FEATURED_THAI_STOCK_UNIVERSE,
+  generateMorningSignalSpeech,
 } from './strategy-tracker.mjs';
 
 test('calcCamarilla computes accurate 8-level pivots and central pivot', () => {
@@ -140,3 +142,38 @@ test('THAI_DIVIDEND_PORTFOLIO_MODEL allocates exactly 100% across all 5 buckets'
   assert.equal(THAI_DIVIDEND_PORTFOLIO_MODEL.length, 5);
   assert.ok(TOP_THAI_DIVIDEND_STOCKS.length >= 6);
 });
+
+test('FEATURED_THAI_STOCK_UNIVERSE scores accurately with 16-point confluence engine', () => {
+  assert.ok(FEATURED_THAI_STOCK_UNIVERSE.length >= 6);
+  const cpall = FEATURED_THAI_STOCK_UNIVERSE.find(s => s.symbol === 'CPALL');
+  assert.ok(cpall);
+  const scored = scoreDRCandidate({
+    symbol: cpall.symbol,
+    currentPrice: cpall.currentPrice,
+    changePct: cpall.changePct,
+    closes: cpall.closes,
+    highs: cpall.highs,
+    lows: cpall.lows,
+  });
+
+  assert.ok(scored);
+  assert.equal(scored.symbol, 'CPALL');
+  assert.ok(scored.totalScore >= 0 && scored.totalScore <= 16);
+  assert.ok(scored.entry > 0 && scored.tp1 > scored.entry && scored.sl < scored.entry);
+  assert.ok(scored.riskReward > 0);
+});
+
+test('generateMorningSignalSpeech produces natural Thai briefing text with entry, TP, and SL', () => {
+  const speech = generateMorningSignalSpeech({
+    thaiPicks: [{ symbol: 'CPALL', entry: 63.80, tp1: 66.50, sl: 62.00, status: 'อยู่ในโซนซื้อ' }],
+    drPicks: [{ symbol: 'AAPL80', entry: 80.50, tp1: 84.20, sl: 78.80, status: 'อยู่ในโซนซื้อ' }],
+  });
+
+  assert.ok(speech.includes('CPALL'));
+  assert.ok(speech.includes('63.80'));
+  assert.ok(speech.includes('AAPL80'));
+  assert.ok(speech.includes('80.50'));
+  assert.ok(speech.includes('เป้าหมายทำกำไร'));
+  assert.ok(speech.includes('ตัดขาดทุน'));
+});
+

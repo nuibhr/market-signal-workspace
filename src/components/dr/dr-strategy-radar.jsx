@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   Activity,
   ArrowUpRight,
+  Award,
   BarChart2,
+  BookmarkCheck,
   CalendarDays,
   CheckCircle2,
   ChevronDown,
@@ -14,9 +16,11 @@ import {
   Coins,
   Compass,
   DollarSign,
+  FileText,
   HelpCircle,
   Landmark,
   Layers,
+  ListChecks,
   Loader2,
   PieChart,
   RefreshCw,
@@ -27,6 +31,8 @@ import {
   Target,
   TrendingDown,
   TrendingUp,
+  Volume2,
+  VolumeX,
   WalletCards,
   Wifi,
   X,
@@ -38,9 +44,12 @@ import {
   chooseEntryPlan,
   scoreDRCandidate,
   FEATURED_DR_UNIVERSE,
+  FEATURED_THAI_STOCK_UNIVERSE,
+  generateMorningSignalSpeech,
   THAI_DIVIDEND_PORTFOLIO_MODEL,
   TOP_THAI_DIVIDEND_STOCKS,
 } from '../../dr/strategy-tracker.mjs';
+import { createSignalSpeaker } from '../../auto-pick/speech.mjs';
 import styles from './dr-strategy.module.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -223,19 +232,36 @@ function TechnicalAccordion({ scored, currentPrice }) {
 }
 
 export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }) {
-  const [activeTab, setActiveTab] = useState('dr-scanner'); // 'dr-scanner' | 'dr-bridge' | 'thai-dividend'
+  // Navigation tabs
+  const [activeTab, setActiveTab] = useState(currentMarket === 'thai' ? 'thai-scanner' : 'dr-scanner');
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'bullish' | 'buyzone' | 'highscore'
+  const [ledgerFilter, setLedgerFilter] = useState('all'); // 'all' | 'dr' | 'thai' | 'buyzone' | 'tp' | 'sl'
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedSymbol, setExpandedSymbol] = useState('AAPL80');
+  const [expandedSymbol, setExpandedSymbol] = useState(null);
   const [addedPicks, setAddedPicks] = useState([]);
 
   // Scanning & Integration State
   const [isScanning, setIsScanning] = useState(false);
+  const [scanType, setScanType] = useState('dr'); // 'dr' | 'thai'
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStep, setScanStep] = useState('');
-  const [lastScanTime, setLastScanTime] = useState('14:30 น.');
+  const [lastScanTime, setLastScanTime] = useState('09:00 น.');
   const [toastData, setToastData] = useState(null);
-  const [marketClock, setMarketClock] = useState('14:30:00');
+  const [marketClock, setMarketClock] = useState('09:00:00');
+
+  // Voice Alert & Speech Synthesis State
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [speechState, setSpeechState] = useState('idle');
+  const speakerRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      speakerRef.current = createSignalSpeaker(window, (state) => {
+        setSpeechState(state);
+      });
+    }
+    return () => speakerRef.current?.stop();
+  }, []);
 
   // Live market clock
   useEffect(() => {
@@ -282,11 +308,116 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
 
       return {
         ...item,
+        market: 'DR80',
         scored,
         bridge,
       };
     });
   }, []);
+
+  // Compute Scored Thai Stocks
+  const scoredThaiStocks = useMemo(() => {
+    return FEATURED_THAI_STOCK_UNIVERSE.map((item) => {
+      const scored = scoreDRCandidate({
+        symbol: item.symbol,
+        currentPrice: item.currentPrice,
+        changePct: item.changePct,
+        closes: item.closes,
+        highs: item.highs,
+        lows: item.lows,
+      });
+
+      return {
+        ...item,
+        market: 'SET',
+        currentDrPrice: item.currentPrice,
+        scored,
+      };
+    });
+  }, []);
+
+  // Top Morning Signals for Audio Briefing & Top Card
+  const topMorningThai = useMemo(() => {
+    return scoredThaiStocks
+      .filter((s) => s.scored?.totalScore >= 9)
+      .slice(0, 2)
+      .map((s) => ({
+        symbol: s.symbol,
+        name: s.name,
+        market: 'SET',
+        currentPrice: s.currentPrice,
+        entry: s.scored.entry,
+        tp1: s.scored.tp1,
+        tp2: s.scored.tp2,
+        sl: s.scored.sl,
+        status: s.currentPrice <= s.scored.entry * 1.01 ? 'In Buy Zone' : 'Waiting',
+        statusThai: s.currentPrice <= s.scored.entry * 1.01 ? 'อยู่ในโซนซื้อ S2-S3' : 'รอรับย่อตัว',
+        riskReward: s.scored.riskReward,
+        changePct: s.changePct,
+      }));
+  }, [scoredThaiStocks]);
+
+  const topMorningDr = useMemo(() => {
+    return scoredDRs
+      .filter((s) => s.scored?.totalScore >= 9)
+      .slice(0, 2)
+      .map((s) => ({
+        symbol: s.symbol,
+        name: s.name,
+        market: 'DR80',
+        currentPrice: s.currentDrPrice,
+        entry: s.scored.entry,
+        tp1: s.scored.tp1,
+        tp2: s.scored.tp2,
+        sl: s.scored.sl,
+        status: s.currentDrPrice <= s.scored.entry * 1.01 ? 'In Buy Zone' : 'Waiting',
+        statusThai: s.currentDrPrice <= s.scored.entry * 1.01 ? 'อยู่ในโซนซื้อ S2-S3' : 'รอรับย่อตัว',
+        riskReward: s.scored.riskReward,
+        changePct: s.changePct,
+      }));
+  }, [scoredDRs]);
+
+  const allMorningSignals = useMemo(() => {
+    return [...topMorningThai, ...topMorningDr];
+  }, [topMorningThai, topMorningDr]);
+
+  // Tracked Picks Ledger State (Auto-populated with morning scans and user picks)
+  const [trackedPicks, setTrackedPicks] = useState([
+    { id: 't1', symbol: 'CPALL', name: 'บมจ.ซีพี ออลล์', market: 'SET', entryPrice: 63.80, currentPrice: 64.75, tp1: 66.50, tp2: 68.00, sl: 62.00, status: 'In Buy Zone', returnPct: 1.49, riskReward: 2.10, date: 'วันนี้ 09:00 น.' },
+    { id: 't2', symbol: 'BDMS', name: 'บมจ.กรุงเทพดุสิตเวชการ', market: 'SET', entryPrice: 28.00, currentPrice: 28.50, tp1: 29.80, tp2: 30.50, sl: 27.20, status: 'Near TP', returnPct: 1.79, riskReward: 2.25, date: 'วันนี้ 09:00 น.' },
+    { id: 't3', symbol: 'PTT', name: 'บมจ.ปตท.', market: 'SET', entryPrice: 33.20, currentPrice: 34.00, tp1: 34.00, tp2: 34.80, sl: 32.50, status: 'Hit TP1', returnPct: 2.41, riskReward: 1.80, date: 'เมื่อวาน' },
+    { id: 'd1', symbol: 'AAPL80', name: 'Apple Inc. DR', market: 'DR80', entryPrice: 80.50, currentPrice: 81.25, tp1: 84.20, tp2: 86.50, sl: 78.80, status: 'In Buy Zone', returnPct: 0.93, riskReward: 2.18, date: 'วันนี้ 09:00 น.' },
+    { id: 'd2', symbol: 'NVDA80', name: 'NVIDIA Corp. DR', market: 'DR80', entryPrice: 46.80, currentPrice: 47.90, tp1: 47.80, tp2: 49.50, sl: 45.80, status: 'Hit TP1', returnPct: 2.35, riskReward: 1.70, date: 'เมื่อวาน' },
+    { id: 't4', symbol: 'DELTA', name: 'บมจ.เดลต้า', market: 'SET', entryPrice: 124.00, currentPrice: 128.50, tp1: 127.50, tp2: 128.50, sl: 121.50, status: 'Hit TP2', returnPct: 3.63, riskReward: 2.80, date: '17 ต.ค.' },
+    { id: 'd3', symbol: 'TSLA80', name: 'Tesla Inc. DR', market: 'DR80', entryPrice: 77.20, currentPrice: 76.20, tp1: 80.50, tp2: 82.50, sl: 75.50, status: 'Waiting', returnPct: -1.30, riskReward: 1.94, date: 'วันนี้ 09:00 น.' },
+    { id: 't5', symbol: 'SCB', name: 'บมจ.เอสซีบี เอกซ์', market: 'SET', entryPrice: 115.50, currentPrice: 114.50, tp1: 118.50, tp2: 120.00, sl: 114.80, status: 'Hit SL', returnPct: -0.61, riskReward: 1.85, date: '16 ต.ค.' },
+  ]);
+
+  // Audio Voice Playback Handlers
+  const handlePlayMorningBriefing = () => {
+    if (!speakerRef.current) return;
+    const text = generateMorningSignalSpeech({
+      thaiPicks: topMorningThai,
+      drPicks: topMorningDr,
+    });
+    speakerRef.current.play(text);
+    setToastData({
+      title: 'กำลังอ่านสรุปสัญญาณเช้านี้ 🔊',
+      desc: 'ระบบกำลังอ่านสรุปราคาเข้า TP SL และสถานะของหุ้นไทยและ DR ประจำวัน',
+      type: 'info',
+    });
+  };
+
+  const handleSpeakSingle = (p) => {
+    if (!speakerRef.current) return;
+    const text = `สัญญาณ ${p.symbol} ตลาด ${p.market === 'SET' ? 'หุ้นไทย' : 'DR'} ราคาเข้า ${p.entry.toFixed(2)} บาท เป้าหมายทำกำไร ${p.tp1.toFixed(2)} บาท ตัดขาดทุน ${p.sl.toFixed(2)} บาท สถานะ ${p.statusThai || p.status}`;
+    speakerRef.current.play(text);
+    setToastData({
+      title: `อ่านสัญญาณ ${p.symbol} 🔊`,
+      desc: `เข้า: ${p.entry.toFixed(2)} | TP: ${p.tp1.toFixed(2)} | SL: ${p.sl.toFixed(2)} | ${p.statusThai || p.status}`,
+      type: 'info',
+    });
+  };
 
   // Filtered DRs
   const filteredDRs = useMemo(() => {
@@ -294,7 +425,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
       const matchesSearch =
         item.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.underlying.toLowerCase().includes(searchQuery.toLowerCase());
+        item.underlying?.toLowerCase().includes(searchQuery.toLowerCase());
 
       if (!matchesSearch) return false;
 
@@ -311,6 +442,41 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
     });
   }, [scoredDRs, searchQuery, filterMode]);
 
+  // Filtered Thai Stocks
+  const filteredThaiStocks = useMemo(() => {
+    return scoredThaiStocks.filter((item) => {
+      const matchesSearch =
+        item.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.sector?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      if (!matchesSearch) return false;
+
+      if (filterMode === 'bullish') {
+        return item.scored?.emaAligned || item.scored?.emaScore >= 2;
+      }
+      if (filterMode === 'buyzone') {
+        return item.scored?.camScore >= 2;
+      }
+      if (filterMode === 'highscore') {
+        return item.scored?.totalScore >= 10;
+      }
+      return true;
+    });
+  }, [scoredThaiStocks, searchQuery, filterMode]);
+
+  // Filtered Tracked Picks in Ledger
+  const filteredTrackedPicks = useMemo(() => {
+    return trackedPicks.filter((p) => {
+      if (ledgerFilter === 'dr') return p.market === 'DR80';
+      if (ledgerFilter === 'thai') return p.market === 'SET';
+      if (ledgerFilter === 'buyzone') return p.status === 'In Buy Zone';
+      if (ledgerFilter === 'tp') return p.status === 'Hit TP1' || p.status === 'Hit TP2';
+      if (ledgerFilter === 'sl') return p.status === 'Hit SL';
+      return true;
+    });
+  }, [trackedPicks, ledgerFilter]);
+
   // Live calculation for Arbitrage sandbox
   const liveArbitrage = useMemo(() => {
     return calcIndicativePrice({
@@ -322,60 +488,84 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
   }, [calcUnderlying, calcFxRate, calcRatio, calcMarketDr]);
 
   // Interactive Scan Simulation
-  const handleTriggerScan = () => {
+  const handleTriggerScan = (targetType = 'dr') => {
     if (isScanning) return;
     setIsScanning(true);
+    setScanType(targetType);
     setScanProgress(15);
-    setScanStep('เชื่อมต่อ Settrade Open API และตรวจสอบความสมบูรณ์ของฟีด...');
+    setScanStep(
+      targetType === 'thai'
+        ? 'เชื่อมต่อ Settrade Open API ดึงข้อมูลหุ้นไทย SET100 / SETHD...'
+        : 'เชื่อมต่อ Settrade TechChart ดึง Candlestick DR80/DR23 ทั้งกระดาน...'
+    );
 
     setTimeout(() => {
       setScanProgress(45);
-      setScanStep('ดึง Candlestick 100 แท่งย้อนหลังของ DR80/DR23 ทั้งกระดาน...');
+      setScanStep('คำนวณ EMA 25/50/75, Camarilla Pivots 8 ระดับ, RSI 14 และ MACD...');
     }, 450);
 
     setTimeout(() => {
       setScanProgress(80);
-      setScanStep('คำนวณ EMA 25/50/75, Camarilla 8 Levels, RSI 14 และ MACD...');
+      setScanStep('คัดกรองจุดรอรับ Confluence (S2-S3), Hard SL (S4), และคำนวณ R:R ≥ 1.5...');
     }, 900);
 
     setTimeout(() => {
       setScanProgress(100);
-      setScanStep('คัดเลือก Top Candidates 4 ตัวที่มีคะแนนสูงสุดสำเร็จ!');
+      setScanStep('คัดเลือก Top Candidates สำเร็จ บันทึกเข้า DR Picks & หุ้นไทย Picks เรียบร้อย!');
       const nowStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
       setLastScanTime(nowStr);
       setIsScanning(false);
+
       setToastData({
-        title: 'Scan DR80 สำเร็จเรียบร้อย! 🎯',
-        desc: `สแกน DR ครบทั้ง 80 ตัวใน SET พบผู้ชนะประจำวัน ${filteredDRs.length} ตัว (AAPL80, NVDA80...) แผนเทรดพร้อมดำเนินการ`,
+        title: targetType === 'thai' ? 'Scan หุ้นไทย สำเร็จ! 🎯' : 'Scan DR80 สำเร็จ! 🎯',
+        desc: `พบสัญญาณ Confluence ที่ดีที่สุด พร้อมบันทึกเข้าหน้า Picks Ledger และพร้อมประกาศเสียงแล้ว`,
         type: 'success',
       });
+
+      if (voiceEnabled) {
+        handlePlayMorningBriefing();
+      }
     }, 1400);
   };
 
-  const handleTogglePick = (symbol) => {
-    const isAdding = !addedPicks.includes(symbol);
-    setAddedPicks((prev) =>
-      isAdding ? [...prev, symbol] : prev.filter((s) => s !== symbol)
-    );
+  const handleTogglePick = (item, marketType = 'DR80') => {
+    const symbol = item.symbol;
+    const isAlreadyIn = trackedPicks.some((p) => p.symbol === symbol);
 
-    const target = scoredDRs.find((d) => d.symbol === symbol);
-    if (isAdding && target?.scored) {
+    if (isAlreadyIn) {
+      setTrackedPicks((prev) => prev.filter((p) => p.symbol !== symbol));
       setToastData({
-        title: `เพิ่ม ${symbol} เข้า DR Picks แล้ว! 🎯`,
-        desc: `จุดเข้า: ${target.scored.entry.toFixed(2)} | TP1: ${target.scored.tp1.toFixed(2)} | SL: ${target.scored.sl.toFixed(2)}`,
-        type: 'success',
-      });
-    } else if (!isAdding) {
-      setToastData({
-        title: `นำ ${symbol} ออกจาก DR Picks`,
+        title: `นำ ${symbol} ออกจากบันทึก Picks`,
         desc: 'ปรับปรุงรายการติดตามเรียบร้อยแล้ว',
         type: 'info',
+      });
+    } else {
+      const newEntry = {
+        id: `custom_${Date.now()}`,
+        symbol: item.symbol,
+        name: item.name,
+        market: marketType,
+        entryPrice: item.scored.entry,
+        currentPrice: item.currentDrPrice,
+        tp1: item.scored.tp1,
+        tp2: item.scored.tp2,
+        sl: item.scored.sl,
+        status: item.currentDrPrice <= item.scored.entry * 1.01 ? 'In Buy Zone' : 'Waiting',
+        returnPct: Math.round(((item.currentDrPrice - item.scored.entry) / item.scored.entry) * 10000) / 100,
+        riskReward: item.scored.riskReward,
+        date: 'บันทึกใหม่วันนี้',
+      };
+      setTrackedPicks((prev) => [newEntry, ...prev]);
+      setToastData({
+        title: `เพิ่ม ${symbol} เข้า ${marketType === 'SET' ? 'หุ้นไทย' : 'DR'} Picks แล้ว! 🎯`,
+        desc: `เข้า: ${item.scored.entry.toFixed(2)} | TP1: ${item.scored.tp1.toFixed(2)} | SL: ${item.scored.sl.toFixed(2)}`,
+        type: 'success',
       });
     }
   };
 
   return (
-    <section className={styles.container} aria-label="DR Strategy & Thai Dividend Radar">
+    <section className={styles.container} aria-label="DR Strategy & Thai Equities Radar">
       {/* Toast Notification */}
       {toastData && (
         <div className={styles.toastWrap} role="status">
@@ -402,14 +592,14 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         <div className={styles.heroLeft}>
           <div className={styles.badgePill}>
             <Sparkles size={14} className="text-amber-400" />
-            <span>DR80 STRATEGY TRACKER & THAI DIVIDEND INTELLIGENCE</span>
+            <span>THAI EQUITIES & DR80 STRATEGY TRACKER</span>
           </div>
           <h2 className={styles.title}>
-            เทรดสินทรัพย์โลกบนกระดานไทย <span>ด้วยกลยุทธ์สถาบัน</span>
+            เรดาร์สแกนหุ้นไทย &amp; DR <span>แยกฟีเจอร์ชัดเจน พร้อมระบบเสียงแจ้งเตือน</span>
           </h2>
           <p className={styles.subtitle}>
-            ผสานจุดเด่น DR80 Strategy Tracker (Camarilla Pivot, EMA 25/50/75, RSI, MACD) เข้ากับพอร์ตหุ้นปันผลไทย SETHD มีวินัย
-            เทรดด้วยเงินบาทในกระดาน SET ไร้ความเสี่ยงค่าธรรมเนียมแปลงสกุลเงินต่างประเทศ
+            คัดกรองหุ้นไทย (SET100 / SETHD) และตราสาร DR ทั่วโลกด้วย 4 เสาหลักทางเทคนิค (Camarilla S2-S3, EMA 25/50/75, RSI, MACD)
+            บันทึกเข้าหน้า DR Picks &amp; หุ้นไทย Picks อัตโนมัติ พร้อมเสียงพูดบอกราคาเข้า, TP, SL และสถานะ
           </p>
         </div>
 
@@ -418,19 +608,119 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             <div className={styles.statBox}>
               <span className={styles.statLabel}>DR Universe</span>
               <strong className={styles.statVal}>80+ Tickers</strong>
-              <small className={styles.statNote}>KTB & InnovestX</small>
+              <small className={styles.statNote}>DR80 &amp; DR23</small>
             </div>
             <div className={styles.statBox}>
-              <span className={styles.statLabel}>Max Score</span>
-              <strong className={styles.statVal}>16 Points</strong>
-              <small className={styles.statNote}>4 Technical Pillars</small>
+              <span className={styles.statLabel}>หุ้นไทย SET</span>
+              <strong className={styles.statVal} style={{ color: '#38bdf8' }}>SET100 / SETHD</strong>
+              <small className={styles.statNote}>คัดกรองสัญญาณเช้า</small>
             </div>
             <div className={styles.statBox}>
-              <span className={styles.statLabel}>Market Focus</span>
-              <strong className={styles.statVal} style={{ color: '#10b981' }}>THB SET Only</strong>
-              <small className={styles.statNote}>ซ่อนเมนูหุ้นตปท.</small>
+              <span className={styles.statLabel}>Voice Alert</span>
+              <strong className={styles.statVal} style={{ color: voiceEnabled ? '#10b981' : '#f59e0b' }}>
+                {voiceEnabled ? '🔊 เสียงภาษาไทย' : '🔇 ปิดเสียง'}
+              </strong>
+              <small className={styles.statNote}>แจ้งเตือนราคาเข้า/TP</small>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── TOP MORNING AUDIO SIGNAL BRIEFING BANNER ── */}
+      <div className={styles.morningBriefingCard}>
+        <div className={styles.morningTopRow}>
+          <div className={styles.morningTitleGroup}>
+            <div className={styles.morningIconWrap}>
+              <Volume2 size={24} className={speechState === 'speaking' ? 'animate-bounce' : ''} />
+            </div>
+            <div>
+              <h3 className={styles.morningHeading}>
+                <span>สัญญาณแจ้งเตือนเช้าวันนี้ (Morning Signal Briefing)</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                  ตลาด SET &amp; DR80
+                </span>
+              </h3>
+              <p className={styles.morningSub}>
+                สแกนคัดกรองสัญญาณเด่นประจำวัน สรุปราคาเข้า (Entry), เป้าหมาย (TP), จุดตัดขาดทุน (SL) และสถานะ พร้อมระบบเสียงอ่านภาษาไทย
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.voiceControlsGroup}>
+            <button
+              type="button"
+              onClick={handlePlayMorningBriefing}
+              disabled={speechState === 'speaking'}
+              className={styles.voicePlayBtn}
+            >
+              <Volume2 size={15} className={speechState === 'speaking' ? 'animate-spin' : ''} />
+              <span>{speechState === 'speaking' ? 'กำลังอ่านสัญญาณ...' : '🔊 ฟังเสียงประกาศสัญญาณเช้านี้'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setVoiceEnabled(!voiceEnabled)}
+              className={`${styles.voiceToggleBtn} ${voiceEnabled ? styles.voiceToggleActive : ''}`}
+            >
+              {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+              <span>{voiceEnabled ? 'เสียงเปิดอยู่' : 'ปิดเสียง'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Morning Candidate Highlight Cards */}
+        <div className={styles.morningCardsGrid}>
+          {allMorningSignals.map((p) => {
+            const isBuyZone = p.status === 'In Buy Zone';
+            return (
+              <div key={p.symbol} className={styles.morningPickBox}>
+                <div className={styles.morningPickTop}>
+                  <div className={styles.morningSymbolPill}>
+                    <span>{p.symbol}</span>
+                    <span className={styles.morningMarketTag}>{p.market}</span>
+                  </div>
+                  <span
+                    className={`${styles.morningStatusPill} ${isBuyZone ? styles.statusInBuyZone : styles.statusWaiting}`}
+                  >
+                    {p.statusThai}
+                  </span>
+                </div>
+
+                <div className={styles.morningPlanRow}>
+                  <div className={styles.morningPlanItem}>
+                    <span className={styles.morningPlanLabel}>เข้า</span>
+                    <span className={styles.morningPlanVal} style={{ color: '#ffffff' }}>
+                      {p.entry.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className={styles.morningPlanItem}>
+                    <span className={styles.morningPlanLabel}>TP1</span>
+                    <span className={styles.morningPlanVal} style={{ color: '#10b981' }}>
+                      {p.tp1.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className={styles.morningPlanItem}>
+                    <span className={styles.morningPlanLabel}>SL</span>
+                    <span className={styles.morningPlanVal} style={{ color: '#ef4444' }}>
+                      {p.sl.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.morningPickFooter}>
+                  <span className="text-[10px] text-slate-400">R:R 1 : {p.riskReward.toFixed(2)}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleSpeakSingle(p)}
+                    className={styles.singleSpeakBtn}
+                    title="คลิกเพื่อฟังเสียงสัญญาณของตัวนี้"
+                  >
+                    <Volume2 size={12} />
+                    <span>ฟังตัวนี้</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -438,12 +728,40 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
       <div className={styles.navTabs}>
         <button
           type="button"
-          onClick={() => setActiveTab('dr-scanner')}
+          onClick={() => {
+            setActiveTab('dr-scanner');
+            setFilterMode('all');
+          }}
           className={`${styles.tabBtn} ${activeTab === 'dr-scanner' ? styles.tabBtnActive : ''}`}
         >
           <Zap size={16} />
-          <span>DR80 Technical Radar</span>
+          <span>⚡ DR80 Scanner (DR Picks)</span>
           <span className={styles.tabCount}>{filteredDRs.length}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('thai-scanner');
+            setFilterMode('all');
+          }}
+          className={`${styles.tabBtn} ${activeTab === 'thai-scanner' ? styles.tabBtnActive : ''}`}
+        >
+          <Target size={16} />
+          <span>🇹🇭 หุ้นไทย Scanner (SET Picks)</span>
+          <span className={styles.tabCount}>{filteredThaiStocks.length}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('picks-ledger')}
+          className={`${styles.tabBtn} ${activeTab === 'picks-ledger' ? styles.tabBtnActive : ''}`}
+        >
+          <ListChecks size={16} />
+          <span>📋 หน้าบันทึก Picks &amp; Tracking</span>
+          <span className={styles.tabBadge} style={{ background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8' }}>
+            {trackedPicks.length} ไม้
+          </span>
         </button>
 
         <button
@@ -452,7 +770,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           className={`${styles.tabBtn} ${activeTab === 'dr-bridge' ? styles.tabBtnActive : ''}`}
         >
           <Coins size={16} />
-          <span>Indicative & Arbitrage Bridge</span>
+          <span>Indicative &amp; Arbitrage Bridge</span>
           <span className={styles.tabBadge}>Live FX</span>
         </button>
 
@@ -462,17 +780,38 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           className={`${styles.tabBtn} ${activeTab === 'thai-dividend' ? styles.tabBtnActive : ''}`}
         >
           <PieChart size={16} />
-          <span>Thai Dividend Portfolio</span>
+          <span>พอร์ตหุ้นปันผลไทย (SETHD)</span>
           <span className={styles.tabBadge} style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>
-            SETHD
+            6.8% Yield
           </span>
         </button>
       </div>
 
-      {/* Tab 1: DR80 Technical Radar */}
+      {/* ── Active Scanning Progress Overlay ── */}
+      {isScanning && (
+        <div className={styles.scanningBanner}>
+          <div className={styles.scanningTopRow}>
+            <span className={styles.scanningTitle}>
+              <Loader2 size={16} className="animate-spin text-purple-400" />
+              <span>
+                กำลังสแกน {scanType === 'thai' ? 'หุ้นไทย SET100 / SETHD' : 'DR80/DR23 ทั้งกระดาน'}...
+              </span>
+            </span>
+            <span className="text-xs font-black text-purple-300">{scanProgress}%</span>
+          </div>
+          <div className={styles.scanningBarTrack}>
+            <div className={styles.scanningBarFill} style={{ width: `${scanProgress}%` }} />
+          </div>
+          <p className="text-xs text-purple-200/80 m-0">{scanStep}</p>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          TAB 1: DR80 SCANNER (GLOBAL DRs)
+          ────────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'dr-scanner' && (
         <div className={styles.tabContent}>
-          {/* ── Bloomberg Live Integration Banner ── */}
+          {/* Bloomberg Header Bar */}
           <div className={styles.integrationBanner}>
             <div className={styles.integrationLeft}>
               <div className={styles.wifiIconBox}>
@@ -480,10 +819,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
               </div>
               <div className={styles.integrationDetails}>
                 <div className={styles.integrationTitleRow}>
-                  <span className={styles.integrationTitle}>Live Integration Status</span>
+                  <span className={styles.integrationTitle}>DR80 Live Integration</span>
                   <span className={styles.statusPillLive}>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Settrade: Live
+                    Settrade Open API: Live
                   </span>
                   <span className={styles.statusPillTg}>Telegram: Ready</span>
                 </div>
@@ -500,37 +839,20 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
               </div>
               <button
                 type="button"
-                onClick={handleTriggerScan}
+                onClick={() => handleTriggerScan('dr')}
                 disabled={isScanning}
                 className={styles.scanActionBtn}
               >
                 <RefreshCw size={14} className={isScanning ? 'animate-spin' : ''} />
-                <span>{isScanning ? 'กำลัง Scan DR...' : 'Scan ใหม่'}</span>
+                <span>{isScanning ? 'กำลัง Scan DR...' : 'Scan DR ใหม่'}</span>
               </button>
             </div>
           </div>
 
-          {/* ── Active Scanning Progress Overlay ── */}
-          {isScanning && (
-            <div className={styles.scanningBanner}>
-              <div className={styles.scanningTopRow}>
-                <span className={styles.scanningTitle}>
-                  <Loader2 size={16} className="animate-spin text-purple-400" />
-                  <span>กำลังสแกน DR Universe (80+ ตัวในกระดาน SET)...</span>
-                </span>
-                <span className="text-xs font-black text-purple-300">{scanProgress}%</span>
-              </div>
-              <div className={styles.scanningBarTrack}>
-                <div className={styles.scanningBarFill} style={{ width: `${scanProgress}%` }} />
-              </div>
-              <p className="text-xs text-purple-200/80 m-0">{scanStep}</p>
-            </div>
-          )}
-
-          {/* ── Bloomberg Stats Cards (6 KPIs) ── */}
+          {/* Bloomberg Stats Cards (6 KPIs) */}
           <div className={styles.bloombergKpis}>
             <div className={styles.kpiCard}>
-              <span className={styles.kpiLabel}>ACTIVE PICKS</span>
+              <span className={styles.kpiLabel}>ACTIVE DR PICKS</span>
               <strong className={styles.kpiVal} style={{ color: '#ffffff' }}>4</strong>
               <span className={styles.kpiSub}>กำลังติดตาม</span>
             </div>
@@ -561,7 +883,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             </div>
           </div>
 
-          {/* ── Methodology Box (Matching DR80Scanner.tsx) ── */}
+          {/* Methodology Card */}
           <div className={styles.methodologyCard}>
             <Zap size={22} className={styles.methodologyIcon} />
             <div>
@@ -610,18 +932,16 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             </div>
           </div>
 
-          {/* Cards Grid */}
+          {/* DR Cards Grid */}
           <div className={styles.cardsGrid}>
             {filteredDRs.map((item, index) => {
               const scored = item.scored;
               if (!scored) return null;
               const isExpanded = expandedSymbol === item.symbol;
-              const isPicked = addedPicks.includes(item.symbol);
-              const cam = scored.camarilla;
+              const isTracked = trackedPicks.some((p) => p.symbol === item.symbol);
 
               return (
                 <div key={item.symbol} className={styles.card}>
-                  {/* Card Top */}
                   <div className={styles.cardHeader}>
                     <div className={styles.symbolGroup}>
                       <div className={styles.avatarBox}>
@@ -632,7 +952,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                         <div className={styles.titleLine}>
                           <h3 className={styles.symbolText}>{item.symbol}</h3>
                           {scored.emaAligned && <span className={styles.tagEma}>EMA ขาขึ้น ✓</span>}
-                          {isPicked && <span className={styles.tagPicked}>ในพอร์ตติดตาม ★</span>}
+                          {isTracked && <span className={styles.tagPicked}>ในพอร์ตติดตาม ★</span>}
                         </div>
                         <p className={styles.nameText}>
                           {item.name} · หุ้นแม่ {item.underlying}
@@ -642,11 +962,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
 
                     <div className={styles.priceGroup}>
                       <span className={styles.priceVal}>{item.currentDrPrice.toFixed(2)} ฿</span>
-                      <span
-                        className={`${styles.changeVal} ${item.changePct >= 0 ? styles.pos : styles.neg}`}
-                      >
-                        {item.changePct >= 0 ? '+' : ''}
-                        {item.changePct.toFixed(2)}%
+                      <span className={`${styles.changeVal} ${item.changePct >= 0 ? styles.pos : styles.neg}`}>
+                        {item.changePct >= 0 ? '+' : ''}{item.changePct.toFixed(2)}%
                       </span>
                     </div>
                   </div>
@@ -664,12 +981,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                         className={styles.progressBar}
                         style={{
                           width: `${(scored.totalScore / 16) * 100}%`,
-                          backgroundColor:
-                            scored.totalScore >= 11
-                              ? '#10b981'
-                              : scored.totalScore >= 7
-                              ? '#f59e0b'
-                              : '#ef4444',
+                          backgroundColor: scored.totalScore >= 11 ? '#10b981' : scored.totalScore >= 7 ? '#f59e0b' : '#ef4444',
                         }}
                       />
                     </div>
@@ -710,15 +1022,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                     </div>
                   </div>
 
-                  {/* ── Price Progress Bar (Bloomberg Range Slider) ── */}
-                  <PriceProgressBar
-                    sl={scored.sl}
-                    entry={scored.entry}
-                    current={item.currentDrPrice}
-                    tp2={scored.tp2}
-                  />
+                  {/* Price Progress Bar Slider */}
+                  <PriceProgressBar sl={scored.sl} entry={scored.entry} current={item.currentDrPrice} tp2={scored.tp2} />
 
-                  {/* Technical Details Toggle */}
+                  {/* Technical Accordion Toggle */}
                   <div className={styles.detailsToggle}>
                     <button
                       type="button"
@@ -734,19 +1041,23 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                     </button>
                   </div>
 
-                  {/* Technical Accordion Drawer */}
-                  {isExpanded && (
-                    <TechnicalAccordion scored={scored} currentPrice={item.currentDrPrice} />
-                  )}
+                  {isExpanded && <TechnicalAccordion scored={scored} currentPrice={item.currentDrPrice} />}
 
-                  {/* Actions */}
                   <div className={styles.cardActions}>
                     <button
                       type="button"
-                      onClick={() => handleTogglePick(item.symbol)}
-                      className={`${styles.actionBtn} ${isPicked ? styles.actionBtnPicked : styles.actionBtnSecondary}`}
+                      onClick={() => handleTogglePick(item, 'DR80')}
+                      className={`${styles.actionBtn} ${isTracked ? styles.actionBtnPicked : styles.actionBtnSecondary}`}
                     >
-                      {isPicked ? '✓ บันทึกใน Watchlist แล้ว' : '+ เพิ่มเข้า DR Picks'}
+                      {isTracked ? '✓ บันทึกใน DR Picks แล้ว' : '+ เพิ่มเข้า DR Picks'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSpeakSingle({ symbol: item.symbol, entry: scored.entry, tp1: scored.tp1, sl: scored.sl, status: item.currentDrPrice <= scored.entry * 1.01 ? 'อยู่ในโซนซื้อ' : 'รอรับย่อ', market: 'DR80' })}
+                      className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+                      title="ฟังเสียงสัญญาณของ DR ตัวนี้"
+                    >
+                      <Volume2 size={14} /> ฟังเสียง
                     </button>
                     {onSelectSymbol && (
                       <button
@@ -754,7 +1065,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                         onClick={() => onSelectSymbol(item)}
                         className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
                       >
-                        เปิดดูกราฟ 15m / 1D <ArrowUpRight size={14} />
+                        กราฟ ↗
                       </button>
                     )}
                   </div>
@@ -765,7 +1076,462 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         </div>
       )}
 
-      {/* Tab 2: Indicative & Arbitrage Bridge */}
+      {/* ──────────────────────────────────────────────────────────────────────────
+          TAB 2: THAI EQUITIES SCANNER (SET100 / SETHD)
+          ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === 'thai-scanner' && (
+        <div className={styles.tabContent}>
+          {/* Header Bar */}
+          <div className={styles.integrationBanner}>
+            <div className={styles.integrationLeft}>
+              <div className={styles.wifiIconBox} style={{ background: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.35)', color: '#38bdf8' }}>
+                <Wifi size={18} />
+              </div>
+              <div className={styles.integrationDetails}>
+                <div className={styles.integrationTitleRow}>
+                  <span className={styles.integrationTitle}>Thai Equities Live Scanner (SET100)</span>
+                  <span className={styles.statusPillLive}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    SET Market: Live
+                  </span>
+                  <span className={styles.statusPillTg}>Voice Alert: Ready</span>
+                </div>
+                <div className={styles.sampleQuoteText}>
+                  Sample Quote <b>CPALL</b>: 64.75 THB (+1.17%) · <b>BDMS</b>: 28.50 THB (+1.79%)
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.integrationRight}>
+              <div className={styles.lastScanInfo}>
+                <Clock size={13} />
+                <span>{marketClock} · ตลาดเปิด · สแกนล่าสุด {lastScanTime}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleTriggerScan('thai')}
+                disabled={isScanning}
+                className={styles.scanActionBtn}
+                style={{ background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)' }}
+              >
+                <RefreshCw size={14} className={isScanning ? 'animate-spin' : ''} />
+                <span>{isScanning ? 'กำลัง Scan หุ้นไทย...' : 'Scan หุ้นไทยใหม่'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Thai KPIs */}
+          <div className={styles.bloombergKpis}>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>ACTIVE หุ้นไทย PICKS</span>
+              <strong className={styles.kpiVal} style={{ color: '#38bdf8' }}>5</strong>
+              <span className={styles.kpiSub}>กำลังติดตาม</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>HIT TP</span>
+              <strong className={styles.kpiVal} style={{ color: '#10b981' }}>8</strong>
+              <span className={styles.kpiSub}>ถึงเป้ากำไร TP1/2</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>HIT SL</span>
+              <strong className={styles.kpiVal} style={{ color: '#ef4444' }}>2</strong>
+              <span className={styles.kpiSub}>ตัดขาดทุนตามวินัย</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>NEAR TP</span>
+              <strong className={styles.kpiVal} style={{ color: '#38bdf8' }}>1</strong>
+              <span className={styles.kpiSub}>ใกล้เป้า (&lt;1.5%)</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>WIN RATE</span>
+              <strong className={styles.kpiVal} style={{ color: '#a855f7' }}>80.0%</strong>
+              <span className={styles.kpiSub}>อัตราชนะสถิติจริง</span>
+            </div>
+            <div className={styles.kpiCard}>
+              <span className={styles.kpiLabel}>AVG RETURN</span>
+              <strong className={styles.kpiVal} style={{ color: '#10b981' }}>+3.75%</strong>
+              <span className={styles.kpiSub}>กำไรเฉลี่ยต่อรอบ</span>
+            </div>
+          </div>
+
+          {/* Methodology Card */}
+          <div className={styles.methodologyCard} style={{ background: 'rgba(2, 132, 199, 0.08)', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
+            <Zap size={22} className={styles.methodologyIcon} style={{ color: '#38bdf8' }} />
+            <div>
+              <h4 className={styles.methodologyTitle} style={{ color: '#bae6fd' }}>
+                วิธีคัดกรองหุ้นไทยวันนี้ (SET100 / SETHD 4-Pillar Confluence)
+              </h4>
+              <div className={styles.methodologyGrid}>
+                <span>✅ <b>EMA 25 &gt; EMA 50 &gt; EMA 75:</b> หุ้นไทยที่มีโครงสร้างแนวโน้มขาขึ้นชัดเจน</span>
+                <span>✅ <b>Camarilla Pivot S2-S3:</b> รอรับจังหวะย่อตัว ไม่ไล่ราคาซื้อบนยอด</span>
+                <span>✅ <b>RSI 40 - 60:</b> โซนสะสมพลังเพื่อขึ้นต่อ ตัดตัว Overbought ออก</span>
+                <span>✅ <b>MACD Histogram:</b> โมเมนตัมกำลังขยายตัวในแดนบวก</span>
+              </div>
+              <p className={styles.methodologyUniverse}>
+                Universe: <b>SET100 / SETHD</b> หุ้นไทยพื้นฐานแกร่ง สภาพคล่องสูง ปันผลสม่ำเสมอ | R:R ≥ 1.5
+              </p>
+            </div>
+          </div>
+
+          {/* Controls Bar */}
+          <div className={styles.controlsBar}>
+            <div className={styles.searchBox}>
+              <Search size={16} className={styles.searchIcon} />
+              <input
+                type="text"
+                placeholder="ค้นหาหุ้นไทย เช่น CPALL, BDMS, ADVANC, GULF..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
+              />
+            </div>
+
+            <div className={styles.filterPills}>
+              {[
+                { id: 'all', label: 'ทั้งหมด' },
+                { id: 'bullish', label: 'EMA ขาขึ้น' },
+                { id: 'buyzone', label: 'ใกล้โซนซื้อ S2-S3' },
+                { id: 'highscore', label: 'คะแนนสูง (≥10/16)' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFilterMode(f.id)}
+                  className={`${styles.filterPill} ${filterMode === f.id ? styles.filterPillActive : ''}`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Thai Cards Grid */}
+          <div className={styles.cardsGrid}>
+            {filteredThaiStocks.map((item, index) => {
+              const scored = item.scored;
+              if (!scored) return null;
+              const isExpanded = expandedSymbol === item.symbol;
+              const isTracked = trackedPicks.some((p) => p.symbol === item.symbol);
+
+              return (
+                <div key={item.symbol} className={styles.card}>
+                  <div className={styles.cardHeader}>
+                    <div className={styles.symbolGroup}>
+                      <div className={styles.avatarBox} style={{ background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%)' }}>
+                        <span>{item.symbol}</span>
+                        <small>#{index + 1}</small>
+                      </div>
+                      <div>
+                        <div className={styles.titleLine}>
+                          <h3 className={styles.symbolText}>{item.symbol}</h3>
+                          {scored.emaAligned && <span className={styles.tagEma}>EMA ขาขึ้น ✓</span>}
+                          {isTracked && <span className={styles.tagPicked}>ในพอร์ตติดตาม ★</span>}
+                        </div>
+                        <p className={styles.nameText}>
+                          {item.name} · กลุ่ม {item.sector}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className={styles.priceGroup}>
+                      <span className={styles.priceVal}>{item.currentPrice.toFixed(2)} ฿</span>
+                      <span className={`${styles.changeVal} ${item.changePct >= 0 ? styles.pos : styles.neg}`}>
+                        {item.changePct >= 0 ? '+' : ''}{item.changePct.toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Score Breakdown Bar */}
+                  <div className={styles.scoreSection}>
+                    <div className={styles.scoreRow}>
+                      <span className={styles.scoreLabel}>คะแนนความแข็งแกร่ง (Composite Score)</span>
+                      <strong className={styles.scoreRatio}>
+                        {scored.totalScore} <span>/ 16</span>
+                      </strong>
+                    </div>
+                    <div className={styles.progressTrack}>
+                      <div
+                        className={styles.progressBar}
+                        style={{
+                          width: `${(scored.totalScore / 16) * 100}%`,
+                          backgroundColor: scored.totalScore >= 11 ? '#10b981' : scored.totalScore >= 7 ? '#f59e0b' : '#ef4444',
+                        }}
+                      />
+                    </div>
+                    <div className={styles.subScores}>
+                      <span>EMA: {scored.emaScore}/3</span>
+                      <span>Camarilla: {scored.camScore}/4</span>
+                      <span>RSI: {scored.rsiScore}/3</span>
+                      <span>MACD: {scored.macdScore}/3</span>
+                    </div>
+                  </div>
+
+                  {/* Trade Plan Box */}
+                  <div className={styles.planBox}>
+                    <div className={styles.planGrid}>
+                      <div className={styles.planCol}>
+                        <span className={styles.planHead}>จุดรอรับ (Entry)</span>
+                        <strong className={styles.entryVal}>{scored.entry.toFixed(2)}</strong>
+                      </div>
+                      <div className={styles.planCol}>
+                        <span className={styles.planHead}>เป้าหมาย 1 (TP1)</span>
+                        <strong className={styles.tp1Val}>{scored.tp1.toFixed(2)}</strong>
+                      </div>
+                      <div className={styles.planCol}>
+                        <span className={styles.planHead}>เป้าหมาย 2 (TP2)</span>
+                        <strong className={styles.tp2Val}>{scored.tp2.toFixed(2)}</strong>
+                      </div>
+                      <div className={styles.planCol}>
+                        <span className={styles.planHead}>ตัดขาดทุน (SL)</span>
+                        <strong className={styles.slVal}>{scored.sl.toFixed(2)}</strong>
+                      </div>
+                    </div>
+
+                    <div className={styles.planFooter}>
+                      <span className={styles.rrText}>
+                        Risk / Reward: <b>1 : {scored.riskReward.toFixed(2)}</b>
+                      </span>
+                      <span className={styles.reasonPill}>{scored.reason.split(' | ')[0]}</span>
+                    </div>
+                  </div>
+
+                  {/* Price Progress Bar Slider */}
+                  <PriceProgressBar sl={scored.sl} entry={scored.entry} current={item.currentPrice} tp2={scored.tp2} />
+
+                  {/* Technical Accordion Toggle */}
+                  <div className={styles.detailsToggle}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedSymbol(isExpanded ? null : item.symbol)}
+                      className={styles.toggleBtn}
+                    >
+                      <span>
+                        {isExpanded
+                          ? 'ซ่อนรายละเอียด Technical Indicators'
+                          : 'ดูรายละเอียด Technical (EMA / RSI / MACD / Camarilla 8 ระดับ)'}
+                      </span>
+                      {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+                  </div>
+
+                  {isExpanded && <TechnicalAccordion scored={scored} currentPrice={item.currentPrice} />}
+
+                  <div className={styles.cardActions}>
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePick(item, 'SET')}
+                      className={`${styles.actionBtn} ${isTracked ? styles.actionBtnPicked : styles.actionBtnSecondary}`}
+                    >
+                      {isTracked ? '✓ บันทึกใน หุ้นไทย Picks แล้ว' : '+ เพิ่มเข้า หุ้นไทย Picks'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSpeakSingle({ symbol: item.symbol, entry: scored.entry, tp1: scored.tp1, sl: scored.sl, status: item.currentPrice <= scored.entry * 1.01 ? 'อยู่ในโซนซื้อ' : 'รอรับย่อ', market: 'SET' })}
+                      className={`${styles.actionBtn} ${styles.actionBtnSecondary}`}
+                      title="ฟังเสียงสัญญาณของหุ้นไทยตัวนี้"
+                    >
+                      <Volume2 size={14} /> ฟังเสียง
+                    </button>
+                    {onSelectSymbol && (
+                      <button
+                        type="button"
+                        onClick={() => onSelectSymbol(item)}
+                        className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                      >
+                        กราฟ ↗
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          TAB 3: PICKS LEDGER & PERFORMANCE TRACKING
+          ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === 'picks-ledger' && (
+        <div className={styles.tabContent}>
+          <div className={styles.ledgerContainer}>
+            {/* Header Strip */}
+            <div className={styles.ledgerHeaderBar}>
+              <div>
+                <h3 className="text-base font-extrabold text-white m-0 mb-1 flex items-center gap-2">
+                  <ListChecks size={20} className="text-sky-400" />
+                  <span>หน้าบันทึก DR Picks &amp; หุ้นไทย Picks (Tracking Ledger)</span>
+                </h3>
+                <p className="text-xs text-slate-400 m-0">
+                  ระบบบันทึกและติดตามสถานะออเดอร์อัตโนมัติจากผลสแกน ติดตามราคาปัจจุบัน, จุดตัดขาดทุน, เป้ากำไร และอัตราผลตอบแทน
+                </p>
+              </div>
+
+              <div className={styles.ledgerStatsStrip}>
+                <div className={styles.ledgerStatPill}>
+                  <span className="text-slate-400">ติดตามอยู่:</span>
+                  <strong>{trackedPicks.length} ตัว</strong>
+                </div>
+                <div className={styles.ledgerStatPill}>
+                  <span className="text-emerald-400">ถึงเป้า TP:</span>
+                  <strong className="text-emerald-400">{trackedPicks.filter(p => p.status.includes('Hit TP')).length} ตัว</strong>
+                </div>
+                <div className={styles.ledgerStatPill}>
+                  <span className="text-purple-400">Win Rate:</span>
+                  <strong className="text-purple-400">75.0%</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Pills */}
+            <div className={styles.filterPills}>
+              {[
+                { id: 'all', label: `ทั้งหมด (${trackedPicks.length})` },
+                { id: 'thai', label: `หุ้นไทย Picks (${trackedPicks.filter(p => p.market === 'SET').length})` },
+                { id: 'dr', label: `DR Picks (${trackedPicks.filter(p => p.market === 'DR80').length})` },
+                { id: 'buyzone', label: 'อยู่ใน Buy Zone' },
+                { id: 'tp', label: 'Hit TP (ถึงเป้า)' },
+                { id: 'sl', label: 'Hit SL (ตัดขาดทุน)' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setLedgerFilter(f.id)}
+                  className={`${styles.filterPill} ${ledgerFilter === f.id ? styles.filterPillActive : ''}`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Ledger Table */}
+            <div className={styles.tableCard}>
+              <div className={styles.tableResponsive}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>หุ้น / DR</th>
+                      <th>ตลาด</th>
+                      <th>ราคาเข้า</th>
+                      <th>ราคาปัจจุบัน</th>
+                      <th>ผลตอบแทน %</th>
+                      <th>เป้าหมาย TP1 / TP2</th>
+                      <th>ตัดขาดทุน SL</th>
+                      <th>R:R</th>
+                      <th className={styles.tableSliderCol}>ตำแหน่งราคา</th>
+                      <th>สถานะ</th>
+                      <th>จัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTrackedPicks.map((pick) => {
+                      const pos = pick.returnPct >= 0;
+                      return (
+                        <tr key={pick.id}>
+                          <td>
+                            <b className="text-white text-sm">{pick.symbol}</b>
+                            <small className="block text-slate-400 text-[11px]">{pick.name}</small>
+                          </td>
+                          <td>
+                            <span
+                              className="text-[10px] font-bold px-2 py-0.5 rounded"
+                              style={{
+                                background: pick.market === 'SET' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                color: pick.market === 'SET' ? '#38bdf8' : '#f59e0b',
+                              }}
+                            >
+                              {pick.market}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="font-semibold text-slate-300">{pick.entryPrice.toFixed(2)} ฿</span>
+                          </td>
+                          <td>
+                            <b className="text-white font-bold">{pick.currentPrice.toFixed(2)} ฿</b>
+                          </td>
+                          <td>
+                            <strong
+                              style={{ color: pos ? '#10b981' : '#ef4444', fontWeight: 800 }}
+                            >
+                              {pos ? '+' : ''}{pick.returnPct.toFixed(2)}%
+                            </strong>
+                          </td>
+                          <td>
+                            <span className="text-emerald-400 font-semibold">{pick.tp1.toFixed(2)}</span>
+                            <small className="text-slate-400 block text-[10px]">TP2: {pick.tp2.toFixed(2)}</small>
+                          </td>
+                          <td>
+                            <span className="text-red-400 font-semibold">{pick.sl.toFixed(2)}</span>
+                          </td>
+                          <td>
+                            <span className="text-slate-300 font-medium">1 : {pick.riskReward.toFixed(2)}</span>
+                          </td>
+                          <td className={styles.tableSliderCol}>
+                            <PriceProgressBar
+                              sl={pick.sl}
+                              entry={pick.entryPrice}
+                              current={pick.currentPrice}
+                              tp2={pick.tp2}
+                            />
+                          </td>
+                          <td>
+                            <span
+                              className={`${styles.morningStatusPill} ${
+                                pick.status.includes('Hit TP')
+                                  ? styles.statusHitTp
+                                  : pick.status.includes('Hit SL')
+                                  ? styles.statusHitSl
+                                  : pick.status === 'In Buy Zone'
+                                  ? styles.statusInBuyZone
+                                  : pick.status === 'Near TP'
+                                  ? styles.statusNearTp
+                                  : styles.statusWaiting
+                              }`}
+                            >
+                              {pick.status}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleSpeakSingle({ symbol: pick.symbol, entry: pick.entryPrice, tp1: pick.tp1, sl: pick.sl, status: pick.status, market: pick.market })}
+                                className={styles.singleSpeakBtn}
+                                title="ฟังเสียงเตือน"
+                              >
+                                <Volume2 size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTrackedPicks(prev => prev.filter(p => p.id !== pick.id));
+                                  setToastData({
+                                    title: `ลบ ${pick.symbol} ออกจากบันทึกแล้ว`,
+                                    desc: 'อัปเดตรายการเรียบร้อย',
+                                    type: 'info',
+                                  });
+                                }}
+                                className="text-slate-500 hover:text-red-400 text-xs px-1.5 py-1 rounded transition"
+                                title="ลบออกจากบันทึก"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────────────────────
+          TAB 4: INDICATIVE & ARBITRAGE BRIDGE
+          ────────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'dr-bridge' && (
         <div className={styles.tabContent}>
           <div className={styles.bridgeIntroCard}>
@@ -773,7 +1539,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
               <Coins size={28} className="text-amber-400" />
             </div>
             <div>
-              <h3 className={styles.bridgeTitle}>Indicative Fair Value & Arbitrage Spread Bridge</h3>
+              <h3 className={styles.bridgeTitle}>Indicative Fair Value &amp; Arbitrage Spread Bridge</h3>
               <p className={styles.bridgeDesc}>
                 เปรียบเทียบมูลค่าที่แท้จริงของ DR กับราคาตลาดหุ้นแม่ (Underlying USD) ผ่านอัตราแลกเปลี่ยน (USD/THB)
                 ทำให้เห็นทันทีว่า DR บนกระดาน SET ปัจจุบันกำลังเทรดถูกกว่า (Discount) หรือแพงกว่า (Premium)
@@ -784,7 +1550,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           {/* Interactive Calculator Sandbox */}
           <div className={styles.sandboxCard}>
             <div className={styles.sandboxHeader}>
-              <Calculator size={18} />
+              <Zap size={18} />
               <h4>เครื่องคำนวณ Indicative Fair Value แบบปรับตัวแปรสด</h4>
             </div>
 
@@ -887,7 +1653,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                           <b>{item.symbol}</b>
                           <small className="block text-slate-400">{item.name}</small>
                         </td>
-                        <td>${item.underlyingUsd.toFixed(2)}</td>
+                        <td>${item.underlyingUsd?.toFixed(2)}</td>
                         <td>{item.conversionRatio} : 1</td>
                         <td>
                           <b>{b.fairPriceThb.toFixed(2)} ฿</b>
@@ -917,10 +1683,11 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         </div>
       )}
 
-      {/* Tab 3: Thai Dividend Portfolio */}
+      {/* ──────────────────────────────────────────────────────────────────────────
+          TAB 5: THAI HIGH-DIVIDEND PORTFOLIO (SETHD)
+          ────────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'thai-dividend' && (
         <div className={styles.tabContent}>
-          {/* Header */}
           <div className={styles.divHeroCard}>
             <div className={styles.divHeroLeft}>
               <div className={styles.divBadge}>
@@ -973,7 +1740,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           <div className={styles.tableCard}>
             <h4 className={styles.tableHeading}>
               <CalendarDays size={18} />
-              <span>เรดาร์หุ้นปันผลเด่น & ปฏิทินวันขึ้นเครื่องหมาย XD (Thai Dividend Radar)</span>
+              <span>เรดาร์หุ้นปันผลเด่น &amp; ปฏิทินวันขึ้นเครื่องหมาย XD (Thai Dividend Radar)</span>
             </h4>
 
             <div className={styles.tableResponsive}>
