@@ -21,6 +21,7 @@ import {
 import { analyzeMarketStructure } from '../../developers/structure.mjs';
 import MobileDock from '../mobile-dock.jsx';
 import SoundMonitorPill from '../monitor/sound-monitor-pill.jsx';
+import ProToolsNav from '../pro-tools-nav.jsx';
 import '../../app/landing.css';
 import '../../app/market-pages.css';
 
@@ -108,7 +109,7 @@ if (res == 200) {
       <header className="ng-market-header">
         <div className="ng-market-header-inner">
           <div className="ng-brand-area">
-            <Link href="/" className="ng-back-link" title="กลับหน้าแรก">
+            <Link href="/#pro-analysis-suite" className="ng-back-link" title="กลับสู่หน้ารวมเครื่องมือสถาบัน">
               <ArrowLeft size={18} />
             </Link>
             <div>
@@ -124,6 +125,9 @@ if (res == 200) {
           </div>
         </div>
       </header>
+
+      {/* Pro Suite Quick Switcher Bar */}
+      <ProToolsNav current="developers" />
 
       <main className="ng-market-content">
         {/* Banner */}

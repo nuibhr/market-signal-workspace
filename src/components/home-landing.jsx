@@ -21,12 +21,13 @@ export default function HomeLanding() {
       <Link href="/" className="ng-brand" aria-label="Nugaom AI Pick หน้าแรก"><Image src="/nugaom-mascot.png" width={40} height={40} alt="" priority /><span>NUGAOM<small>AI PICK / MARKET INTELLIGENCE</small></span></Link>
       <nav aria-label="เมนูหลัก">
         <a href="#discover">เลือกตลาด</a>
-        <a href="#products-suite">ผลิตภัณฑ์ &amp; เครื่องมือ</a>
+        <a href="#products-suite">ผลิตภัณฑ์ทั้งหมด</a>
+        <a href="#pro-analysis-suite" style={{ color: '#0284c7', fontWeight: '700' }}>เครื่องมือสถาบัน ⚡</a>
         <a href="#how-it-works">วิธีใช้งาน</a>
         <Link href="/thai#section-results">ผลงานสัญญาณ</Link>
         <Link href="/community">ชุมชนและทีม</Link>
       </nav>
-      <Link href="/account" className="ng-login">เข้าใช้ด้วย LINE <ArrowUpRight size={16} aria-hidden="true" /></Link>
+      <Link href="/account" className="ng-login">เข้าใช้ด้วย LINE / ทดลอง <ArrowUpRight size={16} aria-hidden="true" /></Link>
     </header>
     <LandingRobot />
     <div className="ng-principles"><span><ScanLine size={15} /> เห็นเงื่อนไขก่อนตัดสินใจ</span><span><BellRing size={15} /> ติดตามสัญญาณผ่านเว็บ</span><span><ShieldCheck size={15} /> ทบทวนจากบันทึกเข้า–ออก</span></div>

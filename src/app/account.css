@@ -11,3 +11,173 @@
 @media(max-width:600px){.account-topbar{height:64px;padding:0 14px}.account-brand strong{font-size:13px}.account-brand small{font-size:7px}.account-back{font-size:0;padding:9px}.account-back svg{width:18px;height:18px}.account-hero-inner{padding:27px 16px}.account-hero h1{font-size:27px}.account-hero p{font-size:11px}.account-layout{padding:15px 12px 42px}.account-card{padding:20px 16px}.account-status-header{flex-direction:column}.account-status-header h2{font-size:24px}.account-metrics,.account-renewal-grid{grid-template-columns:1fr}.account-steps>div{grid-template-columns:1fr}.account-actions{flex-wrap:wrap}.account-section-heading{align-items:flex-start}.account-admin-row{align-items:stretch;flex-direction:column}.account-admin-row form{max-width:none}.account-renewal-option form{flex-direction:column}.account-footer{padding:15px 14px;flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.account-skeleton span{animation:none}}
 .account-credit-grant{display:flex;align-items:end;gap:7px;flex-wrap:wrap}.account-credit-grant label{display:grid;gap:4px;color:#8eabb7;font-size:10px}.account-credit-grant input{width:75px;min-width:0!important;height:32px;padding:0 6px;border:1px solid #365262;border-radius:7px;background:#102332;color:#e6f7f4}.account-credit-grant button{height:32px}
+
+/* One-Click Demo Trial Login & Pro Suite Hub on Account Page */
+.account-demo-card {
+  border: 1px solid #307e71;
+  background: linear-gradient(135deg, #132832, #0d1e27);
+  box-shadow: 0 20px 50px rgba(5, 150, 105, 0.12);
+  border-radius: 17px;
+  padding: 30px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.account-demo-card:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981, #06b6d4, #3b82f6);
+}
+
+.account-demo-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.account-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+  font: 700 10px 'DM Mono', monospace;
+  margin-bottom: 6px;
+}
+
+.account-demo-perks {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 18px 0 22px;
+}
+
+.account-demo-perks li {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+.account-demo-perks li svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.account-demo-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.account-demo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 800;
+  border: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-demo-btn.trial {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.3);
+}
+
+.account-demo-btn.trial:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(5, 150, 105, 0.4);
+}
+
+.account-demo-btn.pro {
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.3);
+}
+
+.account-demo-btn.pro:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(2, 132, 199, 0.4);
+}
+
+.account-pro-suite-strip {
+  border: 1px solid #283e50;
+  border-radius: 14px;
+  background: #101c2a;
+  padding: 18px;
+  margin-top: 20px;
+}
+
+.account-pro-suite-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.account-pro-suite-title strong {
+  font-size: 13px;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.account-pro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.account-pro-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #142334;
+  border: 1px solid #23394b;
+  border-radius: 10px;
+  color: #f1f5f9;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 0.18s;
+}
+
+.account-pro-link:hover {
+  background: #1c3349;
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+  .account-demo-perks {
+    grid-template-columns: 1fr;
+  }
+  .account-demo-actions {
+    flex-direction: column;
+  }
+  .account-demo-btn {
+    width: 100%;
+  }
+}

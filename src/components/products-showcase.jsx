@@ -401,7 +401,7 @@ export default function ProductsShowcase() {
       </div>
 
       {/* Pro Analysis Suite Section */}
-      <div className="ng-pro-analysis-wrap">
+      <div id="pro-analysis-suite" className="ng-pro-analysis-wrap" style={{ scrollMarginTop: '80px' }}>
         <div className="ng-pro-analysis-banner">
           <div className="ng-pro-banner-content">
             <span className="ng-pro-badge">

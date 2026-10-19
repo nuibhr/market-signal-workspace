@@ -22,6 +22,7 @@ import {
 import { calculatePositionSize } from '../../risk/calculator.mjs';
 import MobileDock from '../mobile-dock.jsx';
 import SoundMonitorPill from '../monitor/sound-monitor-pill.jsx';
+import ProToolsNav from '../pro-tools-nav.jsx';
 import '../../app/landing.css';
 import '../../app/market-pages.css';
 
@@ -76,7 +77,7 @@ export default function RiskPage() {
       <header className="ng-market-header">
         <div className="ng-market-header-inner">
           <div className="ng-brand-area">
-            <Link href="/" className="ng-back-link" title="กลับหน้าแรก">
+            <Link href="/#pro-analysis-suite" className="ng-back-link" title="กลับสู่หน้ารวมเครื่องมือสถาบัน">
               <ArrowLeft size={18} />
             </Link>
             <div>
@@ -92,6 +93,9 @@ export default function RiskPage() {
           </div>
         </div>
       </header>
+
+      {/* Pro Suite Quick Switcher Bar */}
+      <ProToolsNav current="risk" />
 
       <main className="ng-market-content">
         {/* Market Selector Tabs */}

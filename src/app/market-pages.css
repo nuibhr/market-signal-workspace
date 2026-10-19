@@ -1040,3 +1040,531 @@
   box-shadow: none;
   padding: 0;
 }
+
+/* ==========================================================================
+   Pro Analysis Suite Navigation Hub & Floating Quick Switcher
+   ========================================================================== */
+.ng-pro-suite-nav {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  position: sticky;
+  top: 71px;
+  z-index: 45;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.ng-pro-suite-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ng-pro-suite-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ng-suite-back-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.ng-suite-back-pill:hover {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  transform: translateX(-2px);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+}
+
+.ng-suite-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ng-suite-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #86efac;
+  color: #166534;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.ng-suite-divider {
+  color: #cbd5e1;
+  font-weight: 300;
+}
+
+.ng-suite-caption {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.ng-pro-suite-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0;
+}
+
+.ng-pro-suite-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.ng-pro-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.ng-pro-pill:hover {
+  border-color: var(--pill-accent, #0284c7);
+  color: var(--pill-accent, #0284c7);
+  background: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+}
+
+.ng-pro-pill.is-active {
+  background: var(--pill-accent, #0284c7);
+  color: #ffffff;
+  border-color: var(--pill-accent, #0284c7);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+}
+
+.ng-pill-icon {
+  display: flex;
+  align-items: center;
+}
+
+.ng-pill-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: inherit;
+  letter-spacing: 0.03em;
+}
+
+.ng-pro-pill.is-active .ng-pill-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Floating Action Button (FAB) */
+.ng-floating-pro-dock {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 90;
+}
+
+.ng-pro-fab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  border: 1px solid #334155;
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.28), 0 2px 6px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.ng-pro-fab:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  border-color: #38bdf8;
+}
+
+.ng-fab-pulse {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
+  animation: ngPulse 2s infinite;
+}
+
+@keyframes ngPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.ng-fab-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 11px;
+}
+
+/* Drawer Modal */
+.ng-pro-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 20px;
+  animation: ngFadeIn 0.2s ease-out;
+}
+
+@keyframes ngFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ng-pro-drawer-card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.2);
+  animation: ngSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@keyframes ngSlideUp {
+  from { transform: translateY(20px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.ng-pro-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 14px;
+}
+
+.ng-pro-drawer-header h3 {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 4px 0 2px;
+}
+
+.ng-pro-drawer-header p {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.ng-drawer-close {
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ng-drawer-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.ng-pro-drawer-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ng-drawer-tool-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  text-decoration: none;
+  color: #0f172a;
+  transition: all 0.18s ease;
+}
+
+.ng-drawer-tool-card:hover {
+  background: #ffffff;
+  border-color: #0284c7;
+  transform: translateX(3px);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12);
+}
+
+.ng-drawer-tool-card.is-active {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.ng-drawer-tool-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.ng-drawer-tool-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ng-drawer-tool-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ng-drawer-tool-top strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ng-drawer-badge {
+  font-size: 10px;
+  font-weight: 800;
+  background: #e2e8f0;
+  color: #334155;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.ng-drawer-tool-info small {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.ng-drawer-active-tag {
+  font-size: 11px;
+  font-weight: 800;
+  color: #059669;
+  background: #dcfce7;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.ng-drawer-arrow {
+  color: #94a3b8;
+}
+
+.ng-drawer-tool-card:hover .ng-drawer-arrow {
+  color: #0284c7;
+}
+
+/* Drawer Auth Box */
+.ng-drawer-auth-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.ng-drawer-member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ng-drawer-member-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ng-drawer-member-info strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ng-drawer-member-info small {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.ng-drawer-member-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ng-drawer-acc-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0284c7;
+  text-decoration: none;
+  padding: 5px 10px;
+  background: #e0f2fe;
+  border-radius: 8px;
+}
+
+.ng-drawer-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.ng-drawer-demo-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ng-drawer-demo-banner strong {
+  display: block;
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.ng-drawer-demo-banner p {
+  font-size: 11px;
+  color: #64748b;
+  margin: 2px 0 0;
+}
+
+.ng-drawer-demo-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ng-drawer-demo-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.ng-drawer-demo-btn.trial {
+  background: #059669;
+  color: #ffffff;
+}
+
+.ng-drawer-demo-btn.trial:hover {
+  background: #047857;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+}
+
+.ng-drawer-demo-btn.pro {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.ng-drawer-demo-btn.pro:hover {
+  background: #0369a1;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+}
+
+@media (max-width: 768px) {
+  .ng-pro-suite-nav {
+    top: 61px;
+    padding: 6px 12px;
+  }
+  .ng-suite-title-group {
+    display: none;
+  }
+  .ng-floating-pro-dock {
+    bottom: 80px; /* Above mobile dock */
+    right: 16px;
+  }
+  .ng-pro-fab .ng-fab-text {
+    display: none;
+  }
+  .ng-pro-drawer-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
+  .ng-pro-drawer-card {
+    max-width: 100%;
+    border-radius: 20px 20px 12px 12px;
+    padding: 18px;
+  }
+}
