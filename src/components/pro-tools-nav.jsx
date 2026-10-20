@@ -97,24 +97,6 @@ export default function ProToolsNav({ current = 'risk' }) {
     };
   }, []);
 
-  const handleDemoLogin = async (role = 'trial') => {
-    setBusy(true);
-    try {
-      const res = await fetch('/api/auth/demo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
-      });
-      if (res.ok) {
-        window.location.reload();
-      }
-    } catch {
-      alert('เข้าสู่ระบบโหมดทดลองไม่สำเร็จ');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const handleLogout = async () => {
     setBusy(true);
     try {
@@ -279,30 +261,7 @@ export default function ProToolsNav({ current = 'risk' }) {
                     </div>
                   </div>
                 ) : (
-                  <div className="ng-drawer-demo-banner">
-                    <div>
-                      <strong>💡 อยากทดลองใช้งานระบบสมาชิก?</strong>
-                      <p>ทดลองเข้าสู่ระบบสิทธิทดลอง 14 วัน หรือ Pro Member ได้ใน 1 คลิก</p>
-                    </div>
-                    <div className="ng-drawer-demo-actions">
-                      <button
-                        type="button"
-                        className="ng-drawer-demo-btn trial"
-                        onClick={() => handleDemoLogin('trial')}
-                        disabled={busy}
-                      >
-                        ⚡ ทดลองสิทธิ 14 วัน
-                      </button>
-                      <button
-                        type="button"
-                        className="ng-drawer-demo-btn pro"
-                        onClick={() => handleDemoLogin('subscriber')}
-                        disabled={busy}
-                      >
-                        👑 สมาชิก Pro
-                      </button>
-                    </div>
-                  </div>
+                  <div className="ng-drawer-demo-banner"><strong>เข้าสู่ระบบสมาชิก</strong><p>เชื่อมบัญชี LINE และแจ้งเลขพอร์ตเพื่อเริ่มใช้สิทธิสมาชิก</p><Link href="/account">เปิดบัญชีสมาชิก ↗</Link></div>
                 )}
               </div>
             </div>

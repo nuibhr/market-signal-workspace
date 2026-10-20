@@ -60,36 +60,13 @@ export default function AccountPage() {
   async function logout() {
     setBusy(true); setError('');
     try {
-      await fetch('/api/auth/demo', { method: 'DELETE' }).catch(() => {});
       await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
       window.location.href = '/account';
     } catch { setError('ออกจากระบบไม่สำเร็จ กรุณาลองใหม่'); setBusy(false); }
   }
-  async function demoLogin(role = 'trial') {
-    setBusy(true); setError(''); setMessage('');
-    try {
-      const response = await fetch('/api/auth/demo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        setError(payload.error || 'เข้าสู่ระบบโหมดทดลองไม่สำเร็จ');
-        return;
-      }
-      setMessage(`เข้าสู่ระบบโหมดทดลอง (${role === 'subscriber' ? 'สมาชิกสถาบัน Pro' : 'ทดลองใช้ 14 วัน'}) สำเร็จ`);
-      await refresh();
-    } catch {
-      setError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
-    } finally {
-      setBusy(false);
-    }
-  }
   const account = data?.account;
   const rights = data?.rights;
   const active = rights?.tier === 'trial' || rights?.tier === 'subscriber';
-  const isDemo = account?.line_id?.startsWith('Udemo_') || account?.id?.startsWith('demo-');
   const nav = NAV;
   return <div className="account-page">
     <header className="account-topbar"><a href="/" className="account-brand"><span><Image src="/nugaom-mascot.png" width={38} height={38} alt="" /></span><span><strong>Nugaom AI Pick</strong><small>MEMBER CENTER</small></span></a><a className="account-back" href="/"><ArrowLeft size={16} /> กลับแดชบอร์ด</a></header>
@@ -99,44 +76,8 @@ export default function AccountPage() {
       {loading ? <div className="account-card account-skeleton"><span /><span /><span /></div> : <>
         {error && <div className="account-alert error" role="alert"><CircleAlert size={17} />{error}</div>}
         {message && <div className="account-alert success" role="status"><Check size={17} />{message}</div>}
-        {!data?.configured && !account && <div className="account-alert"><CircleAlert size={17} />ยังไม่ได้ตั้งค่า LINE Login สำหรับสภาพแวดล้อมนี้ — สามารถใช้ปุ่ม <strong>ทดลองเข้าสู่ระบบ (1-Click Demo)</strong> ด้านล่างเพื่อทดสอบระบบได้ทันที</div>}
+        {!data?.configured && !account && <div className="account-alert">ยังไม่ได้ตั้งค่า LINE Login สำหรับสภาพแวดล้อมนี้</div>}
         {!account ? <>
-          {/* One-Click Demo Trial Login Box */}
-          <section className="account-demo-card">
-            <div className="account-demo-header">
-              <div className="account-icon green"><Sparkles size={26} /></div>
-              <div>
-                <span className="account-demo-badge"><Zap size={13} /> 1-CLICK DEMO LOGIN</span>
-                <h2>ทดลองเข้าสู่ระบบ สิทธิสมาชิก 14 วัน</h2>
-                <p>คลิกเดียวเข้าสู่ระบบเพื่อทดสอบฟีเจอร์สมาชิก สิทธิสแกนตลาด และโควตา AI ได้ทันทีโดยไม่ต้องใช้ LINE OAuth</p>
-              </div>
-            </div>
-            <ul className="account-demo-perks">
-              <li><BadgeCheck size={17} /> <span>เปิดสิทธิสแกนหุ้น 8 ตัว/ครั้ง ตรวจสิทธิเซิร์ฟเวอร์จริง</span></li>
-              <li><BadgeCheck size={17} /> <span>โควตาถาม AI ผู้ช่วยวิเคราะห์ 5 คำถามฟรีต่อวัน</span></li>
-              <li><BadgeCheck size={17} /> <span>จำลองพอร์ตที่ผ่านการยืนยันแล้ว ไม่ต้องรอตรวจ</span></li>
-              <li><BadgeCheck size={17} /> <span>เข้าถึงชุดเครื่องมือวิเคราะห์เชิงลึกระดับสถาบันทั้ง 5 ตัว</span></li>
-            </ul>
-            <div className="account-demo-actions">
-              <button
-                type="button"
-                className="account-demo-btn trial"
-                onClick={() => demoLogin('trial')}
-                disabled={busy}
-              >
-                <Zap size={16} /> {busy ? 'กำลังเข้าสู่ระบบ…' : 'ทดลองสิทธิ 14 วัน (1-Click Trial)'}
-              </button>
-              <button
-                type="button"
-                className="account-demo-btn pro"
-                onClick={() => demoLogin('subscriber')}
-                disabled={busy}
-              >
-                <BadgeCheck size={16} /> {busy ? 'กำลังเข้าสู่ระบบ…' : 'ทดลองสมาชิกระดับสถาบัน (Pro Member)'}
-              </button>
-            </div>
-          </section>
-
           {/* Standard LINE Login Section */}
           <section className="account-card account-login"><div className="account-icon green"><Fingerprint size={28} /></div><span className="account-kicker">STEP 01 · LINE LOGIN</span><h2>เข้าสู่ระบบด้วยบัญชี LINE</h2><p>เข้าสู่ระบบด้วย LINE เพื่อเชื่อมต่อบัญชีจริงและแจ้งเลขพอร์ตหุ้น</p><a className={data?.configured ? 'account-primary line' : 'account-primary disabled'} href={data?.configured ? '/api/auth/line/start' : undefined}>เข้าสู่ระบบด้วย LINE <ArrowRight size={16} /></a><small>เราจะไม่ขอรหัสผ่าน LINE และจะไม่ส่งคำสั่งซื้อขายผ่านบัญชีหุ้นของคุณ</small></section>
         </> : <>
@@ -144,12 +85,11 @@ export default function AccountPage() {
             <div className="account-status-header">
               <div>
                 <span className="account-kicker">สถานะบัญชี</span>
-                <h2>{rights.label} {isDemo && <small style={{ fontSize: '13px', color: '#10b981', fontWeight: '700' }}>(โหมดทดลองใช้งาน)</small>}</h2>
+                <h2>{rights.label}</h2>
                 <p>{rights.tier === 'trial' ? `เหลือเวลาทดลองอีก ${daysLeft(rights.expiresAt)} วัน` : rights.tier === 'subscriber' ? `ต่ออายุภายใน ${date(rights.expiresAt)}` : rights.tier === 'expired' ? 'หมดระยะทดลองใช้ฟรีแล้ว ต่ออายุเพื่อใช้เครื่องมือสแกนสมาชิก' : rights.tier === 'portfolio-fix' ? 'เลขพอร์ตไม่ผ่านการตรวจ กรุณาแจ้งใหม่ · ระยะทดลองยังนับจากวันเริ่มเดิม' : 'แจ้งเลขพอร์ตเพื่อเริ่มทดลองใช้ฟรี 14 วัน'}</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                 <span className={`account-tier ${active ? 'active' : ''}`}>{active ? <BadgeCheck size={18} /> : <Clock3 size={18} />}{rights.tier.toUpperCase()}</span>
-                {isDemo && <button type="button" onClick={() => demoLogin(rights.tier === 'trial' ? 'subscriber' : 'trial')} style={{ background: '#1e3a4c', border: '1px solid #38bdf8', color: '#7dd3fc', borderRadius: '6px', fontSize: '10px', padding: '3px 8px', cursor: 'pointer' }}>สลับเป็น {rights.tier === 'trial' ? 'Pro Member' : 'Trial 14 วัน'}</button>}
               </div>
             </div>
             {rights.expiresAt && <div className="account-expiry"><span>สิทธิสิ้นสุด</span><strong>{date(rights.expiresAt)}</strong></div>}

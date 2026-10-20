@@ -1,61 +1,37 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
-import { upsertDemoMember, createSession, sessionMember, accountSummary } from './store.mjs';
-import { membershipFor } from './rights.mjs';
-
-const temporary = mkdtempSync(join(tmpdir(), 'nugaom-demo-auth-'));
-process.env.DATABASE_PATH = join(temporary, 'fixture.sqlite');
-process.env.SESSION_SECRET = 'fixture-session-secret-key-at-least-32-chars-long';
-process.env.PORTFOLIO_HASH_SECRET = 'fixture-portfolio-secret-key-at-least-32-chars-long';
-
-const { sharedDatabase } = await import('../storage/sqlite.mjs');
-test.after(() => {
-  try { sharedDatabase().close(); } catch {}
-  rmSync(temporary, { recursive: true, force: true });
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {POST,DELETE} from '../app/api/auth/demo/route.js';
+const dir=mkdtempSync(join(tmpdir(),'disabled-demo-'));
+process.env.DATABASE_PATH=join(dir,'fixture.sqlite');
+process.env.SESSION_SECRET='fixture-session-secret-at-least-32-characters';
+const {storage}=await import('../storage/database.mjs');
+const {sharedDatabase}=await import('../storage/sqlite.mjs');
+const {createSession,sessionMember}=await import('./store.mjs');
+test.after(()=>{sharedDatabase().close();rmSync(dir,{recursive:true,force:true});});
+test('anonymous demo login is disabled without creating members or sessions',async()=>{
+ const before=await storage.first('SELECT COUNT(*) AS n FROM members');
+ for(const role of ['trial','subscriber']){
+  const response=await POST(new Request('http://localhost/api/auth/demo',{method:'POST',body:JSON.stringify({role})}));
+  assert.equal(response.status,404);assert.equal(response.headers.get('set-cookie'),null);
+ }
+ assert.equal((await DELETE()).status,404);
+ assert.equal((await storage.first('SELECT COUNT(*) AS n FROM members')).n,before.n);
+ assert.equal((await storage.first('SELECT COUNT(*) AS n FROM sessions')).n,0);
 });
-
-test('upsertDemoMember creates a valid 14-day trial member with active scanner rights', async () => {
-  const demoTrial = await upsertDemoMember({ role: 'trial' });
-  assert.equal(demoTrial.id, 'demo-trial-member');
-  assert.equal(demoTrial.portfolio_status, 'verified');
-  assert.equal(demoTrial.broker, 'KASIKORN SECURITIES');
-  assert.equal(demoTrial.portfolio_last4, '8899');
-  assert.ok(Date.parse(demoTrial.trial_ends_at) > Date.now());
-
-  const rights = membershipFor(demoTrial);
-  assert.equal(rights.tier, 'trial');
-  assert.equal(rights.authenticated, true);
-  assert.equal(rights.capabilities.manualDailyScan, true);
-  assert.equal(rights.capabilities.autoPickFeed, true);
-  assert.equal(rights.capabilities.aiQuestions, true);
-  assert.equal(rights.limits.dailyScanSymbols, 8);
-  assert.equal(rights.limits.freeAiQuestionsDaily, 5);
-
-  const session = await createSession(demoTrial.id);
-  assert.ok(session.value);
-  assert.ok(session.expiresAt);
-
-  const retrieved = await sessionMember(session.value);
-  assert.equal(retrieved?.id, demoTrial.id);
-  assert.equal(retrieved?.display_name, demoTrial.display_name);
-
-  const summary = await accountSummary(retrieved);
-  assert.equal(summary?.portfolioStatus, 'verified');
-  assert.equal(summary?.portfolioLast4, '8899');
+test('previous shared demo sessions are rejected while real member sessions remain valid',async()=>{
+ for(const [id,line] of [['real-fixture','real-line'],['demo-subscriber-member','Udemo_subscriber_nugaom_7788']]){
+  await storage.run('INSERT INTO members(id,line_id,display_name,created_at,updated_at) VALUES(?,?,?,?,?)',id,line,'fixture','2026-10-20','2026-10-20');
+  const session=await createSession(id);assert.equal((await sessionMember(session.value))?.id??null,id.startsWith('demo-')?null:id);
+ }
 });
-
-test('upsertDemoMember creates a subscriber member with monthly subscription access', async () => {
-  const demoSubscriber = await upsertDemoMember({ role: 'subscriber' });
-  assert.equal(demoSubscriber.id, 'demo-subscriber-member');
-  assert.equal(demoSubscriber.portfolio_status, 'verified');
-  assert.equal(demoSubscriber.broker, 'INNOVESTX');
-  assert.ok(Date.parse(demoSubscriber.subscription_ends_at) > Date.now());
-
-  const rights = membershipFor(demoSubscriber);
-  assert.equal(rights.tier, 'subscriber');
-  assert.equal(rights.authenticated, true);
-  assert.equal(rights.capabilities.manualDailyScan, true);
+test('missing or weak session secrets fail closed',async()=>{
+ const prior=process.env.SESSION_SECRET;
+ for(const secret of ['', 'short']){
+  process.env.SESSION_SECRET=secret;await assert.rejects(createSession('real-fixture'),/SESSION_SECRET_REQUIRED/);
+  assert.equal(await sessionMember('unknown'),null);
+ }
+ process.env.SESSION_SECRET=prior;
 });

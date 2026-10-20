@@ -4,7 +4,8 @@ const DAY = 86_400_000;
 
 export function digest(value) { return createHash('sha256').update(value).digest('hex'); }
 function sessionDigest(value) {
-  const secret = process.env.SESSION_SECRET || 'dev_session_secret_at_least_32_characters_long_for_nugaom';
+  const secret = process.env.SESSION_SECRET;
+  if (typeof secret !== 'string' || secret.length < 32) throw new Error('SESSION_SECRET_REQUIRED');
   return createHmac('sha256', secret).update(value).digest('hex');
 }
 export function token() { return randomBytes(32).toString('base64url'); }
@@ -84,9 +85,10 @@ export async function createSession(memberId) {
   return {value,expiresAt};
 }
 export async function sessionMember(value) {
-  if(typeof value!=='string'||value.length>100)return null;
-  return storage.first(`SELECT m.* FROM sessions s JOIN members m ON m.id=s.member_id
+  if(typeof value!=='string'||value.length>100||!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32)return null;
+  const member=await storage.first(`SELECT m.* FROM sessions s JOIN members m ON m.id=s.member_id
     WHERE s.token_hash=? AND s.expires_at>?`,sessionDigest(value),new Date().toISOString());
+  return member?.id?.startsWith('demo-') || member?.line_id?.startsWith('Udemo_') ? null : member;
 }
 export async function deleteSession(value) { if(value)await storage.run('DELETE FROM sessions WHERE token_hash=?',sessionDigest(value)); }
 export async function submitPortfolio(member,brokerInput,numberInput) {
@@ -318,47 +320,4 @@ export async function grantAiCredits(admin,memberId,amount,requestId,note='') {
   if(!grant||grant.actor_id!==admin.id||grant.member_id!==memberId||grant.amount!==amount||grant.note!==note||grant.applied!==1)
     throw new Error('INVALID_REQUEST_ID');
   return result[2].results[0].balance;
-}
-
-export async function upsertDemoMember({ role = 'trial' } = {}) {
-  const now = new Date();
-  const id = role === 'subscriber' ? 'demo-subscriber-member' : 'demo-trial-member';
-  const lineId = role === 'subscriber' ? 'Udemo_subscriber_nugaom_7788' : 'Udemo_trial_nugaom_8899';
-  const displayName = role === 'subscriber' ? 'สมาชิกสถาบัน (Pro Member)' : 'คุณนักออม (ทดลองใช้งาน 14 วัน)';
-  const broker = role === 'subscriber' ? 'INNOVESTX' : 'KASIKORN SECURITIES';
-  const last4 = role === 'subscriber' ? '7788' : '8899';
-  const hash = `demo-hash-${last4}-${id}`;
-  const trialStarted = new Date(now.getTime() - 1 * DAY).toISOString();
-  const trialEnds = new Date(now.getTime() + 14 * DAY).toISOString();
-  const subscriptionEnds = role === 'subscriber' ? new Date(now.getTime() + 30 * DAY).toISOString() : null;
-
-  await storage.run('DELETE FROM members WHERE line_id=? AND id!=?', lineId, id);
-
-  const result = await storage.batch([
-    op(`INSERT INTO members (
-        id, line_id, display_name, picture_url, broker,
-        portfolio_hash, portfolio_last4, portfolio_status,
-        portfolio_submitted_at, portfolio_verified_at,
-        trial_started_at, trial_ends_at, subscription_ends_at,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'verified', ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET
-        display_name=excluded.display_name,
-        broker=excluded.broker,
-        portfolio_last4=excluded.portfolio_last4,
-        portfolio_status='verified',
-        trial_started_at=excluded.trial_started_at,
-        trial_ends_at=excluded.trial_ends_at,
-        subscription_ends_at=excluded.subscription_ends_at,
-        updated_at=excluded.updated_at,
-        version=members.version+1`,
-      id, lineId, displayName, '/nugaom-mascot.png', broker,
-      hash, last4,
-      now.toISOString(), now.toISOString(),
-      trialStarted, trialEnds, subscriptionEnds,
-      now.toISOString(), now.toISOString()
-    ),
-    op('SELECT * FROM members WHERE id=?', id),
-  ]);
-  return result[1].results[0];
 }
