@@ -1,7 +1,7 @@
 /**
  * DR Strategy Tracker & Thai Dividend Portfolio Engine
  * Inspired and integrated from nuibhr/--dr-strategy-tracker-----ai-research
- * 
+ *
  * Features:
  *   1. DR80 Multi-Factor Scanner (EMA 25/50/75, Camarilla Pivots, RSI 14, MACD, ATR)
  *   2. Dynamic Trade Plan with Confluence Entry, TP1, TP2, SL, and Risk:Reward (Max Score 16)
@@ -534,4 +534,3 @@ export function generateMorningSignalSpeech({ thaiPicks = [], drPicks = [] }) {
   parts.push('ขอให้การเทรดวันนี้มีวินัยและรักษาระดับความเสี่ยงตามแผนครับ');
   return parts.join('. ');
 }
-
