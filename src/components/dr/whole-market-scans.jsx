@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
+import {pollAfterCompletion} from '../../monitor/poll.mjs';
 import styles from './dr-strategy.module.css';
 const number=v=>Number.isFinite(v)?v.toLocaleString('en-US',{maximumFractionDigits:4}):'—';
 const states={PASS:'ผ่านเงื่อนไขสแกน',WAIT:'รอเงื่อนไข',REJECT:'ไม่ผ่านแผนความเสี่ยง',UNAVAILABLE:'ยังไม่มีข้อมูลใช้ประเมิน'};
@@ -8,16 +9,20 @@ export default function WholeMarketScans({initialMarket,onSelect}) {
   const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
   useEffect(()=>{
     if(!open)return;
-    const controller=new AbortController();setBusy(true);setError('');setData(null);
+    const controller=new AbortController();setData(null);
     const params=new URLSearchParams({market,mode,q:query,page:String(page)});
-    fetch(`/api/signals?${params}`,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])})
-      .then(async response=>{const value=await response.json();if(!response.ok)throw Error(response.status===403?'เข้าสู่ระบบสมาชิกเพื่ออ่านผลสแกนทั้งตลาด':'ยังอ่านผลสแกนไม่ได้ กรุณาลองใหม่');return value;})
-      .then(value=>{if(!controller.signal.aborted)setData(value);})
-      .catch(e=>{if(!controller.signal.aborted)setError(e.message);})
-      .finally(()=>{if(!controller.signal.aborted)setBusy(false);});
-    return()=>controller.abort();
+    const stop=pollAfterCompletion(async()=>{
+      setBusy(true);setError('');
+      try {
+        const response=await fetch(`/api/signals?${params}`,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])});
+        const value=await response.json();
+        if(!response.ok)throw Error(response.status===403?'เข้าสู่ระบบสมาชิกเพื่ออ่านผลสแกนทั้งตลาด':'ยังอ่านผลสแกนไม่ได้ กรุณาลองใหม่');
+        if(!controller.signal.aborted)setData(value);
+      }catch(error){if(!controller.signal.aborted)setError(error.name==='TimeoutError'?'อ่านผลเกินเวลาที่กำหนด กำลังรอลองใหม่':error.message);}
+      finally{if(!controller.signal.aborted)setBusy(false);}
+    });
+    return()=>{stop();controller.abort();};
   },[open,market,mode,query,page,revision]);
-  useEffect(()=>{if(!open)return;const timer=setInterval(()=>setRevision(v=>v+1),15000);return()=>clearInterval(timer);},[open]);
   return <details className={styles.rulesPanel} onToggle={event=>setOpen(event.currentTarget.open)}><summary>เปิดผลสแกน Swing ทั้งตลาด · หุ้นไทย 150 / DR 141</summary>
     <p>คนละชุดกับ Radar 14 ตัวด้านบน · แสดงทุกหุ้นและสถานะที่ worker ตรวจจริง · หุ้นที่ยังไม่ตรวจหรือข้อมูลไม่ครบคงแสดงสถานะรอ ไม่สร้างราคาขึ้นแทน</p>
     {open&&<><div className={styles.workflowControls}><label>ตลาด <select value={market} onChange={e=>{setMarket(e.target.value);setPage(1);}}><option value="thai">หุ้นไทย</option><option value="dr">DR</option></select></label><label>แบบ <select value={mode} onChange={e=>{setMode(e.target.value);setPage(1);}}><option value="all">Breakout + Pullback</option><option value="breakout">Breakout</option><option value="pullback">Pullback</option></select></label><label>ค้นหา <input aria-label="ค้นหาในสแกนทั้งตลาด" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/></label><button type="button" disabled={busy} onClick={()=>setRevision(v=>v+1)}>โหลดล่าสุด</button></div>

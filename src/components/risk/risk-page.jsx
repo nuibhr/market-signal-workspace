@@ -282,19 +282,19 @@ export default function RiskPage() {
                 {/* Key Metrics Grid */}
                 <div className="ng-metrics-2x2">
                   <div className="ng-metric-box ng-box-loss">
-                    <span className="ng-box-kicker">ขาดทุนสูงสุด (Max Loss)</span>
+                    <span className="ng-box-kicker">ขาดทุนตามแผนโดยประมาณ</span>
                     <strong className="ng-box-val">-{calc.expectedLoss?.toLocaleString()} {currentPreset.currency}</strong>
                     <small>ระยะ SL: {calc.stopDistance} ({calc.stopPercent}%)</small>
                   </div>
                   <div className="ng-metric-box ng-box-gain">
-                    <span className="ng-box-kicker">กำไรที่เป้า ({calc.targetMultiple}R Gain)</span>
-                    <strong className="ng-box-val">+{calc.expectedGain?.toLocaleString()} {currentPreset.currency}</strong>
+                    <span className="ng-box-kicker">กำไรที่เป้าระยะราคา {calc.targetMultiple}R</span>
+                    <strong className="ng-box-val">{calc.expectedGain>=0?'+':''}{calc.expectedGain?.toLocaleString()} {currentPreset.currency}</strong>
                     <small>ราคาเป้าหมาย: {calc.targetPrice}</small>
                   </div>
                   <div className="ng-metric-box">
                     <span className="ng-box-kicker">อัตราส่วน Risk : Reward</span>
                     <strong className="ng-box-val ng-text-accent">{calc.riskRewardRatio}</strong>
-                    <small>คุ้มค่าตามเกณฑ์ขั้นต่ำ 1:1.5</small>
+                    <small>{calc.costBasis==='estimated-0.157-percent-per-side'?'รวมค่าธรรมเนียมประมาณ 0.157% ต่อข้าง':'ก่อนค่าธรรมเนียมและสลิปเพจ'}</small>
                   </div>
                   <div className="ng-metric-box">
                     <span className="ng-box-kicker">เงินมัดจำประมาณการ (Margin)</span>
@@ -312,7 +312,7 @@ export default function RiskPage() {
                     <h4>คำแนะนำก่อนส่งคำสั่ง:</h4>
                     {calc.units === 0 ? (
                       <p>
-                        ระยะ Stop Loss กว้างเกินไปเมื่อเทียบกับวงเงินความเสี่ยง ({calc.riskAmount} {currentPreset.currency})
+                        ทุนหรืองบเสี่ยงไม่พอสำหรับขนาดซื้อขายขั้นต่ำ ({calc.riskAmount} {currentPreset.currency})
                         ทำให้ไม่สามารถเปิดได้แม้แต่ 1 {calc.unitLabel} — ลองขยับจุด SL ให้กระชับขึ้น หรือเพิ่มวงเงิน
                       </p>
                     ) : (

@@ -13,15 +13,15 @@ export function analyzeMarketStructure(candles = []) {
     };
   }
 
-  const bars = candles.slice(-500).map((b, i) => ({
-    index: i,
-    time: b.time || b.timestamp || Date.now() - (candles.length - i) * 60000,
-    open: Number(b.open) || 0,
-    high: Number(b.high) || 0,
-    low: Number(b.low) || 0,
-    close: Number(b.close) || 0,
-    volume: Number(b.volume) || 0,
-  }));
+  if(candles.length>500)return {status:'error',code:'TOO_MANY_BARS'};
+  const bars=[];let previous=0;
+  for(const [index,b] of candles.entries()){
+    const time=b?.time??b?.timestamp;
+    if(!Number.isSafeInteger(time)||time<=previous||![b.open,b.high,b.low,b.close].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>0)||
+       b.high<Math.max(b.open,b.close,b.low)||b.low>Math.min(b.open,b.close)||b.volume!==undefined&&(!Number.isFinite(b.volume)||b.volume<0))
+      return {status:'error',code:'INVALID_CANDLE',barIndex:index};
+    bars.push({...b,index,time,volume:b.volume??null});previous=time;
+  }
 
   const lastBar = bars[bars.length - 1];
   const firstBar = bars[0];

@@ -282,16 +282,17 @@ export function scoreDRCandidate({
 
 export function calcIndicativePrice({
   underlyingUsd,
-  usdThbRate = 34.50,
-  conversionRatio = 100, // 100 DR = 1 Share
+  usdThbRate,
+  conversionRatio, // DR units per underlying share
   currentDrPrice,
 }) {
-  if (!underlyingUsd || underlyingUsd <= 0 || !currentDrPrice || currentDrPrice <= 0) {
+  if (![underlyingUsd,usdThbRate,conversionRatio,currentDrPrice].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>0)) {
     return null;
   }
 
   // Fair Value = (Price_USD * USD/THB) / Ratio
   const fairPriceThb = Math.round(((underlyingUsd * usdThbRate) / conversionRatio) * 100) / 100;
+  if(fairPriceThb<=0||!Number.isFinite(fairPriceThb))return null;
   const diffThb = Math.round((currentDrPrice - fairPriceThb) * 100) / 100;
   const diffPct = Math.round(((currentDrPrice - fairPriceThb) / fairPriceThb) * 10000) / 100;
 
@@ -333,128 +334,7 @@ export const THAI_DIVIDEND_PORTFOLIO_MODEL = [
   { bucket: 'Cash buffer', target: 5, description: 'สภาพคล่องรอ rebalancing และจังหวะย่อ', examples: ['THB Cash / Money Market'] },
 ];
 
-export const TOP_THAI_DIVIDEND_STOCKS = [
-  {
-    symbol: 'TISCO',
-    name: 'บมจ.ทิสโก้ไฟแนนเชียลกรุ๊ป',
-    sector: 'Banking & Financials',
-    price: 98.50,
-    annualDividend: 7.75,
-    yieldPct: 7.87,
-    frequency: 'ปีละ 1 ครั้ง',
-    payoutRatio: 85.4,
-    lastXdDate: '2026-04-24',
-    nextXdDate: 'เม.ย. 2027 (คาดการณ์)',
-    safetyScore: 92,
-    bucket: 'Financials',
-    highlight: 'ปันผลสูงสม่ำเสมอ NPL ต่ำ สำรองสูงเป็นอันดับต้นของกลุ่มธนาคาร',
-  },
-  {
-    symbol: 'SCB',
-    name: 'บมจ.เอสซีบี เอกซ์',
-    sector: 'Banking & Financials',
-    price: 114.50,
-    annualDividend: 8.44,
-    yieldPct: 7.37,
-    frequency: 'ปีละ 2 ครั้ง',
-    payoutRatio: 78.2,
-    lastXdDate: '2026-08-28',
-    nextXdDate: 'เม.ย. 2027 (ปันผลงวดสุดท้าย)',
-    safetyScore: 90,
-    bucket: 'Financials',
-    highlight: 'นโยบายจ่ายปันผลเชิงรุก กระแสเงินสดแข็งแกร่ง ROE ระดับแถวหน้า',
-  },
-  {
-    symbol: 'ADVANC',
-    name: 'บมจ.แอดวานซ์ อินโฟร์ เซอร์วิส',
-    sector: 'Telecom & Tech',
-    price: 278.00,
-    annualDividend: 11.20,
-    yieldPct: 4.03,
-    frequency: 'ปีละ 2 ครั้ง',
-    payoutRatio: 85.0,
-    lastXdDate: '2026-08-19',
-    nextXdDate: 'ก.พ. 2027 (ปันผลงวดสุดท้าย)',
-    safetyScore: 98,
-    bucket: 'Defensive income',
-    highlight: 'Cash Cow ประจำตลาด สัญญาณ 5G ครอบคลุม ขยายสู่ AI Data Center ร่วมกับ GULF',
-  },
-  {
-    symbol: 'PTT',
-    name: 'บมจ.ปตท.',
-    sector: 'Energy & Utilities',
-    price: 34.00,
-    annualDividend: 2.10,
-    yieldPct: 6.18,
-    frequency: 'ปีละ 2 ครั้ง',
-    payoutRatio: 52.3,
-    lastXdDate: '2026-09-04',
-    nextXdDate: 'มี.ค. 2027 (ปันผลงวดสุดท้าย)',
-    safetyScore: 94,
-    bucket: 'Quality dividend growth',
-    highlight: 'รัฐวิสาหกิจพลังงานมั่นคง Balance Sheet แกร่ง จ่ายปันผลมากกว่า 20 ปีต่อเนื่อง',
-  },
-  {
-    symbol: 'AP',
-    name: 'บมจ.เอพี (ไทยแลนด์)',
-    sector: 'Property & Real Estate',
-    price: 10.20,
-    annualDividend: 0.70,
-    yieldPct: 6.86,
-    frequency: 'ปีละ 1 ครั้ง',
-    payoutRatio: 42.1,
-    lastXdDate: '2026-05-08',
-    nextXdDate: 'พ.ค. 2027 (คาดการณ์)',
-    safetyScore: 86,
-    bucket: 'Quality dividend growth',
-    highlight: 'ผู้นำอสังหาฯ แนวราบ Backlog หนาแน่น Payout ปลอดภัยและมีส่วนลด Valuation',
-  },
-  {
-    symbol: 'SPALI',
-    name: 'บมจ.ศุภาลัย',
-    sector: 'Property & Real Estate',
-    price: 18.60,
-    annualDividend: 1.45,
-    yieldPct: 7.80,
-    frequency: 'ปีละ 2 ครั้ง',
-    payoutRatio: 45.0,
-    lastXdDate: '2026-08-26',
-    nextXdDate: 'เม.ย. 2027 (ปันผลงวดสุดท้าย)',
-    safetyScore: 88,
-    bucket: 'Quality dividend growth',
-    highlight: 'อัตรากำไรสุทธิสูงสุดในกลุ่มอสังหาฯ หนี้สินต่อทุนต่ำ ขยายตลาดออสเตรเลีย',
-  },
-  {
-    symbol: 'DIF',
-    name: 'กองทุนรวมโครงสร้างพื้นฐานโทรคมนาคม ดิจิทัล',
-    sector: 'Infrastructure Fund',
-    price: 8.50,
-    annualDividend: 0.82,
-    yieldPct: 9.65,
-    frequency: 'ปีละ 4 ครั้ง (รายไตรมาส)',
-    payoutRatio: 95.0,
-    lastXdDate: '2026-08-14',
-    nextXdDate: 'พ.ย. 2026 (ไตรมาส 3)',
-    safetyScore: 84,
-    bucket: 'REIT & Property Fund',
-    highlight: 'สัญญาเช่าระยะยาวกับ TRUE กระแสเงินสดเสมือนพันธบัตร Yield สูงเกือบสองหลัก',
-  },
-  {
-    symbol: 'CPNREIT',
-    name: 'ทรัสต์เพื่อการลงทุนในสิทธิการเช่าอสังหาริมทรัพย์ CPN รีเทล',
-    sector: 'REIT',
-    price: 11.30,
-    annualDividend: 1.05,
-    yieldPct: 9.29,
-    frequency: 'ปีละ 4 ครั้ง (รายไตรมาส)',
-    payoutRatio: 90.0,
-    lastXdDate: '2026-08-20',
-    nextXdDate: 'พ.ย. 2026 (ไตรมาส 3)',
-    safetyScore: 89,
-    bucket: 'REIT & Property Fund',
-    highlight: 'สิทธิ์เช่าห้างเซ็นทรัลทำเลทอง Traffic หนาแน่น ปรับค่าเช่าตามเงินเฟ้อได้ดี',
-  },
-];
+export const TOP_THAI_DIVIDEND_STOCKS = [{"symbol": "TISCO", "bucket": "Financials"}, {"symbol": "SCB", "bucket": "Financials"}, {"symbol": "ADVANC", "bucket": "Defensive income"}, {"symbol": "PTT", "bucket": "Quality dividend growth"}, {"symbol": "AP", "bucket": "Quality dividend growth"}, {"symbol": "SPALI", "bucket": "Quality dividend growth"}, {"symbol": "DIF", "bucket": "REIT & Property Fund"}, {"symbol": "CPNREIT", "bucket": "REIT & Property Fund"}];
 
 // ─── Core Featured DR Universe with Underlying References ────────────────────
 

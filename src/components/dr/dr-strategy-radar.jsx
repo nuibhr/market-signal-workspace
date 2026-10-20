@@ -1717,13 +1717,13 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
 
           {/* Reference Table */}
           <div className={styles.tableCard}>
-            <h4 className={styles.tableHeading}>ตารางเปรียบเทียบ Arbitrage ของ DR80 ยอดนิยม</h4>
+            <h4 className={styles.tableHeading}>ตารางเปรียบเทียบ Arbitrage ของ DR80 ยอดนิยม</h4><p role="status">แสดงส่วนต่างเมื่อราคา DR หุ้นแม่ และ FX มีเวลาอ้างอิงห่างกันไม่เกิน 15 นาที · หากเวลาไม่ตรงกันจะยังไม่แสดง Fair Price</p>
             <div className={styles.tableResponsive}>
               <table className={styles.table}>
                 <thead>
                   <tr>
                     <th>DR Symbol</th>
-                    <th>หุ้นแม่ (USD)</th>
+                    <th>หุ้นแม่ / สกุลเงิน</th>
                     <th>อัตราส่วน</th>
                     <th>ราคาประเมิน (Fair THB)</th>
                     <th>ราคาตลาด SET (THB)</th>
@@ -1741,7 +1741,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                           <b>{item.symbol}</b>
                           <small className="block text-slate-400">{item.name}</small>
                         </td>
-                        <td>${item.underlyingUsd?.toFixed(2)}</td>
+                        <td>{item.underlyingUsd?.toFixed(2)} {item.currency}</td>
                         <td>{item.conversionRatio} : 1</td>
                         <td>
                           <b>{b.fairPriceThb.toFixed(2)} ฿</b>
@@ -1775,7 +1775,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           TAB 5: THAI HIGH-DIVIDEND PORTFOLIO (SETHD)
           ────────────────────────────────────────────────────────────────────────── */}
       {activeTab === 'thai-dividend' && (
-        <div className={styles.tabContent}>
+        <div className={styles.tabContent}><p role="status">ยังไม่มีแหล่งข้อมูลเงินปันผลและวัน XD ที่ยืนยันแล้ว จึงยังไม่แสดง Yield หรือคะแนนความปลอดภัย · สัดส่วนด้านล่างเป็นโมเดลประกอบการศึกษา</p>
           <div className={styles.divHeroCard}>
             <div className={styles.divHeroLeft}>
               <div className={styles.divBadge}>
@@ -1793,7 +1793,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
               <div className={styles.yieldHighlight}>
                 <span>ค่าเฉลี่ย Dividend Yield</span>
                 <strong>{liveData?.avgDivYield&&liveData.avgDivYield!=='—'?`${liveData.avgDivYield}%`:'—'}</strong>
-                <small>จ่ายปันผลสม่ำเสมอทุกปี</small>
+                <small>รอข้อมูลเงินปันผลที่ยืนยันแล้ว</small>
               </div>
             </div>
           </div>

@@ -68,16 +68,16 @@ export default function CalendarPage() {
               <Flame size={24} className="ng-text-danger" />
             </div>
             <div>
-              <h3>เตรียมพร้อมรับมือเหตุการณ์ข่าวสำคัญ (Macro Volatility)</h3>
+              <h3>รอการเชื่อมแหล่งข้อมูลปฏิทินที่ยืนยันแล้ว</h3>
               <p>
                 ตัวเลขเศรษฐกิจที่มีระดับผลกระทบสูง (High Impact) มักทำให้ Spread กว้างขึ้นและเกิดความผันผวนรวดเร็ว
-                ระบบ AI ช่วยสรุปทิศทางและแนวทางปฏิบัติก่อนและหลังการประกาศตัวเลข
+                ยังไม่แสดงวันประกาศ ตัวเลขคาดการณ์ หรือบทวิเคราะห์ที่ไม่มีที่มาจากแหล่งข้อมูล
               </p>
             </div>
           </div>
           <div className="ng-cal-banner-right">
             <span className="ng-cal-stat">
-              <strong>{events.length}</strong> เหตุการณ์ที่ตรวจพบ
+              <strong>{events.length}</strong> เหตุการณ์จากแหล่งข้อมูล
             </span>
           </div>
         </div>

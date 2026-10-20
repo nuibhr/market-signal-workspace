@@ -47,7 +47,7 @@ describe('Multi-Market Risk & Position Calculator Engine', () => {
       targetMultiple: 2.0,
     });
     assert.equal(res.isValid, true);
-    assert.equal(res.units, 500);
+    assert.equal(res.units, 400);
     assert.equal(res.unitLabel, 'หุ้น');
     assert.equal(res.targetPrice, 54);
     assert.equal(res.riskAmount, 1000);
@@ -94,4 +94,21 @@ describe('Multi-Market Risk & Position Calculator Engine', () => {
     assert.equal(res.unitLabel, 'Lots');
     assert.equal(res.targetPrice, 2660);
   });
+});
+
+it('caps Thai cash requirements and includes both sides of fees inside the risk budget',()=>{
+ for(const sl of [99.9,99,98,95]){
+  const r=calculatePositionSize({market:'thai',capital:100000,riskPercent:1,entryPrice:100,stopLossPrice:sl});
+  assert.equal(r.isValid,true);assert.ok(r.expectedLoss<=r.riskAmount);assert.ok(r.marginRequired<=r.capital);assert.equal(r.units%100,0);
+ }
+});
+it('rejects zero, negative, non-finite risk and invalid markets instead of substituting defaults',()=>{
+ for(const input of [{riskPercent:0},{riskPercent:-1},{riskPercent:101},{capital:Infinity},{entryPrice:NaN},{targetMultiple:0},{market:'unknown'},{side:'other'}])
+  assert.equal(calculatePositionSize(input).isValid,false);
+});
+it('caps every supported instrument by available capital or estimated margin',()=>{
+ for(const market of ['thai','us','tfex','gold','forex']){
+  const r=calculatePositionSize({market,capital:100,riskPercent:100,entryPrice:100,stopLossPrice:99.99});
+  assert.ok(r.marginRequired<=100);assert.ok(r.expectedLoss<=100);
+ }
 });

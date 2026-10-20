@@ -1,11 +1,13 @@
 import { analyzeMarketStructure } from '../../../../developers/structure.mjs';
 
+import {readJsonBody,requestErrorResponse} from '../../../../security/request-guard.mjs';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
-    const body = await request.json();
+    const body = await readJsonBody(request,128000,{allowArray:true});
     const candles = Array.isArray(body) ? body : (body.candles || body.bars || []);
     const result = analyzeMarketStructure(candles);
     const statusCode = result.status === 'success' ? 200 : 400;
@@ -18,13 +20,6 @@ export async function POST(request) {
       },
     });
   } catch (err) {
-    return Response.json(
-      {
-        status: 'error',
-        code: 'INVALID_JSON',
-        message: 'รูปแบบข้อมูล JSON ไม่ถูกต้อง หรือไม่พบ array ของ candles',
-      },
-      { status: 400 }
-    );
+    return requestErrorResponse(err);
   }
 }
