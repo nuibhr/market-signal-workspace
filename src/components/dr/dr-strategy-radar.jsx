@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import {
   Activity,
   ArrowUpRight,
@@ -39,18 +38,17 @@ import {
   Zap,
 } from 'lucide-react';
 import {
-  calcCamarilla,
   calcIndicativePrice,
-  chooseEntryPlan,
-  scoreDRCandidate,
-  FEATURED_DR_UNIVERSE,
-  FEATURED_THAI_STOCK_UNIVERSE,
   generateMorningSignalSpeech,
   THAI_DIVIDEND_PORTFOLIO_MODEL,
-  TOP_THAI_DIVIDEND_STOCKS,
 } from '../../dr/strategy-tracker.mjs';
 import { createSignalSpeaker } from '../../auto-pick/speech.mjs';
 import styles from './dr-strategy.module.css';
+import {requestStrategyFeed} from '../../dr/strategy-client.mjs';
+import {radarChartAsset} from '../../dr/chart-target.mjs';
+import {FEATURED_LIMIT,rankedRadarRows,pageRows} from '../../monitor/workflow.mjs';
+import ScanRules from './scan-rules.jsx';
+import SignalWorkflow from './signal-workflow.jsx';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getRsiLabel(rsi) {
@@ -237,6 +235,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'bullish' | 'buyzone' | 'highscore'
   const [ledgerFilter, setLedgerFilter] = useState('all'); // 'all' | 'dr' | 'thai' | 'buyzone' | 'tp' | 'sl'
   const [searchQuery, setSearchQuery] = useState('');
+  const [allScanQuery,setAllScanQuery]=useState('');
+  const [allScanMarket,setAllScanMarket]=useState('all');
+  const [allScanPage,setAllScanPage]=useState(1);
+  const [personalPage,setPersonalPage]=useState(1);
   const [expandedSymbol, setExpandedSymbol] = useState(null);
   const [addedPicks, setAddedPicks] = useState([]);
 
@@ -245,7 +247,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
   const [scanType, setScanType] = useState('dr'); // 'dr' | 'thai'
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStep, setScanStep] = useState('');
-  const [lastScanTime, setLastScanTime] = useState('09:00 น.');
+  const [lastScanTime, setLastScanTime] = useState('ยังไม่สแกน');
   const [toastData, setToastData] = useState(null);
   const [marketClock, setMarketClock] = useState('09:00:00');
 
@@ -291,95 +293,39 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
 
   // Live Data & Persisted Picks Integration (100% Real Market Data, No Static Mockups)
   const [liveData, setLiveData] = useState(null);
+  const [feedError,setFeedError]=useState('');
   const [isPicksInitialized, setIsPicksInitialized] = useState(false);
 
   // Fetch live market data feed on mount and every 45 seconds
   useEffect(() => {
-    let mounted = true;
-    const loadFeed = async () => {
+    const controller=new AbortController();
+    let mounted=true;
+    const loadFeed=async()=>{
       try {
-        const res = await fetch('/api/dr-strategy/feed', { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (mounted && data.status === 'available') {
-          setLiveData(data);
-          if (data.liveUsdThb) setCalcFxRate(data.liveUsdThb);
-        }
-      } catch {}
+        const data=await requestStrategyFeed({signal:controller.signal});
+        if(mounted){setLiveData(data);setFeedError('');}
+      } catch(error){if(mounted)setFeedError(error.message);}
     };
     loadFeed();
-    const interval = setInterval(loadFeed, 45000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
+    const interval=setInterval(loadFeed,60000);
+    return ()=>{mounted=false;controller.abort();clearInterval(interval);};
   }, []);
 
+  useEffect(()=>{
+    if(liveData?.updatedAt)setLastScanTime(new Date(liveData.updatedAt).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'})+' น.');
+    if(liveData?.liveUsdThb)setCalcFxRate(liveData.liveUsdThb);
+  },[liveData]);
+
   // Arbitrage Calculator inputs (Live real defaults)
-  const [calcUnderlying, setCalcUnderlying] = useState(342.94);
-  const [calcFxRate, setCalcFxRate] = useState(33.57);
+  const [calcUnderlying, setCalcUnderlying] = useState('');
+  const [calcFxRate, setCalcFxRate] = useState('');
   const [calcRatio, setCalcRatio] = useState(1000);
-  const [calcMarketDr, setCalcMarketDr] = useState(11.50);
+  const [calcMarketDr, setCalcMarketDr] = useState('');
 
-  // Compute Scored DRs (Driven by Live API or Technical Engine)
-  const scoredDRs = useMemo(() => {
-    if (liveData?.scoredDRs?.length) return liveData.scoredDRs;
-    return FEATURED_DR_UNIVERSE.map((item) => {
-      const scored = scoreDRCandidate({
-        symbol: item.symbol,
-        currentPrice: item.currentDrPrice,
-        changePct: item.changePct,
-        closes: item.closes,
-        highs: item.highs,
-        lows: item.lows,
-        underlying: item.underlying,
-      });
+  const scoredDRs=liveData?.scoredDRs??[];
+  const scoredThaiStocks=liveData?.scoredThaiStocks??[];
+  const liveDividendStocks=liveData?.liveDividendStocks??[];
 
-      const bridge = calcIndicativePrice({
-        underlyingUsd: item.underlyingUsd,
-        usdThbRate: liveData?.liveUsdThb || 33.57,
-        conversionRatio: item.conversionRatio,
-        currentDrPrice: item.currentDrPrice,
-      });
-
-      return {
-        ...item,
-        market: 'DR80',
-        scored,
-        bridge,
-      };
-    });
-  }, [liveData]);
-
-  // Compute Scored Thai Stocks (Driven by Live API or Technical Engine)
-  const scoredThaiStocks = useMemo(() => {
-    if (liveData?.scoredThaiStocks?.length) return liveData.scoredThaiStocks;
-    return FEATURED_THAI_STOCK_UNIVERSE.map((item) => {
-      const scored = scoreDRCandidate({
-        symbol: item.symbol,
-        currentPrice: item.currentPrice,
-        changePct: item.changePct,
-        closes: item.closes,
-        highs: item.highs,
-        lows: item.lows,
-      });
-
-      return {
-        ...item,
-        market: 'SET',
-        currentDrPrice: item.currentPrice,
-        scored,
-      };
-    });
-  }, [liveData]);
-
-  // Live Thai Dividend Stocks
-  const liveDividendStocks = useMemo(() => {
-    if (liveData?.liveDividendStocks?.length) return liveData.liveDividendStocks;
-    return TOP_THAI_DIVIDEND_STOCKS;
-  }, [liveData]);
-
-  // Top Morning Signals for Audio Briefing & Top Card (Real Scores)
   const topMorningThai = useMemo(() => {
     if (liveData?.topMorningThai?.length) return liveData.topMorningThai;
     return scoredThaiStocks
@@ -465,12 +411,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         if (!match) return p;
         const cur = match.currentDrPrice ?? p.currentPrice;
         const ret = Math.round(((cur - p.entryPrice) / p.entryPrice) * 10000) / 100;
-        let status = p.status;
-        if (cur >= p.tp2) status = 'Hit TP2';
-        else if (cur >= p.tp1) status = 'Hit TP1';
-        else if (cur <= p.sl) status = 'Hit SL';
-        else if (cur <= p.entryPrice * 1.01 && cur >= p.sl) status = 'In Buy Zone';
-        else if (cur > p.entryPrice) status = 'Near TP';
+        const status=p.status; // Personal watch plans never produce server-side fills or closed outcomes.
 
         if (cur !== p.currentPrice || ret !== p.returnPct || status !== p.status) {
           changed = true;
@@ -485,34 +426,9 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
     });
   }, [liveData]);
 
-  // Dynamic Mathematical KPIs (100% Calculated, Zero Mockups)
-  const drKpis = useMemo(() => {
-    if (liveData?.drKpis) return liveData.drKpis;
-    const valid = scoredDRs.filter((s) => s.scored);
-    const active = valid.filter((s) => s.scored.totalScore >= 8).length;
-    const hitTp = trackedPicks.filter((p) => p.market === 'DR80' && p.status.includes('Hit TP')).length;
-    const hitSl = trackedPicks.filter((p) => p.market === 'DR80' && p.status.includes('Hit SL')).length;
-    const nearTp = valid.filter((s) => s.currentDrPrice >= s.scored.tp1 * 0.985 && s.currentDrPrice < s.scored.tp1).length;
-    const resolved = hitTp + hitSl;
-    const winRate = resolved > 0 ? `${((hitTp / resolved) * 100).toFixed(1)}%` : '0.0%';
-    const avgReturnVal = valid.reduce((acc, s) => acc + s.changePct, 0) / Math.max(1, valid.length);
-    const avgReturn = `${avgReturnVal >= 0 ? '+' : ''}${avgReturnVal.toFixed(2)}%`;
-    return { active, hitTp, hitSl, nearTp, winRate, avgReturn };
-  }, [liveData, scoredDRs, trackedPicks]);
-
-  const thaiKpis = useMemo(() => {
-    if (liveData?.thaiKpis) return liveData.thaiKpis;
-    const valid = scoredThaiStocks.filter((s) => s.scored);
-    const active = valid.filter((s) => s.scored.totalScore >= 8).length;
-    const hitTp = trackedPicks.filter((p) => p.market === 'SET' && p.status.includes('Hit TP')).length;
-    const hitSl = trackedPicks.filter((p) => p.market === 'SET' && p.status.includes('Hit SL')).length;
-    const nearTp = valid.filter((s) => s.currentPrice >= s.scored.tp1 * 0.985 && s.currentPrice < s.scored.tp1).length;
-    const resolved = hitTp + hitSl;
-    const winRate = resolved > 0 ? `${((hitTp / resolved) * 100).toFixed(1)}%` : '0.0%';
-    const avgReturnVal = valid.reduce((acc, s) => acc + s.changePct, 0) / Math.max(1, valid.length);
-    const avgReturn = `${avgReturnVal >= 0 ? '+' : ''}${avgReturnVal.toFixed(2)}%`;
-    return { active, hitTp, hitSl, nearTp, winRate, avgReturn };
-  }, [liveData, scoredThaiStocks, trackedPicks]);
+  const emptyKpis={active:'—',hitTp:'—',hitSl:'—',nearTp:'—',winRate:'—',avgReturn:'—'};
+  const drKpis=liveData?.drKpis??emptyKpis;
+  const thaiKpis=liveData?.thaiKpis??emptyKpis;
 
   // Audio Voice Playback Handlers
   const handlePlayMorningBriefing = () => {
@@ -587,6 +503,9 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
   }, [scoredThaiStocks, searchQuery, filterMode]);
 
   // Filtered Tracked Picks in Ledger
+  const allScans=pageRows(rankedRadarRows([...scoredThaiStocks,...scoredDRs]).filter(item=>(allScanMarket==='all'||item.market===allScanMarket)&&`${item.symbol} ${item.name}`.toLowerCase().includes(allScanQuery.toLowerCase())),allScanPage);
+  const showAllScans=market=>{setAllScanMarket(market);setAllScanQuery('');setAllScanPage(1);setActiveTab('all-scans');};
+
   const filteredTrackedPicks = useMemo(() => {
     return trackedPicks.filter((p) => {
       if (ledgerFilter === 'dr') return p.market === 'DR80';
@@ -598,82 +517,36 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
     });
   }, [trackedPicks, ledgerFilter]);
 
+  const personalRows=pageRows(filteredTrackedPicks,personalPage);
+
   // Live calculation for Arbitrage sandbox
   const liveArbitrage = useMemo(() => {
+    if(![calcUnderlying,calcFxRate,calcRatio,calcMarketDr].every(v=>Number(v)>0))return null;
     return calcIndicativePrice({
-      underlyingUsd: Number(calcUnderlying) || 1,
-      usdThbRate: Number(calcFxRate) || 34.5,
-      conversionRatio: Number(calcRatio) || 100,
-      currentDrPrice: Number(calcMarketDr) || 1,
+      underlyingUsd: Number(calcUnderlying),
+      usdThbRate: Number(calcFxRate),
+      conversionRatio: Number(calcRatio),
+      currentDrPrice: Number(calcMarketDr),
     });
   }, [calcUnderlying, calcFxRate, calcRatio, calcMarketDr]);
 
-  // Real Market Scan Execution (Driven by Live Data & Technical Engine)
-  const handleTriggerScan = async (targetType = 'dr') => {
-    if (isScanning) return;
-    setIsScanning(true);
-    setScanType(targetType);
-    setScanProgress(20);
-    setScanStep(
-      targetType === 'thai'
-        ? 'เชื่อมต่อ Settrade Open API ดึง OHLC แท่งเทียนหุ้นไทย SET100 / SETHD...'
-        : 'เชื่อมต่อ Settrade TechChart ดึงแท่งเทียน DR80/DR23 และราคาหุ้นแม่สหรัฐฯ...'
-    );
-
+  const handleTriggerScan = async (targetType='dr') => {
+    if(isScanning)return;
+    setIsScanning(true);setScanType(targetType);setScanProgress(20);
+    setScanStep('กำลังโหลดแท่งปิดรายวันและคำนวณ EMA, RSI, MACD และ Camarilla…');
     try {
-      const timer1 = setTimeout(() => {
-        setScanProgress(55);
-        setScanStep('คำนวณ EMA 25/50/75, Camarilla Pivots 8 ระดับ, RSI 14 และ MACD Momentum...');
-      }, 500);
-
-      const timer2 = setTimeout(() => {
-        setScanProgress(80);
-        setScanStep('ประเมิน Confluence Score, จุดรอรับ S2-S3, Hard SL S4 และ R:R...');
-      }, 900);
-
-      const res = await fetch('/api/dr-strategy/feed', { method: 'POST' });
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-
-      if (res.ok) {
-        const fresh = await res.json();
-        setLiveData(fresh);
-        if (fresh.autoTrackedPicks?.length) {
-          setTrackedPicks((prev) => {
-            const existing = new Set(prev.map((p) => p.symbol));
-            const newItems = fresh.autoTrackedPicks.filter((p) => !existing.has(p.symbol));
-            const updated = [...newItems, ...prev];
-            try {
-              localStorage.setItem('nugaom_tracked_picks', JSON.stringify(updated));
-            } catch {}
-            return updated;
-          });
-        }
-      }
-
+      const fresh=await requestStrategyFeed({refresh:true,signal:AbortSignal.timeout(60000)});
+      setLiveData(fresh);setFeedError('');
+      const coverage=fresh.coverage[targetType];
+      if(!coverage.available)throw Error('ยังไม่มีแท่งปิดสำหรับตลาดนี้ กรุณาลองใหม่เมื่อแหล่งข้อมูลพร้อม');
       setScanProgress(100);
-      setScanStep('สแกนสำเร็จจากราคาจริงและแท่งเทียนล่าสุด! บันทึกเข้าระบบเรียบร้อย');
-      const nowStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
-      setLastScanTime(nowStr);
-      setIsScanning(false);
-
-      setToastData({
-        title: targetType === 'thai' ? 'Scan หุ้นไทย สำเร็จ! 🎯' : 'Scan DR80 สำเร็จ! 🎯',
-        desc: `พบสัญญาณ Confluence ที่ดีที่สุดจากข้อมูลจริง พร้อมบันทึกเข้าหน้า Picks Ledger และพร้อมประกาศเสียงแล้ว`,
-        type: 'success',
-      });
-
-      if (voiceEnabled) {
-        handlePlayMorningBriefing();
-      }
-    } catch (err) {
-      setIsScanning(false);
-      setToastData({
-        title: 'เกิดข้อผิดพลาดในการสแกน',
-        desc: err.message,
-        type: 'error',
-      });
-    }
+      const missing=fresh.unavailable.filter(i=>i.market===targetType).map(i=>i.symbol);
+      setToastData({title:`สแกน${targetType==='thai'?'หุ้นไทย':' DR'}สำเร็จ`,
+        desc:`คำนวณได้ ${coverage.available}/${coverage.total} ตัวจากแท่งปิดรายวัน${missing.length?' · ข้อมูลไม่พร้อม: '+missing.join(', '):''}`,type:'success'});
+      const picks=targetType==='thai'?fresh.topMorningThai:fresh.topMorningDr;
+      if(voiceEnabled&&picks.length)speakerRef.current?.play(generateMorningSignalSpeech({thaiPicks:targetType==='thai'?picks:[],drPicks:targetType==='dr'?picks:[]}));
+    } catch(error){setFeedError(error.message);setToastData({title:'ยังสแกนไม่สำเร็จ',desc:error.message,type:'error'});}
+    finally {setIsScanning(false);}
   };
 
   const handleTogglePick = (item, marketType = 'DR80') => {
@@ -725,21 +598,18 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
   };
 
   const handleGoToChart = (item) => {
-    if (onSelectSymbol) {
-      onSelectSymbol(item);
-    }
-    setTimeout(() => {
-      const el = document.getElementById('chart-panel') || document.querySelector('.chart-panel');
-      if (el) {
-        const yOffset = -75;
-        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-      }
-    }, 120);
+    const asset=radarChartAsset(item);
+    if(!asset){setToastData({title:'ยังเปิดกราฟไม่ได้',desc:'ไม่พบสินทรัพย์นี้ในตลาดที่รองรับ',type:'error'});return;}
+    if(onSelectSymbol)onSelectSymbol(asset);
+    else window.location.assign(`/${asset.id}?symbol=${encodeURIComponent(asset.symbol)}#chart-panel`);
   };
 
   return (
     <section className={styles.container} aria-label="DR Strategy & Thai Equities Radar">
+      <div className={styles.feedNotice} role="status" aria-live="polite">
+        {feedError || (liveData ? `ผลสแกนแท่งปิดรายวัน · หุ้นไทย ${liveData.coverage.thai.available}/${liveData.coverage.thai.total} · DR ${liveData.coverage.dr.available}/${liveData.coverage.dr.total} · ${liveData.feedSource}` : 'กำลังโหลดข้อมูลสแกน…')}
+        {liveData?.unavailable?.length>0&&<span>ข้อมูลไม่พร้อม: {liveData.unavailable.map(i=>i.symbol).join(', ')} · ไม่ใช้ราคาสมมติคำนวณ</span>}
+      </div>
       {/* Toast Notification */}
       {toastData && (
         <div className={styles.toastWrap} role="status">
@@ -772,8 +642,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             เรดาร์สแกนหุ้นไทย &amp; DR <span>แยกฟีเจอร์ชัดเจน พร้อมระบบเสียงแจ้งเตือน</span>
           </h2>
           <p className={styles.subtitle}>
-            คัดกรองหุ้นไทย (SET100 / SETHD) และตราสาร DR ทั่วโลกด้วย 4 เสาหลักทางเทคนิค (Camarilla S2-S3, EMA 25/50/75, RSI, MACD)
-            บันทึกเข้าหน้า DR Picks &amp; หุ้นไทย Picks อัตโนมัติ พร้อมเสียงพูดบอกราคาเข้า, TP, SL และสถานะ
+            คัดกรองชุดหุ้นไทยและ DR ที่ระบุด้านล่างด้วย 4 เสาหลักทางเทคนิค (Camarilla S2-S3, EMA 25/50/75, RSI, MACD)
+            เลือกบันทึกแผนเฝ้าดูไว้ใน Picks พร้อมเสียงพูดบอกราคาเข้า, TP, SL และสถานะ
           </p>
         </div>
 
@@ -781,12 +651,12 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           <div className={styles.statsGrid}>
             <div className={styles.statBox}>
               <span className={styles.statLabel}>DR Universe</span>
-              <strong className={styles.statVal}>80+ Tickers</strong>
+              <strong className={styles.statVal}>{liveData?.coverage.dr.total??'—'} Tickers</strong>
               <small className={styles.statNote}>DR80 &amp; DR23</small>
             </div>
             <div className={styles.statBox}>
               <span className={styles.statLabel}>หุ้นไทย SET</span>
-              <strong className={styles.statVal} style={{ color: '#38bdf8' }}>SET100 / SETHD</strong>
+              <strong className={styles.statVal} style={{ color: '#38bdf8' }}>{liveData?.coverage.thai.total??'—'} หุ้นในชุดสแกน</strong>
               <small className={styles.statNote}>คัดกรองสัญญาณเช้า</small>
             </div>
             <div className={styles.statBox}>
@@ -911,8 +781,11 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         </div>
       </div>
 
+      <ScanRules coverage={liveData?.coverage}/>
       {/* Main Tabs Navigation */}
       <div className={styles.navTabs}>
+        <button type="button" onClick={()=>showAllScans('all')} className={`${styles.tabBtn} ${activeTab==='all-scans'?styles.tabBtnActive:''}`}>สแกนรวม ({scoredThaiStocks.length+scoredDRs.length})</button>
+        <button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>รอเข้า / ติดตาม / แพ้ชนะ</button>
         <button
           type="button"
           onClick={() => {
@@ -945,7 +818,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           className={`${styles.tabBtn} ${activeTab === 'picks-ledger' ? styles.tabBtnActive : ''}`}
         >
           <ListChecks size={16} />
-          <span>📋 หน้าบันทึก Picks &amp; Tracking</span>
+          <span>📋 แผนเฝ้าดูส่วนตัว</span>
           <span className={styles.tabBadge} style={{ background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8' }}>
             {trackedPicks.length} ไม้
           </span>
@@ -958,7 +831,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         >
           <Coins size={16} />
           <span>Indicative &amp; Arbitrage Bridge</span>
-          <span className={styles.tabBadge}>Live FX</span>
+          <span className={styles.tabBadge}>FX Quote</span>
         </button>
 
         <button
@@ -969,10 +842,22 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           <PieChart size={16} />
           <span>พอร์ตหุ้นปันผลไทย (SETHD)</span>
           <span className={styles.tabBadge} style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>
-            6.8% Yield
+            {liveData?.avgDivYield&&liveData.avgDivYield!=='—'?`${liveData.avgDivYield}% Yield`:'รอข้อมูล Yield'}
           </span>
         </button>
       </div>
+
+      {activeTab==='workflow'&&<SignalWorkflow market={currentMarket} onSelect={symbol=>handleGoToChart({symbol,market:currentMarket})}/>}
+      {activeTab==='all-scans'&&<section className={styles.workflowPanel} aria-label="สแกนรวม">
+        <h3>สแกนรวม · ทุกตัวในชุด Radar</h3>
+        <p>หน้าเด่นแสดง 5 ตัว ส่วนที่เกินยังอยู่ที่นี่ · รายการเฝ้าดูไม่ใช่การยืนยัน Entry · จำนวนหุ้นที่สแกนไม่เปลี่ยนตามจำนวนที่แสดง</p>
+        <div className={styles.workflowControls}>
+          <label>ตลาด <select value={allScanMarket} onChange={e=>{setAllScanMarket(e.target.value);setAllScanPage(1);}}><option value="all">หุ้นไทย + DR</option><option value="SET">หุ้นไทย</option><option value="DR80">DR</option></select></label>
+          <label>ค้นหา <input aria-label="ค้นหาในสแกนรวม" value={allScanQuery} onChange={e=>{setAllScanQuery(e.target.value);setAllScanPage(1);}}/></label>
+        </div>
+        <div className={styles.tableResponsive}><table className={styles.table}><thead><tr><th>หุ้น / ตลาด</th><th>คะแนน</th><th>ราคาแท่งปิด</th><th>Entry / SL / TP1</th><th>R:R</th><th>สถานะ</th><th>กราฟ</th></tr></thead><tbody>{allScans.rows.map(item=><tr key={`${item.market}:${item.symbol}`}><td><b>{item.symbol}</b><small>{item.market}</small></td><td>{item.scored.totalScore}/16</td><td>{item.currentDrPrice.toFixed(2)}<small>{item.dataAsOf}</small></td><td>{item.scored.entry.toFixed(2)} / {item.scored.sl.toFixed(2)} / {item.scored.tp1.toFixed(2)}</td><td>{item.scored.riskReward.toFixed(2)}</td><td>เฝ้าดู · ยังไม่ยืนยันเข้า</td><td><button type="button" onClick={()=>handleGoToChart(item)}>ดูกราฟ ↗</button></td></tr>)}</tbody></table></div>
+        <nav className={styles.workflowPagination} aria-label="หน้าสแกนรวม"><button type="button" disabled={allScans.page===1} onClick={()=>setAllScanPage(p=>p-1)}>ก่อนหน้า</button><span>{allScans.page} / {allScans.pages} · ทั้งหมด {allScans.total} ตัว · หน้าละ 7</span><button type="button" disabled={allScans.page===allScans.pages} onClick={()=>setAllScanPage(p=>p+1)}>ถัดไป</button></nav>
+      </section>}
 
       {/* ── Active Scanning Progress Overlay ── */}
       {isScanning && (
@@ -981,7 +866,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             <span className={styles.scanningTitle}>
               <Loader2 size={16} className="animate-spin text-purple-400" />
               <span>
-                กำลังสแกน {scanType === 'thai' ? 'หุ้นไทย SET100 / SETHD' : 'DR80/DR23 ทั้งกระดาน'}...
+                กำลังสแกน {scanType === 'thai' ? 'ชุดหุ้นไทย' : 'ชุด DR'}...
               </span>
             </span>
             <span className="text-xs font-black text-purple-300">{scanProgress}%</span>
@@ -1006,18 +891,18 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
               </div>
               <div className={styles.integrationDetails}>
                 <div className={styles.integrationTitleRow}>
-                  <span className={styles.integrationTitle}>DR80 Live Integration</span>
+                  <span className={styles.integrationTitle}>DR Daily Scanner</span>
                   <span className={styles.statusPillLive}>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Settrade Open API: Live
+                    แท่งปิดรายวัน
                   </span>
-                  <span className={styles.statusPillTg}>Telegram: Ready</span>
+                  <span className={styles.statusPillTg}>ตรวจแหล่งข้อมูลด้านบน</span>
                 </div>
                 <div className={styles.sampleQuoteText}>
                   {liveData?.drSampleText ? (
                     <span>{liveData.drSampleText}</span>
                   ) : (
-                    <span>Live Quote <b>AAPL80</b>: 11.50 THB · <b>NVDA80</b>: 36.50 THB · ตลาดหลักทรัพย์แห่งประเทศไทย (SET)</span>
+                    <span>กำลังรอแท่งปิด DR จากแหล่งข้อมูล</span>
                   )}
                 </div>
               </div>
@@ -1026,7 +911,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             <div className={styles.integrationRight}>
               <div className={styles.lastScanInfo}>
                 <Clock size={13} />
-                <span>{marketClock} · ตลาดเปิด · สแกนล่าสุด {lastScanTime}</span>
+                <span>{marketClock} · สแกนล่าสุด {lastScanTime}</span>
               </div>
               <button
                 type="button"
@@ -1065,12 +950,12 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>WIN RATE</span>
               <strong className={styles.kpiVal} style={{ color: '#a855f7' }}>{drKpis.winRate}</strong>
-              <span className={styles.kpiSub}>อัตราชนะเฉลี่ย</span>
+              <span className={styles.kpiSub}>รอผลไม้ปิดจากบันทึกระบบ</span>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>AVG RETURN</span>
               <strong className={styles.kpiVal} style={{ color: '#10b981' }}>{drKpis.avgReturn}</strong>
-              <span className={styles.kpiSub}>กำไรเฉลี่ยต่อรอบ</span>
+              <span className={styles.kpiSub}>การเปลี่ยนแปลงแท่งล่าสุด</span>
             </div>
           </div>
 
@@ -1086,7 +971,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                 <span>✅ <b>MACD Momentum:</b> Line &gt; Signal และ Histogram ขยายตัวบวก</span>
               </div>
               <p className={styles.methodologyUniverse}>
-                Universe: <b>80+ DR/DRx</b> ในตลาด SET | คัดกรอง Confluence อัตรา Risk/Reward &ge; 1.5 เท่า | Auto-run ทุกเช้า 09:00 น.
+                Universe: <b>{liveData?.coverage.dr.total??0} DR</b> ในตลาด SET | แสดงคะแนน Confluence และ R:R ของแต่ละแผน | กดสแกนเพื่อโหลดข้อมูลใหม่
               </p>
             </div>
           </div>
@@ -1123,9 +1008,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             </div>
           </div>
 
+          <div className={styles.displayLimit}><span>แสดงเด่นสูงสุด 5 ตัว จากผลคัดกรอง {filteredDRs.length} ตัว · เป็นแผนเฝ้าดู ยังไม่ยืนยันเข้า</span><button type="button" onClick={()=>showAllScans('DR80')}>เปิดสแกนรวม DR ({filteredDRs.length})</button></div>
           {/* DR Cards Grid */}
           <div className={styles.cardsGrid}>
-            {filteredDRs.map((item, index) => {
+            {rankedRadarRows(filteredDRs).slice(0,FEATURED_LIMIT).map((item, index) => {
               const scored = item.scored;
               if (!scored) return null;
               const isExpanded = expandedSymbol === item.symbol;
@@ -1145,9 +1031,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                           {scored.emaAligned && <span className={styles.tagEma}>EMA ขาขึ้น ✓</span>}
                           {isTracked && <span className={styles.tagPicked}>ในพอร์ตติดตาม ★</span>}
                         </div>
-                        <p className={styles.nameText}>
-                          {item.name} · หุ้นแม่ {item.underlying}
-                        </p>
+                        <p className={styles.nameText}>{item.name} · หุ้นแม่ {item.underlying} · แท่งปิด {item.dataAsOf}</p>
                       </div>
                     </div>
 
@@ -1281,10 +1165,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
               </div>
               <div className={styles.integrationDetails}>
                 <div className={styles.integrationTitleRow}>
-                  <span className={styles.integrationTitle}>Thai Equities Live Scanner (SET100)</span>
+                  <span className={styles.integrationTitle}>Thai Daily Scanner</span>
                   <span className={styles.statusPillLive}>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    SET Market: Live
+                    แท่งปิดรายวัน
                   </span>
                   <span className={styles.statusPillTg}>Voice Alert: Ready</span>
                 </div>
@@ -1292,7 +1176,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                   {liveData?.thaiSampleText ? (
                     <span>{liveData.thaiSampleText}</span>
                   ) : (
-                    <span>Live Quote <b>CPALL</b>: 43.50 THB · <b>BDMS</b>: 19.10 THB · ตลาดหลักทรัพย์แห่งประเทศไทย (SET)</span>
+                    <span>กำลังรอแท่งปิดหุ้นไทยจากแหล่งข้อมูล</span>
                   )}
                 </div>
               </div>
@@ -1301,7 +1185,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             <div className={styles.integrationRight}>
               <div className={styles.lastScanInfo}>
                 <Clock size={13} />
-                <span>{marketClock} · ตลาดเปิด · สแกนล่าสุด {lastScanTime}</span>
+                <span>{marketClock} · สแกนล่าสุด {lastScanTime}</span>
               </div>
               <button
                 type="button"
@@ -1341,12 +1225,12 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>WIN RATE</span>
               <strong className={styles.kpiVal} style={{ color: '#a855f7' }}>{thaiKpis.winRate}</strong>
-              <span className={styles.kpiSub}>อัตราชนะเฉลี่ย</span>
+              <span className={styles.kpiSub}>รอผลไม้ปิดจากบันทึกระบบ</span>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>AVG RETURN</span>
               <strong className={styles.kpiVal} style={{ color: '#10b981' }}>{thaiKpis.avgReturn}</strong>
-              <span className={styles.kpiSub}>กำไรเฉลี่ยต่อรอบ</span>
+              <span className={styles.kpiSub}>การเปลี่ยนแปลงแท่งล่าสุด</span>
             </div>
           </div>
 
@@ -1364,7 +1248,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                 <span>✅ <b>MACD Histogram:</b> โมเมนตัมกำลังขยายตัวในแดนบวก</span>
               </div>
               <p className={styles.methodologyUniverse}>
-                Universe: <b>SET100 / SETHD</b> หุ้นไทยพื้นฐานแกร่ง สภาพคล่องสูง ปันผลสม่ำเสมอ | R:R ≥ 1.5
+                Universe: <b>{liveData?.coverage.thai.total??0} หุ้นในชุดสแกน</b> · เปรียบเทียบคะแนนและ R:R ก่อนเลือกแผนเฝ้าดู
               </p>
             </div>
           </div>
@@ -1401,9 +1285,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             </div>
           </div>
 
+          <div className={styles.displayLimit}><span>แสดงเด่นสูงสุด 5 ตัว จากผลคัดกรอง {filteredThaiStocks.length} ตัว · เป็นแผนเฝ้าดู ยังไม่ยืนยันเข้า</span><button type="button" onClick={()=>showAllScans('SET')}>เปิดสแกนรวมหุ้นไทย ({filteredThaiStocks.length})</button></div>
           {/* Thai Cards Grid */}
           <div className={styles.cardsGrid}>
-            {filteredThaiStocks.map((item, index) => {
+            {rankedRadarRows(filteredThaiStocks).slice(0,FEATURED_LIMIT).map((item, index) => {
               const scored = item.scored;
               if (!scored) return null;
               const isExpanded = expandedSymbol === item.symbol;
@@ -1557,10 +1442,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
               <div>
                 <h3 className="text-base font-extrabold text-white m-0 mb-1 flex items-center gap-2">
                   <ListChecks size={20} className="text-sky-400" />
-                  <span>หน้าบันทึก DR Picks &amp; หุ้นไทย Picks (Tracking Ledger)</span>
+                  <span>แผนเฝ้าดูส่วนตัว (บันทึกในเบราว์เซอร์นี้)</span>
                 </h3>
                 <p className="text-xs text-slate-400 m-0">
-                  ระบบบันทึกและติดตามสถานะออเดอร์อัตโนมัติจากผลสแกน ติดตามราคาปัจจุบัน, จุดตัดขาดทุน, เป้ากำไร และอัตราผลตอบแทน
+                  รายการที่กดบันทึกไว้เอง ไม่ใช่ออเดอร์หรือไม้จากเซิร์ฟเวอร์ · ไม่รวมสถิติแพ้ชนะ เปิดแท็บ “รอเข้า / ติดตาม / แพ้ชนะ” เพื่อดูไม้จริง
                 </p>
               </div>
 
@@ -1569,25 +1454,11 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                   <span className="text-slate-400">ติดตามอยู่:</span>
                   <strong>{trackedPicks.length} ตัว</strong>
                 </div>
-                <div className={styles.ledgerStatPill}>
-                  <span className="text-emerald-400">ถึงเป้า TP:</span>
-                  <strong className="text-emerald-400">
-                    {trackedPicks.filter((p) => p.status.includes('Hit TP')).length} ตัว
-                  </strong>
-                </div>
-                <div className={styles.ledgerStatPill}>
-                  <span className="text-purple-400">Win Rate:</span>
-                  <strong className="text-purple-400">
-                    {(() => {
-                      const tp = trackedPicks.filter((p) => p.status.includes('Hit TP')).length;
-                      const sl = trackedPicks.filter((p) => p.status.includes('Hit SL')).length;
-                      return tp + sl > 0 ? `${((tp / (tp + sl)) * 100).toFixed(1)}%` : '0.0%';
-                    })()}
-                  </strong>
-                </div>
+                <div className={styles.ledgerStatPill}><span>Win rate</span><strong>ไม่นับบันทึกส่วนตัว</strong></div>
               </div>
             </div>
 
+            <nav className={styles.workflowPagination} aria-label="หน้าแผนส่วนตัว"><button type="button" disabled={personalRows.page===1} onClick={()=>setPersonalPage(p=>p-1)}>ก่อนหน้า</button><span>{personalRows.page} / {personalRows.pages} · หน้าละ 7</span><button type="button" disabled={personalRows.page===personalRows.pages} onClick={()=>setPersonalPage(p=>p+1)}>ถัดไป</button></nav>
             {/* Filter Pills */}
             <div className={styles.filterPills}>
               {[
@@ -1601,7 +1472,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                 <button
                   key={f.id}
                   type="button"
-                  onClick={() => setLedgerFilter(f.id)}
+                  onClick={() => {setLedgerFilter(f.id);setPersonalPage(1);}}
                   className={`${styles.filterPill} ${ledgerFilter === f.id ? styles.filterPillActive : ''}`}
                 >
                   {f.label}
@@ -1629,7 +1500,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTrackedPicks.map((pick) => {
+                    {personalRows.rows.map((pick) => {
                       const pos = pick.returnPct >= 0;
                       return (
                         <tr key={pick.id}>
@@ -1919,7 +1790,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             <div className={styles.divHeroRight}>
               <div className={styles.yieldHighlight}>
                 <span>ค่าเฉลี่ย Dividend Yield</span>
-                <strong>{liveData?.avgDivYield ? `${liveData.avgDivYield}%` : '6.8%'}</strong>
+                <strong>{liveData?.avgDivYield&&liveData.avgDivYield!=='—'?`${liveData.avgDivYield}%`:'—'}</strong>
                 <small>จ่ายปันผลสม่ำเสมอทุกปี</small>
               </div>
             </div>

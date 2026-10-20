@@ -207,8 +207,10 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     setTimeout(() => {
       const el = document.getElementById('chart-panel') || document.querySelector('.chart-panel');
       if (el) {
-        const yOffset = -75;
-        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        const stickyNav=document.querySelector('.ng-pro-suite-nav');
+        const navBottom=stickyNav?(parseFloat(window.getComputedStyle(stickyNav).top)||0)+stickyNav.getBoundingClientRect().height:0;
+        const offset=Math.max(document.querySelector('.topbar')?.getBoundingClientRect().height||0,navBottom)+16;
+        const y = el.getBoundingClientRect().top + window.pageYOffset - offset;
         window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
     }, 120);
@@ -241,7 +243,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     if (initialSymbol || (typeof window !== 'undefined' && window.location.hash.includes('chart'))) {
       scrollToChart();
     }
-  }, [initialSymbol]);
+    const selected=MARKET_ASSETS[marketId]?.find(item=>item.symbol===initialSymbol);
+    if(selected){setSelectedAsset(selected);setActiveMarket(marketId);setTimeframe('1d');}
+  }, [initialSymbol,marketId]);
 
   useEffect(() => {
     if (!hasCandleConnection) { setLiveSeries(null); setLiveState('idle'); setChartLoadMs(null); return undefined; }
@@ -426,14 +430,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           {['thai','dr'].includes(marketId) && (
             <DrStrategyRadar
               currentMarket={marketId}
-              onSelectSymbol={(item) => {
-                const match = ALL_ASSETS.find(a => a.symbol === item.symbol) || {
-                  id: (item.market === 'SET' || item.market === 'thai') ? 'thai' : 'dr',
-                  symbol: item.symbol,
-                  name: item.name || item.symbol,
-                };
-                selectAsset(match);
-              }}
+              onSelectSymbol={selectAsset}
             />
           )}
           {['tfex','us'].includes(marketId)&&<SignalDesk marketId={marketId} memberId={memberAccount?.id} rights={rights} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={selectAsset} loginHref={loginHref}/>}

@@ -1938,3 +1938,19 @@
 }
 
 
+
+.feedNotice { margin: 0 0 1rem; padding: 1rem 1.25rem; border: 1px solid #334155; border-radius: 12px; background: #0f172a; color: #cbd5e1; line-height: 1.7; }
+.feedNotice span { display: block; color: #fbbf24; }
+
+.rulesPanel,.workflowPanel { margin: 1rem 0; padding: 1.25rem; border: 1px solid #334155; border-radius: 14px; background: #111c2d; color: #e2e8f0; line-height: 1.7; }
+.rulesPanel summary { cursor: pointer; font-weight: 700; color: #bae6fd; }
+.rulesPanel p,.workflowPanel p { font-size: .88rem; color: #b7c8db; }
+.workflowControls,.workflowTabs,.workflowPagination,.displayLimit { display:flex; flex-wrap:wrap; align-items:center; gap:.65rem; margin: 1rem 0; }
+.workflowControls label { display:flex; align-items:center; gap:.5rem; }
+.workflowControls input,.workflowControls select { background:#0f172a; color:#e2e8f0; border:1px solid #475569; padding:.45rem; border-radius:6px; max-width:100%; }
+.workflowPanel button,.workflowPagination button,.displayLimit button { background:#172b43; color:#e0f2fe; border:1px solid #3f6586; border-radius:7px; padding:.45rem .75rem; cursor:pointer; font:inherit; }
+.workflowTabs button[aria-pressed=true] { background:#0369a1; border-color:#7dd3fc; }
+.workflowPanel button:disabled,.workflowPagination button:disabled { opacity:.45; cursor:default; }
+.workflowPanel small { display:block; color:#8da6bd; }
+.workflowPanel a { color:#7dd3fc; }
+.displayLimit { justify-content:space-between; font-size:.85rem; color:#bae6fd; }
