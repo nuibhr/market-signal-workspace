@@ -208,13 +208,14 @@ export async function signalFeed() {
 }
 
 /** Every published scanner signal, including picks that never entered. Prices are OHLC references, not fills. */
-export async function signalPerformance(market='all') {
+const legacyStrategyClause=strategy=>strategy==='orb'?" AND json_extract(plan_json,'$.setupType') IN ('OPENING_RANGE_BREAKOUT','DR_ORB_15M')":strategy==='eod'?" AND json_extract(plan_json,'$.setupType') IN ('DAILY_CLOSE_BREAKOUT','US_EOD')":['swing','scalp'].includes(strategy)?' AND 0=1':'';
+export async function signalPerformance(market='all',strategy='all') {
   const specific=['thai','dr','us','tfex','forex'].includes(market),trades=[];
   // Page by closure time so a request never loads the entire ledger into memory.
   let offset=0;
   while(trades.length<PERFORMANCE_WINDOW) {
     const rows=await storage.all(`SELECT * FROM auto_pick_signals WHERE status IN ('TARGET','STOP','EXIT')
-      AND entry_price>0 AND exit_price>0 AND entered_at IS NOT NULL AND exited_at IS NOT NULL ${specific?'AND market=?':''}
+      AND entry_price>0 AND exit_price>0 AND entered_at IS NOT NULL AND exited_at IS NOT NULL ${specific?'AND market=?':''}${legacyStrategyClause(strategy)}
       ORDER BY exited_at DESC,id DESC LIMIT 100 OFFSET ?`,...(specific?[market]:[]),offset);
     for(const row of rows) {
       let signal;try{signal=parse(row);}catch{continue;}
@@ -229,22 +230,15 @@ export async function signalPerformance(market='all') {
 }
 
 export async function signalResults({ market = 'all', status = 'all', scope = 'history', page = 1, pageSize = 7, strategy = 'all' } = {}) {
-  const performance = (await signalPerformance(market));
+  const performance = (await signalPerformance(market,strategy));
   const markets = new Set(['thai', 'dr', 'us', 'tfex', 'forex']);
   const statuses = new Set(['WAITING_FOR_ENTRY', 'OPEN', 'TARGET', 'STOP', 'EXIT', 'EXPIRED', 'REVIEW', 'AMBIGUOUS']);
   const where = [];
   const params = [];
   if (markets.has(market)) { where.push('market=?'); params.push(market); }
   if (statuses.has(status)) { where.push('status=?'); params.push(status); }
-  if (strategy === 'orb') {
-    where.push("(market IN ('thai','dr') AND (plan_json LIKE '%OPENING_RANGE_BREAKOUT%' OR plan_json LIKE '%DR_ORB%' OR plan_json LIKE '%ORB%'))");
-  } else if (strategy === 'eod') {
-    where.push("(market = 'us' OR plan_json LIKE '%US_EOD%' OR plan_json LIKE '%EOD%')");
-  } else if (strategy === 'swing') {
-    where.push("(plan_json LIKE '%SWING%' OR plan_json LIKE '%PULLBACK%' OR plan_json LIKE '%BREAKOUT%')");
-  } else if (strategy === 'scalp') {
-    where.push("(plan_json LIKE '%DAYTRADE%' OR plan_json LIKE '%SCALP%' OR market IN ('forex','tfex'))");
-  }
+  const strategyClause=legacyStrategyClause(strategy);
+  if(strategyClause)where.push(strategyClause.replace(/^ AND /,''));
   if (scope === 'closed') {
     if (performance.recentTrades.length) {
       where.push('id IN (SELECT value FROM json_each(?))');
@@ -265,7 +259,7 @@ export async function signalResults({ market = 'all', status = 'all', scope = 'h
     for (const { pickId, ...event } of events) byPick.get(pickId)?.push(event);
     for (const signal of signals) signal.events = byPick.get(signal.id) ?? [];
   }
-  const marketClause = markets.has(market) ? 'WHERE market=?' : '';
+  const marketClause = `WHERE ${markets.has(market)?'market=?':'1=1'}${legacyStrategyClause(strategy)}`;
   const marketParams = markets.has(market) ? [market] : [];
   const counts = Object.fromEntries((await storage.all(`SELECT status,COUNT(*) AS count FROM auto_pick_signals ${marketClause} GROUP BY status`,...marketParams))
     .map(row => [row.status, row.count]));

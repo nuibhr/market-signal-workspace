@@ -1,6 +1,6 @@
 'use client';
 import SignalPerformance from './signal-performance.jsx';
-import { recordedOutcome } from '../auto-pick/signal-performance.mjs';
+import {resultOutcome} from '../monitor/results.mjs';
 import { Fragment, useEffect, useState } from 'react';
 import { Activity, Bell, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Copy, ExternalLink, Layers, Sparkles, TrendingUp, X, Zap } from 'lucide-react';
 
@@ -18,31 +18,11 @@ const STRATEGIES = [
   { id: 'swing', label: 'Swing Standard (4H/1D)', icon: TrendingUp, desc: 'รอบสวิง 2-5 วัน · โครงสร้างแนวโน้ม D1/4H · TP1 2R สุทธิ + Breakeven Runner' },
   { id: 'orb', label: '15m ORB เปิดตลาด', icon: Zap, desc: 'Opening Range Breakout · กรอบ 30 นาทีแรก + ปิดเหนือ VWAP (หุ้นไทย & DR80)' },
   { id: 'eod', label: 'US EOD ปิดวัน', icon: CalendarDays, desc: 'สแกนแท่งปิดวันหลังตลาดสหรัฐฯ ปิด · คัด Breakout และ Volume สะสม 500 ตัว' },
-  { id: 'scalp', label: 'Scalping CFD', icon: Activity, desc: 'แผนเดย์เทรดจบในวันบน Vantage CFD · กรอบสั้น 15m' },
+  { id: 'scalp', label: 'Daytrade 15m', icon: Activity, desc: 'แผน Daytrade 15m หุ้นไทย DR TFEX และ CFD ตามแหล่งข้อมูลที่เชื่อมต่อ' },
 ];
 
-const STATUSES = [
-  ['all', 'ทุกสถานะ'],
-  ['WAITING_FOR_ENTRY', 'รอเข้า'],
-  ['OPEN', 'เข้าแล้ว'],
-  ['TARGET', 'ถึงเป้า'],
-  ['STOP', 'ตัดขาดทุน'],
-  ['EXIT', 'ปิดตามกติกา'],
-  ['EXPIRED', 'ไม่เข้า'],
-  ['REVIEW', 'ข้อมูลขาด'],
-  ['AMBIGUOUS', 'ตรวจผล'],
-];
-
-const STATUS_LABEL = {
-  WAITING_FOR_ENTRY: 'รอจุดเข้า',
-  OPEN: 'เข้าแล้ว',
-  TARGET: 'ถึงเป้า',
-  STOP: 'ตัดขาดทุน',
-  EXIT: 'ปิดตามกติกา',
-  EXPIRED: 'หมดเวลารอ',
-  REVIEW: 'ตรวจข้อมูล',
-  AMBIGUOUS: 'ตรวจผล',
-};
+const STATUSES=[['all','ทุกสถานะ'],['WAITING','รอเข้า'],['OPEN','เข้าแล้ว'],['RUNNER','ปิดบางส่วน'],['CLOSED','ปิดครบ'],['STOP','ปิดที่ Stop'],['EXPIRED','ไม่เข้า'],['REVIEW','พักตรวจ']];
+const STATUS_LABEL=Object.fromEntries(STATUSES);
 
 const EVENT_LABEL = {
   PICK_READY: 'พบแผน',
@@ -88,17 +68,8 @@ const percent = value =>
   Number.isFinite(value) ? `${value >= 0 ? '+' : ''}${value.toFixed(2)}%` : '—';
 
 function getSignalTag(row) {
-  const setup = row.plan?.setupType || '';
-  if (setup.includes('ORB') || row.market === 'thai' || row.market === 'dr') {
-    return { label: '15m ORB', className: 'tag-orb' };
-  }
-  if (setup.includes('EOD') || row.market === 'us') {
-    return { label: 'US EOD', className: 'tag-eod' };
-  }
-  if (setup.includes('SWING') || setup.includes('PULLBACK')) {
-    return { label: 'Swing 4H', className: 'tag-swing' };
-  }
-  return { label: 'Daytrade', className: 'tag-daytrade' };
+ const tags={swing:['Swing 4H','tag-swing'],scalp:['Daytrade 15m','tag-daytrade'],orb:['15m ORB','tag-orb'],eod:['US EOD','tag-eod']};
+ const [label,className]=tags[row.strategy]??['Legacy','tag-daytrade'];return {label,className};
 }
 
 export default function SignalResults({
@@ -134,7 +105,7 @@ export default function SignalResults({
           strategy,
           page: String(page),
         });
-        const response = await fetch(`/api/auto-pick/results?${queryParams.toString()}`, {
+        const response = await fetch(`/api/trade-results?${queryParams.toString()}`, {
           cache: 'no-store',
           signal: controller.signal,
         });
@@ -175,7 +146,7 @@ export default function SignalResults({
       summary.flat
     }\nอัตราชนะ ${closed ? `${summary.winRate.toFixed(1)}%` : 'ยังไม่มีผลปิด'} · ผลเฉลี่ยต่อไม้ ${percent(
       summary.averageReturnPercent
-    )}\nราคาอ้างอิงจากแท่งที่ระบบตรวจพบ ก่อนค่าธรรมเนียมและสลิปเพจ · ไม่ใช่ผลซื้อขายลูกค้า`;
+    )}\nราคาอ้างอิงจากแท่งที่ระบบตรวจพบ ตามต้นทุนอ้างอิงของแต่ละระบบ (Legacy ก่อนต้นทุน) · ไม่ใช่ผลซื้อขายลูกค้า`;
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -254,6 +225,7 @@ export default function SignalResults({
         </div>
       )}
 
+      {data?.sources?.some(s=>s.status!=='available')&&<p role="status" className="results-message">Daytrade ยังไม่พร้อมในสภาพแวดล้อมนี้ · ผลจากระบบอื่นยังแสดงตาม ledger ที่เข้าถึงได้</p>}
       {data?.status === 'available' && (
         <>
           <p className="results-period">
@@ -345,7 +317,7 @@ export default function SignalResults({
                   }}
                 >
                   {STATUSES.filter(
-                    ([id]) => scope === 'history' || ['all', 'TARGET', 'STOP', 'EXIT'].includes(id)
+                    ([id]) => scope === 'history' || ['all', 'CLOSED', 'STOP'].includes(id)
                   ).map(([id, label]) => (
                     <option key={id} value={id}>
                       {label}
@@ -390,14 +362,14 @@ export default function SignalResults({
                 </thead>
                 <tbody>
                   {rows.map(row => {
-                    const outcome = recordedOutcome(row);
+                    const outcome = resultOutcome(row);
                     const complete = outcome !== null;
                     const change = outcome?.returnPercent ?? null;
                     const rMultiple = outcome?.rMultiple ?? null;
                     const tag = getSignalTag(row);
 
                     return (
-                      <Fragment key={row.id}>
+                      <Fragment key={row.key}>
                         <tr>
                           <td>
                             <span className={`ng-mini-tag ${tag.className}`}>{tag.label}</span>
@@ -419,7 +391,7 @@ export default function SignalResults({
                             </span>
                           </td>
                           <td>
-                            <button className="results-symbol" onClick={() => onSelect(row.symbol)}>
+                            <button className="results-symbol" onClick={() => onSelect?.(row.symbol)}>
                               {row.symbol} ↗
                             </button>
                             <span className="asset-market">
@@ -427,10 +399,10 @@ export default function SignalResults({
                             </span>
                             <button
                               className="results-events-toggle"
-                              aria-expanded={expanded === row.id}
-                              onClick={() => setExpanded(current => (current === row.id ? null : row.id))}
+                              aria-expanded={expanded === row.key}
+                              onClick={() => setExpanded(current => (current === row.key ? null : row.key))}
                             >
-                              {expanded === row.id ? 'ซ่อนเหตุการณ์' : `เหตุการณ์ ${row.events?.length ?? 0} ครั้ง`}
+                              {expanded === row.key ? 'ซ่อนเหตุการณ์' : `เหตุการณ์ ${row.events?.length ?? 0} ครั้ง`}
                             </button>
                           </td>
                           <td data-label="แผนรอเข้า">{price(row.plan?.entry, row.market)}</td>
@@ -455,7 +427,7 @@ export default function SignalResults({
                             {at(row.enteredAt)} / {at(row.exitedAt)}
                           </td>
                         </tr>
-                        {expanded === row.id && (
+                        {expanded === row.key && (
                           <tr className="results-events-row">
                             <td colSpan={8}>
                               <div className="results-events">
@@ -490,7 +462,7 @@ export default function SignalResults({
             <div className="history-footnote results-footer">
               <span>
                 พบ {data.total} สัญญาณ · หน้า {data.page} / {Math.max(1, Math.ceil(data.total / data.pageSize))} ·
-                คำนวณจากราคาอ้างอิงก่อนค่าธรรมเนียมและสลิปเพจ
+                คำนวณจากราคาอ้างอิงและต้นทุนอ้างอิงของแต่ละระบบ (Legacy ก่อนต้นทุน)
               </span>
               <div>
                 <button disabled={page <= 1} onClick={() => setPage(value => value - 1)}>

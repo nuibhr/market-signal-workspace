@@ -1,4 +1,4 @@
-import { receiverConfiguration } from '../forex-mt5/runtime-policy.mjs';
+import {daytradeRuntime} from './runtime.mjs';
 import { storeFor } from '../forex-mt5/store.mjs';
 import { dashboard } from './store.mjs';
 import { membershipFor } from '../membership/rights.mjs';
@@ -11,7 +11,7 @@ export function createDaytradeHandlers({currentMember,getStore=storeFor,env=proc
     if(!['thai','dr','tfex','us','forex'].includes(market))return Response.json({error:'INVALID_MARKET'},{status:400,headers});
     const member=await currentMember();
     if(!member)return Response.json({error:'SIGN_IN_REQUIRED'},{status:401,headers});
-    const config=receiverConfiguration(env);
+    const config=daytradeRuntime(market,env);
     if(!config.enabled)return Response.json({error:config.disabledReason||'SCANNER_DISABLED'},{status:503,headers});
     try {
       const store=getStore(config),connection=store.connection(`member:${member.id}`);
