@@ -55,7 +55,7 @@ Scanner endpoints and the assistant read `membershipFor(currentMember())` on the
 - Use the same environment and database for the app and its authenticated APIs. No raw Stripe payment/card details are stored in the application database.
 - Node and local D1 fixtures cover billing and quota behavior. Real Stripe credentials, CLI forwarding, Portal configuration and a genuine test checkout still require setup and operational acceptance. Browser drag/touch/keyboard visual acceptance is pending when local browser control is unavailable.
 - Before accepting live payments, configure a real HTTPS origin and webhook endpoint, switch all keys/Prices/signing secrets to the same live account/environment, and exercise refund/dispute handling and reconciliation policy. This implementation currently handles subscription/invoice/checkout events; it does not automatically reconcile refunds or disputes. Test and live customer records are separated.
-- The existing admin membership list and its summary use the original manual-date filters. Stripe account self-service and server authorization use the new billing entitlement; an admin billing reporting extension is separate work.
+- The admin membership directory, filters, summary and member detail use the same paid entitlement, including the configured test/live mode. Billing records preserve Stripe state without changing manual membership dates. The cloud secret uploader includes Stripe variables for the web worker only.
 
 ## Mascot
 

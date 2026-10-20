@@ -102,6 +102,8 @@ test('native D1 preserves LINE profile, 14-day trial, monthly renewal, credits a
     const price={id:'price_starter',active:true,livemode:false,currency:'thb',unit_amount:9900,type:'recurring',recurring:{interval:'month',interval_count:1,usage_type:'licensed'}};
     await billing.applyStripeEvent({id:'evt_d1_paid',type:'invoice.paid',created:1,livemode:false,data:{object:{subscription:'sub_d1_fixture'}}},{stripe:{subscriptions:{retrieve:async()=>({id:'sub_d1_fixture',customer:'cus_d1_fixture',status:'active',livemode:false,items:{data:[{price,quantity:1,current_period_end:end}]},latest_invoice:{status:'paid',lines:{data:[{price,period:{end}}]}}})}}});
     assert.equal(membershipFor(await billing.withBilling(paid)).planId,'starter');
+    const {adminMemberships}=await import('../admin/operations.mjs');
+    assert.ok((await adminMemberships(admin,{filter:'subscriber'})).members.some(row=>row.id===paid.id&&row.planName==='Starter'));
     const beforeScan=(await member.aiQuota(paid)).freeRemaining;
     await signalEventPage({after:cursor});assert.equal((await member.aiQuota(paid)).freeRemaining,beforeScan,'Reading signal notifications does not consume AI questions');
     const day=(await member.aiQuota(paid)).day;

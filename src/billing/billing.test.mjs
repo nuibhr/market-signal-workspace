@@ -92,3 +92,13 @@ test('webhook verifies the exact raw body and signature, rejects tampering and w
  assert.equal((await webhookHandler(request('x'.repeat(262145)),{stripe:f.stripe,secret})).status,413);
  await assert.rejects(applyStripeEvent({...f.event(),livemode:true},{stripe:f.stripe}),/INVALID_STRIPE_EVENT/);
 });
+
+test('admin directory, subscriber filter and detail agree with the Stripe entitlement',async()=>{
+ const f=await fixture('pro');await applyStripeEvent(f.event(),{stripe:f.stripe});
+ process.env.ADMIN_LINE_IDS='fixture-admin-line';
+ const admin=await memberStore.upsertLineMember({lineId:'fixture-admin-line',displayName:'Fixture admin'});
+ const {adminMemberships,adminMemberDetail}=await import('../admin/operations.mjs');
+ const directory=await adminMemberships(admin,{filter:'subscriber',q:'Billing test only'});
+ assert.ok(directory.members.some(m=>m.id===f.m.id&&m.planName==='Pro'));assert.ok(directory.summary.subscribers>0);
+ const detail=await adminMemberDetail(admin,f.m.id);assert.equal(detail.member.planId,'pro');assert.equal(detail.quota.freeLimit,50);
+});

@@ -1,3 +1,5 @@
+import {withBilling} from '../billing/store.mjs';
+import {configuredPlans,stripeMode} from '../billing/plans.mjs';
 import { storage } from '../storage/database.mjs';
 import { aiQuota, isAdmin } from '../membership/store.mjs';
 import { membershipFor } from '../membership/rights.mjs';
@@ -14,14 +16,21 @@ function pagination(page,size=12){return {page:Math.max(1,Math.min(100000,parseI
 function pageFor(total,page,pageSize){return Math.min(page,Math.max(1,Math.ceil(total/pageSize)));}
 function queryText(input){return typeof input==='string'?input.trim().slice(0,80):'';}
 const like=value=>`%${value.replace(/[\\%_]/g,'\\$&')}%`;
-const withTier=row=>({...row,tier:membershipFor(row).tier,tierLabel:membershipFor(row).label});
+const withTier=async row=>{const rights=membershipFor(await withBilling(row));return {...row,tier:rights.tier,tierLabel:rights.billingSource==='stripe'?rights.planName:rights.label,planId:rights.planId,planName:rights.planName,billingSource:rights.billingSource};};
+function directoryTier(now){
+ let plans,mode;try{plans=configuredPlans();mode=stripeMode();}catch{return {sql:tierSql,params:[now,now,now]};}
+ if(!plans.length)return {sql:tierSql,params:[now,now,now]};
+ const stripePaid=`EXISTS(SELECT 1 FROM billing_subscriptions bs WHERE bs.member_id=m.id AND bs.mode=? AND bs.status IN ('active','past_due') AND bs.paid_until>? AND bs.plan_id IN (${plans.map(()=>'?').join(',')}))`;
+ return {sql:tierSql.replace('m.subscription_ends_at>?',`(${stripePaid} OR m.subscription_ends_at>?)`),params:[mode,now,...plans.map(p=>p.id),now,now,now]};
+}
 
 export async function adminMemberships(admin,options={}){
   requireAdmin(admin);
   const now=new Date().toISOString(),query=queryText(options.q),filter=options.filter||'all';
-  const cte=`WITH directory AS (SELECT ${fields},COALESCE(c.balance,0) AS ai_credits,${tierSql} AS tier
+  const tier=directoryTier(now);
+  const cte=`WITH directory AS (SELECT ${fields},COALESCE(c.balance,0) AS ai_credits,${tier.sql} AS tier
     FROM members m LEFT JOIN ai_credit_accounts c ON c.member_id=m.id)`;
-  const params=[now,now,now],where=[];
+  const params=[...tier.params],where=[];
   if(query){where.push("(display_name LIKE ? ESCAPE '\\' OR broker LIKE ? ESCAPE '\\' OR portfolio_last4 LIKE ? ESCAPE '\\')");params.push(like(query),like(query),like(query));}
   if(filter==='pending')where.push("portfolio_status='pending'");
   else if(['trial','subscriber','expired','onboarding','portfolio-fix'].includes(filter)){where.push('tier=?');params.push(filter);}
@@ -29,13 +38,13 @@ export async function adminMemberships(admin,options={}){
   let {page,pageSize}=pagination(options.page);
   const {total}=await storage.first(`${cte} SELECT COUNT(*) AS total FROM directory ${clause}`,...params);
   page=pageFor(total,page,pageSize);
-  const members=(await storage.all(`${cte} SELECT * FROM directory ${clause}
-    ORDER BY updated_at DESC,id DESC LIMIT ? OFFSET ?`,...params,pageSize,(page-1)*pageSize)).map(withTier);
+  const members=await Promise.all((await storage.all(`${cte} SELECT * FROM directory ${clause}
+    ORDER BY updated_at DESC,id DESC LIMIT ? OFFSET ?`,...params,pageSize,(page-1)*pageSize)).map(withTier));
   const summary=await storage.first(`${cte} SELECT COUNT(*) AS total,
     COALESCE(SUM(portfolio_status='pending'),0) AS pendingPortfolios,
     COALESCE(SUM(tier='subscriber'),0) AS subscribers,COALESCE(SUM(tier='trial'),0) AS trials,
     COALESCE(SUM(tier='expired'),0) AS expired,COALESCE(SUM(tier IN ('onboarding','portfolio-fix')),0) AS onboarding
-    FROM directory`,now,now,now);
+    FROM directory`,...tier.params);
   const renewalState=['pending','approved','rejected','all'].includes(options.renewalState)?options.renewalState:'pending';
   const renewalWhere=renewalState==='all'?'':'WHERE r.status=?',renewalParams=renewalState==='all'?[]:[renewalState];
   const {total:renewalTotal}=await storage.first(`SELECT COUNT(*) AS total FROM renewal_requests r ${renewalWhere}`,...renewalParams);
@@ -82,6 +91,6 @@ export async function adminMemberDetail(admin,id){
       (SELECT COUNT(*) FROM sessions WHERE member_id=? AND expires_at>?) AS sessions`,id,id,id,new Date().toISOString()),
   ]);
   const now=new Date().toISOString();
-  return {member:withTier(row),audit,quota,workspace,codes:codes.map(code=>({...code,
+  return {member:await withTier(row),audit,quota,workspace,codes:codes.map(code=>({...code,
     status:code.redeemed_at?'redeemed':code.revoked_at?'revoked':code.expires_at<=now?'expired':'available'}))};
 }
