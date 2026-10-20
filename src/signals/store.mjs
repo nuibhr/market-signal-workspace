@@ -61,7 +61,7 @@ export async function signalDeskFeed(memberId, { market='thai',page=1,query='',m
   const requested = universe.filter(a=>(!query||`${a.symbol} ${a.name}`.toLowerCase().includes(query.toLowerCase()))&&(!favorites||favorites.includes(a.symbol)));
   const rows = requested.flatMap(asset => candidateViews(bySymbol.get(asset.symbol) || { market, symbol:asset.symbol,name:asset.name,status:'UNAVAILABLE',code:'NOT_SCANNED_YET' },market==='us'?profile?.costs:defaultSignalCosts(asset))).filter(row=>mode==='all'||row.mode===mode);
   rows.sort((a,b)=>({PASS:0,WAIT:1,REJECT:2,UNAVAILABLE:3}[a.state]-{PASS:0,WAIT:1,REJECT:2,UNAVAILABLE:3}[b.state])||a.symbol.localeCompare(b.symbol));
-  const currentPage=Math.max(1,Math.min(Math.ceil(rows.length/20)||1,Math.floor(Number(page)||1)));
+  const currentPage=Math.max(1,Math.min(Math.ceil(rows.length/7)||1,Math.floor(Number(page)||1)));
   const allowedProfiles=market==='us'?(await storage.all('SELECT profile_id FROM signal_desk_profile_access WHERE member_id=?',memberId)).map(p=>p.profile_id):['standard'];
   const records=(await storage.all('SELECT * FROM signal_desk_signals WHERE market=? AND cost_profile IN (SELECT value FROM json_each(?)) AND rule_version=? ORDER BY published_at DESC,id',market,JSON.stringify(allowedProfiles),SIGNAL_RULE)).map(json);
   const relevant=records.filter(s=>(mode==='all'||s.mode===mode)&&(!favorites||favorites.includes(s.symbol))&&(!query||s.symbol.toLowerCase().includes(query.toLowerCase())));
@@ -74,7 +74,7 @@ export async function signalDeskFeed(memberId, { market='thai',page=1,query='',m
   const projectEvent=(r,m)=>({...JSON.parse(r.payload_json),id:r.id,seq:r.seq,signalId:r.signal_id,ledger:'swing',side:'LONG',symbol:r.symbol,market:r.market,mode:m});
   return { status:'available',ruleVersion:SIGNAL_RULE,notificationScope:`swing:${memberId}:${market}`,market,usCosts:profile,
     costs:market==='us'?profile?.costs:defaultSignalCosts({id:market}), scannedAt:new Date().toISOString(),
-    rows:rows.slice((currentPage-1)*20,currentPage*20),page:currentPage,pageSize:20,totalRows:rows.length,
+    rows:rows.slice((currentPage-1)*7,currentPage*7),page:currentPage,pageSize:7,totalRows:rows.length,
     coverage:{expected:universe.length,observed:snapshots.length,maximumScanAgeMinutes,available:[...bySymbol.values()].filter(s=>s.status==='AVAILABLE').length,
       unavailable:[...bySymbol.values()].filter(s=>s.status!=='AVAILABLE').length,neverChecked:universe.length-snapshots.length,
       lastCheckedAt:snapshots.map(s=>s.checkedAt).sort().at(-1)??null},

@@ -177,3 +177,17 @@ test('generateMorningSignalSpeech produces natural Thai briefing text with entry
   assert.ok(speech.includes('ตัดขาดทุน'));
 });
 
+
+test('Camarilla v2 recognizes the actual S3–S2 interval and score weights cannot exceed 16',async()=>{
+  const {scoreCamarillaPrice,RADAR_SCORING_VERSION}=await import('./strategy-tracker.mjs');
+  const cam=calcCamarilla(85,80,82);
+  assert.ok(cam.S3<cam.S2);assert.equal(scoreCamarillaPrice((cam.S3+cam.S2)/2,cam),4);
+  assert.equal(scoreCamarillaPrice(cam.S3,cam),4);assert.equal(scoreCamarillaPrice(cam.S2,cam),4);
+  assert.notEqual(scoreCamarillaPrice(cam.S3-0.01,cam),4);assert.notEqual(scoreCamarillaPrice(cam.S2+0.01,cam),4);
+  const closes=Array.from({length:100},(_,i)=>75+i*0.05+Math.sin(i/5));
+  for(const price of [76,78,79,80,81,82,85]){
+    const result=scoreDRCandidate({symbol:'TEST',currentPrice:price,closes,highs:closes.map(n=>n+1),lows:closes.map(n=>n-1)});
+    assert.equal(result.scoringVersion,RADAR_SCORING_VERSION);assert.ok(result.totalScore>=0&&result.totalScore<=16);
+    assert.equal(result.totalScore,result.emaScore*2+result.camScore+result.rsiScore+result.macdScore);
+  }
+});

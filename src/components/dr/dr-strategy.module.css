@@ -1954,3 +1954,5 @@
 .workflowPanel small { display:block; color:#8da6bd; }
 .workflowPanel a { color:#7dd3fc; }
 .displayLimit { justify-content:space-between; font-size:.85rem; color:#bae6fd; }
+.briefingDetails { margin-top:1rem; color:#b7c8db; }
+.briefingDetails summary { cursor:pointer; font-size:.85rem; }

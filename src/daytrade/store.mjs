@@ -154,6 +154,7 @@ export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=fa
       replay,forward:forward.filter(t=>t.symbol===chosen.symbol)}:null,
     monitorEvents:forwardEvents(forward).sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id)),
     record:recordId?forward.find(t=>t.id===recordId)??null:null,
+    activeForward:forward.filter(t=>['WAITING','OPEN'].includes(t.status)),
     forward:forward.slice(0,200),summary:summarize(forward),volumeStatus:market==='us'?'FMP_INTRADAY_PENDING':'PRICE_ONLY',
     generatedAt:new Date(now).toISOString()};
 }

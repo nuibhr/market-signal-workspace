@@ -86,3 +86,10 @@ test('native D1 migration and signal/event transaction preserve identical lifecy
   await assert.rejects(storage.run('UPDATE signal_desk_events SET type=?','STOP'));
  });}finally{await proxy.dispose();}
 });
+test('whole-market scan pages retain all strategy rows while showing seven per page',async()=>{
+ const first=await signalDeskFeed('fixture-a',{market:'thai',page:1});
+ const second=await signalDeskFeed('fixture-a',{market:'thai',page:2});
+ assert.equal(first.pageSize,7);assert.equal(first.rows.length,7);assert.equal(second.rows.length,7);
+ assert.equal(first.totalRows,first.coverage.expected*2);
+ const keys=first.rows.map(r=>`${r.symbol}:${r.mode}`);assert.ok(second.rows.every(r=>!keys.includes(`${r.symbol}:${r.mode}`)));
+});

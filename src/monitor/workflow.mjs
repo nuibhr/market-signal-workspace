@@ -19,7 +19,7 @@ export function tradeBucket(record,ledger) {
 export function workflowRecords(daytrade=[],swing=[]) {
   const unique=new Map();
   for(const [ledger,rows] of [['daytrade',daytrade],['swing',swing]])for(const r of rows) {
-    if(!r.id)continue;
+    if(!r.id||r.origin==='replay')continue;
     const key=`${ledger}:${r.id}`,old=unique.get(key);
     if(old&&stamp(old.updatedAt??old.publishedAt)>stamp(r.updatedAt??r.publishedAt))continue;
     const bucket=tradeBucket(r,ledger);

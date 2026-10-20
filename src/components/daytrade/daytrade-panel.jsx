@@ -7,6 +7,8 @@ import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import {topOpportunities} from '../../daytrade/ranking.mjs';
 import {monitorRow,filterRows,MARKET_LABELS} from '../../monitor/view.mjs';
 import Link from 'next/link';
+import SignalWorkflow from '../dr/signal-workflow.jsx';
+import {pageRows,SCAN_PAGE_SIZE} from '../../monitor/workflow.mjs';
 import Mt5PriceChart from '../forex/mt5-price-chart.jsx';
 import styles from './daytrade.module.css';
 
@@ -18,7 +20,8 @@ function Statistics({summary}){
   return <div className={styles.stats}>{[['ไม้ปิด',n(summary?.closed,0)],['Win rate',summary?.closed?`${n(summary.winRate)}%`:'—'],['ผลรวม',summary?.closed?`${n(summary.netR)} R`:'—'],['Profit factor',n(summary?.profitFactor)],['Drawdown',summary?.closed?`${n(summary.maxDrawdownR)} R`:'—'],['พักผล',n(summary?.review,0)]].map(([k,v])=><div key={k}><span>{k}</span><strong>{v}</strong></div>)}</div>;
 }
 function Trades({rows,digits=4,onInspect}){
-  return <div className={styles.tableWrap}><table><thead><tr><th>สินทรัพย์ / ทิศทาง</th><th>แท่งสัญญาณ / เข้า</th><th>Entry</th><th>SL</th><th>TP</th><th>ออก / เวลา</th><th>ผล R / สถานะ</th></tr></thead><tbody>{rows.map(t=><tr key={t.id}><td><b>{t.symbol}</b><small>{t.side}</small>{onInspect&&<button type="button" onClick={()=>onInspect({ledger:"daytrade",market:t.market,tradeId:t.id})}>ดูไม้ / สถิติ ↗</button>}</td><td>{time(t.signalTime)}<small>{time(t.entryTime)}</small></td><td>{n(t.plan?.entry,digits)}</td><td>{n(t.plan?.stop??t.stop,digits)}</td><td>{n(t.plan?.target,digits)}</td><td>{n(t.exit,digits)}<small>{time(t.exitTime)}</small></td><td className={t.netR>0?styles.positive:t.netR<0?styles.negative:''}>{Number.isFinite(t.netR)?`${n(t.netR)}R`:label[t.status]||t.status}<small>{reason[t.reason]||t.reason}</small></td></tr>)}</tbody></table>{!rows.length&&<p className={styles.empty}>ยังไม่มีไม้ในชุดนี้ ระบบจะไม่สร้างสถิติขึ้นแทนข้อมูล</p>}</div>;
+  const [page,setPage]=useState(1),view=pageRows(rows,page);
+  return <div className={styles.tableWrap}><table><thead><tr><th>สินทรัพย์ / ทิศทาง</th><th>แท่งสัญญาณ / เข้า</th><th>Entry</th><th>SL</th><th>TP</th><th>ออก / เวลา</th><th>ผล R / สถานะ</th></tr></thead><tbody>{view.rows.map(t=><tr key={t.id}><td><b>{t.symbol}</b><small>{t.side}</small>{onInspect&&<button type="button" onClick={()=>onInspect({ledger:"daytrade",market:t.market,tradeId:t.id})}>ดูไม้ / สถิติ ↗</button>}</td><td>{time(t.signalTime)}<small>{time(t.entryTime)}</small></td><td>{n(t.plan?.entry,digits)}</td><td>{n(t.plan?.stop??t.stop,digits)}</td><td>{n(t.plan?.target,digits)}</td><td>{n(t.exit,digits)}<small>{time(t.exitTime)}</small></td><td className={t.netR>0?styles.positive:t.netR<0?styles.negative:''}>{Number.isFinite(t.netR)?`${n(t.netR)}R`:label[t.status]||t.status}<small>{reason[t.reason]||t.reason}</small></td></tr>)}</tbody></table>{!rows.length&&<p className={styles.empty}>ยังไม่มีไม้ในชุดนี้ ระบบจะไม่สร้างสถิติขึ้นแทนข้อมูล</p>}<nav className={styles.pager} aria-label="หน้าประวัติไม้"><button disabled={view.page===1} onClick={()=>setPage(p=>p-1)}>ก่อนหน้า</button><span>{view.page} / {view.pages} · หน้าละ 7</span><button disabled={view.page===view.pages} onClick={()=>setPage(p=>p+1)}>ถัดไป</button></nav></div>;
 }
 export default function DaytradePanel({market='us',initialSymbol=null,onSelect,id='section-auto-pick',legacyScanner=null}){
   const monitor=useMonitor();
@@ -50,7 +53,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
   useEffect(()=>{if(!symbol&&picks[0])setSymbol(picks[0].symbol);},[symbol,picks[0]?.symbol]);
   const rows=filterRows(allRows,{query,group,status:filter,sortBy});
   const relevant=filterRows(allRows,{group});
-  const pageCount=Math.max(1,Math.ceil(rows.length/25)),currentPage=Math.min(page,pageCount);
+  const pageCount=Math.max(1,Math.ceil(rows.length/SCAN_PAGE_SIZE)),currentPage=Math.min(page,pageCount);
   useEffect(()=>{
     const current=new Set(Object.entries(monitor?.snapshots||{}).flatMap(([id,d])=>d.universe.filter(r=>monitorRow(r,id,d.connection).met).map(r=>`${id}:${r.symbol}`)));
     const added=priorMet.current?new Set([...current].filter(k=>!priorMet.current.has(k))):new Set();priorMet.current=current;
@@ -82,7 +85,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
       </div>:<p className={styles.empty}>เลือกสินทรัพย์จาก Top 5 หรือตารางติดตามราคาเพื่อดูกราฟ</p>}</section>
       <section id={`${id}-history`} tabIndex={-1} className={styles.anchor}>
       <nav className={styles.tabs} aria-label="ประเภทประวัติ"><button aria-pressed={tab==='forward'} onClick={()=>setTab('forward')}>ไม้ที่ระบบประกาศจริง</button><button aria-pressed={tab==='replay'} onClick={()=>setTab('replay')}>ทดสอบย้อนหลัง · {chosen?.symbol||'เลือกสินทรัพย์'}</button></nav>
-      {tab==='forward'?<><h3 id="section-results">ประวัติสัญญาณที่บันทึกบนเซิร์ฟเวอร์</h3><Statistics summary={data.summary}/><Trades rows={data.forward} onInspect={monitor?.inspectTrade}/><p className={styles.caption}>ราคาอ้างอิงตามกติกา ไม่ใช่คำสั่งหรือผลซื้อขายของลูกค้า · ไม่ย้อนสร้างไม้จริงจากแท่งอดีต</p></>:<><h3>ผลทดสอบย้อนหลัง · {chosen?.symbol}</h3><Statistics summary={chosen?.replay?.summary}/><p className={styles.caption}>ช่วงที่มีข้อมูล {time(chosen?.replay?.from)} – {time(chosen?.replay?.to)} · {chosen?.replay?.bars||0} แท่ง · สมมติ slip {chosen?.costs?.slippageBps??'—'} bps / ข้าง, fee {chosen?.costs?.feeBps??'—'} bps / ข้าง, spread {n(chosen?.costs?.spread,6)} {chosen?.spreadKnown?'(ค่าที่สังเกตล่าสุด ใช้เป็นสมมติฐานย้อนหลัง)':'(ยังไม่ทราบ ผลยังประเมินต้นทุนไม่ครบ)'} · แท่งขาดหรือแตะ TP/SL พร้อมกันพักเป็น REVIEW</p><Trades rows={chosen?.replay?.trades||[]} digits={chosen?.digits}/></>}
+      {tab==='forward'?<><h3 id="section-results">ประวัติสัญญาณที่บันทึกบนเซิร์ฟเวอร์</h3><Statistics summary={data.summary}/><SignalWorkflow market={selectedMarket} onSelect={value=>{setSymbol(value);onSelect?.(value);navigate('chart');}}/><p className={styles.caption}>ราคาอ้างอิงตามกติกา ไม่ใช่คำสั่งหรือผลซื้อขายของลูกค้า · ไม่ย้อนสร้างไม้จริงจากแท่งอดีต</p></>:<><h3>ผลทดสอบย้อนหลัง · {chosen?.symbol}</h3><Statistics summary={chosen?.replay?.summary}/><p className={styles.caption}>ช่วงที่มีข้อมูล {time(chosen?.replay?.from)} – {time(chosen?.replay?.to)} · {chosen?.replay?.bars||0} แท่ง · สมมติ slip {chosen?.costs?.slippageBps??'—'} bps / ข้าง, fee {chosen?.costs?.feeBps??'—'} bps / ข้าง, spread {n(chosen?.costs?.spread,6)} {chosen?.spreadKnown?'(ค่าที่สังเกตล่าสุด ใช้เป็นสมมติฐานย้อนหลัง)':'(ยังไม่ทราบ ผลยังประเมินต้นทุนไม่ครบ)'} · แท่งขาดหรือแตะ TP/SL พร้อมกันพักเป็น REVIEW</p><Trades rows={chosen?.replay?.trades||[]} digits={chosen?.digits}/></>}
       </section>
       <section id={`${id}-prices`} tabIndex={-1} className={styles.priceSection} aria-label="ติดตามราคาและเงื่อนไข">
         <div className={styles.heading}><div><span className={styles.eyebrow}>ALL INSTRUMENTS</span><h3>ติดตามราคาและเงื่อนไข</h3></div><span className={styles.caption}>ค้นหา / เลือกสินทรัพย์ทั้งหมด</span></div>
@@ -104,7 +107,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
       </div>
       {filter==='near'&&<p className={styles.caption}>กติกาเดิมไม่มีระยะ “ใกล้เข้า” จึงยังไม่จัดรายการเข้ากลุ่มนี้ ดูระยะห่างจริงในตารางได้</p>}
       <p className={styles.caption}>Bid quote คือราคาที่ broker ส่งล่าสุด · ปิดแท่ง 15m คือราคาประเมินเดิม · ราคาเข้าเป็นแผนของระบบ แก้เองไม่ได้ตามสิทธิเดิม</p>
-      <MarketTable rows={rows.slice((currentPage-1)*25,currentPage*25)} selected={{symbol:chosen?.symbol,market:selectedMarket}} highlights={highlights} choose={r=>{choose(r);navigate('chart');}} reason={reason} emptyMessage={filter==='near'?'ยังไม่มีเกณฑ์ใกล้เข้าที่กำหนดไว้ในกลยุทธ์':allRows.length?'ไม่พบรายการตามตัวกรอง':'รอรายการจริงจากแหล่งข้อมูล'}/>
+      <MarketTable rows={rows.slice((currentPage-1)*SCAN_PAGE_SIZE,currentPage*SCAN_PAGE_SIZE)} selected={{symbol:chosen?.symbol,market:selectedMarket}} highlights={highlights} choose={r=>{choose(r);navigate('chart');}} reason={reason} emptyMessage={filter==='near'?'ยังไม่มีเกณฑ์ใกล้เข้าที่กำหนดไว้ในกลยุทธ์':allRows.length?'ไม่พบรายการตามตัวกรอง':'รอรายการจริงจากแหล่งข้อมูล'}/>
       <div className={styles.pager}><span>{rows.length} รายการ · หน้า {currentPage} / {pageCount} · เข้าเงื่อนไขก่อน</span><button disabled={currentPage<=1} onClick={()=>setPage(currentPage-1)}>ก่อนหน้า</button><button disabled={currentPage>=pageCount} onClick={()=>setPage(currentPage+1)}>ถัดไป</button></div>
       <p className={styles.caption}>โลโก้บริษัท: <a href="https://site.financialmodelingprep.com/developer/docs/company-image-api" target="_blank" rel="noreferrer">FMP</a> · DR ใช้โลโก้บริษัทอ้างอิงที่ยืนยันได้ · ไม่มีภาพใช้ชื่อย่อ · FX / Futures ใช้สัญลักษณ์ประเภทสินทรัพย์</p>
       </section>

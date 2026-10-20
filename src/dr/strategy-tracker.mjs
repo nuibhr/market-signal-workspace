@@ -162,6 +162,15 @@ export function chooseEntryPlan({ currentPrice, ema25, camarilla: cam, effective
   return { entry, tp1, tp2, sl, riskReward, label };
 }
 
+export const RADAR_SCORING_VERSION='radar-score-v2';
+export function scoreCamarillaPrice(price,cam) {
+  const low=Math.min(cam.S2,cam.S3),high=Math.max(cam.S2,cam.S3);
+  if(price>=low&&price<=high)return 4;
+  if(price>cam.pivot&&price<=cam.R3)return 2;
+  if(price>=cam.S3&&price<=cam.R3)return 1;
+  return 0;
+}
+
 // ─── Multi-Factor Scorer (16-Point Scale) ──────────────────────────────────────
 
 export function scoreDRCandidate({
@@ -218,17 +227,14 @@ export function scoreDRCandidate({
   const prevClose = closes[closes.length - 2] ?? closes[closes.length - 1];
   const cam = calcCamarilla(weeklyHigh, weeklyLow, prevClose);
 
-  let camScore = 0;
-  if (currentPrice > cam.pivot) camScore++;
-  if (currentPrice >= cam.S3 && currentPrice <= cam.R3) camScore++;
-  if (currentPrice >= cam.S2 && currentPrice <= cam.S3) camScore += 2;
+  const camScore=scoreCamarillaPrice(currentPrice,cam);
 
   // Entry Plan
   const plan = chooseEntryPlan({ currentPrice, ema25: ema25 ?? currentPrice, camarilla: cam, effectiveAtr });
 
   // Total Score (Max 16)
   const emaContrib = emaScore >= 1 ? emaScore * 2 : 0;
-  const totalScore = emaContrib + camScore * 2 + rsiScore + macdScore;
+  const totalScore = emaContrib + camScore + rsiScore + macdScore;
 
   // Thai Reasons
   const reasons = [];
@@ -237,7 +243,7 @@ export function scoreDRCandidate({
   if (rsi >= 40 && rsi <= 60) reasons.push(`RSI ${rsi.toFixed(1)} อยู่ในโซนดี`);
   else if (rsi < 40) reasons.push(`RSI ${rsi.toFixed(1)} ใกล้ oversold`);
   if (histogram > 0) reasons.push('MACD momentum เป็นบวก');
-  if (camScore >= 2) reasons.push('ราคาใกล้ Camarilla S3 (Buy Zone)');
+  if (camScore === 4) reasons.push('ราคาอยู่ระหว่าง Camarilla S3–S2 (Buy Zone)');
   else if (currentPrice > cam.pivot) reasons.push('ราคาอยู่เหนือ Pivot');
   reasons.push(plan.label);
 
@@ -266,6 +272,7 @@ export function scoreDRCandidate({
     sl: plan.sl,
     riskReward: plan.riskReward,
     totalScore,
+    scoringVersion:RADAR_SCORING_VERSION,
     reason,
     underlying,
   };

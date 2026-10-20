@@ -183,7 +183,7 @@ test('API rejects anonymous users, isolates MT5 owners and preserves existing me
   assert.equal((await (await api(member).GET(recordReq)).json()).record.id,'monitor-fixture');
   assert.equal((await (await api({...member,id:'two'}).GET(recordReq)).json()).record,null);
   assert.equal((await (await api({id:'one'}).GET(recordReq)).json()).record,null);
-  const noRights=await (await api({id:'one'}).GET(req)).json();assert.equal(noRights.signalAccess,false);assert.equal(noRights.selected.replay,null);assert.deepEqual(noRights.monitorEvents,[]);assert.equal(noRights.universe[0].monitorPlan,null);assert.equal(noRights.universe[0].side,null);assert.equal(noRights.universe[0].ranking,null);
+  const noRights=await (await api({id:'one'}).GET(req)).json();assert.equal(noRights.signalAccess,false);assert.equal(noRights.selected.replay,null);assert.deepEqual(noRights.monitorEvents,[]);assert.deepEqual(noRights.activeForward,[]);assert.equal(noRights.universe[0].monitorPlan,null);assert.equal(noRights.universe[0].side,null);assert.equal(noRights.universe[0].ranking,null);
   assert.equal((await api(member).GET(new Request('https://example.com/api/daytrade?market=bad'))).status,400);
   store.db.close();
 });
@@ -193,6 +193,12 @@ test('record lookup reaches beyond the displayed 200 rows and shares the full au
   const feed=dashboard(db,null,'thai',{compact:true,recordId:'record-0'});
   assert.equal(feed.forward.length,200);assert.ok(!feed.forward.some(t=>t.id==='record-0'));assert.equal(feed.record.id,'record-0');assert.equal(feed.summary.closed,205);assert.equal(feed.summary.netR,410);
   assert.equal(dashboard(db,null,'dr',{compact:true,recordId:'record-0'}).record,null);db.close();
+});
+test('all active records remain in the monitoring queue beyond the 200-row recent-history window',()=>{
+  const db=memory(),scope='native:thai',symbol=nativeUniverse('thai')[0].symbol;
+  db.prepare('INSERT INTO daytrade_forward VALUES(?,?,?)').run(scope,'old-open',JSON.stringify({id:'old-open',symbol,market:'thai',status:'OPEN',publishedAt:1,plan:{entry:100,stop:95,target:110}}));
+  for(let i=0;i<205;i++)db.prepare('INSERT INTO daytrade_forward VALUES(?,?,?)').run(scope,`closed-${i}`,JSON.stringify({id:`closed-${i}`,symbol,market:'thai',status:'CLOSED',publishedAt:1000+i,netR:1}));
+  const feed=dashboard(db,null,'thai',{compact:true});assert.equal(feed.forward.length,200);assert.equal(feed.activeForward.length,1);assert.equal(feed.activeForward[0].id,'old-open');assert.equal(feed.summary.closed,205);db.close();
 });
 test('native worker filters incomplete/delayed bars, records failures and never falls back to Yahoo',async()=>{
   const db=memory(),a=rows(90),now=(a.at(-1).time+1000)*1000;

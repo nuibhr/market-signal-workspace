@@ -49,6 +49,7 @@ import {radarChartAsset} from '../../dr/chart-target.mjs';
 import {FEATURED_LIMIT,rankedRadarRows,pageRows} from '../../monitor/workflow.mjs';
 import ScanRules from './scan-rules.jsx';
 import SignalWorkflow from './signal-workflow.jsx';
+import WholeMarketScans from './whole-market-scans.jsx';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getRsiLabel(rsi) {
@@ -432,7 +433,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
 
   // Audio Voice Playback Handlers
   const handlePlayMorningBriefing = () => {
-    if (!speakerRef.current) return;
+    if (!speakerRef.current || !voiceEnabled) return;
     const text = generateMorningSignalSpeech({
       thaiPicks: topMorningThai,
       drPicks: topMorningDr,
@@ -446,7 +447,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
   };
 
   const handleSpeakSingle = (p) => {
-    if (!speakerRef.current) return;
+    if (!speakerRef.current || !voiceEnabled) return;
     const text = `สัญญาณ ${p.symbol} ตลาด ${p.market === 'SET' ? 'หุ้นไทย' : 'DR'} ราคาเข้า ${p.entry.toFixed(2)} บาท เป้าหมายทำกำไร ${p.tp1.toFixed(2)} บาท ตัดขาดทุน ${p.sl.toFixed(2)} บาท สถานะ ${p.statusThai || p.status}`;
     speakerRef.current.play(text);
     setToastData({
@@ -470,7 +471,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         return item.scored?.emaAligned || item.scored?.emaScore >= 2;
       }
       if (filterMode === 'buyzone') {
-        return item.scored?.camScore >= 2;
+        return item.scored?.camScore === 4;
       }
       if (filterMode === 'highscore') {
         return item.scored?.totalScore >= 10;
@@ -493,7 +494,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         return item.scored?.emaAligned || item.scored?.emaScore >= 2;
       }
       if (filterMode === 'buyzone') {
-        return item.scored?.camScore >= 2;
+        return item.scored?.camScore === 4;
       }
       if (filterMode === 'highscore') {
         return item.scored?.totalScore >= 10;
@@ -543,8 +544,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
       const missing=fresh.unavailable.filter(i=>i.market===targetType).map(i=>i.symbol);
       setToastData({title:`สแกน${targetType==='thai'?'หุ้นไทย':' DR'}สำเร็จ`,
         desc:`คำนวณได้ ${coverage.available}/${coverage.total} ตัวจากแท่งปิดรายวัน${missing.length?' · ข้อมูลไม่พร้อม: '+missing.join(', '):''}`,type:'success'});
-      const picks=targetType==='thai'?fresh.topMorningThai:fresh.topMorningDr;
-      if(voiceEnabled&&picks.length)speakerRef.current?.play(generateMorningSignalSpeech({thaiPicks:targetType==='thai'?picks:[],drPicks:targetType==='dr'?picks:[]}));
+
     } catch(error){setFeedError(error.message);setToastData({title:'ยังสแกนไม่สำเร็จ',desc:error.message,type:'error'});}
     finally {setIsScanning(false);}
   };
@@ -679,13 +679,13 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             </div>
             <div>
               <h3 className={styles.morningHeading}>
-                <span>สัญญาณแจ้งเตือนเช้าวันนี้ (Morning Signal Briefing)</span>
+                <span>สรุปแผนเฝ้าดูจาก Radar (กดฟังเอง)</span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
                   ตลาด SET &amp; DR80
                 </span>
               </h3>
               <p className={styles.morningSub}>
-                สแกนคัดกรองสัญญาณเด่นประจำวัน สรุปราคาเข้า (Entry), เป้าหมาย (TP), จุดตัดขาดทุน (SL) และสถานะ พร้อมระบบเสียงอ่านภาษาไทย
+                สรุปแผนคัดกรองจากแท่งปิด · เสียงเหตุการณ์ Entry / TP / SL จริงจะประกาศจากคิวเซิร์ฟเวอร์เมื่อเข้าเงื่อนไข
               </p>
             </div>
           </div>
@@ -694,7 +694,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             <button
               type="button"
               onClick={handlePlayMorningBriefing}
-              disabled={speechState === 'speaking'}
+              disabled={!voiceEnabled || speechState === 'speaking'}
               className={styles.voicePlayBtn}
             >
               <Volume2 size={15} className={speechState === 'speaking' ? 'animate-spin' : ''} />
@@ -702,7 +702,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             </button>
             <button
               type="button"
-              onClick={() => setVoiceEnabled(!voiceEnabled)}
+              onClick={() => {if(voiceEnabled)speakerRef.current?.stop();setVoiceEnabled(!voiceEnabled);}}
               className={`${styles.voiceToggleBtn} ${voiceEnabled ? styles.voiceToggleActive : ''}`}
             >
               {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
@@ -711,7 +711,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           </div>
         </div>
 
-        {/* 4 Morning Candidate Highlight Cards */}
+        <details className={styles.briefingDetails}><summary>ดูแผนเฝ้าดูสำหรับอ่านเสียง ({allMorningSignals.length}) · ยังไม่ยืนยัน Entry</summary>
         <div className={styles.morningCardsGrid}>
           {allMorningSignals.map((p) => {
             const isBuyZone = p.status === 'In Buy Zone';
@@ -779,6 +779,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
             );
           })}
         </div>
+        </details>
       </div>
 
       <ScanRules coverage={liveData?.coverage}/>
@@ -857,6 +858,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         </div>
         <div className={styles.tableResponsive}><table className={styles.table}><thead><tr><th>หุ้น / ตลาด</th><th>คะแนน</th><th>ราคาแท่งปิด</th><th>Entry / SL / TP1</th><th>R:R</th><th>สถานะ</th><th>กราฟ</th></tr></thead><tbody>{allScans.rows.map(item=><tr key={`${item.market}:${item.symbol}`}><td><b>{item.symbol}</b><small>{item.market}</small></td><td>{item.scored.totalScore}/16</td><td>{item.currentDrPrice.toFixed(2)}<small>{item.dataAsOf}</small></td><td>{item.scored.entry.toFixed(2)} / {item.scored.sl.toFixed(2)} / {item.scored.tp1.toFixed(2)}</td><td>{item.scored.riskReward.toFixed(2)}</td><td>เฝ้าดู · ยังไม่ยืนยันเข้า</td><td><button type="button" onClick={()=>handleGoToChart(item)}>ดูกราฟ ↗</button></td></tr>)}</tbody></table></div>
         <nav className={styles.workflowPagination} aria-label="หน้าสแกนรวม"><button type="button" disabled={allScans.page===1} onClick={()=>setAllScanPage(p=>p-1)}>ก่อนหน้า</button><span>{allScans.page} / {allScans.pages} · ทั้งหมด {allScans.total} ตัว · หน้าละ 7</span><button type="button" disabled={allScans.page===allScans.pages} onClick={()=>setAllScanPage(p=>p+1)}>ถัดไป</button></nav>
+        <WholeMarketScans initialMarket={currentMarket} onSelect={handleGoToChart}/>
       </section>}
 
       {/* ── Active Scanning Progress Overlay ── */}
@@ -928,9 +930,9 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           {/* Bloomberg Stats Cards (6 KPIs) */}
           <div className={styles.bloombergKpis}>
             <div className={styles.kpiCard}>
-              <span className={styles.kpiLabel}>ACTIVE DR PICKS</span>
+              <span className={styles.kpiLabel}>แผน DR คะแนน ≥8</span>
               <strong className={styles.kpiVal} style={{ color: '#ffffff' }}>{drKpis.active}</strong>
-              <span className={styles.kpiSub}>กำลังติดตาม</span>
+              <span className={styles.kpiSub}>เข้าเกณฑ์จัดอันดับ</span>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>HIT TP</span>
@@ -1203,9 +1205,9 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           {/* Thai KPIs */}
           <div className={styles.bloombergKpis}>
             <div className={styles.kpiCard}>
-              <span className={styles.kpiLabel}>ACTIVE หุ้นไทย PICKS</span>
+              <span className={styles.kpiLabel}>แผนหุ้นไทยคะแนน ≥8</span>
               <strong className={styles.kpiVal} style={{ color: '#38bdf8' }}>{thaiKpis.active}</strong>
-              <span className={styles.kpiSub}>กำลังติดตาม</span>
+              <span className={styles.kpiSub}>เข้าเกณฑ์จัดอันดับ</span>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>HIT TP</span>

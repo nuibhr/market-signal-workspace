@@ -24,7 +24,7 @@ export function createDaytradeHandlers({currentMember,getStore=storeFor,env=proc
       if(!data.signalAccess){
         data.universe=data.universe.map(r=>({...r,side:null,monitorPlan:null,ranking:null}));
         data.monitorEvents=[];
-        data.forward=[];data.summary=null;data.record=null;
+        data.forward=[];data.activeForward=[];data.summary=null;data.record=null;
         if(data.selected){data.selected.replay=null;data.selected.forward=[];}
       }
       return Response.json(data,{headers});
