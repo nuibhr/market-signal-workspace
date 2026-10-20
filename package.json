@@ -40,7 +40,8 @@
     "d1:prepare": "node --env-file=.env.local scripts/d1-migrate.mjs prepare",
     "d1:import": "node --env-file=.env.local scripts/d1-migrate.mjs import deploy/cloudflare/wrangler.remote.jsonc",
     "d1:verify": "node --env-file=.env.local scripts/d1-migrate.mjs verify deploy/cloudflare/wrangler.remote.jsonc",
-    "d1:unchanged": "node --env-file=.env.local scripts/d1-migrate.mjs unchanged"
+    "d1:unchanged": "node --env-file=.env.local scripts/d1-migrate.mjs unchanged",
+    "test": "node scripts/test.mjs"
   },
   "engines": {
     "node": ">=22.13"

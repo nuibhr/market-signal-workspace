@@ -102,3 +102,13 @@ test('admin directory, subscriber filter and detail agree with the Stripe entitl
  assert.ok(directory.members.some(m=>m.id===f.m.id&&m.planName==='Pro'));assert.ok(directory.summary.subscribers>0);
  const detail=await adminMemberDetail(admin,f.m.id);assert.equal(detail.member.planId,'pro');assert.equal(detail.quota.freeLimit,50);
 });
+
+test('Stripe community entitlement follows the same current package and expiry',async()=>{
+ const f=await fixture('starter');await applyStripeEvent(f.event(),{stripe:f.stripe});
+ const {communityAccess,mutateCommunity}=await import('../community/store.mjs');
+ assert.equal((await communityAccess(f.m)).rooms,true);
+ await mutateCommunity(f.m,{action:'send',operationId:randomUUID(),kind:'room',channelId:'lounge',body:'Stripe fixture message'});
+ await storage.run('UPDATE billing_subscriptions SET paid_until=? WHERE member_id=?',new Date(Date.now()-1000).toISOString(),f.m.id);
+ assert.equal((await communityAccess(f.m)).rooms,false);
+ await assert.rejects(mutateCommunity(f.m,{action:'send',operationId:randomUUID(),kind:'room',channelId:'lounge',body:'Expired fixture message'}),/MEMBERSHIP_REQUIRED/);
+});

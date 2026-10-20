@@ -1,3 +1,5 @@
+import {withBilling} from '../billing/store.mjs';
+import {configuredPlans,stripeMode} from '../billing/plans.mjs';
 import { createHash } from 'node:crypto';
 import { storage, operation as op } from '../storage/database.mjs';
 import { isAdmin } from '../membership/store.mjs';
@@ -15,7 +17,7 @@ function text(value,max) {
 }
 export async function communityAccess(actor) {
   if(!actor)fail('LOGIN_REQUIRED',401);
-  const member=await storage.first('SELECT * FROM members WHERE id=?',actor.id);
+  const member=await withBilling(await storage.first('SELECT * FROM members WHERE id=?',actor.id));
   if(!member)fail('LOGIN_REQUIRED',401);
   const admin=isAdmin(member);
   const roles=(await storage.all('SELECT role FROM community_staff WHERE member_id=?',member.id)).map(row=>row.role);
@@ -33,7 +35,11 @@ async function threadAccess(access,id){
 function safeThread(row){return {id:row.id,team:row.team,subject:row.subject,status:row.status,version:row.version,createdAt:row.created_at,updatedAt:row.updated_at,...(row.memberName?{memberName:row.memberName}:{})};}
 const readKey=(kind,id)=>`${kind}:${id}`;
 const recipientGate=()=>`(t.member_id=? OR ?=1 OR EXISTS(SELECT 1 FROM community_staff WHERE member_id=? AND role=t.team))`;
-const roomGate=`(?=1 OR EXISTS(SELECT 1 FROM community_staff WHERE member_id=?) OR EXISTS(SELECT 1 FROM members WHERE id=? AND (subscription_ends_at>? OR (trial_ends_at>? AND portfolio_status<>'missing'))))`;
+function stripeRoomGate(){
+ try{const mode=stripeMode(),plans=configuredPlans().filter(p=>p.features.includes('communityPosting'));if(!plans.length)return '0';
+ return `EXISTS(SELECT 1 FROM billing_subscriptions bs WHERE bs.member_id=members.id AND bs.mode='${mode}' AND bs.plan_id IN (${plans.map(p=>`'${p.id}'`).join(',')}) AND bs.status IN ('active','past_due') AND bs.paid_until>strftime('%Y-%m-%dT%H:%M:%fZ','now'))`;}catch{return '0';}
+}
+const roomGate=()=>`(?=1 OR EXISTS(SELECT 1 FROM community_staff WHERE member_id=?) OR EXISTS(SELECT 1 FROM members WHERE id=? AND (subscription_ends_at>? OR (trial_ends_at>? AND portfolio_status<>'missing') OR ${stripeRoomGate()})))`;
 
 export async function communityOverview(actor,{team=false,page=1}={}) {
   const a=await communityAccess(actor);
@@ -149,7 +155,7 @@ export async function mutateCommunity(actor,body) {
     if(body.kind==='thread') {
       queries.push(op(`INSERT INTO community_messages(id,thread_id,sender_id,sender_kind,body,created_at) SELECT ?,t.id,?,CASE WHEN t.member_id=? THEN 'member' ELSE 'team' END,?,? FROM support_threads t WHERE t.id=? AND t.status<>'closed' AND ${recipientGate()} AND ${absent} ON CONFLICT(id) DO NOTHING`,body.operationId,actorId,actorId,normalized.body,now,channel.id,actorId,Number(a.admin),actorId,body.operationId));
     } else {
-      queries.push(op(`INSERT INTO community_messages(id,room_id,sender_id,sender_kind,body,created_at) SELECT ?,r.id,?,?,?,? FROM community_rooms r WHERE r.id=? AND (r.locked=0 OR ?=1) AND ${roomGate} AND ${absent} ON CONFLICT(id) DO NOTHING`,body.operationId,actorId,a.admin||a.roles.length?'team':'member',normalized.body,now,channel.id,Number(a.admin),Number(a.admin),actorId,actorId,now,now,body.operationId));
+      queries.push(op(`INSERT INTO community_messages(id,room_id,sender_id,sender_kind,body,created_at) SELECT ?,r.id,?,?,?,? FROM community_rooms r WHERE r.id=? AND (r.locked=0 OR ?=1) AND ${roomGate()} AND ${absent} ON CONFLICT(id) DO NOTHING`,body.operationId,actorId,a.admin||a.roles.length?'team':'member',normalized.body,now,channel.id,Number(a.admin),Number(a.admin),actorId,actorId,now,now,body.operationId));
     }
     queries.push(record('EXISTS(SELECT 1 FROM community_messages WHERE id=? AND sender_id=?)',[body.operationId,actorId]));
   } else {

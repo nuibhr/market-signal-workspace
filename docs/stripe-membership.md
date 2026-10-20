@@ -49,6 +49,8 @@ The webhook verifies the original request bytes with the Stripe SDK and a signed
 
 Scanner endpoints and the assistant read `membershipFor(currentMember())` on the server. The Radar feed now also checks membership. Free symbol search and charts remain accessible. Daily AI reservations refresh member/Stripe entitlement from storage and use a transactional database quota guard, covering concurrent requests and direct API calls. `AI_QUOTA_EXHAUSTED` returns HTTP 429 with the current quota and reset timestamp. The UI displays that timestamp and an upgrade link.
 
+Run the complete source suite with `npm test`. Its discovery excludes copied applications under build staging directories.
+
 ## Deployment and remaining acceptance
 
 - SQLite automatically applies migrations 11 and 12 at startup. D1 deployments must apply both additive migrations before releasing the new worker. They add billing tables and replace the AI quota guard; customer histories and manual membership dates are not rewritten.
