@@ -1,0 +1,10 @@
+[Unit]
+Description=Encrypted Nugaom database snapshot and temporary restore verification
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+ExecStart=/opt/nugaom-forex/operations/pilot-backup/backup-on-vps.sh
+TimeoutStartSec=300

@@ -1,3 +1,4 @@
+import {publicNewsFeed} from '../../../market-data/rss-news.mjs';
 const BASE_URL = 'https://api.marketdx.lab.ai/v1/news';
 const MARKETS = [{ id: 'thai', country: 'TH', label: 'หุ้นไทย' }, { id: 'us', country: 'US', label: 'หุ้นอเมริกา' }];
 const TTL_MS = 15 * 60_000;
@@ -37,14 +38,15 @@ function normalizeArticle(article) {
     impactScore: Number.isInteger(impact) && impact >= 1 && impact <= 5 ? impact : null,
     direction: ['pos', 'neg', 'ambiguous'].includes(article.direction) ? article.direction : 'ambiguous',
     newsTypes: Array.isArray(article.news_types) ? article.news_types.filter(value => typeof value === 'string').slice(0, 3) : [],
+    breaking: article.breaking === true || article.is_breaking === true,
     duplicateCount: Number.isInteger(article.dup_count) && article.dup_count > 1 ? article.dup_count : null,
     entities: rawEntities.map(entity => cleanText(entity?.ticker ?? entity?.stock, 30)).filter(Boolean).slice(0, 5),
   };
 }
 
-async function fetchMarket(market, key) {
+async function fetchMarket(market, key, alerts=false) {
   const url = new URL(BASE_URL);
-  for (const [field, value] of Object.entries({ country: market.country, entity_type: 'stock', include: 'entities', collapse: 'true', lang: 'th', limit: '4' })) {
+  for (const [field, value] of Object.entries({ country: market.country, entity_type: 'stock', include: 'entities', collapse: 'true', lang: 'th', limit: alerts?'30':'4' })) {
     url.searchParams.set(field, value);
   }
   const response = await fetch(url, {
@@ -62,10 +64,10 @@ async function fetchMarket(market, key) {
   const snapshot = {
     id: market.id, country: market.country, label: market.label,
     status: 'available', receivedAt,
-    articles: payload.results.map(normalizeArticle).filter(Boolean).slice(0, 4),
-    expiresAt: Date.now() + TTL_MS,
+    articles: payload.results.map(normalizeArticle).filter(Boolean).slice(0, alerts?30:4),
+    expiresAt: Date.now() + (alerts?60000:TTL_MS),
   };
-  snapshots.set(market.id, snapshot);
+  snapshots.set(`${market.id}:${alerts}`, snapshot);
   return snapshot;
 }
 
@@ -74,33 +76,40 @@ function errorCode(error) {
     : error?.status === 401 || error?.status === 403 ? 'AUTH_FAILED' : 'SOURCE_UNAVAILABLE';
 }
 
-async function marketResult(market, key) {
-  const cached = snapshots.get(market.id);
+async function marketResult(market, key, alerts=false) {
+  const cacheKey=`${market.id}:${alerts}`;
+  const cached = snapshots.get(cacheKey);
   if (cached?.expiresAt > Date.now()) return cached;
-  const failed = failures.get(market.id);
+  const failed = failures.get(cacheKey);
   if (failed?.retryAt > Date.now()) return failed.result;
   try {
-    if (!pending.has(market.id)) pending.set(market.id, fetchMarket(market, key).finally(() => pending.delete(market.id)));
-    const result = await pending.get(market.id); failures.delete(market.id); return result;
+    if (!pending.has(cacheKey)) pending.set(cacheKey, fetchMarket(market, key,alerts).finally(() => pending.delete(cacheKey)));
+    const result = await pending.get(cacheKey); failures.delete(cacheKey); return result;
   } catch (error) {
     const result = cached && Date.now() - Date.parse(cached.receivedAt) < STALE_MS
       ? { ...cached, status: 'stale', code: errorCode(error) }
       : { id: market.id, country: market.country, label: market.label, status: 'unavailable', code: errorCode(error), articles: [] };
-    failures.set(market.id, { retryAt: Date.now()+60000, result });
+    failures.set(cacheKey, { retryAt: Date.now()+60000, result });
     return result;
   }
 }
 
-export async function GET() {
+export async function GET(request) {
+  const alerts=request?new URL(request.url).searchParams.get('alerts')==='1':false;
+  // Alert headlines can use publishers' public RSS without a paid API key.
+  // Keep the existing MarketDX news panel and its rights gate unchanged.
+  if(alerts&&(!process.env.MARKETDX_API_KEY?.trim()||process.env.NODE_ENV==='production'&&process.env.MARKETDX_PUBLIC_DISPLAY_RIGHTS_CONFIRMED!=='true')){
+    const feed=await publicNewsFeed();return Response.json(feed,{status:feed.status==='unavailable'?503:200,headers:{'Cache-Control':'private, no-store'}});
+  }
   if (process.env.NODE_ENV === 'production' && process.env.MARKETDX_PUBLIC_DISPLAY_RIGHTS_CONFIRMED !== 'true') {
     return Response.json({ status: 'unavailable', code: 'DISPLAY_RIGHTS_UNCONFIRMED', markets: [] }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }
   const key = process.env.MARKETDX_API_KEY?.trim();
   if (!key) return Response.json({ status: 'unconfigured', code: 'MARKETDX_NOT_CONFIGURED', markets: [] }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
 
-  const markets = await Promise.all(MARKETS.map(market => marketResult(market, key)));
+  const markets = await Promise.all(MARKETS.map(market => marketResult(market, key,alerts)));
   const status = markets.every(market => market.status === 'available') ? 'available'
     : markets.some(market => market.status === 'available' || market.status === 'stale') ? 'partial' : 'unavailable';
-  return Response.json({ status, source: 'MarketDX', scope: 'listed-stocks-by-country', markets },
+  return Response.json({ status, source: 'MarketDX', scope: 'listed-stocks-by-country', pollingSeconds:alerts?60:900, markets },
     { status: status === 'unavailable' ? 503 : 200, headers: { 'Cache-Control': 'private, no-store' } });
 }

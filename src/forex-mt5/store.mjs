@@ -5,6 +5,8 @@ import { dirname, resolve } from "node:path";
 import { assertIdentity, fail, FRAMES, validatePacket } from "./protocol.mjs";
 
 import { observeClock, publicClock } from "./clock.mjs";
+import { initializeDaytrade, scanJobs, ingestScanCharts } from "../daytrade/store.mjs";
+import { historyFloor } from './history-window.mjs';
 
 const digest = (token) => createHash("sha256").update(token).digest("hex");
 const secret = () => randomBytes(32).toString("base64url");
@@ -32,6 +34,7 @@ export class ForexStore {
       CREATE TABLE IF NOT EXISTS forex_clock (connection_id TEXT PRIMARY KEY, body TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS forex_local_sessions (hash TEXT PRIMARY KEY, expires INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS forex_limits (bucket TEXT PRIMARY KEY, hits INTEGER NOT NULL, expires INTEGER NOT NULL);`);
+    initializeDaytrade(this.db);
   }
   limit(scope, identity, count, window = 60000, now = Date.now()) {
     this.db.prepare("DELETE FROM forex_limits WHERE expires < ?").run(now);
@@ -223,11 +226,14 @@ export class ForexStore {
           row.quotes = "{}"; row.charts = "{}";
         }
       }
+      fail(!(packet.scan_charts?.length) || Boolean(clock), "CLOCK_OBSERVATION_REQUIRED");
+      const historySince=historyFloor(clock,config,now);
       if (packet.kind === "universe") this.universe(row, packet, now);
       else if (!clock || (packet.clock && clock.status === "ready" &&
         packet.clock.used_offset_minutes === clock.offset_minutes &&
         (!packet.chart || (packet.chart.utc_offset_minutes === clock.offset_minutes &&
-          packet.chart.bars.every(bar => bar.time >= clock.history_since))))) this.feed(row, packet, now);
+          packet.chart.bars.every(bar => bar.time >= historySince))) &&
+        (packet.scan_charts||[]).every(chart=>chart.utc_offset_minutes===clock.offset_minutes && chart.bars.every(bar=>bar.time>=historySince)))) this.feed(row, packet, now);
       this.db
         .prepare(
           "UPDATE forex_connections SET company=?,last_seen=?,sequence=? WHERE id=?",
@@ -246,7 +252,9 @@ export class ForexStore {
         ),
         requested_frame: current.wanted_frame,
         requested_utc_offset_minutes: String(clock?.offset_minutes ?? 10000),
-        requested_history_since: String(clock?.history_since ?? 0),
+        requested_history_since: String(clock?historySince:0),
+        requested_scan_symbols_hex: clock?.status === "ready" &&
+          (packet.kind==='feed'||packet.part===packet.parts-1) ? scanJobs(this.db,this.connection(row.owner),now) : "",
       };
       this.db.prepare("INSERT INTO forex_receipts VALUES(?,?,?) ON CONFLICT(connection_id) DO UPDATE SET digest=excluded.digest,body=excluded.body")
         .run(row.id, hash, JSON.stringify(receipt));
@@ -337,7 +345,8 @@ export class ForexStore {
     );
     fail(
       packet.quotes.every((q) => known.has(q.broker_symbol)) &&
-        (!packet.chart || known.has(packet.chart.broker_symbol)),
+        (!packet.chart || known.has(packet.chart.broker_symbol)) &&
+        (packet.scan_charts||[]).every(c=>known.has(c.broker_symbol)),
       "UNKNOWN_SYMBOL",
     );
     fail(
@@ -382,6 +391,7 @@ export class ForexStore {
       charts[key] = { ...packet.chart, source: "mt5", received_at: iso(now) };
       for (const key of Object.keys(charts).slice(0, -8)) delete charts[key];
     }
+    ingestScanCharts(this.db,row,[...(packet.chart?[packet.chart]:[]),...(packet.scan_charts||[])],packet.quotes,now);
     this.db
       .prepare("UPDATE forex_connections SET quotes=?,charts=? WHERE id=?")
       .run(JSON.stringify(quotes), JSON.stringify(charts), row.id);

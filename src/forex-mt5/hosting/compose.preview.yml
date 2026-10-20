@@ -4,3 +4,6 @@ services:
     environment:
       FOREX_MT5_PREVIEW: 'true'
       FOREX_MT5_ENABLED: 'false'
+  backup:
+    environment:
+      FOREX_MT5_PREVIEW: 'true'

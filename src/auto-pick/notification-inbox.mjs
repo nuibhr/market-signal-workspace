@@ -1,6 +1,6 @@
 import { ANNOUNCEMENT_TYPES } from './announcements.mjs';
 const CAPACITY = 500, LEASE_MS = 120000;
-export function createNotificationInbox({ scope, storage, locks, owner, now = Date.now, onPersistenceError = () => {} }) {
+export function createNotificationInbox({ scope, storage, locks, owner, now = Date.now, historyLimit=100, onPersistenceError = () => {} }) {
   if (!scope || !owner) throw Error('NOTIFICATION_SCOPE_REQUIRED');
   const key = `nugaom-signal-inbox:${scope}`;
   let memory = { version: 1, cursor: null, pending: [], history: [] };
@@ -39,6 +39,17 @@ export function createNotificationInbox({ scope, storage, locks, owner, now = Da
   return {
     scope,
     async snapshot() { return act(state => ({ cursor: state.cursor, pending: state.pending.length, durable })); },
+    async history() { return act(state => [...state.history.filter(item=>item.event).map(item=>({...item.event,deliveryVoice:item.voice})),...state.pending.map(item=>({...item.event,deliveryVoice:item.voice}))]); },
+    async receiveSnapshot(events) {
+      return act(state=>{
+        const ids=events.map(e=>e.id),known=new Set(state.snapshotIds||[]);
+        // First visit establishes a silent baseline; existing records remain in history.
+        if(!state.snapshotIds){write({...state,snapshotIds:ids,history:[...state.history,...events.slice(-historyLimit).map(event=>({id:event.id,event,voice:'historical',displayedAt:null}))].slice(-historyLimit)});return true;}
+        const incoming=events.filter(e=>ANNOUNCEMENT_TYPES.has(e.type)&&!known.has(e.id));
+        const accepted=incoming.slice(0,Math.max(0,CAPACITY-state.pending.length));
+        write({...state,snapshotIds:[...new Set([...known,...accepted.map(e=>e.id)])],pending:[...state.pending,...accepted.map(event=>({event,displayedAt:null,voice:'pending',owner:null,leaseUntil:0}))]});return accepted.length===incoming.length;
+      });
+    },
     async receive(page, expectedCursor) {
       return act(state => {
         if (expectedCursor !== undefined && state.cursor !== expectedCursor) return false;
@@ -73,7 +84,10 @@ export function createNotificationInbox({ scope, storage, locks, owner, now = Da
     async voice(id, value) {
       return act(state => {
         const first = state.pending[0];
-        if (first?.event.id !== id || first.owner !== owner) return;
+        if (first?.event.id !== id || first.owner !== owner) {
+          if(state.history.some(item=>item.id===id&&item.owner===owner))write({...state,history:state.history.map(item=>item.id===id?{...item,voice:value}:item)});
+          return;
+        }
         write({ ...state, pending: [{ ...first, voice: value }, ...state.pending.slice(1)] });
       });
     },
@@ -82,7 +96,7 @@ export function createNotificationInbox({ scope, storage, locks, owner, now = Da
         const first = state.pending[0];
         if (first?.event.id !== id || first.owner !== owner) return;
         write({ ...state, pending: state.pending.slice(1), history: [...state.history,
-          { id, displayedAt: first.displayedAt, voice: first.voice, dismissedAt: new Date(now()).toISOString() }].slice(-100) });
+          { id, event:first.event, owner, displayedAt: first.displayedAt, voice: first.voice, dismissedAt: new Date(now()).toISOString() }].slice(-historyLimit) });
       });
     },
     async release() {

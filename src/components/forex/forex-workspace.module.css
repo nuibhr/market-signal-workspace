@@ -2373,3 +2373,11 @@
 .pairingKey p {
   font-size: 12px;
 }
+
+/* Compact monitoring surface: preserve tools and market navigation. */
+.hero {min-height:0;padding:14px 16px;background:#16252b;border-radius:4px;box-shadow:none;}
+.heroGlobe,.heroCandles {display:none;}
+.hero h1 {font-size:24px;text-shadow:none;}
+.heroCopy > div {margin-top:7px;font-size:10px;}
+.sidebar {background:#111d23;}
+@media(max-width:600px){.hero {flex-wrap:wrap;}.hero h1 {font-size:21px;}.heroSession {flex:1;min-width:0;}}

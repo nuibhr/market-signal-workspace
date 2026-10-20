@@ -1,4 +1,5 @@
 "use client";
+import {SoundControl,AlertHistory} from "../monitor/monitor-provider.jsx";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -17,6 +18,8 @@ import {
   Wallet,
 } from "lucide-react";
 import MarketNavigation from "../market-navigation.jsx";
+import DaytradePanel from "../daytrade/daytrade-panel.jsx";
+import { CORE_FOREX } from "../../daytrade/universe.mjs";
 import MemberAvatar from "../member-avatar.jsx";
 import useMt5Connection from "./use-mt5-connection.jsx";
 import ConnectionPanel from "./connection-panel.jsx";
@@ -113,8 +116,8 @@ const METRICS = [
 ];
 
 export default function ForexWorkspace({ initialSymbol = null, viewer = null }) {
-  const [section, setSection] = useState("overview");
-  const [demoPreview, setPreview] = useState(true);
+  const [section, setSection] = useState("scanner");
+  const [demoPreview, setPreview] = useState(false);
   const [frame, setFrame] = useState("1h");
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("all");
@@ -125,7 +128,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
   );
   const bridge = useMt5Connection(selection.broker_symbol, frame);
   const hasMt5 = Boolean(bridge.snapshot?.instruments.length);
-  const universe = hasMt5 ? bridge.snapshot.instruments : STARTER_UNIVERSE;
+  const universe = (hasMt5 ? bridge.snapshot.instruments : STARTER_UNIVERSE).filter(i => CORE_FOREX.includes(i.canonical_symbol));
   const selected =
     universe.find((item) => item.id === selection.id) ??
     universe.find(
@@ -133,7 +136,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
         item.canonical_symbol &&
         item.canonical_symbol === selection.canonical_symbol,
     ) ??
-    universe[0];
+    universe[0] ?? selection;
   const preview = demoPreview && !hasMt5;
   useEffect(() => {
     if (hasMt5 && selection.id !== selected.id) setSelected(selected);
@@ -291,7 +294,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
               );
             })}
           </div>
-          <div className={styles.topActions}>
+          <div className={styles.topActions}><SoundControl/>
             {hasMt5 ? (
               <span className={styles.demoBadge}>MT5 / READ ONLY</span>
             ) : (
@@ -324,7 +327,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
                 ? `${universe.length} สินทรัพย์จาก ${bridge.server} · ราคาบางตัวอาจขาดช่วง · ยังไม่มีข้อมูลพอร์ตหรือ AI จริง`
                 : preview
                   ? "ข้อมูลตัวอย่างสำหรับทดลองหน้าจอ ไม่มีราคา บัญชี หรือสัญญาณจริง"
-                  : "Guest mode · รายการเริ่มต้น 19 สัญลักษณ์ ไม่มีฟีดราคา"}
+                  : "Guest mode · รายการหลัก 9 สัญลักษณ์ ไม่มีฟีดราคา"}
             </span>
             <button
               aria-pressed={preview}
@@ -474,6 +477,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
                   preview={preview}
                 />
               )}
+              <DaytradePanel market="forex" id="forex-daytrade" />
               <div className={styles.chartGrid}>
                 <TerminalChart {...chartProps} />
                 <AiAnalysis instrument={selected} preview={preview} />
@@ -544,12 +548,13 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
               </nav>
               {section === "scanner" && (
                 <>
+                  <DaytradePanel market="forex" id="forex-scanner" />
                   <InstrumentUniverse {...scannerProps} />
                   <div className={styles.scannerFoot}>
                     <ShieldCheck size={14} />
                     {hasMt5
                       ? `Universe จาก ${bridge.server} · ชื่อและสเปกตาม Terminal · ไม่มีคะแนน AI จำลองในโหมด MT5`
-                      : "Universe เริ่มต้น FX 17 · Metals 2 · หมวดอื่นรอซิงก์จาก Vantage"}
+                      : "รายการหลัก FX 7 · ทองและเงิน 2 · เก็บ universe เต็มไว้ในระบบเชื่อมต่อ"}
                   </div>
                 </>
               )}
@@ -598,7 +603,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
               )}
               {section === "calendar" && <Calendar preview={preview} />}
               {section === "alerts" && (
-                <Alerts enabled={alertSettings} onChange={setAlertSettings} />
+                <><AlertHistory/><details><summary>ค่าหน้าจอเดิม · ยังไม่ส่งแจ้งเตือน</summary><Alerts enabled={alertSettings} onChange={setAlertSettings} /></details></>
               )}
             </>
           )}

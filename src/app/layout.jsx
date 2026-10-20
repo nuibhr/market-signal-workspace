@@ -16,6 +16,8 @@ import './workspace-v9.css';
 import './market-pages.css';
 import './focus-performance.css';
 import './signal-desk.css';
+import './monitor.css';
+import MonitorProvider from '../components/monitor/monitor-provider.jsx';
 
 export const metadata = {
   title: 'Nugaom AI Pick — Market Intelligence Workspace',
@@ -26,7 +28,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="th">
-      <body>{children}</body>
+      <body><MonitorProvider>{children}</MonitorProvider></body>
     </html>
   );
 }

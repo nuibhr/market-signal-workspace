@@ -10,15 +10,52 @@ import { ALL_ASSETS } from '../markets/catalog.mjs';
 
 // Keep every destination in one map so desktop and mobile expose the same tools.
 const GROUPS = [
-  { id: 'today', label: 'เริ่มวันนี้', icon: Compass, items: [['overview', 'หน้าต้อนรับ', LayoutDashboard], ['daily', 'สำรวจวันนี้', Radar], ['autopick', 'จังหวะที่ระบบพบ', Bell]] },
-  { id: 'explore', label: 'สำรวจราคา', icon: CandlestickChart, items: [['watchlist', 'มุมโฟกัส', Star], ['search', 'ค้นหาสินทรัพย์', Search], ['chart', 'กราฟและตัวชี้วัด', CandlestickChart], ['analysis-tools', 'ชุดสแกนเชิงลึก', Activity], ['signals', 'แผนจากกราฟ', Sparkles]] },
-  { id: 'context', label: 'ก่อนตัดสินใจ', icon: Newspaper, items: [['news', 'ข่าวไทยและสหรัฐฯ', Newspaper], ['calendar', 'วันข่าวเศรษฐกิจ', CalendarDays], ['dividends', 'ปันผลและ XD', CalendarDays], ['news-guide', 'อ่านข่าวอย่างไร', BookOpen]] },
-  { id: 'plan', label: 'ผลสัญญาณ', icon: Wallet, items: [['results', 'ผลงานสัญญาณ', ChartNoAxesCombined], ['financial', 'คำนวณความเสี่ยง', Gauge]] },
-  { id: 'more', label: 'เพิ่มเติม', icon: CircleHelp, items: [['learn', 'วิธีเริ่มใช้', GraduationCap], ['roadmap', 'สถานะระบบ', Compass]] },
+  {
+    id: 'core',
+    label: 'เริ่มต้น & สแกน',
+    icon: Compass,
+    items: [
+      ['overview', 'หน้าต้อนรับ & ตลาด', LayoutDashboard],
+      ['scanner', 'สแกนตามสไตล์ (Swing/Scalp)', Radar],
+      ['watchlist', 'หุ้นโปรด & เฝ้าราคา', Star],
+    ],
+  },
+  {
+    id: 'charts-signals',
+    label: 'กราฟ & แผนเทรด',
+    icon: CandlestickChart,
+    items: [
+      ['chart', 'กราฟและตัวชี้วัด', CandlestickChart],
+      ['results', 'ประวัติ & ผลงานสัญญาณ', ChartNoAxesCombined],
+      ['search', 'ค้นหาสินทรัพย์ 5 ตลาด', Search],
+    ],
+  },
+  {
+    id: 'intel-tools',
+    label: 'เครื่องมือวิเคราะห์',
+    icon: Newspaper,
+    items: [
+      ['risk', 'คำนวณความเสี่ยง & Lot', Gauge],
+      ['calendar', 'ปฏิทินเศรษฐกิจ & ข่าวกรอง', CalendarDays],
+      ['developers', 'SMC Developer API', Activity],
+      ['news', 'ข่าวสารไทย & สหรัฐฯ', Newspaper],
+      ['dividends', 'ปันผลและ XD', CalendarDays],
+    ],
+  },
+  {
+    id: 'more',
+    label: 'สมาชิก & ช่วยเหลือ',
+    icon: CircleHelp,
+    items: [
+      ['account', 'บัญชีของฉัน & สิทธิ', Wallet],
+      ['learn', 'วิธีเริ่มใช้งาน', GraduationCap],
+      ['roadmap', 'สถานะและแผนพัฒนา', Compass],
+    ],
+  },
 ];
 
 export function WorkspaceSidebar({ marketId, activeNav, onNavigate, rights, account, loginHref = '/account', hasRealBars, favoriteCount }) {
-  const [expanded, setExpanded] = useState(['today', 'explore']);
+  const [expanded, setExpanded] = useState(['core', 'charts-signals', 'intel-tools']);
   const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => {
     const group = GROUPS.find(item => item.items.some(([id]) => id === activeNav));
@@ -39,12 +76,12 @@ export function WorkspaceSidebar({ marketId, activeNav, onNavigate, rights, acco
       <a className="hub-account-card" href={loginHref}><span className="hub-account-avatar"><MemberAvatar account={isGuest ? null : account} size={40} /></span><span><strong>{isGuest ? 'เริ่มด้วย LINE' : account?.displayName || 'มุมสมาชิกของฉัน'}</strong><small>{isGuest ? 'เชื่อมบัญชี · แจ้งพอร์ต · ทดลอง 14 วัน' : rights?.label}</small></span><span className="hub-account-arrow">↗</span></a>
       <MarketNavigation current={marketId}/><div className="hub-sidebar-caption">เครื่องมือประจำตลาด</div>
       <nav className="hub-group-list" aria-label="เมนูหลัก">
-        {GROUPS.map((group, index) => <section key={group.id} className="hub-menu-group"><button className="hub-group-toggle" aria-expanded={expanded.includes(group.id)} onClick={() => toggle(group.id)}><span className="hub-group-index">0{index + 1}</span><span className="hub-nav-glyph"><group.icon size={17} strokeWidth={1.9} /></span><span>{group.label}</span><ChevronDown size={14} className={expanded.includes(group.id) ? 'hub-chevron open' : 'hub-chevron'} /></button>{expanded.includes(group.id) && <div className="hub-group-items">{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'hub-subnav active' : 'hub-subnav'} onClick={() => onNavigate(id)}><Icon size={15} strokeWidth={1.9} /><span>{label}</span>{id === 'watchlist' && favoriteCount > 0 && <em>{favoriteCount}</em>}{id === 'analysis-tools' && <em>3 เครื่องมือ</em>}</button>)}</div>}</section>)}
+        {GROUPS.map((group, index) => <section key={group.id} className="hub-menu-group"><button className="hub-group-toggle" aria-expanded={expanded.includes(group.id)} onClick={() => toggle(group.id)}><span className="hub-group-index">0{index + 1}</span><span className="hub-nav-glyph"><group.icon size={17} strokeWidth={1.9} /></span><span>{group.label}</span><ChevronDown size={14} className={expanded.includes(group.id) ? 'hub-chevron open' : 'hub-chevron'} /></button>{expanded.includes(group.id) && <div className="hub-group-items">{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'hub-subnav active' : 'hub-subnav'} onClick={() => onNavigate(id)}><Icon size={15} strokeWidth={1.9} /><span>{label}</span>{id === 'watchlist' && favoriteCount > 0 && <em>{favoriteCount}</em>}</button>)}</div>}</section>)}
       </nav>
       <div className="engine-card"><div className="engine-heading">สถานะข้อมูล <span className={hasRealBars ? 'real-pill' : 'demo-pill'}>{hasRealBars ? 'OHLC จริง' : 'รอฟีด'}</span></div><p>ราคาและผลสัญญาณแสดงเฉพาะข้อมูลที่เชื่อมได้ พร้อมที่มาและเวลา</p></div>
     </div>
     <div className="sidebar-foot">NUGAOM <span>ทุกวัน เริ่มจากข้อมูล</span></div>
-  </aside><nav className="hub-mobile-dock" aria-label="เมนูมือถือ"><button className={activeNav === 'overview' ? 'active' : ''} onClick={() => onNavigate('overview')}><LayoutDashboard size={20} /><span>วันนี้</span></button><button className={activeNav === 'daily' ? 'active' : ''} onClick={() => onNavigate('daily')}><Radar size={20} /><span>สำรวจ</span></button><button className={activeNav === 'autopick' ? 'active' : ''} onClick={() => onNavigate('autopick')}><Bell size={20} /><span>จังหวะ</span></button><a className="hub-mobile-line" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้า LINE' : 'บัญชี'}</span></a><button onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen}><Compass size={20} /><span>ทั้งหมด</span></button></nav>{mobileOpen && <div className="hub-mobile-scrim" onClick={() => setMobileOpen(false)}><div className="hub-mobile-sheet" role="dialog" aria-modal="true" aria-label="เครื่องมือทั้งหมดของ Nugaom" onClick={event => event.stopPropagation()}><div className="hub-mobile-sheet-head"><strong>เครื่องมือทั้งหมด</strong><button onClick={() => setMobileOpen(false)} aria-label="ปิดเมนู">×</button></div><a className="hub-mobile-membership" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้าสู่ระบบด้วย LINE · ทดลอง 14 วัน' : `มุมสมาชิก · ${rights?.label}`}</span><span>↗</span></a><MarketNavigation current={marketId}/>{GROUPS.map((group, index) => <div key={group.id} className="hub-mobile-group"><strong>0{index + 1} / {group.label}</strong><div>{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'active' : ''} onClick={() => mobileNavigate(id)}><Icon size={18} />{label}</button>)}</div></div>)}</div></div>}</>;
+  </aside><nav className="hub-mobile-dock" aria-label="เมนูมือถือ"><button className={activeNav === 'overview' ? 'active' : ''} onClick={() => onNavigate('overview')}><LayoutDashboard size={20} /><span>วันนี้</span></button><button className={activeNav === 'scanner' ? 'active' : ''} onClick={() => onNavigate('scanner')}><Radar size={20} /><span>สแกน</span></button><button className={activeNav === 'results' ? 'active' : ''} onClick={() => onNavigate('results')}><ChartNoAxesCombined size={20} /><span>ผลงาน</span></button><a className="hub-mobile-line" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้า LINE' : 'บัญชี'}</span></a><button onClick={() => setMobileOpen(true)} aria-expanded={mobileOpen}><Compass size={20} /><span>ทั้งหมด</span></button></nav>{mobileOpen && <div className="hub-mobile-scrim" onClick={() => setMobileOpen(false)}><div className="hub-mobile-sheet" role="dialog" aria-modal="true" aria-label="เครื่องมือทั้งหมดของ Nugaom" onClick={event => event.stopPropagation()}><div className="hub-mobile-sheet-head"><strong>เครื่องมือทั้งหมด</strong><button onClick={() => setMobileOpen(false)} aria-label="ปิดเมนู">×</button></div><a className="hub-mobile-membership" href={loginHref}><span className="hub-line-icon">LINE</span><span>{isGuest ? 'เข้าสู่ระบบด้วย LINE · ทดลอง 14 วัน' : `มุมสมาชิก · ${rights?.label}`}</span><span>↗</span></a><MarketNavigation current={marketId}/>{GROUPS.map((group, index) => <div key={group.id} className="hub-mobile-group"><strong>0{index + 1} / {group.label}</strong><div>{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'active' : ''} onClick={() => mobileNavigate(id)}><Icon size={18} />{label}</button>)}</div></div>)}</div></div>}</>;
 }
 
 const PRESETS = [
@@ -105,7 +142,7 @@ export function FinancialCheck() {
   const gap = Math.abs(Number(entry) - Number(stop));
   const valid = Number(capital) > 0 && Number(risk) > 0 && Number(risk) <= 100 && Number(entry) > 0 && Number(stop) > 0 && gap > 0;
   const units = valid ? Math.floor(budget / gap) : 0;
-  return <div className="hub-panel financial-panel"><div className="hub-intro"><span className="hub-heading-icon"><Gauge size={23} /></span><div><h3>Financial Check · หุ้นไทย</h3><p>คำนวณจำนวนหุ้นจากเงินที่ยอมเสียได้ต่อหนึ่งแผน ใช้สำหรับวางกรอบความเสี่ยง</p></div></div><div className="financial-form"><label>เงินทุน (บาท) <input type="number" min="0" value={capital} onChange={event => setCapital(event.target.value)} /></label><label>ความเสี่ยงต่อแผน (%) <input type="number" min="0" max="100" step="0.1" value={risk} onChange={event => setRisk(event.target.value)} /></label><label>ราคาเข้า (บาท/หุ้น) <input type="number" min="0" step="any" value={entry} onChange={event => setEntry(event.target.value)} /></label><label>จุดหยุดขาดทุน (บาท/หุ้น) <input type="number" min="0" step="any" value={stop} onChange={event => setStop(event.target.value)} /></label></div><div className="financial-results"><div><small>ขาดทุนสูงสุดตามแผน</small><strong>{valid ? budget.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—'}</strong></div><div><small>ระยะห่าง Entry → SL</small><strong>{valid ? gap.toLocaleString('en-US', { maximumFractionDigits: 4 }) : '—'}</strong></div><div><small>จำนวนหุ้นโดยประมาณ</small><strong>{valid ? units.toLocaleString('en-US') : '—'}</strong></div></div><p className="modal-footnote">ใช้สำหรับหุ้นไทยแบบหนึ่งหุ้นต่อหนึ่งหน่วยเท่านั้น · ยังไม่ปัด board lot และไม่รวมค่าธรรมเนียม/สลิปเพจ · TFEX, Forex และหุ้นต่างประเทศต้องมีตัวคูณสัญญา สเปรด และอัตราแลกเปลี่ยนก่อนคำนวณ · คำนวณในเบราว์เซอร์</p></div>;
+  return <div className="hub-panel financial-panel"><div className="hub-intro"><span className="hub-heading-icon"><Gauge size={23} /></span><div><h3>Financial Check · หุ้นไทย</h3><p>คำนวณจำนวนหุ้นจากเงินที่ยอมเสียได้ต่อหนึ่งแผน ใช้สำหรับวางกรอบความเสี่ยง</p></div></div><div className="financial-form"><label>เงินทุน (บาท) <input type="number" min="0" value={capital} onChange={event => setCapital(event.target.value)} /></label><label>ความเสี่ยงต่อแผน (%) <input type="number" min="0" max="100" step="0.1" value={risk} onChange={event => setRisk(event.target.value)} /></label><label>ราคาเข้า (บาท/หุ้น) <input type="number" min="0" step="any" value={entry} onChange={event => setEntry(event.target.value)} /></label><label>จุดหยุดขาดทุน (บาท/หุ้น) <input type="number" min="0" step="any" value={stop} onChange={event => setStop(event.target.value)} /></label></div><div className="financial-results"><div><small>ขาดทุนสูงสุดตามแผน</small><strong>{valid ? budget.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—'}</strong></div><div><small>ระยะห่าง Entry → SL</small><strong>{valid ? gap.toLocaleString('en-US', { maximumFractionDigits: 4 }) : '—'}</strong></div><div><small>จำนวนหุ้นโดยประมาณ</small><strong>{valid ? units.toLocaleString('en-US') : '—'}</strong></div></div><p className="modal-footnote">ใช้สำหรับหุ้นไทยแบบหนึ่งหุ้นต่อหนึ่งหน่วยเท่านั้น · ยังไม่ปัด board lot และไม่รวมค่าธรรมเนียม/สลิปเพจ · TFEX, Forex และหุ้นต่างประเทศต้องมีตัวคูณสัญญา สเปรด และอัตราแลกเปลี่ยนก่อนคำนวณ · คำนวณในเบราว์เซอร์</p><div style={{marginTop:'14px',display:'flex',gap:'8px',flexWrap:'wrap'}}><a href="/risk" className="feature-primary" style={{textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'6px',fontSize:'0.88rem',padding:'8px 14px',borderRadius:'8px',background:'#0284c7',color:'#fff',fontWeight:'600'}}>เปิดเครื่องมือคุมความเสี่ยง & Position Size เต็มรูปแบบ (5 ตลาด) ↗</a></div></div>;
 }
 
 export function LearningPanel({ onOpen }) {
@@ -121,17 +158,24 @@ export function LearningPanel({ onOpen }) {
 
 export function RoadmapPanel({ onOpen }) {
   const items = [
-    ['นำร่อง', 'สแกนรายวันและ AutoPick หุ้นไทย', 'อ่านแท่ง Settrade ได้ในเครื่อง · ต้องยืนยันสิทธิข้อมูล เซิร์ฟเวอร์ถาวร และผลรันวันทำการก่อนเปิดให้สมาชิก', 'autopick'],
-    ['พร้อมใช้', 'Watchlist + กราฟ + วิเคราะห์เทคนิค', 'บันทึกคู่โปรดในเครื่อง เปิดกราฟและตรวจเงื่อนไขจากแท่งที่เชื่อมได้', 'watchlist'],
-    ['พร้อมตั้งค่า', 'บัญชี LINE และสิทธิสมาชิก', 'ทดลอง 14 วัน ตรวจพอร์ต และต่ออายุผ่านแอดมิน · รอค่า LINE และฐานข้อมูลถาวร', 'account'],
-    ['ขั้นถัดไป', 'ชำระเงินอัตโนมัติ', 'ปัจจุบันแอดมินตรวจและอนุมัติการต่ออายุ · ระบบชำระเงินอัตโนมัติยังไม่เชื่อม', 'account'],
-    ['นำร่อง', 'แจ้งเตือนในเว็บ', 'บันทึกเหตุการณ์เข้า/TP/SL และแสดงขณะเปิดเว็บ · ต้องยืนยันความเสถียรและการอ่านย้อนหลัง', 'autopick'],
-    ['บันทึกผล', 'ผลงานสัญญาณ', 'สรุป 100 ไม้ที่ปิดล่าสุดจากราคาเข้า/ออกที่บันทึกไว้ · ไม้รอเข้าและข้อมูลไม่ครบไม่นับเป็นชนะหรือแพ้', 'results'],
-    ['บางส่วน', 'ข่าว ปฏิทินเศรษฐกิจ และ XD', 'ข่าวไทย/สหรัฐฯ จาก MarketDX · วันประกาศและตัวเลขสหรัฐฯ จาก FRED · XD เปิดดูต้นทาง SET', 'calendar'],
-    ['รอข้อมูล', 'TFEX · Forex AutoPick', 'TFEX มีกราฟ OHLC แล้ว แต่ยังต้องยืนยันสัญญานำและกติกาความเสี่ยง · Forex รอฟีด bid/ask กับแท่งจริง', 'autopick'],
-    ['พื้นที่สมาชิก', 'ช่องคุยกับทีมและชุมชน', 'เข้าใช้ห้องสมาชิกและส่งหัวข้อส่วนตัวกับทีมจากหน้าบัญชี', 'learn'],
+    ['พร้อมใช้', 'SMC & Structure Developer API', 'API วิเคราะห์โครงสร้าง Swing High/Low, BOS/CHoCH, FVG, Order Block และแผน 2R พร้อมโค้ด cURL/Python/MQL5', 'developers', 'src/developers/structure.mjs', 'ทุกตลาด (OHLC JSON)', 'POST /api/developers/structure · 100% Deterministic'],
+    ['นำร่อง', 'สแกนรายวันและ AutoPick หุ้นไทย', 'อ่านแท่ง Settrade ได้ในเครื่อง · ต้องยืนยันสิทธิข้อมูล เซิร์ฟเวอร์ถาวร และผลรันวันทำการก่อนเปิดให้สมาชิก', 'autopick', 'src/auto-pick/runner.mjs', 'Thai (SET100/mai)', 'Settrade Open API · 60 bars 15m · Fail-closed'],
+    ['พร้อมใช้', 'Watchlist + กราฟ + วิเคราะห์เทคนิค', 'บันทึกคู่โปรดในเครื่อง เปิดกราฟและตรวจเงื่อนไขจากแท่งที่เชื่อมได้', 'watchlist', 'src/components/candlestick-chart.jsx', '5 ตลาด', 'OHLC Canvas + Pivot/EMA + Indicators'],
+    ['พร้อมตั้งค่า', 'บัญชี LINE และสิทธิสมาชิก', 'ทดลอง 14 วัน ตรวจพอร์ต และต่ออายุผ่านแอดมิน · รอค่า LINE และฐานข้อมูลถาวร', 'account', 'src/membership/server.mjs', 'ระบบสมาชิกกลาง', 'LINE OAuth2 + SHA-256 Portfolio Hash'],
+    ['นำร่อง', 'US CFD Daytrade Scanner', 'สแกนหุ้นและ ETF US 500 ตัว พร้อมจุดเข้า SL/TP 2R อ้างอิงแท่งปิด 15m', 'autopick', 'src/daytrade/engine.mjs', 'US CFD (500 หุ้น+ETF)', 'Vantage MT5 closed bars + FMP EOD indicators'],
+    ['นำร่อง', 'Forex Vantage MT5 Command Center', 'เชื่อมต่อ EA Vantage MT5 แบบ Read-only ดึงราคาและแท่งปิดเข้าเวิร์กสเปซ', 'watchlist', 'src/forex-mt5/handlers.mjs', 'Forex / Metals (19 คู่)', 'WebRequest/Local file bridge · Read-only token'],
+    ['บันทึกผล', 'ผลงานสัญญาณ (Forward Ledger)', 'สรุป 100 ไม้ที่ปิดล่าสุดจากราคาเข้า/ออกที่บันทึกไว้ · ไม้รอเข้าและข้อมูลไม่ครบไม่นับเป็นชนะหรือแพ้', 'results', 'src/signals/store.mjs', 'Thai / DR / US / Forex', 'Immutable Forward Ledger · ป้องกัน Synthetic Wins'],
+    ['พร้อมใช้', 'ปฏิทินเศรษฐกิจ & Macro Intelligence', 'ปฏิทินจัดระดับผลกระทบ ข้อมูลคาดการณ์/ก่อนหน้า และบทวิเคราะห์ AI เตือนความเสี่ยง', 'calendar-page', 'src/calendar/events.mjs', 'Thai & Global Macro', 'High/Med/Low Impact Filter + AI Caution'],
+    ['พร้อมใช้', 'เครื่องมือคำนวณ Position & Risk (5 ตลาด)', 'คำนวณ Lot, สัญญา TFEX, Board lot หุ้นไทย, Margin และ Max Risk ต่อไม้', 'risk', 'src/risk/calculator.mjs', '5 ตลาด (Thai, TFEX, US, Forex, Gold)', 'Board lot rounding + Multiplier support'],
+    ['รอข้อมูล', 'TFEX · Forex AutoPick', 'TFEX มีกราฟ OHLC แล้ว แต่ยังต้องยืนยันสัญญานำและกติกาความเสี่ยง · Forex รอฟีด bid/ask กับแท่งจริง', 'autopick', 'src/market-data/tfex.mjs', 'TFEX (S50/Gold/Silver)', 'TFEX Open API Delayed · รอยืนยันสัญญานำ'],
+    ['พื้นที่สมาชิก', 'ช่องคุยกับทีมและชุมชน', 'เข้าใช้ห้องสมาชิกและส่งหัวข้อส่วนตัวกับทีมจากหน้าบัญชี', 'learn', 'src/community/store.mjs', 'ชุมชนสมาชิก', 'SQLite Audit Log + Role-based Access'],
+    ['ขั้นถัดไป', 'ชำระเงินอัตโนมัติ', 'ปัจจุบันแอดมินตรวจและอนุมัติการต่ออายุ · ระบบชำระเงินอัตโนมัติยังไม่เชื่อม', 'account', 'src/app/api/account/route.mjs', 'Payment Gateway', 'Manual Admin Review + Verification Code'],
   ];
-  return <div className="hub-panel roadmap-panel"><div className="hub-intro"><span className="hub-heading-icon"><Compass size={23} /></span><div><h3>สถานะระบบและสิ่งที่ยังขาด</h3><p>รายการนี้ช่วยแยกของที่ใช้ได้ตอนนี้ออกจากงาน fullstack ที่ต้องเชื่อมก่อนเปิดจริง</p></div></div><div className="roadmap-list">{items.map(([status, title, copy, target]) => <button key={title} onClick={() => onOpen(target)}><span className={status === 'พร้อมใช้' ? 'roadmap-state ready' : 'roadmap-state'}>{status}</span><span><strong>{title}</strong><small>{copy}</small></span><span>↗</span></button>)}</div></div>;
+  return <div className="hub-panel roadmap-panel">
+    <div className="hub-intro"><span className="hub-heading-icon"><Compass size={23} /></span><div><h3>สถานะระบบ เครื่องมือ และหลักฐานความพร้อม</h3><p>รายการนี้ช่วยแยกของที่ใช้ได้ตอนนี้ออกจากงาน fullstack ที่ต้องเชื่อมก่อนเปิดจริง</p></div></div>
+    <div className="daily-callout"><ShieldCheck size={17} /><span><b>ข้อชี้แจงความโปร่งใส (Catalog ≠ 27 Completed Features)</b>: แคตตาล็อกและรายการสถาปัตยกรรมระบบรวบรวมขอบเขตของ 5 ตลาด ไม่ได้หมายถึง 27 ฟีเจอร์ที่เสร็จสมบูรณ์พร้อมกันระดับ Production โดยแต่ละโมดูลแสดงที่มาของซอร์ส ขอบเขตตลาด และหลักฐานความพร้อมไว้อย่างตรงไปตรงมา</span></div>
+    <div className="roadmap-list">{items.map(([status, title, copy, target, sourcePath, scope, evidence]) => <button key={title} onClick={() => target === 'developers' || target === 'risk' || target === 'calendar-page' ? onOpen(target) : onOpen(target)}><span className={status === 'พร้อมใช้' ? 'roadmap-state ready' : 'roadmap-state'}>{status}</span><span><strong>{title}</strong><small>{copy}</small><small style={{color:'#72dfb3',marginTop:'2px'}}>ตลาด: {scope} · ซอร์ส: {sourcePath} · หลักฐาน: {evidence}</small></span><span>↗</span></button>)}</div>
+  </div>;
 }
 
 export function CalendarPanel({ onOpenGuide }) {
@@ -163,7 +207,7 @@ export function CalendarPanel({ onOpenGuide }) {
     </>}
     <div className="daily-callout"><CircleHelp size={17} /><span>FRED ให้วันประกาศและค่าที่เผยแพร่แล้ว ไม่ใช่ฟีดพาดหัวข่าว ไม่มีค่า forecast หรือเวลาออกข่าวในข้อมูลชุดนี้ วันประกาศอาจเปลี่ยนได้และข้อมูลอาจถูกปรับย้อนหลัง</span></div>
     <div className="calendar-source-links"><a href="https://www.bot.or.th/en/our-roles/monetary-policy/mpc-meeting.html" target="_blank" rel="noopener noreferrer">ธปท. · กำหนดประชุม กนง. ↗</a><a href="https://www.bls.gov/schedule/" target="_blank" rel="noopener noreferrer">BLS · เวลาออกข่าวสหรัฐฯ ↗</a></div>
-    <button className="feature-primary" onClick={onOpenGuide}>อ่านวิธีใช้ข่าวประกอบกราฟ ↗</button>
+    <div style={{marginTop:'12px',display:'flex',gap:'8px',flexWrap:'wrap'}}><a href="/calendar" className="feature-primary" style={{textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'6px',fontSize:'0.88rem',padding:'8px 14px',borderRadius:'8px',background:'#0284c7',color:'#fff',fontWeight:'600'}}>เปิดปฏิทินเศรษฐกิจ & Macro Intelligence (จัดระดับผลกระทบ + ข้อควรระวัง AI) ↗</a><button className="feature-primary" onClick={onOpenGuide} style={{background:'transparent',border:'1px solid #cbd5e1',color:'#334155'}}>อ่านวิธีใช้ข่าวประกอบกราฟ ↗</button></div>
   </div>;
 }
 

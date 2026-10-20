@@ -7,8 +7,8 @@ export const OAUTH_COOKIE = 'nugaom_line_flow';
 export const privateHeaders = { 'Cache-Control': 'private, no-store' };
 
 export async function currentMember() {
-  if (!isConfigured()) return null;
   const value = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!value) return null;
   return sessionMember(value);
 }
 export async function currentAccount() {

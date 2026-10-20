@@ -43,10 +43,29 @@ test('US costs are explicit, per member and immutable per signal profile; anothe
  assert.notEqual(a.id,b.id);await insertReferenceSignal(begin('us',a.id));
  assert.equal((await signalDeskFeed('fixture-a',{market:'us'})).signals.length,1);
  assert.equal((await signalDeskFeed('fixture-b',{market:'us'})).signals.length,0);
+  const recordId=begin('us',a.id).id;
+  const ownRecord=await signalDeskFeed('fixture-a',{market:'us',recordId});assert.equal(ownRecord.record.id,recordId);assert.equal(ownRecord.recordEvents.length,1);assert.equal(ownRecord.recordEvents[0].signalId,recordId);assert.equal(ownRecord.recordEvents[0].ledger,'swing');
+  const otherRecord=await signalDeskFeed('fixture-b',{market:'us',recordId});assert.equal(otherRecord.record,null);assert.deepEqual(otherRecord.recordEvents,[]);assert.equal(otherRecord.recordStatistics,null);
  const saved=(await activeReferenceSignals('us'))[0];await saveUsCosts('fixture-a',{commissionPercent:0.3,marketFeePercent:0,commissionVatPercent:0,slippagePercent:0.4});
  assert.deepEqual((await activeReferenceSignals('us'))[0].plan,saved.plan);
  assert.equal((await signalDeskFeed('fixture-a',{market:'us'})).signals.length,1,'old-cost active signals remain visible after changing costs');
+  assert.equal((await signalDeskFeed('fixture-a',{market:'us',recordId})).record.id,recordId,'an authorized older cost profile still links to its own record');
  assert.equal((await signalDeskFeed('fixture-b',{market:'us'})).signals.length,0);
+});
+test('Swing alert timeline and statistics track one committed partial / full lifecycle, not event counts',async()=>{
+  const initial={...begin(),id:'stats-correlation-fixture'};await insertReferenceSignal(initial);
+  const load=()=>signalDeskFeed('fixture-a',{market:'thai',recordId:initial.id});
+  let previous=(await activeReferenceSignals('thai')).find(s=>s.id===initial.id);
+  const entry=advanceReferenceSignal(previous,[bar],snapshot,(epoch+1800)*1000);await saveReferenceAdvance(previous,entry.signal,entry.events);
+  let data=await load();assert.equal(data.record.status,'OPEN');assert.equal(data.recordStatistics.closed,0);
+  previous=(await activeReferenceSignals('thai')).find(s=>s.id===initial.id);const tp=previous.plan.minimumTarget;
+  const partial=advanceReferenceSignal(previous,[{...bar,time:epoch+900,open:tp+1,high:tp+2,low:102,close:tp+1}],snapshot,(epoch+2700)*1000);
+  await saveReferenceAdvance(previous,partial.signal,partial.events);data=await load();assert.equal(data.record.status,'RUNNER');assert.equal(data.recordStatistics.closed,0);
+  previous=(await activeReferenceSignals('thai')).find(s=>s.id===initial.id);
+  const closed=advanceReferenceSignal(previous,[{...bar,time:epoch+1800,open:101,high:102,low:99,close:100}],snapshot,(epoch+3600)*1000);
+  await saveReferenceAdvance(previous,closed.signal,closed.events);await saveReferenceAdvance(previous,closed.signal,closed.events);
+  data=await load();assert.equal(data.record.status,'CLOSED');assert.equal(data.recordStatistics.closed,1);assert.equal(data.recordStatistics.expectancyR,data.record.netR);
+  assert.ok(data.recordEvents.every(e=>e.signalId===initial.id));assert.equal(data.recordEvents.filter(e=>e.type==='ENTRY').length,1);assert.equal(data.recordEvents.filter(e=>e.type==='TARGET').length,1);assert.ok(data.recordEvents.length>data.recordStatistics.closed);
 });
 test('first subscription starts at high-water cursor, subsequent pages deliver committed events without exposing a member ID as data',async()=>{
  const first=await signalDeskFeed('fixture-a',{market:'thai'});assert.deepEqual(first.events,[]);
@@ -66,4 +85,11 @@ test('native D1 migration and signal/event transaction preserve identical lifecy
   const rows=await storage.all('SELECT * FROM signal_desk_events');assert.equal(rows.length,2);assert.equal((await activeReferenceSignals('thai'))[0].status,'OPEN');
   await assert.rejects(storage.run('UPDATE signal_desk_events SET type=?','STOP'));
  });}finally{await proxy.dispose();}
+});
+test('whole-market scan pages retain all strategy rows while showing seven per page',async()=>{
+ const first=await signalDeskFeed('fixture-a',{market:'thai',page:1});
+ const second=await signalDeskFeed('fixture-a',{market:'thai',page:2});
+ assert.equal(first.pageSize,7);assert.equal(first.rows.length,7);assert.equal(second.rows.length,7);
+ assert.equal(first.totalRows,first.coverage.expected*2);
+ const keys=first.rows.map(r=>`${r.symbol}:${r.mode}`);assert.ok(second.rows.every(r=>!keys.includes(`${r.symbol}:${r.mode}`)));
 });

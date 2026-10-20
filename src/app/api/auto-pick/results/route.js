@@ -17,6 +17,7 @@ export async function GET(request) {
       market: params.get('market') ?? 'all',
       status: params.get('status') ?? 'all',
       scope: params.get('scope') ?? 'history',
+      strategy: params.get('strategy') ?? 'all',
       page: params.get('page') ?? 1,
       pageSize: 7,
     }));

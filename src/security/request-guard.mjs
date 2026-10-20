@@ -12,7 +12,7 @@ export async function rateLimit(scope, identity, limit, windowMs = 60000) {
 }
 
 export class RequestError extends Error { constructor(code, status) { super(code); this.status = status; } }
-export async function readJsonBody(request, maximum = 4096) {
+export async function readJsonBody(request, maximum = 4096, {allowArray=false}={}) {
   if (!/^application\/json(?:\s*;|$)/i.test(request.headers.get('content-type') || '')) throw new RequestError('CONTENT_TYPE_REQUIRED', 415);
   if (Number(request.headers.get('content-length')) > maximum) throw new RequestError('PAYLOAD_TOO_LARGE', 413);
   const reader = request.body?.getReader();
@@ -23,7 +23,7 @@ export async function readJsonBody(request, maximum = 4096) {
       if (size > maximum) { await reader.cancel(); throw new RequestError('PAYLOAD_TOO_LARGE', 413); } chunks.push(value); }
   } finally { reader.releaseLock(); }
   try { const value = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-    if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error(); return value;
+    if (!value || typeof value !== 'object' || !allowArray&&Array.isArray(value)) throw Error(); return value;
   } catch { throw new RequestError('INVALID_JSON', 400); }
 }
 export function requestErrorResponse(error) {

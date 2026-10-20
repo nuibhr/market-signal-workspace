@@ -1,5 +1,5 @@
 #property strict
-#property version "2.20"
+#property version "2.30"
 #property description "Nugaom read-only symbol/quote/candle bridge. No account credentials or order operations."
 input string Endpoint = "http://localhost:3100/api/forex/mt5";
 input bool LocalFiles = false; // Same-computer file transport; no WebRequest needed
@@ -15,6 +15,7 @@ int next_part = 0, universe_total = 0;
 bool needs_sync = true;
 datetime synced_at = 0;
 string requested_symbol = "", requested_frame = "1h";
+string scan_symbols[];
 long pending_file_sequence = 0;
 string terminal_state = "";
 int effective_offset = 10000;
@@ -94,7 +95,8 @@ string Instrument(string symbol) {
       ",\"volume_max\":"+SD(symbol,SYMBOL_VOLUME_MAX)+",\"volume_step\":"+SD(symbol,SYMBOL_VOLUME_STEP)+
       ",\"currency_base\":"+SS(symbol,SYMBOL_CURRENCY_BASE)+",\"currency_profit\":"+SS(symbol,SYMBOL_CURRENCY_PROFIT)+
       ",\"currency_margin\":"+SS(symbol,SYMBOL_CURRENCY_MARGIN)+",\"trade_mode\":"+SI(symbol,SYMBOL_TRADE_MODE)+
-      ",\"session\":"+Sessions(symbol)+"}";
+      ",\"broker_path\":"+SS(symbol,SYMBOL_PATH)+",\"exchange\":"+SS(symbol,SYMBOL_EXCHANGE)+
+      ",\"underlying_symbol\":"+SS(symbol,SYMBOL_BASIS)+",\"session\":"+Sessions(symbol)+"}";
 }
 string ReadField(string json,string key) {
    string prefix="\""+key+"\":\"";
@@ -109,6 +111,15 @@ string Clock() {
       ",\"used_offset_minutes\":"+(MathAbs(effective_offset)<=840 ? IntegerToString(effective_offset) : "null")+"}";
 }
 void ApplyClock(string response) {
+   string list=ReadField(response,"requested_scan_symbols_hex");
+   ArrayResize(scan_symbols,0);
+   if(list!="") {
+      string encoded[]; int count=StringSplit(list,',',encoded);
+      for(int i=0;i<MathMin(count,8);i++) {
+         string name=Unhex(encoded[i]);
+         if(name!="") { int n=ArraySize(scan_symbols); ArrayResize(scan_symbols,n+1); scan_symbols[n]=name; }
+      }
+   }
    if(!AutoDetectServerTime) return;
    string offset=ReadField(response,"requested_utc_offset_minutes");
    effective_offset=offset=="" ? 10000 : (int)StringToInteger(offset);
@@ -178,10 +189,10 @@ bool Send(string fields) {
    if(frame=="15m" || frame=="1h" || frame=="4h" || frame=="1d") requested_frame=frame;
    return true;
 }
-ENUM_TIMEFRAMES Frame() {
-   if(requested_frame=="15m") return PERIOD_M15;
-   if(requested_frame=="4h") return PERIOD_H4;
-   if(requested_frame=="1d") return PERIOD_D1;
+ENUM_TIMEFRAMES Frame(string frame) {
+   if(frame=="15m") return PERIOD_M15;
+   if(frame=="4h") return PERIOD_H4;
+   if(frame=="1d") return PERIOD_D1;
    return PERIOD_H1;
 }
 string Quote(string symbol) {
@@ -190,21 +201,23 @@ string Quote(string symbol) {
    long time=(long)tick.time-effective_offset*60;
    return "{\"broker_symbol\":"+J(symbol)+",\"bid\":"+N(tick.bid)+",\"ask\":"+N(tick.ask)+",\"time\":"+IntegerToString(time)+"}";
 }
-string Chart() {
-   if(requested_symbol=="" || !SymbolSelect(requested_symbol,true)) return "null";
+string Chart(string symbol,string frame) {
+   if(symbol=="" || !SymbolSelect(symbol,true)) return "null";
    MqlRates rates[]; ArraySetAsSeries(rates,false);
-   // Closed bars only. Keep within the current broker offset period (max 24 hours).
-   int copied=CopyRates(requested_symbol,Frame(),1,100,rates);
+   // Closed bars only. The receiver may grant a bounded seasonal history window
+   // after verifying the broker clock; never extrapolate a historical DST offset.
+   int copied=CopyRates(symbol,Frame(frame),1,200,rates);
    string rows="";
    for(int i=0;i<copied;i++) {
       long time=(long)rates[i].time-effective_offset*60;
-      if(time<(long)TimeGMT()-86400 || (AutoDetectServerTime && time<history_since)) continue;
+      long floor=AutoDetectServerTime ? MathMax(history_since,(long)TimeGMT()-7*86400) : (long)TimeGMT()-86400;
+      if(time<floor) continue;
       if(rows!="") rows+=",";
       rows+="{\"time\":"+IntegerToString(time)+",\"open\":"+N(rates[i].open)+",\"high\":"+N(rates[i].high)+
          ",\"low\":"+N(rates[i].low)+",\"close\":"+N(rates[i].close)+",\"volume\":"+IntegerToString(rates[i].tick_volume)+"}";
    }
    if(rows=="") return "null";
-   return "{\"broker_symbol\":"+J(requested_symbol)+",\"timeframe\":"+J(requested_frame)+
+   return "{\"broker_symbol\":"+J(symbol)+",\"timeframe\":"+J(frame)+
       ",\"utc_offset_minutes\":"+IntegerToString(effective_offset)+",\"bars\":["+rows+"]}";
 }
 int InitError(string reason) {
@@ -234,9 +247,10 @@ bool ExportReady() {
 int OnInit() {
    // Parameter/preset reinitialization must start a fresh universe and discard any old ACK wait.
    sync_id=0; next_part=0; universe_total=0; needs_sync=true; synced_at=0;
+   ArrayResize(scan_symbols,0);
    pending_file_sequence=0; requested_symbol=""; requested_frame="1h"; terminal_state="";
    effective_offset=AutoDetectServerTime ? 10000 : ServerUtcOffsetMinutes; history_since=0;
-   Print("Nugaom setup: connector version 2.20; starting fresh universe");
+   Print("Nugaom setup: connector version 2.30; starting fresh universe");
    if(LocalFiles) {
       if(StringLen(LocalChannel)!=32) {
          Print("Nugaom setup: LocalChannel length is ",StringLen(LocalChannel),"; expected 32");
@@ -260,7 +274,7 @@ void OnTimer() {
    if(!ExportReady()) return;
    int total=SymbolsTotal(false);
    if(total<=0) return;
-   if(total!=universe_total || TimeGMT()-synced_at>900) needs_sync=true;
+   if(total!=universe_total || TimeGMT()-synced_at>21600) needs_sync=true;
    if(needs_sync) {
       // A pending first chunk must keep its revision until the file acknowledgement arrives.
       if(next_part==0 && pending_file_sequence==0) { universe_total=total; sync_id=sequence_id+1; }
@@ -278,7 +292,7 @@ void OnTimer() {
       }
       return;
    }
-   string quotes="", chart="null";
+   string quotes="", chart="null", scans="";
    if(AutoDetectServerTime) {
       long delta=(long)TimeTradeServer()-(long)TimeGMT();
       long lag=(long)TimeTradeServer()-(long)TimeCurrent();
@@ -288,13 +302,24 @@ void OnTimer() {
       if(requested_symbol!="") SymbolSelect(requested_symbol,true);
       // Quote the requested chart symbol first, then at most 99 other Market Watch symbols.
       if(requested_symbol!="") quotes=Quote(requested_symbol);
-      int count=MathMin(SymbolsTotal(true),99);
+      string quoted="|"+requested_symbol+"|";
+      for(int i=0;i<ArraySize(scan_symbols);i++) {
+         string symbol=scan_symbols[i];
+         if(!SymbolSelect(symbol,true)) continue;
+         string item=Chart(symbol,"15m");
+         if(item!="null") { if(scans!="") scans+=","; scans+=item; }
+         if(StringFind(quoted,"|"+symbol+"|")<0) {
+            string q=Quote(symbol); if(q!="") { if(quotes!="") quotes+=","; quotes+=q; }
+            quoted+=symbol+"|";
+         }
+      }
+      int count=MathMin(SymbolsTotal(true),90);
       for(int i=0;i<count;i++) {
-         string symbol=SymbolName(i,true); if(symbol==requested_symbol) continue;
+         string symbol=SymbolName(i,true); if(StringFind(quoted,"|"+symbol+"|")>=0) continue;
          string row=Quote(symbol);
          if(row!="") { if(quotes!="") quotes+=","; quotes+=row; }
       }
-      chart=Chart();
+      chart=Chart(requested_symbol,requested_frame);
    }
-   Send("\"kind\":\"feed\",\"quotes\":["+quotes+"],\"chart\":"+chart);
+   Send("\"kind\":\"feed\",\"quotes\":["+quotes+"],\"chart\":"+chart+",\"scan_charts\":["+scans+"]");
 }

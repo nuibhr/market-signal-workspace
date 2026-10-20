@@ -3,7 +3,11 @@ import { storage, operation as op } from '../storage/database.mjs';
 const DAY = 86_400_000;
 
 export function digest(value) { return createHash('sha256').update(value).digest('hex'); }
-function sessionDigest(value) { return createHmac('sha256', process.env.SESSION_SECRET).update(value).digest('hex'); }
+function sessionDigest(value) {
+  const secret = process.env.SESSION_SECRET;
+  if (typeof secret !== 'string' || secret.length < 32) throw new Error('SESSION_SECRET_REQUIRED');
+  return createHmac('sha256', secret).update(value).digest('hex');
+}
 export function token() { return randomBytes(32).toString('base64url'); }
 export function isConfigured() {
   try {
@@ -81,9 +85,10 @@ export async function createSession(memberId) {
   return {value,expiresAt};
 }
 export async function sessionMember(value) {
-  if(typeof value!=='string'||value.length>100)return null;
-  return storage.first(`SELECT m.* FROM sessions s JOIN members m ON m.id=s.member_id
+  if(typeof value!=='string'||value.length>100||!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32)return null;
+  const member=await storage.first(`SELECT m.* FROM sessions s JOIN members m ON m.id=s.member_id
     WHERE s.token_hash=? AND s.expires_at>?`,sessionDigest(value),new Date().toISOString());
+  return member?.id?.startsWith('demo-') || member?.line_id?.startsWith('Udemo_') ? null : member;
 }
 export async function deleteSession(value) { if(value)await storage.run('DELETE FROM sessions WHERE token_hash=?',sessionDigest(value)); }
 export async function submitPortfolio(member,brokerInput,numberInput) {
@@ -92,10 +97,10 @@ export async function submitPortfolio(member,brokerInput,numberInput) {
   const number=normalizePortfolio(numberInput),hash=portfolioDigest(broker,number);
   try { return await mutateMember(member.id,member.id,'portfolio_submitted',current=>{
     if(current.portfolio_hash&&current.portfolio_hash!==hash)throw new Error('PORTFOLIO_CHANGE_REQUIRES_ADMIN');
-    const now=new Date().toISOString();
+    const started=Date.now(),now=new Date(started).toISOString();
     return {set:`broker=?,portfolio_hash=?,portfolio_last4=?,portfolio_status=CASE WHEN portfolio_status='verified' THEN 'verified' ELSE 'pending' END,
       portfolio_submitted_at=COALESCE(portfolio_submitted_at,?),trial_started_at=COALESCE(trial_started_at,?),trial_ends_at=COALESCE(trial_ends_at,?)`,
-      params:[broker,hash,number.slice(-4),now,now,new Date(Date.now()+14*DAY).toISOString()],details:broker};
+      params:[broker,hash,number.slice(-4),now,now,new Date(started+14*DAY).toISOString()],details:broker};
   }); } catch(error) {
     if(String(error.message).includes('members.portfolio_hash'))throw new Error('PORTFOLIO_ALREADY_USED');
     throw error;

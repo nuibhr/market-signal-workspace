@@ -60,8 +60,7 @@ export default function AccountPage() {
   async function logout() {
     setBusy(true); setError('');
     try {
-      const response = await fetch('/api/auth/logout', { method: 'POST' });
-      if (!response.ok) throw new Error('LOGOUT_FAILED');
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
       window.location.href = '/account';
     } catch { setError('ออกจากระบบไม่สำเร็จ กรุณาลองใหม่'); setBusy(false); }
   }
@@ -77,9 +76,61 @@ export default function AccountPage() {
       {loading ? <div className="account-card account-skeleton"><span /><span /><span /></div> : <>
         {error && <div className="account-alert error" role="alert"><CircleAlert size={17} />{error}</div>}
         {message && <div className="account-alert success" role="status"><Check size={17} />{message}</div>}
-        {!data?.configured && <div className="account-alert"><CircleAlert size={17} />ยังไม่ได้ตั้งค่า LINE Login และฐานข้อมูลสมาชิกสำหรับสภาพแวดล้อมนี้</div>}
-        {!account ? <section className="account-card account-login"><div className="account-icon green"><Fingerprint size={28} /></div><span className="account-kicker">STEP 01 · LINE LOGIN</span><h2>เริ่มต้นด้วยบัญชี LINE</h2><p>เข้าสู่ระบบด้วย LINE แล้วแจ้งเลขพอร์ตหุ้นเพื่อเริ่มทดลองใช้ฟรี 14 วัน</p><a className={data?.configured ? 'account-primary line' : 'account-primary disabled'} href={data?.configured ? '/api/auth/line/start' : undefined}>เข้าสู่ระบบด้วย LINE <ArrowRight size={16} /></a><small>เราจะไม่ขอรหัสผ่าน LINE และจะไม่ส่งคำสั่งซื้อขายผ่านบัญชีหุ้นของคุณ</small></section> : <>
-          {section === 'overview' && <><section className="account-card account-status"><div className="account-status-header"><div><span className="account-kicker">สถานะบัญชี</span><h2>{rights.label}</h2><p>{rights.tier === 'trial' ? `เหลือเวลาทดลองอีก ${daysLeft(rights.expiresAt)} วัน` : rights.tier === 'subscriber' ? `ต่ออายุภายใน ${date(rights.expiresAt)}` : rights.tier === 'expired' ? 'หมดระยะทดลองใช้ฟรีแล้ว ต่ออายุเพื่อใช้เครื่องมือสแกนสมาชิก' : rights.tier === 'portfolio-fix' ? 'เลขพอร์ตไม่ผ่านการตรวจ กรุณาแจ้งใหม่ · ระยะทดลองยังนับจากวันเริ่มเดิม' : 'แจ้งเลขพอร์ตเพื่อเริ่มทดลองใช้ฟรี 14 วัน'}</p></div><span className={`account-tier ${active ? 'active' : ''}`}>{active ? <BadgeCheck size={18} /> : <Clock3 size={18} />}{rights.tier.toUpperCase()}</span></div>{rights.expiresAt && <div className="account-expiry"><span>สิทธิสิ้นสุด</span><strong>{date(rights.expiresAt)}</strong></div>}<div className="account-metrics"><div><span>บัญชีหุ้น</span><strong>{account.portfolioLast4 ? `${account.broker} ·••${account.portfolioLast4}` : 'ยังไม่แจ้ง'}</strong><small>{account.portfolioStatus === 'verified' ? 'ยืนยันแล้ว' : account.portfolioStatus === 'pending' ? 'รอแอดมินตรวจ' : 'เริ่มที่ขั้นตอนนี้'}</small></div><div><span>สิทธิสแกนรายวัน</span><strong>{rights.capabilities.manualDailyScan ? `${rights.limits.dailyScanSymbols} หุ้น / ครั้ง` : 'ยังไม่เปิด'}</strong><small>ตรวจสิทธิฝั่งเซิร์ฟเวอร์</small></div></div><div className="account-actions"><button className="account-primary" onClick={() => setSection(account.portfolioLast4 ? 'renewal' : 'portfolio')}>{account.portfolioLast4 ? 'จัดการการต่ออายุ' : 'แจ้งเลขพอร์ตหุ้น'} <ArrowRight size={16} /></button><a className="account-secondary" href="/">กลับไปสแกนหุ้น</a></div></section><section className="account-card account-steps"><span className="account-kicker">MEMBER JOURNEY</span><h3>ขั้นตอนการใช้งาน</h3><div><article><span>01</span><strong>เข้าสู่ระบบ LINE</strong><small>ระบุตัวตนในทุกอุปกรณ์</small></article><article><span>02</span><strong>แจ้งเลขพอร์ต</strong><small>เริ่มทดลอง 14 วันหนึ่งครั้งต่อพอร์ต</small></article><article><span>03</span><strong>ต่ออายุรายเดือน</strong><small>แอดมินตรวจและเปิดสิทธิ หรือออกโค้ดให้</small></article></div></section></>}
+        {!data?.configured && !account && <div className="account-alert">ยังไม่ได้ตั้งค่า LINE Login สำหรับสภาพแวดล้อมนี้</div>}
+        {!account ? <>
+          {/* Standard LINE Login Section */}
+          <section className="account-card account-login"><div className="account-icon green"><Fingerprint size={28} /></div><span className="account-kicker">STEP 01 · LINE LOGIN</span><h2>เข้าสู่ระบบด้วยบัญชี LINE</h2><p>เข้าสู่ระบบด้วย LINE เพื่อเชื่อมต่อบัญชีจริงและแจ้งเลขพอร์ตหุ้น</p><a className={data?.configured ? 'account-primary line' : 'account-primary disabled'} href={data?.configured ? '/api/auth/line/start' : undefined}>เข้าสู่ระบบด้วย LINE <ArrowRight size={16} /></a><small>เราจะไม่ขอรหัสผ่าน LINE และจะไม่ส่งคำสั่งซื้อขายผ่านบัญชีหุ้นของคุณ</small></section>
+        </> : <>
+          {section === 'overview' && <><section className="account-card account-status">
+            <div className="account-status-header">
+              <div>
+                <span className="account-kicker">สถานะบัญชี</span>
+                <h2>{rights.label}</h2>
+                <p>{rights.tier === 'trial' ? `เหลือเวลาทดลองอีก ${daysLeft(rights.expiresAt)} วัน` : rights.tier === 'subscriber' ? `ต่ออายุภายใน ${date(rights.expiresAt)}` : rights.tier === 'expired' ? 'หมดระยะทดลองใช้ฟรีแล้ว ต่ออายุเพื่อใช้เครื่องมือสแกนสมาชิก' : rights.tier === 'portfolio-fix' ? 'เลขพอร์ตไม่ผ่านการตรวจ กรุณาแจ้งใหม่ · ระยะทดลองยังนับจากวันเริ่มเดิม' : 'แจ้งเลขพอร์ตเพื่อเริ่มทดลองใช้ฟรี 14 วัน'}</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                <span className={`account-tier ${active ? 'active' : ''}`}>{active ? <BadgeCheck size={18} /> : <Clock3 size={18} />}{rights.tier.toUpperCase()}</span>
+              </div>
+            </div>
+            {rights.expiresAt && <div className="account-expiry"><span>สิทธิสิ้นสุด</span><strong>{date(rights.expiresAt)}</strong></div>}
+            <div className="account-metrics">
+              <div><span>บัญชีหุ้น</span><strong>{account.portfolioLast4 ? `${account.broker} ·••${account.portfolioLast4}` : 'ยังไม่แจ้ง'}</strong><small>{account.portfolioStatus === 'verified' ? 'ยืนยันแล้ว' : account.portfolioStatus === 'pending' ? 'รอแอดมินตรวจ' : 'เริ่มที่ขั้นตอนนี้'}</small></div>
+              <div><span>สิทธิสแกนรายวัน</span><strong>{rights.capabilities.manualDailyScan ? `${rights.limits.dailyScanSymbols} หุ้น / ครั้ง` : 'ยังไม่เปิด'}</strong><small>ตรวจสิทธิฝั่งเซิร์ฟเวอร์</small></div>
+              <div><span>โควตาคำถาม AI</span><strong>{data?.aiQuota ? `${data.aiQuota.freeRemaining} ฟรีวันนี้` : '—'}</strong><small>{data?.aiQuota?.credits ? `มีเครดิตสะสม ${data.aiQuota.credits} ครั้ง` : 'ไม่มีเครดิตสะสม'}</small></div>
+              <div><span>ขอบเขตตลาด</span><strong>5 ตลาดครบ</strong><small>ไทย · DR · TFEX · US · FX</small></div>
+            </div>
+
+            {/* Quick Access to Pro Institutional Tools */}
+            <div className="account-pro-suite-strip">
+              <div className="account-pro-suite-title">
+                <strong><Sparkles size={15} style={{ color: '#38bdf8' }} /> ชุดเครื่องมือวิเคราะห์เชิงลึกระดับสถาบัน (Pro Suite)</strong>
+                <span style={{ fontSize: '11px', color: '#64748b' }}>คลิกเข้าใช้งานได้ทันที</span>
+              </div>
+              <div className="account-pro-grid">
+                <a href="/risk" className="account-pro-link">
+                  <BarChart3 size={16} style={{ color: '#0d9488' }} />
+                  <span>🎛️ บริหารความเสี่ยง (2R Risk)</span>
+                </a>
+                <a href="/calendar" className="account-pro-link">
+                  <CalendarClock size={16} style={{ color: '#d97706' }} />
+                  <span>📅 ปฏิทินเศรษฐกิจ (Macro)</span>
+                </a>
+                <a href="/developers" className="account-pro-link">
+                  <Fingerprint size={16} style={{ color: '#7c3aed' }} />
+                  <span>⚡ SMC Structure API</span>
+                </a>
+                <a href="/daytrade" className="account-pro-link">
+                  <Clock3 size={16} style={{ color: '#0284c7' }} />
+                  <span>🚀 Daytrade Desk 15m</span>
+                </a>
+                <a href="/thai" className="account-pro-link">
+                  <BadgeCheck size={16} style={{ color: '#059669' }} />
+                  <span>🎯 สแกนเนอร์ตลาดไทย</span>
+                </a>
+              </div>
+            </div>
+
+            <div className="account-record" style={{marginTop:'18px'}}><div><span className="account-kicker">NEXT ACTION · ขั้นตอนถัดไป</span><strong>{!account.portfolioLast4 ? 'แจ้งเลขพอร์ตหุ้นเพื่อเริ่มสิทธิทดลอง 14 วัน' : account.portfolioStatus === 'pending' ? 'รอแอดมินตรวจสอบเลขพอร์ต' : rights.tier === 'expired' ? 'ขอต่ออายุสมาชิกหรือกรอกโค้ด' : 'สิทธิของคุณพร้อมใช้งานทุกฟีเจอร์'}</strong><span style={{color:'#a9bbc8',fontSize:'11px'}}>{!account.portfolioLast4 ? 'กรอกชื่อโบรกเกอร์และเลขพอร์ต 5–24 หลัก เพื่อเปิดสิทธิสแกนและ AutoPick' : account.portfolioStatus === 'pending' ? 'ระบบบันทึกแฮชความปลอดภัยเรียบร้อยแล้ว แอดมินกำลังตรวจทานกับหลักฐาน' : rights.tier === 'expired' ? 'ส่งคำขอต่ออายุผ่านแอดมินเพื่อเปิดสิทธิเครื่องมือสแกนสมาชิกอีกครั้ง' : `สมาชิก ${rights.label} สามารถเปิดดูกราฟ สแกนเทคนิค และรับสัญญาณได้ทุกตลาด`}</span></div></div><div className="account-actions"><button className="account-primary" onClick={() => setSection(account.portfolioLast4 ? 'renewal' : 'portfolio')}>{account.portfolioLast4 ? 'จัดการการต่ออายุ' : 'แจ้งเลขพอร์ตหุ้น'} <ArrowRight size={16} /></button><a className="account-secondary" href="/thai">เปิดโต๊ะสแกนหุ้นไทย</a><a className="account-secondary" href="/dr">โต๊ะ DR Strategy</a></div></section><section className="account-card account-steps"><span className="account-kicker">MEMBER JOURNEY</span><h3>ขั้นตอนการใช้งาน</h3><div><article><span>01</span><strong>เข้าสู่ระบบ LINE</strong><small>ระบุตัวตนในทุกอุปกรณ์</small></article><article><span>02</span><strong>แจ้งเลขพอร์ต</strong><small>เริ่มทดลอง 14 วันหนึ่งครั้งต่อพอร์ต</small></article><article><span>03</span><strong>ต่ออายุรายเดือน</strong><small>แอดมินตรวจและเปิดสิทธิ หรือออกโค้ดให้</small></article></div></section></>}
           {section === 'ai-credits' && <AiCreditsPanel quota={data?.aiQuota} onRefresh={refresh} />}
           {section === 'portfolio' && <section className="account-card"><div className="account-section-heading"><span className="account-icon cyan"><Wallet size={24} /></span><div><span className="account-kicker">BROKERAGE ACCOUNT</span><h2>บัญชีหุ้นของคุณ</h2><p>กรอกชื่อโบรกเกอร์และเลขพอร์ตที่ใช้สมัคร</p></div></div>{account.portfolioLast4 ? <div className="account-record"><BadgeCheck size={20} /><div><strong>{account.broker} ·••{account.portfolioLast4}</strong><span>{account.portfolioStatus === 'verified' ? 'แอดมินตรวจสอบแล้ว' : 'แจ้งแล้ว · รอแอดมินตรวจสอบ'}</span></div></div> : <form className="account-form" onSubmit={event => { event.preventDefault(); action('/api/account', { action: 'portfolio', broker, number: portfolio }, 'แจ้งเลขพอร์ตแล้ว เริ่มทดลองใช้ฟรี 14 วัน'); }}><label>โบรกเกอร์<input value={broker} onChange={event => setBroker(event.target.value)} required maxLength={40} placeholder="เช่น KASIKORN SECURITIES" /></label><label>เลขพอร์ตหุ้น<input value={portfolio} onChange={event => setPortfolio(event.target.value)} required minLength={5} maxLength={30} autoComplete="off" placeholder="เลขบัญชีซื้อขายหลักทรัพย์" /></label><button className="account-primary" disabled={busy}>{busy ? 'กำลังบันทึก…' : 'แจ้งเลขพอร์ตและเริ่มทดลอง'} <ArrowRight size={16} /></button></form>}<p className="account-fineprint">ระบบเก็บแฮชและ 4 หลักท้ายของเลขพอร์ต แอดมินต้องมีเลขเต็มจากหลักฐานภายนอกมาเทียบก่อนยืนยัน ไม่เชื่อมบัญชีเพื่อส่งคำสั่งเทรด</p></section>}
           {section === 'renewal' && <><section className="account-card"><div className="account-section-heading"><span className="account-icon gold"><CalendarClock size={24} /></span><div><span className="account-kicker">MONTHLY ACCESS</span><h2>ต่ออายุสมาชิก</h2><p>สถานะปัจจุบัน: {rights.label}{rights.expiresAt ? ` · สิ้นสุด ${date(rights.expiresAt)}` : ''}</p></div></div><div className="account-renewal-grid"><div className="account-renewal-option"><span className="account-kicker">ทางเลือก 01</span><h3>ขอต่ออายุผ่านแอดมิน</h3><p>แอดมินตรวจบัญชีหุ้นและการชำระเงินจากช่องทางที่ตกลงกัน แล้วเปิดสิทธิรายเดือนให้</p><button className="account-primary" disabled={busy || account.portfolioStatus !== 'verified' || account.renewalPending} onClick={() => action('/api/account', { action: 'renewal' }, 'ส่งคำขอต่ออายุแล้ว รอแอดมินตรวจสอบ')}>{account.renewalPending ? 'ส่งคำขอแล้ว · รอตรวจ' : 'ส่งคำขอต่ออายุ'} <ArrowRight size={15} /></button></div><div className="account-renewal-option"><span className="account-kicker">ทางเลือก 02</span><h3>ใช้โค้ดรายเดือน</h3><p>โค้ดออกโดยแอดมินให้บัญชีที่ยืนยันแล้ว ใช้ได้ครั้งเดียวและผูกกับบัญชีนี้</p><form onSubmit={event => { event.preventDefault(); action('/api/account', { action: 'redeem', code }, 'ใช้โค้ดสำเร็จ เพิ่มสิทธิรายเดือนแล้ว'); }}><input value={code} onChange={event => setCode(event.target.value)} placeholder="NUG-••••••••••••••••••••••••" aria-label="โค้ดรายเดือน" required /><button className="account-secondary" disabled={busy || account.portfolioStatus !== 'verified'}>ใช้โค้ด</button></form></div></div><p className="account-fineprint">ขณะนี้ระบบรับคำขอและอนุมัติแบบแอดมิน ยังไม่มีหน้าจ่ายเงินออนไลน์หรือการหักเงินอัตโนมัติ</p></section></>}
