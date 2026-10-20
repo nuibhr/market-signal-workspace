@@ -21,7 +21,7 @@ import ChartToolbox from './chart-toolbox.jsx';
 import CandlestickChart from './candlestick-chart.jsx';
 import { AmbientDepth, MarketScanner, MultiTimeframe, VolumePulse, NewsGuide, NewsFeedState } from './workspace-features.jsx';
 import { WorkspaceSidebar, FinancialCheck, LearningPanel, RoadmapPanel, CalendarPanel, DividendCalendarPanel } from './workspace-hub.jsx';
-import NugaomAssistant from './nugaom-assistant.jsx';
+import {useAssistantSymbol} from './assistant-provider.jsx';
 import AutoPickBoard from './auto-pick-board.jsx';
 import SignalResults from './signal-results.jsx';
 import DrStrategyRadar from './dr/dr-strategy-radar.jsx';
@@ -121,6 +121,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [quoteState, setQuoteState] = useState('idle');
   const market = MARKETS.find(item => item.id === activeMarket) ?? MARKETS[0];
   const asset = selectedAsset ?? market;
+  useAssistantSymbol(asset.symbol);
   const chartIndicators = useMemo(() => asset.id === 'forex' ? { ...indicators, volume: false, vwap: false } : indicators, [asset.id, indicators]);
   const hasSettradeConnection = asset.feed === 'settrade-daily';
   const hasFmpConnection = asset.feed === 'fmp-quote';
@@ -483,7 +484,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
         </div>
       </main>
 
-      <NugaomAssistant activeSymbol={asset.symbol} />
+
       {favoriteNotice&&<div className="favorite-notice" role="status"><span>★</span>{favoriteNotice}<button onClick={()=>navigateTo('favorites')}>ดูรายการ</button><button aria-label="ปิดข้อความหุ้นโปรด" onClick={()=>setFavoriteNotice('')}>×</button></div>}
 
       {popup && <div className="modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setPopup(null); }}>

@@ -608,6 +608,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
     <section className={styles.container} aria-label="DR Strategy & Thai Equities Radar">
       <div className={styles.feedNotice} role="status" aria-live="polite">
         {feedError || (liveData ? `ผลสแกนแท่งปิดรายวัน · หุ้นไทย ${liveData.coverage.thai.available}/${liveData.coverage.thai.total} · DR ${liveData.coverage.dr.available}/${liveData.coverage.dr.total} · ${liveData.feedSource}` : 'กำลังโหลดข้อมูลสแกน…')}
+        {feedError.includes('สมาชิก')&&<a href="/account#membership-plans">ดูแพ็กเกจ / เข้าสู่ระบบ ↗</a>}
         {liveData?.unavailable?.length>0&&<span>ข้อมูลไม่พร้อม: {liveData.unavailable.map(i=>i.symbol).join(', ')} · ไม่ใช้ราคาสมมติคำนวณ</span>}
       </div>
       {/* Toast Notification */}

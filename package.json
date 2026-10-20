@@ -53,6 +53,7 @@
     "next": "^16.3.8",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "stripe": "23.0.0",
     "three": "0.186.1",
     "wrangler": "4.147.0",
     "yahoo-finance2": "^4.0.2"
@@ -60,5 +61,8 @@
   "overrides": {
     "sharp": "0.35.5",
     "source-map-js": "1.2.2"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
   }
 }

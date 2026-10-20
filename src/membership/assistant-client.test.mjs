@@ -93,3 +93,10 @@ test('explicit rejection releases the composer while a server error without quot
     assert.equal(writer.snapshot().pending, true);
   }
 });
+
+test('a definitive daily quota rejection releases a first request and exposes its reset time',async()=>{
+ const quota={freeLimit:10,freeRemaining:0,resetAt:'2026-10-21T17:00:00.000Z'};
+ const writer=createAssistantWriter({fetcher:async()=>Response.json({error:'AI_QUOTA_EXHAUSTED',quota},{status:429})});
+ const outcome=await writer.write({question:'Quota fixture'});
+ assert.equal(outcome.status,'rejected');assert.equal(writer.snapshot().pending,false);assert.equal(writer.snapshot().quota.resetAt,quota.resetAt);
+});

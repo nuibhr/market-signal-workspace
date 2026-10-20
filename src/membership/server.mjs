@@ -1,3 +1,4 @@
+import {billingSummary} from '../billing/store.mjs';
 import { cookies } from 'next/headers';
 import { accountSummary, aiQuota, isConfigured, sessionMember } from './store.mjs';
 import { membershipFor } from './rights.mjs';
@@ -13,7 +14,7 @@ export async function currentMember() {
 }
 export async function currentAccount() {
   const member = await currentMember();
-  return { configured: isConfigured(), account: (await accountSummary(member)), rights: membershipFor(member), aiQuota: (await aiQuota(member)), aiConfigured: Boolean(process.env.BIGDATA_API_KEY) };
+  return { configured: isConfigured(), account: (await accountSummary(member)), rights: membershipFor(member), aiQuota: (await aiQuota(member)), aiConfigured: Boolean(process.env.BIGDATA_API_KEY), billing:await billingSummary(member) };
 }
 export function sameOrigin(request) {
   const origin = request.headers.get('origin');

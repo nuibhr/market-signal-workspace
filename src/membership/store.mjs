@@ -1,5 +1,7 @@
 import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { storage, operation as op } from '../storage/database.mjs';
+import {withBilling} from '../billing/store.mjs';
+import {membershipFor} from './rights.mjs';
 const DAY = 86_400_000;
 
 export function digest(value) { return createHash('sha256').update(value).digest('hex'); }
@@ -88,7 +90,7 @@ export async function sessionMember(value) {
   if(typeof value!=='string'||value.length>100||!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32)return null;
   const member=await storage.first(`SELECT m.* FROM sessions s JOIN members m ON m.id=s.member_id
     WHERE s.token_hash=? AND s.expires_at>?`,sessionDigest(value),new Date().toISOString());
-  return member?.id?.startsWith('demo-') || member?.line_id?.startsWith('Udemo_') ? null : member;
+  return member?.id?.startsWith('demo-') || member?.line_id?.startsWith('Udemo_') ? null : withBilling(member);
 }
 export async function deleteSession(value) { if(value)await storage.run('DELETE FROM sessions WHERE token_hash=?',sessionDigest(value)); }
 export async function submitPortfolio(member,brokerInput,numberInput) {
@@ -240,27 +242,33 @@ export async function accountSummary(member) {
 }
 export async function aiQuota(member) {
   const day=bangkokDay();
-  if(!member)return {freeLimit:AI_FREE_DAILY,freeUsed:0,freeRemaining:0,credits:0,day};
+  const limit=member?membershipFor(await withBilling(member)).limits.freeAiQuestionsDaily:AI_FREE_DAILY;
+  const resetAt=new Date(Date.parse(`${day}T00:00:00+07:00`)+DAY).toISOString();
+  const allowExtraCredits=member?membershipFor(await withBilling(member)).limits.allowExtraAiCredits:false;
+  if(!member)return {freeLimit:AI_FREE_DAILY,freeUsed:0,freeRemaining:0,credits:0,day,resetAt,allowExtraCredits};
   const row=await storage.first(`SELECT (SELECT COUNT(*) FROM ai_questions WHERE member_id=? AND day_key=? AND charge_type='free') AS used,
     COALESCE((SELECT balance FROM ai_credit_accounts WHERE member_id=?),0) AS credits`,member.id,day,member.id);
-  return {freeLimit:AI_FREE_DAILY,freeUsed:row.used,freeRemaining:Math.max(0,AI_FREE_DAILY-row.used),credits:row.credits,day};
+  return {freeLimit:limit,freeUsed:row.used,freeRemaining:Math.max(0,limit-row.used),credits:row.credits,day,resetAt,allowExtraCredits};
 }
 export async function reserveAiQuestion(member,requestId,question,conversationId) {
   if(!/^[a-f0-9-]{36}$/i.test(requestId))throw new Error('INVALID_REQUEST_ID');
   if(!/^[a-f0-9-]{36}$/i.test(conversationId)||typeof question!=='string'||question.length<3||question.length>700)throw new Error('INVALID_REQUEST');
+  const rights=membershipFor(await withBilling(await memberById(member.id)));
+  if(!rights.capabilities.aiQuestions)throw Error('MEMBERSHIP_REQUIRED');
   const reservationToken=token(),day=bangkokDay(),now=new Date().toISOString();
   let results;
   try { results=await storage.batch([
+    op('INSERT INTO member_ai_limits(member_id,free_daily_limit,allow_extra_credits) VALUES(?,?,?) ON CONFLICT(member_id) DO UPDATE SET free_daily_limit=excluded.free_daily_limit,allow_extra_credits=excluded.allow_extra_credits',member.id,rights.limits.freeAiQuestionsDaily,rights.limits.allowExtraAiCredits?1:0),
     op("DELETE FROM ai_questions WHERE member_id=? AND status='pending' AND created_at<?",member.id,new Date(Date.now()-300000).toISOString()),
     op(`INSERT INTO ai_questions (id,member_id,conversation_id,question_text,day_key,charge_type,status,created_at,reservation_token)
-      SELECT ?,?,?,?,?,CASE WHEN (SELECT COUNT(*) FROM ai_questions WHERE member_id=? AND day_key=? AND charge_type='free')<5 THEN 'free' ELSE 'credit' END,'pending',?,?
-      WHERE NOT EXISTS(SELECT 1 FROM ai_questions WHERE id=?)`,requestId,member.id,conversationId,question,day,member.id,day,now,reservationToken,requestId),
+      SELECT ?,?,?,?,?,CASE WHEN (SELECT COUNT(*) FROM ai_questions WHERE member_id=? AND day_key=? AND charge_type='free')<(SELECT free_daily_limit FROM member_ai_limits WHERE member_id=?) THEN 'free' ELSE 'credit' END,'pending',?,?
+      WHERE NOT EXISTS(SELECT 1 FROM ai_questions WHERE id=?)`,requestId,member.id,conversationId,question,day,member.id,day,member.id,now,reservationToken,requestId),
     op('SELECT * FROM ai_questions WHERE id=?',requestId),
   ]); } catch(error) {
-    for(const code of ['QUESTION_IN_PROGRESS','INSUFFICIENT_AI_CREDITS','FREE_QUOTA_EXHAUSTED'])if(String(error.message).includes(code))throw new Error(code);
+    for(const code of ['QUESTION_IN_PROGRESS','INSUFFICIENT_AI_CREDITS','FREE_QUOTA_EXHAUSTED','AI_QUOTA_EXHAUSTED'])if(String(error.message).includes(code))throw new Error(code);
     throw error;
   }
-  const previous=results[2].results[0];
+  const previous=results[3].results[0];
   if(!previous||previous.member_id!==member.id||previous.conversation_id!==conversationId||previous.question_text!==question)throw new Error('INVALID_REQUEST_ID');
   return {kind:previous.reservation_token===reservationToken?'reserved':previous.status==='completed'?'cached':'pending',
     response:previous.response_json?JSON.parse(previous.response_json):null,chargeType:previous.charge_type,

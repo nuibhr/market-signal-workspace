@@ -91,5 +91,24 @@ test('native D1 preserves LINE profile, 14-day trial, monthly renewal, credits a
     assert.equal(received.length,120);assert.equal(new Set(received.map(item=>item.id)).size,120);
     assert.ok(received.every(item=>!('planJson' in item)&&!('features' in item)));
     assert.equal((await signalEventPage({after:cursor})).events.length,0);
+    {
+    // A Stripe-paid D1 account uses the same entitlement and atomic quota guard as Node.
+    process.env.STRIPE_SECRET_KEY='sk_test_d1_fixture';
+    process.env.STRIPE_PRICE_STARTER_MONTHLY='price_starter';process.env.STRIPE_PRICE_PRO_MONTHLY='price_pro';process.env.STRIPE_PRICE_ULTIMATE_MONTHLY='price_ultimate';
+    const billing=await import('../billing/store.mjs');
+    const paid=await member.upsertLineMember({lineId:'U'+'c'.repeat(32),displayName:'D1 billing fixture'});
+    await storage.run('INSERT INTO billing_customers VALUES(?,?,?)',paid.id,'test','cus_d1_fixture');
+    const end=Math.floor(Date.now()/1000)+86400;
+    const price={id:'price_starter',active:true,livemode:false,currency:'thb',unit_amount:9900,type:'recurring',recurring:{interval:'month',interval_count:1,usage_type:'licensed'}};
+    await billing.applyStripeEvent({id:'evt_d1_paid',type:'invoice.paid',created:1,livemode:false,data:{object:{subscription:'sub_d1_fixture'}}},{stripe:{subscriptions:{retrieve:async()=>({id:'sub_d1_fixture',customer:'cus_d1_fixture',status:'active',livemode:false,items:{data:[{price,quantity:1,current_period_end:end}]},latest_invoice:{status:'paid',lines:{data:[{price,period:{end}}]}}})}}});
+    assert.equal(membershipFor(await billing.withBilling(paid)).planId,'starter');
+    const beforeScan=(await member.aiQuota(paid)).freeRemaining;
+    await signalEventPage({after:cursor});assert.equal((await member.aiQuota(paid)).freeRemaining,beforeScan,'Reading signal notifications does not consume AI questions');
+    const day=(await member.aiQuota(paid)).day;
+    for(let i=0;i<10;i++)await storage.run("INSERT INTO ai_questions(id,member_id,day_key,charge_type,status,created_at) VALUES(?,?,?,'free','completed',?)",randomUUID(),paid.id,day,new Date().toISOString());
+    await assert.rejects(member.reserveAiQuestion(paid,randomUUID(),'Quota reached',randomUUID()),/AI_QUOTA_EXHAUSTED/);
+    assert.equal((await member.aiQuota(paid)).freeRemaining,0);
+    }
+
   });}finally{await proxy.dispose();rmSync(directory,{recursive:true,force:true});}
 });

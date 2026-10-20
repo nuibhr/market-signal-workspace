@@ -18,6 +18,7 @@ export async function sendAssistantQuestion(body, { fetcher = globalThis.fetch, 
       const released = response.status === 503 && payload?.quota &&
         ['BIGDATA_AUTH_FAILED', 'BIGDATA_RATE_LIMIT', 'BIGDATA_EMPTY_RESPONSE', 'BIGDATA_UNGROUNDED',
           'BIGDATA_RESPONSE_TOO_LONG', 'BIGDATA_TIMEOUT', 'BIGDATA_UNAVAILABLE'].includes(error);
+      if (error === 'AI_QUOTA_EXHAUSTED' && payload?.quota) return {status:'rejected',error,quota:payload.quota};
       if (released || response.status >= 400 && response.status < 500 && ![408, 409, 429].includes(response.status))
         return { status: 'rejected', error, quota: payload?.quota };
       return { status: 'pending', error, quota: payload?.quota };

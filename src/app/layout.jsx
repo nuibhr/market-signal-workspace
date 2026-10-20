@@ -17,6 +17,7 @@ import './market-pages.css';
 import './focus-performance.css';
 import './signal-desk.css';
 import './monitor.css';
+import AssistantProvider from '../components/assistant-provider.jsx';
 import MonitorProvider from '../components/monitor/monitor-provider.jsx';
 
 export const metadata = {
@@ -28,7 +29,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="th">
-      <body><MonitorProvider>{children}</MonitorProvider></body>
+      <body><MonitorProvider><AssistantProvider>{children}</AssistantProvider></MonitorProvider></body>
     </html>
   );
 }

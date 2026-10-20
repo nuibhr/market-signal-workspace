@@ -38,8 +38,8 @@ export async function POST(request) {
   let reservation;
   try { reservation = (await reserveAiQuestion(member, requestId, question, conversationId)); }
   catch (error) {
-    const code = ['INSUFFICIENT_AI_CREDITS', 'QUESTION_IN_PROGRESS'].includes(error.message) ? error.message : 'INVALID_REQUEST';
-    return Response.json({ error: code, quota: (await aiQuota(member)) }, { status: code === 'INSUFFICIENT_AI_CREDITS' ? 402 : code === 'QUESTION_IN_PROGRESS' ? 409 : 400, headers: privateHeaders });
+    const code = ['INSUFFICIENT_AI_CREDITS', 'QUESTION_IN_PROGRESS','AI_QUOTA_EXHAUSTED'].includes(error.message) ? error.message : 'INVALID_REQUEST';
+    return Response.json({ error: code, quota: (await aiQuota(member)) }, { status: code === 'AI_QUOTA_EXHAUSTED' ? 429 : code === 'INSUFFICIENT_AI_CREDITS' ? 402 : code === 'QUESTION_IN_PROGRESS' ? 409 : 400, headers: privateHeaders });
   }
   if (reservation.kind === 'cached') return Response.json({ ...reservation.response, quota: reservation.quota }, { headers: privateHeaders });
   if (reservation.kind === 'pending') return Response.json({ error: 'QUESTION_IN_PROGRESS', quota: reservation.quota }, { status: 409, headers: privateHeaders });
