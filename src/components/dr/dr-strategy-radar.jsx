@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef,useCallback } from 'react';
 import {
   Activity,
   ArrowUpRight,
@@ -230,9 +230,15 @@ function TechnicalAccordion({ scored, currentPrice }) {
   );
 }
 
-export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }) {
+export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',resultsRequest=0 }) {
   // Navigation tabs
   const [activeTab, setActiveTab] = useState(currentMarket === 'thai' ? 'thai-scanner' : 'dr-scanner');
+  const [resultsMarket,setResultsMarket]=useState(currentMarket);
+  const [resultsView,setResultsView]=useState(null);
+  const [resultSnapshots,setResultSnapshots]=useState({});
+  const receiveResults=useCallback(snapshot=>setResultSnapshots(previous=>({...previous,[snapshot.market]:snapshot})),[]);
+  const openResults=market=>{setResultsMarket(market);setResultsView(previous=>({scope:'closed',sequence:(previous?.sequence??0)+1}));setActiveTab('workflow');};
+  useEffect(()=>{if(resultsRequest>0){setResultsMarket(currentMarket);setResultsView(previous=>({scope:'closed',sequence:(previous?.sequence??0)+1}));setActiveTab('workflow');}},[resultsRequest,currentMarket]);
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'bullish' | 'buyzone' | 'highscore'
   const [ledgerFilter, setLedgerFilter] = useState('all'); // 'all' | 'dr' | 'thai' | 'buyzone' | 'tp' | 'sl'
   const [searchQuery, setSearchQuery] = useState('');
@@ -427,9 +433,13 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
     });
   }, [liveData]);
 
-  const emptyKpis={active:'—',hitTp:'—',hitSl:'—',nearTp:'—',winRate:'—',avgReturn:'—'};
-  const drKpis=liveData?.drKpis??emptyKpis;
-  const thaiKpis=liveData?.thaiKpis??emptyKpis;
+  const resultKpis=(scan,snapshot)=>{
+    const summary=snapshot?.status==='available'?snapshot.summary:null;
+    return {active:scan?.active??'—',hitTp:summary?.wins??'—',hitSl:summary?.losses??'—',nearTp:summary?.flat??'—',
+      winRate:summary?.closed?`${summary.winRate.toFixed(1)}%`:'—',avgReturn:summary?.closed?`${summary.averageReturnPercent>=0?'+':''}${summary.averageReturnPercent.toFixed(2)}%`:'—'};
+  };
+  const drKpis=resultKpis(liveData?.drKpis,resultSnapshots.dr);
+  const thaiKpis=resultKpis(liveData?.thaiKpis,resultSnapshots.thai);
 
   // Audio Voice Playback Handlers
   const handlePlayMorningBriefing = () => {
@@ -787,11 +797,12 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
       {/* Main Tabs Navigation */}
       <div className={styles.navTabs}>
         <button type="button" onClick={()=>showAllScans('all')} className={`${styles.tabBtn} ${activeTab==='all-scans'?styles.tabBtnActive:''}`}>สแกนรวม ({scoredThaiStocks.length+scoredDRs.length})</button>
-        <button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>รอเข้า / ติดตาม / แพ้ชนะ</button>
+        <button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>ศูนย์สัญญาณ / 100 ไม้ล่าสุด</button>
         <button
           type="button"
           onClick={() => {
             setActiveTab('dr-scanner');
+            setResultsMarket('dr');
             setFilterMode('all');
           }}
           className={`${styles.tabBtn} ${activeTab === 'dr-scanner' ? styles.tabBtnActive : ''}`}
@@ -805,6 +816,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
           type="button"
           onClick={() => {
             setActiveTab('thai-scanner');
+            setResultsMarket('thai');
             setFilterMode('all');
           }}
           className={`${styles.tabBtn} ${activeTab === 'thai-scanner' ? styles.tabBtnActive : ''}`}
@@ -849,7 +861,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
         </button>
       </div>
 
-      {activeTab==='workflow'&&<SignalWorkflow market={currentMarket} onSelect={symbol=>handleGoToChart({symbol,market:currentMarket})}/>}
+      <div hidden={activeTab!=='workflow'}><SignalWorkflow market={resultsMarket} onSelect={(symbol,market)=>handleGoToChart({symbol,market:market??resultsMarket})} viewRequest={resultsView} onSnapshot={receiveResults}/></div>
       {activeTab==='all-scans'&&<section className={styles.workflowPanel} aria-label="สแกนรวม">
         <h3>สแกนรวม · ทุกตัวในชุด Radar</h3>
         <p>หน้าเด่นแสดง 5 ตัว ส่วนที่เกินยังอยู่ที่นี่ · รายการเฝ้าดูไม่ใช่การยืนยัน Entry · จำนวนหุ้นที่สแกนไม่เปลี่ยนตามจำนวนที่แสดง</p>
@@ -936,31 +948,33 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
               <span className={styles.kpiSub}>เข้าเกณฑ์จัดอันดับ</span>
             </div>
             <div className={styles.kpiCard}>
-              <span className={styles.kpiLabel}>HIT TP</span>
+              <span className={styles.kpiLabel}>ชนะ · ไม้ปิด</span>
               <strong className={styles.kpiVal} style={{ color: '#10b981' }}>{drKpis.hitTp}</strong>
-              <span className={styles.kpiSub}>ถึงเป้ากำไร TP1/2</span>
+              <span className={styles.kpiSub}>จากบันทึกผล 100 ไม้ล่าสุด</span>
             </div>
             <div className={styles.kpiCard}>
-              <span className={styles.kpiLabel}>HIT SL</span>
+              <span className={styles.kpiLabel}>แพ้ · ไม้ปิด</span>
               <strong className={styles.kpiVal} style={{ color: '#ef4444' }}>{drKpis.hitSl}</strong>
-              <span className={styles.kpiSub}>ตัดขาดทุนตามวินัย</span>
+              <span className={styles.kpiSub}>จากบันทึกผลชุดเดียวกัน</span>
             </div>
             <div className={styles.kpiCard}>
-              <span className={styles.kpiLabel}>NEAR TP</span>
+              <span className={styles.kpiLabel}>เท่าทุน · ไม้ปิด</span>
               <strong className={styles.kpiVal} style={{ color: '#38bdf8' }}>{drKpis.nearTp}</strong>
-              <span className={styles.kpiSub}>ใกล้ถึงเป้า (&lt;2.0%)</span>
+              <span className={styles.kpiSub}>ไม่รวมไม้ที่ยังเปิดอยู่</span>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>WIN RATE</span>
               <strong className={styles.kpiVal} style={{ color: '#a855f7' }}>{drKpis.winRate}</strong>
-              <span className={styles.kpiSub}>รอผลไม้ปิดจากบันทึกระบบ</span>
+              <span className={styles.kpiSub}>จากผลปิดล่าสุด ไม่ใช่คะแนนสแกน</span>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>AVG RETURN</span>
               <strong className={styles.kpiVal} style={{ color: '#10b981' }}>{drKpis.avgReturn}</strong>
-              <span className={styles.kpiSub}>การเปลี่ยนแปลงแท่งล่าสุด</span>
+              <span className={styles.kpiSub}>เฉลี่ยผล 100 ไม้ล่าสุด</span>
             </div>
           </div>
+
+          <div className={styles.workflowControls}><span>ผลปิด {resultSnapshots.dr?.summary?.closed??'—'}/100 ไม้ · ใช้ตัวกรองกลยุทธ์เดียวกับศูนย์สัญญาณ</span><button type="button" onClick={()=>openResults('dr')}>ดูบันทึก 100 ไม้ล่าสุด ↗</button></div>
 
           {/* Methodology Card */}
           <div className={styles.methodologyCard}>
@@ -1211,32 +1225,33 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr' }
               <span className={styles.kpiSub}>เข้าเกณฑ์จัดอันดับ</span>
             </div>
             <div className={styles.kpiCard}>
-              <span className={styles.kpiLabel}>HIT TP</span>
+              <span className={styles.kpiLabel}>ชนะ · ไม้ปิด</span>
               <strong className={styles.kpiVal} style={{ color: '#10b981' }}>{thaiKpis.hitTp}</strong>
-              <span className={styles.kpiSub}>ถึงเป้ากำไร TP1/2</span>
+              <span className={styles.kpiSub}>จากบันทึกผล 100 ไม้ล่าสุด</span>
             </div>
             <div className={styles.kpiCard}>
-              <span className={styles.kpiLabel}>HIT SL</span>
+              <span className={styles.kpiLabel}>แพ้ · ไม้ปิด</span>
               <strong className={styles.kpiVal} style={{ color: '#ef4444' }}>{thaiKpis.hitSl}</strong>
-              <span className={styles.kpiSub}>ตัดขาดทุนตามวินัย</span>
+              <span className={styles.kpiSub}>จากบันทึกผลชุดเดียวกัน</span>
             </div>
             <div className={styles.kpiCard}>
-              <span className={styles.kpiLabel}>NEAR TP</span>
+              <span className={styles.kpiLabel}>เท่าทุน · ไม้ปิด</span>
               <strong className={styles.kpiVal} style={{ color: '#38bdf8' }}>{thaiKpis.nearTp}</strong>
-              <span className={styles.kpiSub}>ใกล้เป้า (&lt;2.0%)</span>
+              <span className={styles.kpiSub}>ไม่รวมไม้ที่ยังเปิดอยู่</span>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>WIN RATE</span>
               <strong className={styles.kpiVal} style={{ color: '#a855f7' }}>{thaiKpis.winRate}</strong>
-              <span className={styles.kpiSub}>รอผลไม้ปิดจากบันทึกระบบ</span>
+              <span className={styles.kpiSub}>จากผลปิดล่าสุด ไม่ใช่คะแนนสแกน</span>
             </div>
             <div className={styles.kpiCard}>
               <span className={styles.kpiLabel}>AVG RETURN</span>
               <strong className={styles.kpiVal} style={{ color: '#10b981' }}>{thaiKpis.avgReturn}</strong>
-              <span className={styles.kpiSub}>การเปลี่ยนแปลงแท่งล่าสุด</span>
+              <span className={styles.kpiSub}>เฉลี่ยผล 100 ไม้ล่าสุด</span>
             </div>
           </div>
 
+          <div className={styles.workflowControls}><span>ผลปิด {resultSnapshots.thai?.summary?.closed??'—'}/100 ไม้ · ใช้ตัวกรองกลยุทธ์เดียวกับศูนย์สัญญาณ</span><button type="button" onClick={()=>openResults('thai')}>ดูบันทึก 100 ไม้ล่าสุด ↗</button></div>
           {/* Methodology Card */}
           <div className={styles.methodologyCard} style={{ background: 'rgba(2, 132, 199, 0.08)', borderColor: 'rgba(56, 189, 248, 0.3)' }}>
             <Zap size={22} className={styles.methodologyIcon} style={{ color: '#38bdf8' }} />

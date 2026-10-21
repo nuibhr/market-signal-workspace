@@ -24,6 +24,16 @@ test('resolved partial fills and net R determine outcomes without rounding trade
  assert.equal(projectTrade({...swing('bad'),exitedAt:null},'swing').status,'REVIEW');
  assert.equal(legacyStrategy({setupType:'OPENING_RANGE_BREAKOUT'}),'orb');
 });
+test('the latest 100 complete exits stay identical across lifecycle/status views and focus the exact off-page trade',()=>{
+ const closed=Array.from({length:105},(_,i)=>projectTrade({...swing(`rolling-${String(i).padStart(3,'0')}`),status:i%2?'STOP':'CLOSED',netR:i%2?-1:1,fills:[{fraction:1,price:i%2?97:103}],exitedAt:new Date(Date.parse(end)+i*1000).toISOString()},'swing'));
+ const part={ledger:'swing',closed:[...closed,closed[104]],rows:[],total:0,counts:{WAITING:2,OPEN:1,RUNNER:1,CLOSED:53,STOP:52}};
+ const baseline=combineResults([part],{scope:'closed'});
+ assert.equal(baseline.summary.closed,100);assert.equal(baseline.recentTrades[0].id,'rolling-104');assert.equal(baseline.recentTrades.at(-1).id,'rolling-005');
+ for(const scope of ['history','waiting','tracking','review'])assert.deepEqual(combineResults([part],{scope}).summary,baseline.summary);
+ const stops=combineResults([part],{scope:'closed',status:'STOP'});assert.equal(stops.total,50);assert.deepEqual(stops.summary,baseline.summary);
+ const selected=combineResults([part],{scope:'closed',tradeKey:'swing:rolling-005'});assert.equal(selected.page,15);assert.equal(selected.selectedKey,'swing:rolling-005');assert.ok(selected.signals.some(r=>r.key===selected.selectedKey));assert.deepEqual(selected.summary,baseline.summary);
+ assert.equal(combineResults([part],{scope:'closed',tradeKey:'swing:private-record'}).selectedKey,null);
+});
 test('real source ledgers remain separate and filters share the same statistics',async()=>{
  await insertReferenceSignal(swing('swing-one'));
  const legacy=await createSignal({market:'thai',symbol:'ORB',sessionDay:'2026-10-20',plan:{side:'LONG',entry:100,stopLoss:98,tp1:104,setupType:'OPENING_RANGE_BREAKOUT'},source:'fixture'});
@@ -47,8 +57,22 @@ test('server pagination retains old history and excludes other members CFD and U
  assert.equal(a.total,10);assert.equal(a.signals.length,7);assert.equal(b.signals.length,3);
  assert.ok(b.signals.every(r=>!a.signals.some(x=>x.key===r.key)));
  assert.equal((await tradeResults('fixture',{strategy:'scalp',market:'forex'},deps)).total,0);
+ const denied=await tradeResults('fixture',{strategy:'swing',market:'us',scope:'closed',tradeKey:'swing:private-profile'},deps);assert.equal(denied.selectedKey,null);assert.equal(denied.summary.closed,0);
  const cloud=await tradeResults('fixture',{strategy:'all'},{env:{STORAGE_PROVIDER:'d1',FOREX_MT5_ENABLED:'true'},getStore:()=>{throw Error('must not open SQLite');}});
  assert.ok(cloud.sources.some(s=>s.status==='NODE_RECEIVER_REQUIRED'));assert.ok(cloud.signals.length>0);
+});
+test('server lifecycle queues share one rolling sample and incomplete closures do not displace valid older results',async()=>{
+ for(let i=0;i<105;i++)await insertReferenceSignal({...swing(`dr-good-${i}`),market:'dr',exitedAt:new Date(Date.parse(end)+i*1000).toISOString()});
+ for(let i=0;i<110;i++)await insertReferenceSignal({...swing(`dr-invalid-${i}`),market:'dr',plan:{...swing('x').plan,netRiskPerUnit:0},exitedAt:new Date(Date.parse(end)+1000*1000+i*1000).toISOString()});
+ for(const status of ['WAITING','OPEN','RUNNER','EXPIRED','REVIEW'])await insertReferenceSignal({...swing(`dr-state-${status}`),market:'dr',status,enteredAt:status==='WAITING'?null:start,exitedAt:null,netR:null,fills:[]});
+ const closed=await tradeResults('fixture',{market:'dr',strategy:'swing',scope:'closed'},deps);assert.equal(closed.summary.closed,100);assert.equal(closed.total,100);assert.ok(closed.recentTrades.every(r=>r.id.startsWith('dr-good-')));assert.equal(closed.recentTrades.at(-1).id,'dr-good-5');
+ for(const [scope,expected,total] of [['waiting',['WAITING'],1],['tracking',['OPEN','RUNNER'],2],['review',['EXPIRED','REVIEW'],2]]){
+  const data=await tradeResults('fixture',{market:'dr',strategy:'swing',scope},deps);assert.equal(data.total,total);assert.ok(data.signals.every(r=>expected.includes(r.status)));assert.deepEqual(data.summary,closed.summary);assert.equal(data.counts.WAITING,1);
+ }
+ const waiting=await tradeResults('fixture',{market:'dr',strategy:'swing',scope:'history',status:'WAITING'},deps);assert.equal(waiting.total,1);assert.deepEqual(waiting.summary,closed.summary);
+ const stop=await tradeResults('fixture',{market:'dr',strategy:'swing',scope:'closed',status:'STOP'},deps);assert.equal(stop.total,0);assert.deepEqual(stop.summary,closed.summary);
+ const focus=await tradeResults('fixture',{market:'dr',strategy:'swing',scope:'closed',tradeKey:'swing:dr-good-5'},deps);assert.equal(focus.page,15);assert.equal(focus.selectedKey,'swing:dr-good-5');assert.ok(focus.signals.find(r=>r.id==='dr-good-5')?.events.length);
+ const history=await tradeResults('fixture',{market:'dr',strategy:'swing',scope:'history',page:31},deps);assert.equal(history.total,220);assert.ok(history.signals.length>0,'Older history remains accessible beyond the rolling window');
 });
 test('the combined results use the existing D1 schema without opening the Node ledger',async()=>{
  const {writeFileSync}=await import('node:fs');

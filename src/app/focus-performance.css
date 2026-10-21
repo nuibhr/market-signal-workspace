@@ -91,6 +91,7 @@
 .trade-tape-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 13px; font-size: 12px; color: #b8cad6; }.trade-tape-legend span { display: flex; gap: 6px; align-items: center; }.trade-tape-legend i { width: 8px; height: 8px; border-radius: 3px; }.trade-tape-legend small { margin-left: auto; color: #9cb0c3; font-size: 10px; }
 .rolling-note { padding-top: 15px; margin: 15px 0 0; border-top: 1px solid #ffffff0d; color: #9eb3c6; line-height: 1.8; font-size: 11px; }
 .results-scope { display: flex; gap: 7px; padding: 0 18px 18px; flex-wrap: wrap; }.results-scope button { font: inherit; font-size: 12px; min-height: 42px; border: 1px solid #ffffff14; border-radius: 10px; color: #b5c7d5; background: #ffffff04; padding: 9px 12px; cursor: pointer; }.results-scope button[aria-pressed=true] { color: var(--market-accent,#8fd7b0); border-color: rgba(var(--market-rgb),.3); background: rgba(var(--market-rgb),.1); }
+.trade-tape button[aria-pressed=true] { outline: 2px solid var(--market-accent,#8fd7b0); outline-offset: 2px; }
 
 /* Decoration moves at two scroll speeds; charts, forms, fixed menus, and text keep native scrolling. */
 .market-workspace .scroll-depth { --parallax-progress: 0; display: block; opacity: .7; background: none; }

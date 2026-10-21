@@ -1,6 +1,8 @@
 import {recordedOutcome,summarizeRecordedTrades} from '../auto-pick/signal-performance.mjs';
 export const STRATEGIES=['all','swing','orb','eod','scalp'];
 export const RESULT_STATES=['all','WAITING','OPEN','RUNNER','CLOSED','STOP','EXPIRED','REVIEW'];
+export const RESULT_SCOPES=['closed','waiting','tracking','review','history'];
+export const RESULT_SCOPE_STATES={waiting:['WAITING','WAITING_FOR_ENTRY'],tracking:['OPEN','RUNNER'],review:['EXPIRED','REVIEW','AMBIGUOUS']};
 export function legacyStrategy(plan) {
  const setup=plan?.setupType??plan?.strategy;
  return ['OPENING_RANGE_BREAKOUT','DR_ORB_15M'].includes(setup)?'orb':['DAILY_CLOSE_BREAKOUT','US_EOD'].includes(setup)?'eod':'legacy';
@@ -29,17 +31,18 @@ export function projectTrade(raw,ledger) {
  return row;
 }
 export const resultOutcome=row=>row.outcome??null;
-export function combineResults(parts,{page=1,pageSize=7,scope='history'}={}) {
+export function combineResults(parts,{page=1,pageSize=7,scope='history',status='all',tradeKey=null}={}) {
  const date=r=>Date.parse(scope==='closed'?r.exitedAt:r.publishedAt)||0;
  const unique=rows=>[...new Map(rows.map(r=>[r.key,r])).values()];
  const sort=rows=>rows.sort((a,b)=>date(b)-date(a)||a.key.localeCompare(b.key));
  const closed=unique(parts.flatMap(p=>p.closed??[])).filter(r=>r.outcome).sort((a,b)=>Date.parse(b.exitedAt)-Date.parse(a.exitedAt)||a.key.localeCompare(b.key)).slice(0,100);
  const trades=closed.map(r=>({...r,...r.outcome}));
- const total=scope==='closed'?trades.length:parts.reduce((n,p)=>n+p.total,0);
- const pages=Math.max(1,Math.ceil(total/pageSize)),current=Math.max(1,Math.min(page,pages));
- const rows=scope==='closed'?closed:sort(unique(parts.flatMap(p=>p.rows)));
+ const rows=scope==='closed'?closed.filter(r=>status==='all'||r.status===status):sort(unique(parts.flatMap(p=>p.rows)));
+ const total=scope==='closed'?rows.length:parts.reduce((n,p)=>n+p.total,0);
+ const selectedIndex=scope==='closed'&&tradeKey?rows.findIndex(r=>r.key===tradeKey):-1;
+ const pages=Math.max(1,Math.ceil(total/pageSize)),current=selectedIndex>=0?Math.floor(selectedIndex/pageSize)+1:Math.max(1,Math.min(page,pages));
  const counts={};for(const part of parts)for(const [status,n] of Object.entries(part.counts??{}))counts[resultStatus(status)]=(counts[resultStatus(status)]??0)+n;
- return {status:'available',signals:rows.slice((current-1)*pageSize,current*pageSize),total,page:current,pageSize,scope,counts,
+ return {status:'available',signals:rows.slice((current-1)*pageSize,current*pageSize),total,page:current,pageSize,scope,counts,selectedKey:selectedIndex>=0?rows[selectedIndex].key:null,
   summary:{...summarizeRecordedTrades(trades),entered:parts.reduce((n,p)=>n+(p.entered??0),0)},recentTrades:trades,
   sources:parts.map(p=>({ledger:p.ledger,status:p.status??'available'}))};
 }

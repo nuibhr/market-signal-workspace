@@ -1,7 +1,7 @@
 'use client';
 import SignalPerformance from './signal-performance.jsx';
 import {resultOutcome} from '../monitor/results.mjs';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Activity, Bell, CalendarDays, CheckCircle2, ChevronDown, ChevronUp, Copy, ExternalLink, Layers, Sparkles, TrendingUp, X, Zap } from 'lucide-react';
 
 const MARKETS = [
@@ -23,6 +23,7 @@ const STRATEGIES = [
 
 const STATUSES=[['all','ทุกสถานะ'],['WAITING','รอเข้า'],['OPEN','เข้าแล้ว'],['RUNNER','ปิดบางส่วน'],['CLOSED','ปิดครบ'],['STOP','ปิดที่ Stop'],['EXPIRED','ไม่เข้า'],['REVIEW','พักตรวจ']];
 const STATUS_LABEL=Object.fromEntries(STATUSES);
+const SCOPES=[['waiting','รอเข้า'],['tracking','กำลังติดตาม'],['closed','100 ไม้ที่ปิดล่าสุด'],['review','หมดอายุ / พักตรวจ'],['history','ประวัติทั้งหมด']];
 
 const EVENT_LABEL = {
   PICK_READY: 'พบแผน',
@@ -79,17 +80,29 @@ export default function SignalResults({
   sectionId = 'section-results',
   isModal = false,
   onClose = null,
+  initialScope = 'closed',
+  viewRequest = null,
+  onSnapshot = null,
 }) {
   const [strategy, setStrategy] = useState('all');
-  const [market, setMarket] = useState(fixedMarket ?? 'all');
+  const [selectedMarket, setMarket] = useState(fixedMarket ?? 'all');
+  const market=fixedMarket??selectedMarket;
   const [status, setStatus] = useState('all');
-  const [scope, setScope] = useState('closed');
+  const [scope, setScope] = useState(initialScope);
   const [page, setPage] = useState(1);
   const [revision, setRevision] = useState(0);
   const [data, setData] = useState(null);
   const [error, setError] = useState(false);
   const [expanded, setExpanded] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [tradeFocus,setTradeFocus]=useState(null);
+  const pendingFocus=useRef(null);
+  useEffect(()=>{if(expanded)document.getElementById(`${sectionId}-trade-${expanded}`)?.scrollIntoView({behavior:'smooth',block:'nearest'});},[expanded,sectionId]);
+  function resetSelection(){setTradeFocus(null);pendingFocus.current=null;setExpanded(null);setPage(1);}
+  useEffect(()=>{
+    if(!viewRequest)return;
+    setScope(viewRequest.scope??'closed');setStatus('all');resetSelection();setRevision(v=>v+1);
+  },[viewRequest]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -105,6 +118,7 @@ export default function SignalResults({
           strategy,
           page: String(page),
         });
+        if(tradeFocus&&scope==='closed')queryParams.set('trade',tradeFocus);
         const response = await fetch(`/api/trade-results?${queryParams.toString()}`, {
           cache: 'no-store',
           signal: controller.signal,
@@ -113,9 +127,11 @@ export default function SignalResults({
         if (!controller.signal.aborted) {
           setData(payload);
           setError(!response.ok);
+          onSnapshot?.({...payload,market,strategy});
+          if(pendingFocus.current&&payload.selectedKey===pendingFocus.current){setExpanded(payload.selectedKey);pendingFocus.current=null;}
         }
       } catch {
-        if (!controller.signal.aborted) setError(true);
+        if (!controller.signal.aborted){setData(null);setError(true);onSnapshot?.({status:'unavailable',market,strategy});}
       } finally {
         loading = false;
       }
@@ -124,18 +140,22 @@ export default function SignalResults({
     setError(false);
     setExpanded(null);
     setCopied(false);
+    onSnapshot?.({status:'loading',market,strategy});
     refresh();
-    const interval = window.setInterval(refresh, 60_000);
+    const interval = window.setInterval(refresh, 15_000);
     return () => {
       controller.abort();
       window.clearInterval(interval);
     };
-  }, [market, status, scope, strategy, page, revision]);
+  }, [market, status, scope, strategy, page, revision,tradeFocus,onSnapshot]);
 
   const summary = data?.summary;
   const rows = data?.signals ?? [];
   const closed = summary?.closed ?? 0;
   const currentStrategyObj = STRATEGIES.find(s => s.id === strategy) || STRATEGIES[0];
+  function inspectRecordedTrade(row){
+    pendingFocus.current=row.key;setTradeFocus(row.key);setScope('closed');setStatus('all');setPage(1);setRevision(v=>v+1);
+  }
 
   async function copyActualResults() {
     const text = `Nugaom AI Pick · ผลสัญญาณ 100 ไม้ที่ปิดล่าสุด\nระบบ/สไตล์: ${currentStrategyObj.label}\nตลาด: ${
@@ -159,14 +179,14 @@ export default function SignalResults({
     <section
       id={sectionId}
       className={`performance-section signal-results ${isModal ? 'is-modal-view' : ''}`}
-      aria-labelledby="signal-results-title"
+      aria-labelledby={`${sectionId}-title`}
     >
       <div className="section-heading">
         <div>
           <div className="eyebrow">VERIFIED FORWARD LEDGER</div>
-          <h2 id="signal-results-title">ประวัติ &amp; ผลงานสัญญาณแยกตามกลยุทธ์</h2>
+          <h2 id={`${sectionId}-title`}>ศูนย์สัญญาณ · ติดตามและผล 100 ไม้ล่าสุด</h2>
           <p>
-            ราคาเข้าและออกอ้างอิงจากแท่งราคาที่ระบบตรวจพบจริง · บันทึกแบบ Immutable ไม่สร้างผลย้อนหลัง (No Synthetic Wins)
+            รอเข้า → กำลังติดตาม → ปิดครบ · ใช้รหัสไม้และบันทึกชุดเดียวกัน กดช่องผลเพื่อดูเหตุการณ์ของไม้นั้น
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -194,7 +214,7 @@ export default function SignalResults({
               className={`ng-strategy-tab-btn ${active ? 'is-active' : ''}`}
               onClick={() => {
                 setStrategy(item.id);
-                setPage(1);
+                resetSelection();
               }}
             >
               <Icon size={16} />
@@ -229,7 +249,7 @@ export default function SignalResults({
       {data?.status === 'available' && (
         <>
           <p className="results-period">
-            สรุป 100 ไม้ที่ปิดล่าสุด ({currentStrategyObj.label}) · มีบันทึก {closed} ไม้ ·{' '}
+            {MARKETS.find(([id])=>id===market)?.[1]} · {currentStrategyObj.label} · ผลปิด {closed}/100 ไม้ ·{' '}
             {summary.from ? at(summary.from) : 'ยังไม่มีผลปิด'}
             {summary.to ? ` – ${at(summary.to)}` : ''}
           </p>
@@ -268,7 +288,7 @@ export default function SignalResults({
                 {Number.isFinite(summary.averageR)
                   ? `${summary.averageR.toFixed(2)}R เฉลี่ย`
                   : 'ยังไม่มีระยะความเสี่ยงที่คำนวณ R ได้'}{' '}
-                · ก่อนค่าใช้จ่าย
+                · ต้นทุนตามป้ายของแต่ละระบบ
               </span>
             </article>
           </div>
@@ -279,15 +299,15 @@ export default function SignalResults({
             </button>
           </div>
 
-          <SignalPerformance summary={summary} trades={data.recentTrades} onSelect={onSelect} />
+          <SignalPerformance summary={summary} trades={data.recentTrades} onSelect={onSelect} onInspect={inspectRecordedTrade} selectedKey={expanded} />
 
           <div className="panel history-panel">
             <div className="history-heading">
               <div>
-                <h2>รายการสัญญาณจากระบบ ({currentStrategyObj.label})</h2>
+                  <h2>{SCOPES.find(([id])=>id===scope)?.[1]} · {currentStrategyObj.label}</h2>
                 <p>
                   หน้าละ 7 รายการ · เข้าแล้วทั้งหมด {summary.entered} · เปิดอยู่ {data.counts?.OPEN ?? 0} · รอเข้า{' '}
-                  {data.counts?.WAITING_FOR_ENTRY ?? 0}
+                  {data.counts?.WAITING ?? 0} · ตัวกรองสถานะเปลี่ยนเฉพาะรายการ สรุปยังอิงไม้ปิดชุดเดียวกัน
                 </p>
               </div>
               <div className="results-filters">
@@ -297,7 +317,7 @@ export default function SignalResults({
                   aria-label="เลือกตลาด"
                   onChange={event => {
                     setMarket(event.target.value);
-                    setPage(1);
+                    resetSelection();
                     setCopied(false);
                   }}
                 >
@@ -313,11 +333,11 @@ export default function SignalResults({
                   aria-label="เลือกสถานะ"
                   onChange={event => {
                     setStatus(event.target.value);
-                    setPage(1);
+                    resetSelection();
                   }}
                 >
                   {STATUSES.filter(
-                    ([id]) => scope === 'history' || ['all', 'CLOSED', 'STOP'].includes(id)
+                    ([id]) => scope==='history'||id==='all'||({closed:['CLOSED','STOP'],waiting:['WAITING'],tracking:['OPEN','RUNNER'],review:['EXPIRED','REVIEW']})[scope]?.includes(id)
                   ).map(([id, label]) => (
                     <option key={id} value={id}>
                       {label}
@@ -328,17 +348,14 @@ export default function SignalResults({
             </div>
 
             <div className="results-scope" aria-label="ชุดประวัติสัญญาณ">
-              {[
-                ['closed', '100 ไม้ที่ปิดล่าสุด'],
-                ['history', 'ประวัติทั้งหมด / รอเข้า'],
-              ].map(([id, label]) => (
+              {SCOPES.map(([id, label]) => (
                 <button
                   key={id}
                   aria-pressed={scope === id}
                   onClick={() => {
                     setScope(id);
                     setStatus('all');
-                    setPage(1);
+                    resetSelection();
                   }}
                 >
                   {label}
@@ -391,7 +408,7 @@ export default function SignalResults({
                             </span>
                           </td>
                           <td>
-                            <button className="results-symbol" onClick={() => onSelect?.(row.symbol)}>
+                            <button className="results-symbol" onClick={() => onSelect?.(row.symbol,row.market)}>
                               {row.symbol} ↗
                             </button>
                             <span className="asset-market">
@@ -428,10 +445,11 @@ export default function SignalResults({
                           </td>
                         </tr>
                         {expanded === row.key && (
-                          <tr className="results-events-row">
+                          <tr className="results-events-row" id={`${sectionId}-trade-${row.key}`}>
                             <td colSpan={8}>
                               <div className="results-events">
                                 <strong>เส้นทางสัญญาณ · {row.symbol}</strong>
+                                <span>รหัสไม้ {row.key} · {row.costBasis==='before-costs'?'Legacy · ก่อนต้นทุน':'ผลหลังต้นทุนอ้างอิงตามแผน'}</span>
                                 <span>เผยแพร่ {at(row.publishedAt)}</span>
                                 {row.events?.length ? (
                                   <ol>
@@ -465,12 +483,12 @@ export default function SignalResults({
                 คำนวณจากราคาอ้างอิงและต้นทุนอ้างอิงของแต่ละระบบ (Legacy ก่อนต้นทุน)
               </span>
               <div>
-                <button disabled={page <= 1} onClick={() => setPage(value => value - 1)}>
+                <button disabled={data.page <= 1} onClick={() => {setTradeFocus(null);pendingFocus.current=null;setPage(data.page-1);}}>
                   ก่อนหน้า
                 </button>
                 <button
-                  disabled={page * data.pageSize >= data.total}
-                  onClick={() => setPage(value => value + 1)}
+                  disabled={data.page * data.pageSize >= data.total}
+                  onClick={() => {setTradeFocus(null);pendingFocus.current=null;setPage(data.page+1);}}
                 >
                   ถัดไป
                 </button>

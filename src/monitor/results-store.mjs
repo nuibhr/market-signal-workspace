@@ -3,33 +3,45 @@ import {SIGNAL_RULE} from '../signals/model.mjs';
 import {receiverConfiguration} from '../forex-mt5/runtime-policy.mjs';
 import {storeFor} from '../forex-mt5/store.mjs';
 import {forwardEvents} from './view.mjs';
-import {projectTrade,combineResults,resultStatus} from './results.mjs';
+import {projectTrade,combineResults,RESULT_SCOPE_STATES} from './results.mjs';
 const rawStates=status=>({WAITING:['WAITING','WAITING_FOR_ENTRY'],OPEN:['OPEN'],RUNNER:['RUNNER'],CLOSED:['CLOSED','TARGET','EXIT'],STOP:['STOP'],EXPIRED:['EXPIRED'],REVIEW:['REVIEW','AMBIGUOUS']})[status]??[];
 // Every query remains in the authorized source scope. No ledger rows are copied or mutated.
-async function readSource({ledger,db=storage,where=[],params=[],market,status='all',limit=107}) {
+async function readSource({ledger,db=storage,where=[],params=[],market,status='all',scope='history',limit=107}) {
  const day=ledger==='daytrade',swing=ledger==='swing',table=day?'daytrade_forward':swing?'signal_desk_signals':'auto_pick_signals';
  const body=day?'body':'payload_json',field=name=>day?`json_extract(body,'$.${name}')`:swing?`json_extract(payload_json,'$.${name}')`:({publishedAt:'published_at',enteredAt:'entered_at',exitedAt:'exited_at',entryPrice:'entry_price',exitPrice:'exit_price'})[name]??name;
  const statusField=day?field('status'):'status',marketField=day?field('market'):'market';
  if(market!=='all'){where.push(`${marketField}=?`);params.push(market);}
- if(status!=='all'){const states=rawStates(status);where.push(`${statusField} IN (${states.map(()=>'?').join(',')})`);params.push(...states);}
  const base=where.length?where.join(' AND '):'1=1';
+ // Browsing a lifecycle state never changes the market/strategy's closed-trade sample.
+ const rowFilters=[base],rowParams=[...params];
+ for(const states of [status==='all'?null:rawStates(status),RESULT_SCOPE_STATES[scope]])if(states){rowFilters.push(`${statusField} IN (${states.map(()=>'?').join(',')})`);rowParams.push(...states);}
+ const rowWhere=rowFilters.join(' AND ');
  const resolved=day||swing?`${statusField} IN ('CLOSED','STOP') AND json_type(${body},'$.netR') IN ('integer','real')`:
   `status IN ('TARGET','STOP','EXIT') AND entry_price>0 AND exit_price>0 AND julianday(exited_at)>=julianday(entered_at)`;
  const order=field('publishedAt'),exitOrder=field(day?'exitTime':'exitedAt');
  const parse=r=>{if(day||swing)return projectTrade(JSON.parse(r[body]),ledger);return projectTrade({id:r.id,market:r.market,symbol:r.symbol,status:r.status,publishedAt:r.published_at,enteredAt:r.entered_at,exitedAt:r.exited_at,entryPrice:r.entry_price,exitPrice:r.exit_price,plan:JSON.parse(r.plan_json)},ledger);};
+ const readClosed=async()=>{
+  const valid=[];
+  for(let offset=0;valid.length<100;offset+=100){
+   const batch=await db.all(`SELECT * FROM ${table} WHERE ${base} AND ${resolved} ORDER BY ${exitOrder} DESC,id LIMIT 100 OFFSET ?`,...params,offset);
+   valid.push(...batch.map(parse).filter(r=>r.outcome));
+   if(batch.length<100)break;
+  }
+  return valid.slice(0,100);
+ };
  const [rows,closed,count,groups,entered]=await Promise.all([
-  db.all(`SELECT * FROM ${table} WHERE ${base} ORDER BY ${order} DESC,id LIMIT ?`,...params,limit),
-  db.all(`SELECT * FROM ${table} WHERE ${base} AND ${resolved} ORDER BY ${exitOrder} DESC,id LIMIT 100`,...params),
-  db.first(`SELECT COUNT(*) AS n FROM ${table} WHERE ${base}`,...params),
+  db.all(`SELECT * FROM ${table} WHERE ${rowWhere} ORDER BY ${order} DESC,id LIMIT ?`,...rowParams,limit),
+  readClosed(),
+  db.first(`SELECT COUNT(*) AS n FROM ${table} WHERE ${rowWhere}`,...rowParams),
   db.all(`SELECT ${statusField} AS state,COUNT(*) AS n FROM ${table} WHERE ${base} GROUP BY ${statusField}`,...params),
   db.first(`SELECT COUNT(*) AS n FROM ${table} WHERE ${base} AND ${field(day?'entryTime':'enteredAt')} IS NOT NULL`,...params),
  ]);
- return {ledger,rows:rows.map(parse),closed:closed.map(parse),total:count.n,counts:Object.fromEntries(groups.map(r=>[r.state,r.n])),entered:entered.n};
+ return {ledger,rows:rows.map(parse),closed,total:count.n,counts:Object.fromEntries(groups.map(r=>[r.state,r.n])),entered:entered.n};
 }
 export async function tradeResults(memberId,options={}, {env=process.env,getStore=storeFor}={}) {
  const {market='all',strategy='all',status='all',scope='history'}=options;
  const page=Math.max(1,Math.min(10000,Math.floor(Number(options.page)||1))),pageSize=7,limit=page*pageSize+100;
- const common={market,status,limit},parts=[];
+ const common={market,status,scope,limit},parts=[];
  if(['all','swing'].includes(strategy)){
   const where=[`rule_version=?`,`(market IN ('thai','dr') AND cost_profile='standard' OR market='us' AND cost_profile IN (SELECT profile_id FROM signal_desk_profile_access WHERE member_id=?))`];
   parts.push(await readSource({ledger:'swing',...common,where,params:[SIGNAL_RULE,memberId]}));
@@ -49,7 +61,9 @@ export async function tradeResults(memberId,options={}, {env=process.env,getStor
    parts.push(await readSource({ledger:'daytrade',db,...common,where:[`scope IN (${scopes.map(()=>'?').join(',')})`,`COALESCE(json_extract(body,'$.origin'),'forward')!='replay'`],params:scopes}));
   }else parts.push({ledger:'daytrade',status:config.disabledReason||'SCANNER_DISABLED',rows:[],closed:[],total:0});
  }
- const result=combineResults(parts,{page,pageSize,scope});
+ const result=combineResults(parts,{page,pageSize,scope,status,tradeKey:options.tradeKey});
+ result.market=market;result.strategy=strategy;result.updatedAt=new Date().toISOString();
+ result.window={limit:100,market,strategy,basis:'latest-complete-exits',statusIndependent:true};
  // Only the seven displayed records load their event history; identity was authorized above.
  for(const row of result.signals){
   if(row.ledger==='daytrade'){
