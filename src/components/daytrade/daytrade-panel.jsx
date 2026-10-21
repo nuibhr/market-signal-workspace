@@ -62,6 +62,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
   const chosen=data?.market===selectedMarket&&(!symbol||data?.selected?.symbol===symbol)?data?.selected:null,latestTrade=chosen?.forward.find(t=>['WAITING','OPEN'].includes(t.status));
   const plan=latestTrade?.plan||(latestTrade?{entry:latestTrade.trigger,stop:latestTrade.stop,target:null}:chosen?.replay?.open?.plan);
   return <section className={styles.panel} id={id} aria-label={`Daytrade scanner ${market}`}>
+    {data?.policy?.status==='research-paused'&&<div className={styles.notice} role="status"><strong>Daytrade หุ้นไทย / DR อยู่ระหว่างทบทวน</strong><p>{data.policy.message}</p><Link href={`/${data.market}`}>เปิดแผนเฝ้า Swing และคำนวณงบเสี่ยง ↗</Link></div>}
     <header className={styles.heading}><div><span className={styles.eyebrow}>MARKET MVP / {MARKET_LABELS[market]}</span><h2>ตัวเด่นผ่านเกณฑ์สแกน</h2><p>สูงสุด 5 ตัว · เรียงคะแนนคุณภาพเทคนิค 1–100 · แท่งปิด 15m</p></div><button onClick={()=>{setRevision(v=>v+1);monitor?.refresh();}}>อัปเดต</button></header>
     <nav className={styles.dock} aria-label="เครื่องมือสแกน">
       {[['picks','◎ MVP · Top 5'],['chart','▥ กราฟและแผน'],['history','◷ สถิติ / ประวัติ'],['prices','≡ ติดตามราคา']].map(([key,title])=><button key={key} onClick={()=>navigate(key)} aria-pressed={view==='mvp'&&key===activeSection}>{title}</button>)}

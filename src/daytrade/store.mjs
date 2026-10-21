@@ -4,6 +4,7 @@ import { nativeTradingDay } from './calendar.mjs';
 import { thaiEquityTick } from '../analysis/thai-tick.mjs';
 import { forwardEvents } from '../monitor/view.mjs';
 import { rankSetup } from './ranking.mjs';
+import {nativeDaytradePolicy} from './native-policy.mjs';
 
 const cfdScope = connection => `mt5:${connection.owner}:${connection.server}`;
 
@@ -22,7 +23,7 @@ export function recordFailure(db,scope,asset,code,now=Date.now()) {
   db.prepare('INSERT INTO daytrade_coverage VALUES(?,?,?,?) ON CONFLICT(scope,symbol) DO UPDATE SET body=excluded.body,checked=excluded.checked')
     .run(scope,asset.symbol,JSON.stringify({symbol:asset.symbol,market:asset.market,status:'UNAVAILABLE',code}),now);
 }
-export function ingestBars(db,scope,asset,incoming,{now=Date.now(),offsetMinutes=0,source='Vantage MT5',spread=null,feeBps=0,slippageBps=2,delaySeconds=0}={}) {
+export function ingestBars(db,scope,asset,incoming,{now=Date.now(),offsetMinutes=0,source='Vantage MT5',spread=null,feeBps=0,slippageBps=2,delaySeconds=0,allowNewSignals=nativeDaytradePolicy(asset.market).allowNewSignals}={}) {
   const prior=seriesFor(db,scope,asset.symbol), incomingBars=cleanBars(incoming,now);
   const merged=new Map((prior?.bars||[]).map(b=>[b.time,b]));
   // Keep the first observed closed candle immutable for reproducible ledgers.
@@ -35,15 +36,16 @@ export function ingestBars(db,scope,asset,incoming,{now=Date.now(),offsetMinutes
   const coverage={symbol:asset.symbol,market:asset.market,status:bars.length>=SETTINGS.warmup?'READY':'WARMUP',code:bars.length>=SETTINGS.warmup?null:'NEED_60_CLOSED_15M_BARS',bars:bars.length,source};
   db.prepare('INSERT INTO daytrade_coverage VALUES(?,?,?,?) ON CONFLICT(scope,symbol) DO UPDATE SET body=excluded.body,checked=excluded.checked')
     .run(scope,asset.symbol,JSON.stringify(coverage),now);
-  advanceForward(db,scope,asset,bars,{now,offsetMinutes,costs,spreadKnown:spread!==null,delaySeconds});
+  advanceForward(db,scope,asset,bars,{now,offsetMinutes,costs,spreadKnown:spread!==null,delaySeconds,allowNewSignals});
   return coverage;
 }
-function advanceForward(db,scope,asset,bars,{now,offsetMinutes,costs,spreadKnown,delaySeconds}) {
+function advanceForward(db,scope,asset,bars,{now,offsetMinutes,costs,spreadKnown,delaySeconds,allowNewSignals}) {
   const found=db.prepare('SELECT body FROM daytrade_cursor WHERE scope=? AND symbol=?').get(scope,asset.symbol);
   const state=found?JSON.parse(found.body):{last:null,pending:null,active:null,cooldown:0};
   const previousLast=state.last;
   const save=trade=>db.prepare('INSERT INTO daytrade_forward VALUES(?,?,?) ON CONFLICT(scope,id) DO UPDATE SET body=excluded.body')
     .run(scope,trade.id,JSON.stringify(trade));
+  if(!allowNewSignals&&state.pending){save({...state.pending,status:'EXPIRED',reason:'RESEARCH_PAUSED',expiredAt:now});state.pending=null;}
   for(const b of bars.filter(b=>state.last!==null&&b.time>state.last)) {
     if(state.pending&&!state.active&&b.volume!==0&&b.time>=state.pending.publishedAt/1000){
       const p=state.pending;
@@ -67,7 +69,7 @@ function advanceForward(db,scope,asset,bars,{now,offsetMinutes,costs,spreadKnown
   // observed, recent close may publish a plan for a future bar.
   const last=bars.at(-1);
   if(last&&last.time!==state.last){state.last=last.time;}
-  if(last&&last.time!==previousLast&&!state.active&&!state.pending&&now-(last.time+900+delaySeconds)*1000<900000&&spreadKnown){
+  if(allowNewSignals&&last&&last.time!==previousLast&&!state.active&&!state.pending&&now-(last.time+900+delaySeconds)*1000<900000&&spreadKnown){
     if(state.cooldown>0)state.cooldown--;
     else {
       const setup=setupAt(asset,bars,bars.length-1,features(bars),offsetMinutes);
@@ -120,6 +122,7 @@ export function ingestScanCharts(db,row,charts,quotes,now) {
   }
 }
 export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=false,recordId=null}={}) {
+  const policy=nativeDaytradePolicy(market);
   const cfd=['us','forex'].includes(market),scope=cfd?(connection?cfdScope(connection):null):`native:${market}`;
   const instruments=connection?.snapshot?JSON.parse(connection.snapshot).instruments:[];
   const assets=cfd?cfdUniverse(instruments,market):nativeUniverse(market);
@@ -133,8 +136,8 @@ export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=fa
     const stale=last&&now-(last.time+900)*1000>30*60000;
     return {symbol:asset.symbol,name:asset.name,kind:asset.instrumentType,underlyingSymbol:asset.underlyingSymbol??null,canonical_symbol:asset.canonical_symbol??null,...data,checkedAt:row?.checked??null,
       latestBar:last?.time??null,price:last?.close??null,stale:Boolean(stale),receivedAt:series?.updated??null,quote:quotes[asset.symbol]??null,
-      side:!stale&&data.status==='READY'?latest?.side??null:null,volumeSource:asset.volumeSource,
-      ranking:!stale&&last&&(last.time+900)*1000<=now&&data.status==='READY'&&(!cfd||connection.expires>now&&now-connection.last_seen<=30000)?rankSetup(series.bars,values,latest):null,
+      side:policy.allowNewSignals&&!stale&&data.status==='READY'?latest?.side??null:null,volumeSource:asset.volumeSource,
+      ranking:policy.allowNewSignals&&!stale&&last&&(last.time+900)*1000<=now&&data.status==='READY'&&(!cfd||connection.expires>now&&now-connection.last_seen<=30000)?rankSetup(series.bars,values,latest):null,
       spreadKnown:series?.spreadKnown??false};
   });
   const chosen=compact?null:assets.find(a=>a.symbol===symbol)||assets[0],series=chosen&&seriesFor(db,scope,chosen.symbol);
@@ -142,7 +145,7 @@ export function dashboard(db,connection,market,{symbol,now=Date.now(),compact=fa
   const symbols=new Set(assets.map(a=>a.symbol));
   const forward=scope?db.prepare('SELECT body FROM daytrade_forward WHERE scope=?').all(scope).map(r=>JSON.parse(r.body)).filter(t=>symbols.has(t.symbol)).sort((a,b)=>b.publishedAt-a.publishedAt):[];
   for(const row of rows){const t=forward.find(t=>t.symbol===row.symbol&&['WAITING','OPEN'].includes(t.status));row.monitorPlan=t?{entry:t.plan?.entry??t.trigger,stop:t.plan?.stop??t.stop,target:t.plan?.target??null,side:t.side,status:t.status}:null;}
-  return {market,rule:RULE,settings:SETTINGS,source:cfd?'Vantage MT5':market==='tfex'?'TFEX Open API':'Settrade Market API',
+  return {market,rule:RULE,settings:SETTINGS,policy,source:cfd?'Vantage MT5':market==='tfex'?'TFEX Open API':'Settrade Market API',
     marketCalendar:cfd?null:nativeTradingDay(Math.floor(now/1000)),
     connection:cfd?connection?(connection.expires<=now?'expired':now-connection.last_seen>30000?'stale':'connected'):'required':'server',
     universe:rows,coverage:{total:rows.length,ready:rows.filter(r=>r.status==='READY').length,warmup:rows.filter(r=>r.status==='WARMUP').length,

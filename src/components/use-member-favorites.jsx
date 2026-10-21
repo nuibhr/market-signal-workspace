@@ -59,11 +59,14 @@ export function useMemberFavorites({ready,memberId,marketId,onNotice}) {
   },[ready,memberId,onNotice]);
   const available=ready&&state.owner===owner&&state.ready;
   const favorites=available?(memberId?state.items.filter(item=>item.market===marketId).map(item=>item.symbol):state.items):[];
-  async function toggleFavorite(symbol) {
+  const favoritesByMarket=Object.fromEntries([...new Set(ALL_ASSETS.map(a=>a.id))].map(market=>[market,available?(memberId?state.items.filter(item=>item.market===market).map(item=>item.symbol):state.items.filter(symbol=>ALL_ASSETS.some(a=>a.id===market&&a.symbol===symbol))):[]]));
+  async function toggleFavorite(symbol,requestedMarket=marketId) {
+    const targetMarket=typeof requestedMarket==='string'?requestedMarket:marketId;
+    if(!ALL_ASSETS.some(a=>a.id===targetMarket&&a.symbol===symbol)){onNotice('ไม่พบสินทรัพย์นี้ในตลาดที่เลือก');return;}
     if(!available){onNotice('กำลังโหลดหุ้นโปรด กรุณารอสักครู่');return;}
-    const key=`${owner}:${marketId}:${symbol}`;
+    const key=`${owner}:${targetMarket}:${symbol}`;
     if(pending.current.has(key))return;
-    const saved=memberId?latestState.current.items.some(item=>item.market===marketId&&item.symbol===symbol):latestState.current.items.includes(symbol);
+    const saved=memberId?latestState.current.items.some(item=>item.market===targetMarket&&item.symbol===symbol):latestState.current.items.includes(symbol);
     if(!memberId) {
       const next=saved?latestState.current.items.filter(item=>item!==symbol):[...latestState.current.items,symbol];
       publish({owner:'guest',items:next,ready:true});
@@ -81,7 +84,7 @@ export function useMemberFavorites({ready,memberId,marketId,onNotice}) {
       try {
         if(currentOwner.current!==owner)return;
         const payload=await responseItems(await fetch('/api/favorites',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({market:marketId,symbol,saved:!saved})}),memberId);
+          body:JSON.stringify({market:targetMarket,symbol,saved:!saved})}),memberId);
         if(currentOwner.current===owner) {
           publish({owner,items:payload.items,ready:true});
           onNotice(saved?`นำ ${symbol} ออกจากหุ้นโปรดแล้ว`:`บันทึก ${symbol} ตามบัญชี LINE แล้ว`);
@@ -92,5 +95,5 @@ export function useMemberFavorites({ready,memberId,marketId,onNotice}) {
     writes.current=job;
     await job;
   }
-  return {favorites,toggleFavorite};
+  return {favorites,favoritesByMarket,toggleFavorite};
 }

@@ -92,7 +92,7 @@ export default function MonitorProvider({children}) {
       const next={},legacy={},fail={};
       await Promise.all([
         ...markets.map(async market=>{try{const d=await request(`/api/daytrade?market=${market}&compact=1`);if(!disposed)next[market]=d;}catch(e){fail[market]=e.message;}}),
-        ...['thai','dr','us'].map(async market=>{try{const d=await request(`/api/signals?market=${market}`);if(!disposed)legacy[market]=d;}catch(e){if(e.message!=='MEMBERSHIP_REQUIRED')fail[`swing-${market}`]=e.message;}})
+        ...['thai','dr','us'].map(async market=>{try{const d=await request(`/api/signals?market=${market}&overview=0`);if(!disposed)legacy[market]=d;}catch(e){if(e.message!=='MEMBERSHIP_REQUIRED')fail[`swing-${market}`]=e.message;}})
       ]);
       if(disposed)return;
       const identities=new Set([...Object.values(next),...Object.values(legacy)].map(d=>d.notificationScope.split(':')[1]));
@@ -112,7 +112,7 @@ export default function MonitorProvider({children}) {
         for(const [market,page] of Object.entries(legacy)){
           try{
             const box=boxFor(page.notificationScope);
-            await receiveSignalPage({page,requestCursor:null,inbox:box,expectedScope:page.notificationScope,fetchAfter:after=>request(`/api/signals?market=${market}&after=${after}`)});
+            await receiveSignalPage({page,requestCursor:null,inbox:box,expectedScope:page.notificationScope,fetchAfter:after=>request(`/api/signals?market=${market}&after=${after}&overview=0`)});
             await consume(box);
           }catch(e){fail[`swing-${market}`]=e.message;}
         }

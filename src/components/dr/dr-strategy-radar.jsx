@@ -50,6 +50,7 @@ import {FEATURED_LIMIT,rankedRadarRows,pageRows} from '../../monitor/workflow.mj
 import ScanRules from './scan-rules.jsx';
 import SignalWorkflow from './signal-workflow.jsx';
 import WholeMarketScans from './whole-market-scans.jsx';
+import DecisionDesk from './decision-desk.jsx';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getRsiLabel(rsi) {
@@ -230,9 +231,9 @@ function TechnicalAccordion({ scored, currentPrice }) {
   );
 }
 
-export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',resultsRequest=0 }) {
+export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',resultsRequest=0,favorites=[],favoritesByMarket={},onToggleFavorite,signalAccess=null }) {
   // Navigation tabs
-  const [activeTab, setActiveTab] = useState(currentMarket === 'thai' ? 'thai-scanner' : 'dr-scanner');
+  const [activeTab, setActiveTab] = useState('decision');
   const [resultsMarket,setResultsMarket]=useState(currentMarket);
   const [resultsView,setResultsView]=useState(null);
   const [resultSnapshots,setResultSnapshots]=useState({});
@@ -274,11 +275,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
   // Sync activeTab when currentMarket prop changes
   useEffect(() => {
-    if (currentMarket === 'thai') {
-      setActiveTab('thai-scanner');
-    } else if (currentMarket === 'dr') {
-      setActiveTab('dr-scanner');
-    }
+    setActiveTab('decision');
+    setResultsMarket(currentMarket);
   }, [currentMarket]);
 
   // Live market clock
@@ -650,11 +648,11 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <span>THAI EQUITIES & DR80 STRATEGY TRACKER</span>
           </div>
           <h2 className={styles.title}>
-            เรดาร์สแกนหุ้นไทย &amp; DR <span>แยกฟีเจอร์ชัดเจน พร้อมระบบเสียงแจ้งเตือน</span>
+            แผนเฝ้าหุ้นไทย &amp; DR <span>รู้จังหวะ รู้ความเสี่ยง ติดตามได้ทั้งวัน</span>
           </h2>
           <p className={styles.subtitle}>
-            คัดกรองชุดหุ้นไทยและ DR ที่ระบุด้านล่างด้วย 4 เสาหลักทางเทคนิค (Camarilla S2-S3, EMA 25/50/75, RSI, MACD)
-            เลือกบันทึกแผนเฝ้าดูไว้ใน Picks พร้อมเสียงพูดบอกราคาเข้า, TP, SL และสถานะ
+            เลือกวางแผน Swing หลายวัน หรือเช็กราคาระหว่างวันจากหุ้นโปรด พร้อมเหตุผลที่ยังต้องรอและงบเสี่ยงต่อไม้
+            ส่วน Radar รายวันเป็นเครื่องมือศึกษาประกอบ แยกจากไม้ที่ระบบประกาศและติดตามจริง
           </p>
         </div>
 
@@ -796,6 +794,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
       <ScanRules coverage={liveData?.coverage}/>
       {/* Main Tabs Navigation */}
       <div className={styles.navTabs}>
+        <button type="button" onClick={()=>setActiveTab('decision')} className={`${styles.tabBtn} ${activeTab==='decision'?styles.tabBtnActive:''}`}>แผนเฝ้าวันนี้ · งบเสี่ยง</button>
         <button type="button" onClick={()=>showAllScans('all')} className={`${styles.tabBtn} ${activeTab==='all-scans'?styles.tabBtnActive:''}`}>สแกนรวม ({scoredThaiStocks.length+scoredDRs.length})</button>
         <button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>ศูนย์สัญญาณ / 100 ไม้ล่าสุด</button>
         <button
@@ -861,6 +860,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         </button>
       </div>
 
+      {activeTab==='decision'&&<DecisionDesk initialMarket={currentMarket} favorites={favorites} favoritesByMarket={favoritesByMarket} onToggleFavorite={onToggleFavorite} onSelect={handleGoToChart} onResults={openResults} signalAccess={signalAccess}/>}
       <div hidden={activeTab!=='workflow'}><SignalWorkflow market={resultsMarket} onSelect={(symbol,market)=>handleGoToChart({symbol,market:market??resultsMarket})} viewRequest={resultsView} onSnapshot={receiveResults}/></div>
       {activeTab==='all-scans'&&<section className={styles.workflowPanel} aria-label="สแกนรวม">
         <h3>สแกนรวม · ทุกตัวในชุด Radar</h3>

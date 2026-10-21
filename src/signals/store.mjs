@@ -3,6 +3,7 @@ import { storage, operation } from '../storage/database.mjs';
 import { resolveSwingCosts, thaiResearchCosts, drResearchCosts } from '../analysis/swing-standard.mjs';
 import { ACTIVE_SIGNAL_STATES, SIGNAL_RULE, candidateViews, signalId, summarizeSignals, referenceMark } from './model.mjs';
 import { signalUniverse } from './data.mjs';
+import {buildDecisionBrief} from './decision-brief.mjs';
 const json = row => ({ ...JSON.parse(row.payload_json), revision:row.revision });
 const fault = code => Object.assign(new Error(code), { code });
 export function defaultSignalCosts(asset) { return asset.id === 'thai' ? thaiResearchCosts(asset.sectionId?.startsWith('MAI')?'small':'large') : asset.id === 'dr' ? drResearchCosts() : null; }
@@ -73,6 +74,7 @@ export async function signalDeskFeed(memberId, { market='thai',page=1,query='',m
   const recordEvents=record?await storage.all('SELECT * FROM signal_desk_events WHERE signal_id=? ORDER BY seq',record.id):[];
   const projectEvent=(r,m)=>({...JSON.parse(r.payload_json),id:r.id,seq:r.seq,signalId:r.signal_id,ledger:'swing',side:'LONG',symbol:r.symbol,market:r.market,mode:m});
   return { status:'available',ruleVersion:SIGNAL_RULE,notificationScope:`swing:${memberId}:${market}`,market,usCosts:profile,
+    decisionBrief:buildDecisionBrief(rows),
     costs:market==='us'?profile?.costs:defaultSignalCosts({id:market}), scannedAt:new Date().toISOString(),
     rows:rows.slice((currentPage-1)*7,currentPage*7),page:currentPage,pageSize:7,totalRows:rows.length,
     coverage:{expected:universe.length,observed:snapshots.length,maximumScanAgeMinutes,available:[...bySymbol.values()].filter(s=>s.status==='AVAILABLE').length,

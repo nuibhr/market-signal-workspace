@@ -116,7 +116,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [rights, setRights] = useState(null);
   const [memberAccount, setMemberAccount] = useState(null);
   const [accountReady,setAccountReady]=useState(false);
-  const {favorites,toggleFavorite}=useMemberFavorites({ready:accountReady,memberId:memberAccount?.id,marketId,onNotice:setFavoriteNotice});
+  const {favorites,favoritesByMarket,toggleFavorite}=useMemberFavorites({ready:accountReady,memberId:memberAccount?.id,marketId,onNotice:setFavoriteNotice});
   const [accountConfigured, setAccountConfigured] = useState(false);
   const [marketQuote, setMarketQuote] = useState(null);
   const [quoteState, setQuoteState] = useState('idle');
@@ -439,6 +439,10 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               currentMarket={marketId}
               onSelectSymbol={selectAsset}
               resultsRequest={resultsRequest}
+              favorites={favorites}
+              favoritesByMarket={favoritesByMarket}
+              onToggleFavorite={toggleFavorite}
+              signalAccess={accountReady?Boolean(rights?.capabilities?.autoPickFeed):null}
             />
           )}
           {['tfex','us'].includes(marketId)&&<SignalDesk marketId={marketId} memberId={memberAccount?.id} rights={rights} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={selectAsset} loginHref={loginHref}/>}

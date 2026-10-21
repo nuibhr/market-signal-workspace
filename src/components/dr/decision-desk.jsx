@@ -1,0 +1,66 @@
+'use client';
+import {useEffect,useState} from 'react';
+import {useMonitor} from '../monitor/monitor-provider.jsx';
+import {sizeReferencePlan} from '../../signals/decision-brief.mjs';
+import {pollAfterCompletion} from '../../monitor/poll.mjs';
+import styles from './decision-desk.module.css';
+const n=(v,d=2)=>Number.isFinite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'—';
+const at=v=>v?new Date(v).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+const MODE={breakout:'ทะลุกรอบ',pullback:'ย่อแล้วฟื้น'};
+export function DecisionPlan({row,capital,riskBudget,lotSize,onCapital,onRisk,onLot}){
+  const p=row.plan,sizing=sizeReferencePlan(p,{capital:Number(capital),riskBudget:Number(riskBudget),lotSize:Number(lotSize)});
+  return <article className={styles.plan} aria-label={`แผนอ้างอิง ${row.symbol}`}>
+    <div className={styles.planHeading}><div><span>SWING STANDARD · {MODE[row.mode]}</span><h3>{row.symbol}</h3><p>{row.name}</p></div><strong>{row.category==='ready'?'ผ่านสแกน · รอประกาศไม้':'รอเงื่อนไขครบ'}</strong></div>
+    <p className={styles.timestamp}>ราคาแท่งปิด 4H {n(row.price,4)} บาท · {at(row.priceAt)} · ตรวจ {at(row.checkedAt)}</p>
+    <ul className={styles.checks}>{row.checks.map(c=><li key={c.label} data-passed={c.passed}>{c.passed?'✓':'○'} {c.label}</li>)}</ul>
+    <div className={styles.levels}>{[['ระดับเข้าแผน',p.entry],['Stop โครงสร้าง',p.stopLoss],['TP1 · ขาย 50%',p.minimumTarget]].map(([label,value])=><div key={label}><span>{label}</span><strong>{n(value,4)}</strong></div>)}</div>
+    <p className={styles.condition}>{row.mode==='breakout'?`รอ 4H ปิดเหนือ ${n(row.trigger?.breakout,4)}`:`รอย่อหา EMA20 ${n(row.trigger?.pullback,4)} และแท่ง 4H ปิดกลับ`} · RVOL ตอนตรวจ {n(row.relativeVolume)}×</p>
+    <p>ระดับและขนาดไม้ข้างล่างคำนวณจากราคาแผนตอนสแกน ยังไม่ใช่การยืนยันเข้า เมื่อเงื่อนไขครบ ระบบคำนวณแผนใหม่ก่อนประกาศ Entry</p>
+    <p>Stop ห่าง {n(p.stopPercent)}% · TP1 2R สุทธิหลังต้นทุนสมมติ · ที่เหลือ 50% ตาม Stop คุ้มทุนและ trailing</p>
+    <div className={styles.budget}><label>เงินที่จัดสรร (บาท)<input aria-label="เงินที่จัดสรร" type="number" min="1" step="100" value={capital} onChange={e=>onCapital(e.target.value)}/></label><label>ยอมเสี่ยงต่อไม้ (บาท)<input aria-label="งบเสี่ยงต่อไม้" type="number" min="1" step="50" value={riskBudget} onChange={e=>onRisk(e.target.value)}/></label><label>หน่วยต่อชุด (ปรับได้)<input aria-label="จำนวนหน่วยต่อชุด" type="number" min="1" step="1" value={lotSize} onChange={e=>onLot(e.target.value)}/></label></div>
+    <div className={styles.sizing} aria-live="polite">{sizing?.quantity>0?<><strong>{n(sizing.quantity,0)} {row.market==='dr'?'หน่วย':'หุ้น'}</strong><span>ใช้เงินประมาณ {n(sizing.estimatedCapital)} บาท · เสี่ยงตามแผน {n(sizing.estimatedRisk)} บาท</span><small>แบ่ง TP1 {n(sizing.tp1Quantity,0)} / ตามเทรนด์ {n(sizing.runnerQuantity,0)} · คิดทีละ 2 ชุดเพื่อแบ่งครึ่ง</small></>:<span>{sizing?'งบยังไม่พอสำหรับ 2 ชุดที่แบ่งขายได้ ลองปรับเงินจัดสรร งบเสี่ยง หรือขนาดชุด':'ใส่เงินจัดสรรและงบเสี่ยงที่มากกว่า 0 โดยงบเสี่ยงไม่เกินเงินจัดสรร'}</span>}</div>
+    <details className={styles.costs}><summary>ต้นทุนและกฎของแผนนี้</summary><p>คอม {n(p.friction?.assumptions?.commissionPercent,4)}% · ค่าธรรมเนียมตลาด {n(p.friction?.assumptions?.marketFeePercent,4)}% · VAT บนคอม {n(p.friction?.assumptions?.commissionVatPercent)}% · Slippage {n(p.friction?.assumptions?.slippagePercent,4)}% ต่อข้าง</p><p>ขนาดชุดเริ่มต้น 100 เป็นค่าที่ปรับได้ ตรวจหน่วยซื้อขายของสินทรัพย์ก่อนใช้ · ความเสี่ยงเป็นประมาณการ Gap และต้นทุนจริงอาจทำให้เสียมากกว่างบ</p></details>
+  </article>;
+}
+export default function DecisionDesk({initialMarket='thai',favorites:initialFavorites=[],favoritesByMarket={},onToggleFavorite,onSelect,onResults,signalAccess=null}){
+  const monitor=useMonitor(),[market,setMarket]=useState(initialMarket),[intent,setIntent]=useState('swing'),[savedOnly,setSavedOnly]=useState(false),[query,setQuery]=useState(''),[selected,setSelected]=useState(null);
+  const favorites=favoritesByMarket[market]??initialFavorites;
+  const [capital,setCapital]=useState('20000'),[riskBudget,setRiskBudget]=useState('500'),[lotSize,setLotSize]=useState('100'),[filtered,setFiltered]=useState(null),[failure,setFailure]=useState(''),[busy,setBusy]=useState(false);
+  const [revision,setRevision]=useState(0);
+  const favoriteKey=[...favorites].sort().join(','),custom=Boolean(query.trim()||savedOnly);
+  useEffect(()=>{setMarket(initialMarket);setSelected(null);},[initialMarket]);
+  useEffect(()=>{
+    if(!custom||signalAccess===false)return;
+    const controller=new AbortController();setFiltered(null);setFailure('');setBusy(true);let stop;
+    const timer=setTimeout(()=>{const params=new URLSearchParams({market,q:query.trim(),overview:'0'});if(savedOnly)params.set('favorites',favoriteKey);
+      stop=pollAfterCompletion(async()=>{try{const response=await fetch(`/api/signals?${params}`,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])});const value=await response.json();if(!response.ok)throw Error(response.status===403?'เข้าสู่ระบบสมาชิกเพื่ออ่านแผน':'ยังอ่านแผนไม่ได้ กำลังรอลองใหม่');if(!controller.signal.aborted){setFiltered(value);setFailure('');}}catch(e){if(!controller.signal.aborted){setFiltered(null);setFailure(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}});
+    },300);
+    return()=>{clearTimeout(timer);stop?.();controller.abort();};
+  },[market,query,savedOnly,favoriteKey,custom,signalAccess,revision]);
+  const sourceError=custom?failure:monitor?.errors?.[`swing-${market}`];
+  const feed=sourceError?null:custom?filtered:monitor?.swingSnapshots?.[market],brief=feed?.decisionBrief;
+  const shortlist=brief?.items??[],chosen=shortlist.find(r=>`${r.symbol}:${r.mode}`===selected)||shortlist[0];
+  const tracked=chosen&&feed?.signals?.find(s=>s.symbol===chosen.symbol&&s.mode===chosen.mode);
+  const intraday=monitor?.snapshots?.[market],intraError=monitor?.errors?.[market];
+  const intraRows=intraError?[]:(intraday?.universe??[]).filter(r=>(!query||`${r.symbol} ${r.name}`.toLowerCase().includes(query.toLowerCase()))&&(!savedOnly||favorites.includes(r.symbol))).sort((a,b)=>Number(favorites.includes(b.symbol))-Number(favorites.includes(a.symbol))||a.symbol.localeCompare(b.symbol));
+  const [intraPage,setIntraPage]=useState(1),intraPages=Math.max(1,Math.ceil(intraRows.length/7)),currentPage=Math.min(intraPage,intraPages);
+  useEffect(()=>{setIntraPage(1);setSelected(null);},[market,query,savedOnly]);
+  if(signalAccess===false||monitor?.errors?.[market]==='SIGN_IN_REQUIRED'||monitor?.snapshots?.[market]?.signalAccess===false)return <section className={styles.desk} aria-label="แผนเฝ้าวันนี้"><h2>แผนเฝ้าวันนี้ · หุ้นไทยและ DR</h2><p>คัดแผน Swing พร้อมเหตุผลที่ต้องรอ คำนวณขนาดไม้ตามงบเสี่ยง และติดตามหุ้นโปรดระหว่างวัน</p><a href="/account">เข้าสู่ระบบ / ตรวจสิทธิสมาชิกเพื่อเปิดแผน ↗</a></section>;
+  return <section className={styles.desk} aria-label="แผนเฝ้าวันนี้">
+    <header className={styles.heading}><div><span>วางแผนก่อนลงทุน</span><h2>วันนี้เฝ้าตัวไหน รออะไร เสี่ยงเท่าไร</h2><p>หุ้นไทยและ DR ใช้กฎ Swing เดียวกัน · แผนสแกนยังต้องรอการประกาศและยืนยันเข้า</p></div><div className={styles.actions}><button type="button" disabled={busy} onClick={()=>{setRevision(v=>v+1);monitor?.refresh();}}>โหลดแผนล่าสุด</button><button type="button" onClick={()=>onResults?.(market)}>ดูผล 100 ไม้ ↗</button></div></header>
+    <div className={styles.intents} aria-label="รูปแบบการใช้งาน"><button type="button" aria-pressed={intent==='swing'} onClick={()=>setIntent('swing')}>วางแผนหลายวัน</button><button type="button" aria-pressed={intent==='intraday'} onClick={()=>setIntent('intraday')}>ติดตามระหว่างวัน</button></div>
+    <div className={styles.controls}><label>ตลาด<select aria-label="ตลาดของแผนวันนี้" value={market} onChange={e=>setMarket(e.target.value)}><option value="thai">หุ้นไทย</option><option value="dr">DR</option></select></label><label className={styles.search}>ค้นหาหุ้น / DR<input aria-label="ค้นหาแผนวันนี้" placeholder="เช่น PTT, AAPL80" value={query} onChange={e=>setQuery(e.target.value)}/></label><button type="button" aria-pressed={savedOnly} onClick={()=>setSavedOnly(v=>!v)}>★ {savedOnly?'หุ้นโปรดเท่านั้น':'ดูหุ้นโปรด'}</button></div>
+    {intent==='swing'?<>
+      <div className={styles.counts}>{[['ผ่านสแกน','ready'],['รอจังหวะ','waiting'],['พักความเสี่ยง / เทรนด์','avoid'],['ข้อมูลไม่พร้อม','unavailable']].map(([label,key])=><div key={key}><span>{label}</span><strong>{brief?n(brief.counts[key],0):'—'}</strong></div>)}</div>
+      <p className={styles.caption}>นับหุ้นไม่ซ้ำ {brief?.totalSymbols??'—'} ตัวในตัวกรอง · เลือกแผนที่ผ่านเงื่อนไขมากกว่าของ Breakout/Pullback · เด่นสูงสุด 5 ตัว · ไม่ใช่โอกาสชนะ</p>
+      {sourceError?<p role="status" className={styles.empty}>ยังอ่านข้อมูลแผนไม่ได้ <a href="/account">ตรวจสิทธิสมาชิก ↗</a></p>:!brief?<p role="status" className={styles.empty}>{busy?'กำลังค้นหาแผน…':'กำลังอ่านผลสแกนจากเซิร์ฟเวอร์…'}</p>:!chosen?<div className={styles.empty}><strong>ยังไม่มีแผนที่เหมาะให้เฝ้าในตัวกรองนี้</strong><p>รอแนวโน้มและแผนความเสี่ยงผ่านก่อน ระบบไม่เติมตัวอย่างหุ้นแทนข้อมูล</p></div>:<div className={styles.layout}><div className={styles.shortlist} aria-label="แผนเฝ้าสูงสุด 5 ตัว">{shortlist.map(r=><article key={r.symbol} data-selected={chosen.symbol===r.symbol}><button type="button" aria-pressed={chosen.symbol===r.symbol} onClick={()=>setSelected(`${r.symbol}:${r.mode}`)}><span>{r.symbol} <small>{MODE[r.mode]}</small></span><strong>{r.category==='ready'?'ผ่านสแกน':'รอยืนยัน'}</strong><small>{r.checks.filter(c=>c.passed).length}/4 เงื่อนไข · Stop {n(r.plan.stopPercent)}%</small></button><button className={styles.save} type="button" aria-label={`${favorites.includes(r.symbol)?'เลิกติดตาม':'ติดตาม'} ${r.symbol}`} aria-pressed={favorites.includes(r.symbol)} onClick={()=>onToggleFavorite?.(r.symbol,market)}>{favorites.includes(r.symbol)?'★ ติดตามแล้ว':'☆ เก็บไว้เฝ้า'}</button></article>)}</div><div><DecisionPlan row={chosen} capital={capital} riskBudget={riskBudget} lotSize={lotSize} onCapital={setCapital} onRisk={setRiskBudget} onLot={setLotSize}/><div className={styles.actions}><button type="button" onClick={()=>onSelect?.({symbol:chosen.symbol,market})}>เปิดกราฟ {chosen.symbol} ↗</button>{tracked?<button type="button" onClick={()=>monitor?.inspectTrade({ledger:'swing',market,tradeId:tracked.id})}>ดูไม้ที่ประกาศแล้ว · {tracked.status} ↗</button>:<button type="button" onClick={()=>onResults?.(market)}>ดูคิวรอเข้า / ติดตาม ↗</button>}</div><p className={styles.caption}>แผนข้างบนมาจากผลสแกนล่าสุด ไม้ที่ประกาศแล้วเก็บระดับเดิมตามรหัสไม้ กดดูไม้เพื่อตรวจระดับและเหตุการณ์ที่ใช้จริง</p></div></div>}
+      {brief?.excluded?.length>0&&<details className={styles.excluded}><summary>ทำไมบางตัวยังไม่ควรเฝ้า</summary>{brief.excluded.map(r=><p key={r.symbol}><b>{r.symbol}</b> · {r.reason}</p>)}</details>}
+    </>:<>
+      <div className={styles.research} role="status"><strong>ติดตามราคาและไม้เดิม · พักสัญญาณ Daytrade ใหม่</strong><p>ข้อมูลแท่งปิดหน่วงอย่างน้อย 15 นาที จึงใช้เช็กระยะจากแผนและเปิดกราฟ ไม่ใช่สัญญาณซื้อขายทันที การแจ้งเตือน Entry / Stop / TP ของไม้ Swing ที่ประกาศแล้วอยู่ในศูนย์สัญญาณ</p></div>
+      <div className={styles.tableWrap}><table><thead><tr><th>สินทรัพย์</th><th>ราคาแท่งปิด 15m</th><th>เวลาแท่งปิด</th><th>แผน Swing ที่ประกาศ</th><th>กราฟ / ติดตาม</th></tr></thead><tbody>{intraRows.slice((currentPage-1)*7,currentPage*7).map(r=>{const active=feed?.signals?.find(s=>s.symbol===r.symbol);const distance=active&&r.price?(r.price/active.plan.entry-1)*100:null;return <tr key={r.symbol}><td><b>{r.symbol}</b><small>{r.name}</small></td><td>{n(r.price,4)}<small>{r.stale?'ข้อมูลเก่า · ตรวจเวลา':'ราคาอ้างอิงหน่วง'}</small></td><td>{r.latestBar?at((r.latestBar+900)*1000):'ยังไม่มีแท่ง'}</td><td>{active?<button type="button" onClick={()=>monitor?.inspectTrade({ledger:'swing',market,tradeId:active.id})}>{active.status} · ห่างระดับเข้า {n(distance)}%</button>:'ยังไม่มีไม้ Swing ที่เปิด / รอเข้า'}</td><td><button type="button" onClick={()=>onSelect?.({symbol:r.symbol,market})}>กราฟ ↗</button><button type="button" aria-label={`${favorites.includes(r.symbol)?'เลิกติดตาม':'ติดตาม'} ${r.symbol}`} aria-pressed={favorites.includes(r.symbol)} onClick={()=>onToggleFavorite?.(r.symbol,market)}>{favorites.includes(r.symbol)?'★':'☆'}</button></td></tr>;})}</tbody></table></div>
+      {!intraRows.length&&<p role="status" className={styles.empty}>{intraError?'แหล่งราคาระหว่างวันยังไม่พร้อม':savedOnly?'ยังไม่มีหุ้นโปรดในตัวกรองนี้':'กำลังรอข้อมูลราคาระหว่างวัน'}</p>}
+      <nav className={styles.pager} aria-label="หน้าติดตามระหว่างวัน"><button disabled={currentPage===1} onClick={()=>setIntraPage(currentPage-1)}>ก่อนหน้า</button><span>{currentPage}/{intraPages} · ทั้งหมด {intraRows.length} ตัว · หน้าละ 7</span><button disabled={currentPage===intraPages} onClick={()=>setIntraPage(currentPage+1)}>ถัดไป</button></nav>
+    </>}
+    <p className={styles.marketNote}>{market==='dr'?'DR เพิ่มสิ่งที่ต้องตรวจ: ทิศทางหุ้นแม่ ค่าเงิน เวลาเปิดตลาดหุ้นแม่ และสภาพคล่อง DR · รูปแบบกราฟอย่างเดียวอธิบายความเสี่ยงทั้งหมดไม่ได้':'หุ้นไทยเพิ่มสิ่งที่ต้องตรวจ: ข่าวบริษัท วัน XD งบการเงิน และสภาพคล่อง · รายการนี้คัดเฉพาะเงื่อนไขเทคนิค'}</p>
+  </section>;
+}

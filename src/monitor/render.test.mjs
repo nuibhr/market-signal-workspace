@@ -20,8 +20,16 @@ const Table=component('../components/monitor/market-table.jsx').default;
 const Cards=component('../components/monitor/opportunity-cards.jsx').default;
 const Logo=component('../components/monitor/instrument-logo.jsx').default;
 const RecordDetails=component('../components/monitor/trade-record.jsx').TradeRecordDetails;
+const DecisionPlan=component('../components/dr/decision-desk.jsx').DecisionPlan;
 const now=Date.parse('2026-10-15T15:00:00Z');
 const row={symbol:'NTES',name:'NETEASE INC-ADR',kind:'stock_cfd',status:'READY',price:100,latestBar:now/1000-900,receivedAt:now,bars:100,stale:false,side:null,monitorPlan:{entry:100,side:'LONG',status:'WAITING'}};
+test('decision card renders canonical net-cost levels and risk sizing without implying an entered trade',()=>{
+ const plan={signalEligible:true,entry:100,entryBasis:101,stopLoss:97,minimumTarget:110,netRiskPerUnit:4.5,stopPercent:4,friction:{assumptions:{commissionPercent:0.06,marketFeePercent:0.005,commissionVatPercent:7,slippagePercent:0.15}}};
+ const candidate={market:'thai',symbol:'PTT',name:'PTT',mode:'breakout',category:'waiting',price:100,relativeVolume:1.2,trigger:{breakout:101},plan,checks:[{label:'D1 ขาขึ้น',passed:true},{label:'4H ทะลุกรอบ',passed:false}]};
+ const html=renderToStaticMarkup(React.createElement(DecisionPlan,{row:candidate,capital:'50000',riskBudget:'1000',lotSize:'100'}));
+ for(const value of ['รอเงื่อนไขครบ','ระดับเข้าแผน','Stop โครงสร้าง','TP1 · ขาย 50%','200 หุ้น','20,200','900','แบ่ง TP1 100','Gap','0.15'])assert.ok(html.includes(value),value);
+ assert.ok(!html.includes('ซื้อทันที'));const zero=renderToStaticMarkup(React.createElement(DecisionPlan,{row:candidate,capital:'100',riskBudget:'10',lotSize:'100'}));assert.ok(zero.includes('งบยังไม่พอ'));assert.ok(!zero.includes('200 หุ้น'));
+});
 test('real table component renders NTES target touch with accessible button and truthful time/price labels',()=>{
  const r=monitorRow(row,'us','connected',now),html=renderToStaticMarkup(React.createElement(Table,{rows:[r],selected:{market:'us',symbol:'NTES'}}));
  for(const copy of ['NTES','NETEASE','US CFD','ราคาเข้า / ระยะห่าง','แตะระดับราคา','รอเงื่อนไขครบ','Delayed','ปิดแท่ง 15m','ประเมิน','รับ'])assert.ok(html.includes(copy),copy);

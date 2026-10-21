@@ -49,8 +49,8 @@ export const PRO_TOOLS_CONFIG = [
   },
   {
     id: 'daytrade',
-    href: '/daytrade',
-    label: 'Daytrade Desk',
+    href: '/daytrade?market=forex',
+    label: 'Daytrade CFD / TFEX',
     sublabel: '15m Momentum / US CFD',
     icon: TrendingUp,
     badge: '15m Desk',
