@@ -77,10 +77,32 @@ for(const [plan,limit] of [['starter',10],['pro',50],['ultimate',150]])test(`${p
  const before=quota.freeUsed;await portal(f.m,{stripe:f.stripe});assert.equal((await memberStore.aiQuota(f.m)).freeUsed,before,'Billing activity does not consume AI quota');
 });
 test('checkout reuses the open session, rejects active subscriptions and cannot choose an arbitrary price',async()=>{
- const f=await fixture();let creates=0;f.stripe.checkout.sessions.create=async body=>{creates++;assert.equal(body.mode,'subscription');assert.equal(body.line_items[0].price,'price_starter');assert.equal(body.customer,f.sub.customer);return {id:'cs_test',url:'https://checkout.stripe.com/c/pay/fixture'};};
+ const f=await fixture();let creates=0;f.stripe.checkout.sessions.create=async body=>{creates++;assert.equal(body.mode,'subscription');assert.equal(body.line_items[0].price,'price_starter');assert.equal(body.customer,f.sub.customer);assert.match(body.integration_identifier,/^nugaom-membership-[a-z]{8}$/);return {id:'cs_test',url:'https://checkout.stripe.com/c/pay/fixture'};};
  const one=await checkout(f.m,'starter',{stripe:f.stripe});assert.equal(one.url,'https://checkout.stripe.com/c/pay/fixture');assert.deepEqual(await checkout(f.m,'starter',{stripe:f.stripe}),one);assert.equal(creates,1);
  await assert.rejects(checkout(f.m,'pro',{stripe:f.stripe}),/CHECKOUT_ALREADY_OPEN/);await assert.rejects(checkout(f.m,'price_attacker',{stripe:f.stripe}),/INVALID_PLAN/);
  f.stripe.subscriptions.list=async()=>({data:[{status:'past_due'}]});await assert.rejects(checkout(f.m,'starter',{stripe:f.stripe}),/SUBSCRIPTION_EXISTS/);
+});
+test('portal pins the Nugaom configuration and rejects malformed configuration before creating a session',async()=>{
+ const f=await fixture();const previous=process.env.STRIPE_PORTAL_CONFIGURATION_ID;let calls=0;
+ f.stripe.billingPortal.sessions.create=async body=>{calls++;assert.equal(body.configuration,'bpc_nugaom');assert.equal(body.customer,f.sub.customer);return {url:'https://billing.stripe.com/p/session/fixture'};};
+ try{
+  process.env.STRIPE_PORTAL_CONFIGURATION_ID='bpc_nugaom';await portal(f.m,{stripe:f.stripe});
+  process.env.STRIPE_PORTAL_CONFIGURATION_ID='invalid';await assert.rejects(portal(f.m,{stripe:f.stripe}),/INVALID_BILLING_CONFIG/);assert.equal(calls,1);
+ }finally{if(previous===undefined)delete process.env.STRIPE_PORTAL_CONFIGURATION_ID;else process.env.STRIPE_PORTAL_CONFIGURATION_ID=previous;}
+});
+test('a retried Checkout attempt keeps the exact request body and Stripe idempotency key',async()=>{
+ const f=await fixture();let original,calls=0;
+ f.stripe.checkout.sessions.create=async(body,options)=>{
+  calls++;if(calls===1){original=structuredClone({body,options});throw Error('Simulated response timeout');}
+  assert.deepEqual({body,options},original);return {id:'cs_retry',url:'https://checkout.stripe.com/c/pay/retry'};
+ };
+ await assert.rejects(checkout(f.m,'starter',{stripe:f.stripe}),/Simulated response timeout/);
+ await checkout(f.m,'starter',{stripe:f.stripe});assert.equal(calls,2);
+});
+test('asynchronous Checkout grants access only after the subscription invoice is actually paid',async()=>{
+ const f=await fixture('pro');const event=()=>({...f.event('checkout.session.async_payment_succeeded'),data:{object:{id:'cs_async',mode:'subscription',subscription:f.sub.id}}});
+ f.sub.latest_invoice.status='open';await applyStripeEvent(event(),{stripe:f.stripe});assert.equal(membershipFor(await withBilling(f.m)).capabilities.aiQuestions,false);
+ f.sub.latest_invoice.status='paid';await applyStripeEvent(event(),{stripe:f.stripe});assert.equal(membershipFor(await withBilling(f.m)).planId,'pro');
 });
 test('webhook verifies the exact raw body and signature, rejects tampering and wrong modes',async()=>{
  const f=await fixture(),event=f.event(),body=JSON.stringify(event),secret=process.env.STRIPE_WEBHOOK_SECRET;

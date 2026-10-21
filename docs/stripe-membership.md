@@ -14,7 +14,7 @@ AI quota is reserved atomically on the server before a provider request. A succe
 
 ## Configure Stripe (start in test mode)
 
-1. In Stripe Dashboard, select the test environment and create three Products named Starter, Pro and Ultimate.
+1. In Stripe Dashboard, select a dedicated sandbox and create three Products named Starter, Pro and Ultimate.
 2. Add one **THB, recurring, every month, fixed per-unit** Price to each product: 99, 299 and 599 baht respectively. These are 9900, 29900 and 59900 in the API's minor units. Do not select yearly or metered pricing. Copy each `price_...` ID, not the product's `prod_...` ID.
 3. Set these server environment variables in the private `.env.local` file or the deployment secret manager. Keep existing values in that file intact:
 
@@ -25,14 +25,15 @@ STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_STARTER_MONTHLY=price_replace_with_starter
 STRIPE_PRICE_PRO_MONTHLY=price_replace_with_pro
 STRIPE_PRICE_ULTIMATE_MONTHLY=price_replace_with_ultimate
+STRIPE_PORTAL_CONFIGURATION_ID=
 ```
 
-Enter the actual secret values privately. Do not commit them, add a `NEXT_PUBLIC_` prefix or send them through chat. `.env.example` contains blank values only. No Stripe key or real Price ID has been configured by this implementation.
+Enter the actual secret values privately. Do not commit them, add a `NEXT_PUBLIC_` prefix or send them through chat. `.env.example` contains blank values only. Use a restricted sandbox key (`rk_test_`) with only Customers, Checkout Sessions and Customer Portal write access, plus Products, Prices, Subscriptions and Invoices read access. CLI OAuth authorization is separate from the application API key.
 
 4. For localhost, sign in to the official Stripe CLI yourself and forward the relevant events:
 
 ```sh
-stripe listen --events checkout.session.completed,invoice.paid,invoice.payment_failed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,customer.subscription.paused,customer.subscription.resumed --forward-to http://localhost:3000/api/billing/webhook
+stripe listen --events checkout.session.completed,checkout.session.async_payment_succeeded,invoice.paid,invoice.payment_failed,customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,customer.subscription.paused,customer.subscription.resumed --forward-to http://localhost:3000/api/billing/webhook
 ```
 
 Use that listener's webhook signing secret in `STRIPE_WEBHOOK_SECRET`. A Dashboard webhook signing secret and a local CLI listener secret are separate. Restart the app after setting environment variables.
@@ -55,7 +56,7 @@ Run the complete source suite with `npm test`. Its discovery excludes copied app
 
 - SQLite automatically applies migrations 11 and 12 at startup. D1 deployments must apply both additive migrations before releasing the new worker. They add billing tables and replace the AI quota guard; customer histories and manual membership dates are not rewritten.
 - Use the same environment and database for the app and its authenticated APIs. No raw Stripe payment/card details are stored in the application database.
-- Node and local D1 fixtures cover billing and quota behavior. Real Stripe credentials, CLI forwarding, Portal configuration and a genuine test checkout still require setup and operational acceptance. Browser drag/touch/keyboard visual acceptance is pending when local browser control is unavailable.
+- Node and local D1 fixtures cover billing and quota behavior. Each environment must verify its own Stripe credentials, CLI forwarding, Portal configuration and a genuine test checkout before operational acceptance. Browser drag/touch/keyboard visual acceptance is pending when local browser control is unavailable.
 - Before accepting live payments, configure a real HTTPS origin and webhook endpoint, switch all keys/Prices/signing secrets to the same live account/environment, and exercise refund/dispute handling and reconciliation policy. This implementation currently handles subscription/invoice/checkout events; it does not automatically reconcile refunds or disputes. Test and live customer records are separated.
 - The admin membership directory, filters, summary and member detail use the same paid entitlement, including the configured test/live mode. Billing records preserve Stripe state without changing manual membership dates. The cloud secret uploader includes Stripe variables for the web worker only.
 
@@ -70,3 +71,7 @@ The assistant is mounted once in the root layout, including `/account`. Its smal
 - https://docs.stripe.com/customer-management
 
 The installed Stripe SDK is 23.0.0, API version `2026-09-30.endive`. Configure the webhook endpoint's API version consistently and revalidate the invoice/subscription fields when upgrading the SDK.
+
+A dedicated Billing Portal configuration can be selected using `STRIPE_PORTAL_CONFIGURATION_ID=bpc_...`. It is passed by the server when opening the portal, keeping Nugaom settings separate from the account default. Checkout labels include a stable eight-letter suffix per persisted attempt so retries remain idempotent. Asynchronous Checkout completion still requires a verified paid subscription invoice before access is granted.
+
+Stripe Tax is not enabled by this setup. Confirm the business tax registration and applicable tax treatment before enabling automatic tax for live subscriptions.
