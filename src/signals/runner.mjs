@@ -1,10 +1,11 @@
 import { signalUniverse, loadSignalFrame, signalProviderAllowed } from './data.mjs';
 import { inspectSignalBars, candidateViews, startReferenceSignal, advanceReferenceSignal } from './model.mjs';
 import { activeReferenceSignals, allCostProfiles, claimSignalLease, defaultSignalCosts, insertReferenceSignal,
-  observationSchedule, releaseSignalLease, saveObservation, saveReferenceAdvance } from './store.mjs';
+  observationSchedule, storedObservation, releaseSignalLease, saveObservation, saveReferenceAdvance } from './store.mjs';
+import {discoveryIntervalMs,monitorDue} from './cadence.mjs';
 
 export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, allowed = signalProviderAllowed } = {}) {
-  return async function runSignalScan(market, { symbols = null, budgetMs = 20000, maxSymbols = 12, enabled = true } = {}) {
+  return async function runSignalScan(market, { symbols = null, force = Boolean(symbols), budgetMs = 20000, maxSymbols = 12, enabled = true } = {}) {
     if (!['thai','dr','us'].includes(market) || !enabled || !allowed(market)) return { status:'blocked',code:'SIGNAL_SOURCE_NOT_READY' };
     const now = clock(), token = await claimSignalLease(market,now,Math.max(120000,budgetMs+60000));
     if (!token) return { status:'busy',scanned:0 };
@@ -13,7 +14,7 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
       const universe = signalUniverse(market), known = new Map(universe.map(a=>[a.symbol,a]));
       if (symbols && (!Array.isArray(symbols) || symbols.length>8 || symbols.some(s=>!known.has(s)))) return {status:'blocked',code:'INVALID_SYMBOLS'};
       const active = await activeReferenceSignals(market), schedules = new Map((await observationSchedule(market)).map(s=>[s.symbol,s.next_scan_ms]));
-      const activeSymbols = [...new Set(active.map(s=>s.symbol))].sort((a,b)=>(schedules.get(a)??0)-(schedules.get(b)??0));
+      const activeSymbols = [...new Set(active.filter(s=>monitorDue(s,now)).map(s=>s.symbol))];
       // Oldest monitored symbol first, then never-scanned/due candidates. A
       // persisted next_scan_ms prevents a process restart from resetting to A.
       const due = universe.filter(a=>(schedules.get(a.symbol)??0)<=now).sort((a,b)=>(schedules.get(a.symbol)??0)-(schedules.get(b.symbol)??0)).map(a=>a.symbol);
@@ -24,20 +25,36 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
       for (const symbol of queue) {
         if (scanned>=maxSymbols || clock()>=deadline) break;
         const asset = known.get(symbol); if(!asset)continue;
+        const existing = active.filter(s=>s.symbol===symbol);
+        const discover=force||(schedules.get(symbol)??0)<=now;
+        const track=existing.length&&(force||existing.some(s=>monitorDue(s,now)));
+        if(!discover&&!track)continue;
         scanned++;
         try {
-          const daily = await load(asset,'1d'), four = await load(asset,'4h');
-          const snapshot = inspectSignalBars({...asset,signalSource:`D1: ${daily.source} · 4H: ${four.source}`},daily.bars,four.bars,clock());
-          await saveObservation(snapshot,clock()+5*60000);
-          const existing = active.filter(s=>s.symbol===symbol);
-          if(existing.length) {
+          let snapshot=await storedObservation(market,symbol);
+          if(discover){
+            try{
+              const daily = await load(asset,'1d'), four = await load(asset,'4h');
+              snapshot = inspectSignalBars({...asset,signalSource:`D1: ${daily.source} · 4H: ${four.source}`},daily.bars,four.bars,clock());
+            }catch(error){
+              const code=['DISPLAY_RIGHTS_NOT_CONFIRMED','NO_AVAILABLE_CLOSED_BARS','INSTRUMENT_MISMATCH','HISTORY_UNAVAILABLE','TIMEFRAME_NOT_AVAILABLE'].includes(error.code)?error.code:'SOURCE_UNAVAILABLE';
+              snapshot={market,symbol,name:asset.name,status:'UNAVAILABLE',code,checkedAt:new Date(clock()).toISOString()};
+              errors.push({symbol,code});
+            }
+            await saveObservation(snapshot,clock()+discoveryIntervalMs(market));
+          }
+          // Keep the original structural stop if discovery is unavailable/stale.
+          // The stored snapshot's actual candle time is retained for trailing.
+          const monitorSnapshot=snapshot&&clock()-Date.parse(snapshot.checkedAt)<=20*60000?snapshot:{status:'UNAVAILABLE'};
+          if(track) {
             const fifteen=await load(asset,'15m');
             for(const previous of existing) {
-              const {signal,events}=advanceReferenceSignal(previous,fifteen.bars,snapshot,clock());
+              const {signal,events}=advanceReferenceSignal(previous,fifteen.bars,monitorSnapshot,clock());
               await saveReferenceAdvance(previous,signal,events);
               previous.status=signal.status;
             }
           }
+          if(!discover||snapshot?.status!=='AVAILABLE')continue;
           const costProfiles=profiles || [{id:'standard',costs:defaultSignalCosts(asset)}];
           for(const profile of costProfiles) for(const view of candidateViews(snapshot,profile.costs)) {
             if(view.state!=='PASS' || existing.some(s=>s.profile===profile.id&&s.mode===view.mode&&['WAITING','OPEN','RUNNER'].includes(s.status)))continue;
@@ -47,7 +64,6 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
           }
         } catch(error) {
           const code = ['DISPLAY_RIGHTS_NOT_CONFIRMED','NO_AVAILABLE_CLOSED_BARS','INSTRUMENT_MISMATCH','HISTORY_UNAVAILABLE','TIMEFRAME_NOT_AVAILABLE'].includes(error.code)?error.code:'SOURCE_UNAVAILABLE';
-          await saveObservation({market,symbol,name:asset.name,status:'UNAVAILABLE',code,checkedAt:new Date(clock()).toISOString()},clock()+5*60000);
           errors.push({symbol,code});
         }
       }

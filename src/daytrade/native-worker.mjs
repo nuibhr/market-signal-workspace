@@ -2,13 +2,30 @@ import { createSettradeClient, createTfexClient } from '../market-data/settrade.
 import { nativeUniverse } from './universe.mjs';
 import { ingestBars, recordFailure } from './store.mjs';
 import { candleClosedAt } from '../market-data/delayed-candles.mjs';
+import {DISCOVERY_INTERVAL_MS,ACTIVE_MONITOR_INTERVAL_MS} from '../signals/cadence.mjs';
 
 export function createNativeScanner({db,env=process.env,now=Date.now,clients={SET:createSettradeClient(),TFEX:createTfexClient()}}) {
   let index=0,pauseUntil=0;
   const assets=['thai','dr','tfex'].flatMap(nativeUniverse);
   return async function step() {
     if(now()<pauseUntil)return {status:'rate-limited'};
-    const asset=assets[index++%assets.length],scope=`native:${asset.market}`;
+    const stamp=now();
+    const checked=new Map(db.prepare("SELECT scope,symbol,checked FROM daytrade_coverage WHERE scope IN ('native:thai','native:dr','native:tfex')").all().map(r=>[`${r.scope}:${r.symbol}`,r.checked]));
+    const active=new Set(db.prepare("SELECT scope,symbol FROM daytrade_cursor WHERE scope IN ('native:thai','native:dr') AND json_extract(body,'$.active') IS NOT NULL").all().map(r=>[r.scope,r.symbol].join(':')));
+    const due=a=>{
+      const key=`native:${a.market}:${a.symbol}`;
+      const right=a.market==='tfex'?'TFEX_DISPLAY_RIGHTS_CONFIRMED':'SETTRADE_DISPLAY_RIGHTS_CONFIRMED';
+      if(env.NODE_ENV==='production'&&env[right]!=='true')return true;
+      // Do not accelerate TFEX as a side effect of skipping Thai/DR candidates.
+      const interval=active.has(key)?ACTIVE_MONITOR_INTERVAL_MS:a.market==='tfex'?assets.length*1000:DISCOVERY_INTERVAL_MS;
+      return !checked.has(key)||stamp-checked.get(key)>=interval;
+    };
+    // Existing native positions retain their own faster queue. Persisted
+    // coverage prevents reopening the app/worker from resetting the cooldown.
+    let asset=assets.filter(a=>active.has(`native:${a.market}:${a.symbol}`)&&due(a)).sort((a,b)=>(checked.get(`native:${a.market}:${a.symbol}`)??0)-(checked.get(`native:${b.market}:${b.symbol}`)??0))[0];
+    for(let i=0;!asset&&i<assets.length;i++){const candidate=assets[index++%assets.length];if(due(candidate))asset=candidate;}
+    if(!asset)return {status:'idle'};
+    const scope=`native:${asset.market}`;
     const right=asset.market==='tfex'?'TFEX_DISPLAY_RIGHTS_CONFIRMED':'SETTRADE_DISPLAY_RIGHTS_CONFIRMED';
     if(env.NODE_ENV==='production'&&env[right]!=='true'){
       recordFailure(db,scope,asset,'DISPLAY_RIGHTS_NOT_CONFIRMED',now());return;

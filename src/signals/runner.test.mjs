@@ -7,6 +7,9 @@ const dir=mkdtempSync(join(tmpdir(),'signal-runner-'));process.env.DATABASE_PATH
 const {storage}=await import('../storage/database.mjs');const {sharedDatabase}=await import('../storage/sqlite.mjs');
 const {createSignalRunner}=await import('./runner.mjs');const {createSignalCloud}=await import('./cloud.mjs');
 const {signalUniverse}=await import('./data.mjs');
+const {saveObservation,insertReferenceSignal,activeReferenceSignals}=await import('./store.mjs');
+const {candidateViews,startReferenceSignal}=await import('./model.mjs');
+const {thaiResearchCosts}=await import('../analysis/swing-standard.mjs');
 const now=Date.parse('2026-10-15T05:30:00Z');
 const daily=Array.from({length:150},(_,i)=>({time:new Date(Date.UTC(2026,4,1+i)).toISOString().slice(0,10),open:98+i*.02,high:100+i*.02,low:97+i*.02,close:99+i*.02,volume:10000}));
 const four=Array.from({length:100},(_,i)=>{const c=101+Math.sin(i)*0.2;return {time:now/1000-15300-(99-i)*14400,open:c-.1,high:c+.2,low:c-.2,close:c,volume:10000};});
@@ -22,6 +25,33 @@ test('bounded scans continue across the roster after restart; a data-source fail
  const row=await storage.first('SELECT payload_json FROM signal_desk_observations WHERE market=? AND symbol=?','dr',symbol);
  assert.equal(JSON.parse(row.payload_json).code,'SOURCE_UNAVAILABLE');
 });
+test('persisted ten-minute discovery survives restarts; open stops are checked after one minute without D1/4H reloads',async()=>{
+ const symbol=signalUniverse('thai').at(-1).symbol,calls=[];let time=now;
+ const context={market:'thai',symbol,name:symbol,status:'AVAILABLE',resistanceLevels:[],instrumentId:`fixture:${symbol}`,checkedAt:new Date(now).toISOString(),price:100,atr:1,swingLow:98,swingHigh:103,ema20:99,ema50:98,closes:[100],relativeVolume:1.2,trendD1:'up',matched:{breakout:true,pullback:false},latest4hTime:now/1000-15300,priceAt:new Date(now-900000).toISOString()};
+ await saveObservation(context,now+600000);
+ const signal=startReferenceSignal(candidateViews(context,thaiResearchCosts())[0],'standard',now-1800000);
+ signal.status='OPEN';signal.entryPrice=100;signal.enteredAt=new Date(now-900000).toISOString();signal.lastBar=now/1000-2700;signal.updatedAt=new Date(now).toISOString();
+ await insertReferenceSignal(signal);
+ const load=async(_a,frame)=>{calls.push(frame);if(frame==='1d')throw Error('daily-outage');return {source:'unit-fixture',bars:[{time:now/1000-1800,open:96,high:97,low:95,close:96,volume:10000}]};};
+ const run=()=>createSignalRunner({load,clock:()=>time,allowed:()=>true})('thai',{symbols:[symbol],force:false});
+ assert.equal((await run()).scanned,0);time+=59999;assert.equal((await run()).scanned,0);assert.deepEqual(calls,[]);
+ time=now+60000;assert.equal((await run()).scanned,1);assert.deepEqual(calls,['15m']);
+ const closed=JSON.parse((await storage.first('SELECT payload_json FROM signal_desk_signals WHERE id=?',signal.id)).payload_json);
+ assert.equal(closed.status,'STOP');assert.ok(closed.netR<0);assert.ok(!(await activeReferenceSignals('thai')).some(s=>s.id===signal.id));
+ time=now+599999;assert.equal((await run()).scanned,0);time=now+600000;assert.equal((await run()).status,'partial');assert.deepEqual(calls,['15m','1d']);
+ const schedule=await storage.first('SELECT next_scan_ms FROM signal_desk_observations WHERE market=? AND symbol=?','thai',symbol);assert.equal(schedule.next_scan_ms,time+600000);
+});
+test('a failed discovery source does not stop 15m monitoring of an existing position',async()=>{
+ const symbol=signalUniverse('dr').at(-1).symbol;const context={market:'dr',symbol,name:symbol,status:'AVAILABLE',resistanceLevels:[],instrumentId:`fixture:${symbol}`,checkedAt:new Date(now-600000).toISOString(),price:100,atr:1,swingLow:98,swingHigh:103,ema20:99,ema50:98,closes:[100],relativeVolume:1.2,trendD1:'up',matched:{breakout:true,pullback:false},latest4hTime:now/1000-15300};
+ const {drResearchCosts}=await import('../analysis/swing-standard.mjs');
+ await saveObservation(context,now);
+ const signal=startReferenceSignal(candidateViews(context,drResearchCosts())[0],'standard',now-1800000);
+ signal.status='OPEN';signal.entryPrice=100;signal.enteredAt=new Date(now-900000).toISOString();signal.lastBar=now/1000-2700;
+ await insertReferenceSignal(signal);const calls=[];
+ const result=await createSignalRunner({clock:()=>now,allowed:()=>true,load:async(_a,frame)=>{calls.push(frame);if(frame==='1d')throw Error('outage');return {source:'fixture',bars:[{time:now/1000-1800,open:96,high:97,low:95,close:96,volume:10000}]};}})('dr',{symbols:[symbol],force:false});
+ assert.equal(result.status,'partial');assert.deepEqual(calls,['1d','15m']);
+ const row=await storage.first('SELECT status FROM signal_desk_signals WHERE id=?',signal.id);assert.equal(row.status,'STOP');
+});
 test('cloud scheduling coalesces outstanding symbols and acknowledges duplicate deliveries without rerunning a completed batch',async()=>{
  let calls=0;const cloud=createSignalCloud({readiness:()=>({markets:[{id:'thai',status:'active'}]}),allowed:()=>true,run:async(m,task)=>{calls++;return {status:'complete',scanned:task.symbols.length};}});
  const messages=[];const queue={sendBatch:async(items)=>messages.push(...items)};
@@ -31,4 +61,17 @@ test('cloud scheduling coalesces outstanding symbols and acknowledges duplicate 
  assert.equal(new Set(assigned).size,assigned.length,'outstanding symbols must not be enqueued twice');
  assert.equal((await cloud.consume(messages[0].body.id,now+2000)).status,'done');
  assert.equal((await cloud.consume(messages[0].body.id,now+3000)).status,'ignored');assert.equal(calls,1);
+});
+test('queued monitoring respects persisted cooldown and treats already-checked delivery as completed, without forcing a new scan',async()=>{
+ await storage.run('DELETE FROM scanner_jobs');
+ for(const a of signalUniverse('dr'))await saveObservation({market:'dr',symbol:a.symbol,status:'UNAVAILABLE',checkedAt:new Date(now).toISOString()},now+600000);
+ const symbol=signalUniverse('dr')[2].symbol,context={market:'dr',symbol,instrumentId:`fixture:${symbol}`,name:symbol,status:'AVAILABLE',resistanceLevels:[],price:100,swingLow:98,atr:1,relativeVolume:1.2,trendD1:'up',matched:{breakout:true,pullback:false},latest4hTime:now/1000-15300};
+ const {drResearchCosts}=await import('../analysis/swing-standard.mjs');await insertReferenceSignal(startReferenceSignal(candidateViews(context,drResearchCosts())[0],'standard',now));
+ const messages=[];let task;
+ const cloud=createSignalCloud({readiness:()=>({markets:[{id:'dr',status:'active'}]}),allowed:()=>true,run:async(_market,value)=>{task=value;return {status:'complete',scanned:0};}});
+ const queue={sendBatch:async(items)=>messages.push(...items)};
+ assert.equal((await cloud.schedule(queue,now+59999)).dispatched,0);
+ assert.equal((await storage.first('SELECT heartbeat_ms FROM signal_desk_leases WHERE market=?','dr')).heartbeat_ms,now+59999);
+ assert.equal((await cloud.schedule(queue,now+60000)).dispatched,1);
+ assert.equal((await cloud.consume(messages[0].body.id,now+61000)).status,'done');assert.equal(task.force,false);
 });

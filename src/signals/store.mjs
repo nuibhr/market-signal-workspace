@@ -4,6 +4,7 @@ import { resolveSwingCosts, thaiResearchCosts, drResearchCosts } from '../analys
 import { ACTIVE_SIGNAL_STATES, SIGNAL_RULE, candidateViews, signalId, summarizeSignals, referenceMark } from './model.mjs';
 import { signalUniverse } from './data.mjs';
 import {buildDecisionBrief} from './decision-brief.mjs';
+import {discoveryIntervalMs,ACTIVE_MONITOR_INTERVAL_MS} from './cadence.mjs';
 const json = row => ({ ...JSON.parse(row.payload_json), revision:row.revision });
 const fault = code => Object.assign(new Error(code), { code });
 export function defaultSignalCosts(asset) { return asset.id === 'thai' ? thaiResearchCosts(asset.sectionId?.startsWith('MAI')?'small':'large') : asset.id === 'dr' ? drResearchCosts() : null; }
@@ -35,6 +36,10 @@ export async function saveObservation(snapshot, nextMs) {
   await storage.run(`INSERT INTO signal_desk_observations VALUES(?,?,?,?,?) ON CONFLICT(market,symbol) DO UPDATE SET payload_json=excluded.payload_json,checked_ms=excluded.checked_ms,next_scan_ms=excluded.next_scan_ms WHERE excluded.checked_ms>=signal_desk_observations.checked_ms`,snapshot.market,snapshot.symbol,JSON.stringify(snapshot),Date.parse(snapshot.checkedAt),nextMs);
 }
 export async function observationSchedule(market) { return storage.all('SELECT symbol,next_scan_ms FROM signal_desk_observations WHERE market=?',market); }
+export async function storedObservation(market,symbol) {
+  const row=await storage.first('SELECT payload_json FROM signal_desk_observations WHERE market=? AND symbol=?',market,symbol);
+  return row?JSON.parse(row.payload_json):null;
+}
 export async function activeReferenceSignals(market) { return (await storage.all("SELECT * FROM signal_desk_signals WHERE market=? AND status IN ('WAITING','OPEN','RUNNER') ORDER BY updated_at,id",market)).map(json); }
 export async function insertReferenceSignal(signal) {
   const token = randomUUID(), event = { type:'PICK_READY',createdAt:signal.publishedAt,price:signal.plan.entry,detail:'แผน Swing เผยแพร่แล้ว รอแท่งยืนยันหลังเวลานี้',barTime:signal.context.latest4hTime };
@@ -75,6 +80,7 @@ export async function signalDeskFeed(memberId, { market='thai',page=1,query='',m
   const projectEvent=(r,m)=>({...JSON.parse(r.payload_json),id:r.id,seq:r.seq,signalId:r.signal_id,ledger:'swing',side:'LONG',symbol:r.symbol,market:r.market,mode:m});
   return { status:'available',ruleVersion:SIGNAL_RULE,notificationScope:`swing:${memberId}:${market}`,market,usCosts:profile,
     decisionBrief:buildDecisionBrief(rows),
+    cadence:{discoveryMinutes:discoveryIntervalMs(market)/60000,monitorMinutes:ACTIVE_MONITOR_INTERVAL_MS/60000,queuedWakeMinutes:5},
     costs:market==='us'?profile?.costs:defaultSignalCosts({id:market}), scannedAt:new Date().toISOString(),
     rows:rows.slice((currentPage-1)*7,currentPage*7),page:currentPage,pageSize:7,totalRows:rows.length,
     coverage:{expected:universe.length,observed:snapshots.length,maximumScanAgeMinutes,available:[...bySymbol.values()].filter(s=>s.status==='AVAILABLE').length,

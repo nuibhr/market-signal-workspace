@@ -1,4 +1,7 @@
 'use client';
+import InstrumentLogo from '../monitor/instrument-logo.jsx';
+import {pollAfterCompletion} from '../../monitor/poll.mjs';
+import {DISCOVERY_INTERVAL_MS} from '../../signals/cadence.mjs';
 
 import { useState, useMemo, useEffect, useRef,useCallback } from 'react';
 import {
@@ -301,7 +304,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   const [feedError,setFeedError]=useState('');
   const [isPicksInitialized, setIsPicksInitialized] = useState(false);
 
-  // Fetch live market data feed on mount and every 45 seconds
+  // Read the shared ten-minute feed while visible; no overlapping requests.
   useEffect(() => {
     const controller=new AbortController();
     let mounted=true;
@@ -311,9 +314,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         if(mounted){setLiveData(data);setFeedError('');}
       } catch(error){if(mounted)setFeedError(error.message);}
     };
-    loadFeed();
-    const interval=setInterval(loadFeed,60000);
-    return ()=>{mounted=false;controller.abort();clearInterval(interval);};
+    const stop=pollAfterCompletion(loadFeed,{intervalMs:DISCOVERY_INTERVAL_MS});
+    return ()=>{mounted=false;controller.abort();stop();};
   }, []);
 
   useEffect(()=>{
@@ -542,7 +544,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   const handleTriggerScan = async (targetType='dr') => {
     if(isScanning)return;
     setIsScanning(true);setScanType(targetType);setScanProgress(20);
-    setScanStep('กำลังโหลดแท่งปิดรายวันและคำนวณ EMA, RSI, MACD และ Camarilla…');
+    setScanStep('กำลังอ่านผล Radar ล่าสุดจากเซิร์ฟเวอร์ · อัปเดตรอบละ 10 นาที…');
     try {
       const fresh=await requestStrategyFeed({refresh:true,signal:AbortSignal.timeout(60000)});
       setLiveData(fresh);setFeedError('');
@@ -550,10 +552,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
       if(!coverage.available)throw Error('ยังไม่มีแท่งปิดสำหรับตลาดนี้ กรุณาลองใหม่เมื่อแหล่งข้อมูลพร้อม');
       setScanProgress(100);
       const missing=fresh.unavailable.filter(i=>i.market===targetType).map(i=>i.symbol);
-      setToastData({title:`สแกน${targetType==='thai'?'หุ้นไทย':' DR'}สำเร็จ`,
-        desc:`คำนวณได้ ${coverage.available}/${coverage.total} ตัวจากแท่งปิดรายวัน${missing.length?' · ข้อมูลไม่พร้อม: '+missing.join(', '):''}`,type:'success'});
+      setToastData({title:`โหลดผล${targetType==='thai'?'หุ้นไทย':' DR'}ล่าสุดแล้ว`,
+        desc:`มีผล ${coverage.available}/${coverage.total} ตัว · ใช้ผลร่วมกันรอบละ 10 นาที${missing.length?' · ข้อมูลไม่พร้อม: '+missing.join(', '):''}`,type:'success'});
 
-    } catch(error){setFeedError(error.message);setToastData({title:'ยังสแกนไม่สำเร็จ',desc:error.message,type:'error'});}
+    } catch(error){setFeedError(error.message);setToastData({title:'ยังโหลดผลไม่สำเร็จ',desc:error.message,type:'error'});}
     finally {setIsScanning(false);}
   };
 
@@ -869,7 +871,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           <label>ตลาด <select value={allScanMarket} onChange={e=>{setAllScanMarket(e.target.value);setAllScanPage(1);}}><option value="all">หุ้นไทย + DR</option><option value="SET">หุ้นไทย</option><option value="DR80">DR</option></select></label>
           <label>ค้นหา <input aria-label="ค้นหาในสแกนรวม" value={allScanQuery} onChange={e=>{setAllScanQuery(e.target.value);setAllScanPage(1);}}/></label>
         </div>
-        <div className={styles.tableResponsive}><table className={styles.table}><thead><tr><th>หุ้น / ตลาด</th><th>คะแนน</th><th>ราคาแท่งปิด</th><th>Entry / SL / TP1</th><th>R:R</th><th>สถานะ</th><th>กราฟ</th></tr></thead><tbody>{allScans.rows.map(item=><tr key={`${item.market}:${item.symbol}`}><td><b>{item.symbol}</b><small>{item.market}</small></td><td>{item.scored.totalScore}/16</td><td>{item.currentDrPrice.toFixed(2)}<small>{item.dataAsOf}</small></td><td>{item.scored.entry.toFixed(2)} / {item.scored.sl.toFixed(2)} / {item.scored.tp1.toFixed(2)}</td><td>{item.scored.riskReward.toFixed(2)}</td><td>เฝ้าดู · ยังไม่ยืนยันเข้า</td><td><button type="button" onClick={()=>handleGoToChart(item)}>ดูกราฟ ↗</button></td></tr>)}</tbody></table></div>
+        <div className={styles.tableResponsive}><table className={styles.table}><thead><tr><th>หุ้น / ตลาด</th><th>คะแนน</th><th>ราคาแท่งปิด</th><th>Entry / SL / TP1</th><th>R:R</th><th>สถานะ</th><th>กราฟ</th></tr></thead><tbody>{allScans.rows.map(item=><tr key={`${item.market}:${item.symbol}`}><td><span className={styles.assetIdentity}><InstrumentLogo asset={{market:item.market==='SET'?'thai':'dr',symbol:item.symbol}}/><span><b>{item.symbol}</b><small>{item.market}</small></span></span></td><td>{item.scored.totalScore}/16</td><td>{item.currentDrPrice.toFixed(2)}<small>{item.dataAsOf}</small></td><td>{item.scored.entry.toFixed(2)} / {item.scored.sl.toFixed(2)} / {item.scored.tp1.toFixed(2)}</td><td>{item.scored.riskReward.toFixed(2)}</td><td>เฝ้าดู · ยังไม่ยืนยันเข้า</td><td><button type="button" onClick={()=>handleGoToChart(item)}>ดูกราฟ ↗</button></td></tr>)}</tbody></table></div>
         <nav className={styles.workflowPagination} aria-label="หน้าสแกนรวม"><button type="button" disabled={allScans.page===1} onClick={()=>setAllScanPage(p=>p-1)}>ก่อนหน้า</button><span>{allScans.page} / {allScans.pages} · ทั้งหมด {allScans.total} ตัว · หน้าละ 7</span><button type="button" disabled={allScans.page===allScans.pages} onClick={()=>setAllScanPage(p=>p+1)}>ถัดไป</button></nav>
         <WholeMarketScans initialMarket={currentMarket} onSelect={handleGoToChart}/>
       </section>}
@@ -881,7 +883,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <span className={styles.scanningTitle}>
               <Loader2 size={16} className="animate-spin text-purple-400" />
               <span>
-                กำลังสแกน {scanType === 'thai' ? 'ชุดหุ้นไทย' : 'ชุด DR'}...
+                กำลังโหลดผล {scanType === 'thai' ? 'ชุดหุ้นไทย' : 'ชุด DR'}...
               </span>
             </span>
             <span className="text-xs font-black text-purple-300">{scanProgress}%</span>
@@ -935,7 +937,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                 className={styles.scanActionBtn}
               >
                 <RefreshCw size={14} className={isScanning ? 'animate-spin' : ''} />
-                <span>{isScanning ? 'กำลัง Scan DR...' : 'Scan DR ใหม่'}</span>
+                <span>{isScanning ? 'กำลังโหลดผล DR...' : 'โหลดผล DR ล่าสุด'}</span>
               </button>
             </div>
           </div>
@@ -1039,7 +1041,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                   <div className={styles.cardHeader}>
                     <div className={styles.symbolGroup}>
                       <div className={styles.avatarBox}>
-                        <span>{item.symbol.replace(/\d+$/, '')}</span>
+                        <InstrumentLogo asset={{market:'dr',symbol:item.symbol}}/>
                         <small>#{index + 1}</small>
                       </div>
                       <div>
@@ -1212,7 +1214,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                 style={{ background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)' }}
               >
                 <RefreshCw size={14} className={isScanning ? 'animate-spin' : ''} />
-                <span>{isScanning ? 'กำลัง Scan หุ้นไทย...' : 'Scan หุ้นไทยใหม่'}</span>
+                <span>{isScanning ? 'กำลังโหลดผลหุ้นไทย...' : 'โหลดผลหุ้นไทยล่าสุด'}</span>
               </button>
             </div>
           </div>
@@ -1317,7 +1319,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                   <div className={styles.cardHeader}>
                     <div className={styles.symbolGroup}>
                       <div className={styles.avatarBox} style={{ background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%)' }}>
-                        <span>{item.symbol}</span>
+                        <InstrumentLogo asset={{market:'thai',symbol:item.symbol}}/>
                         <small>#{index + 1}</small>
                       </div>
                       <div>
@@ -1523,7 +1525,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       return (
                         <tr key={pick.id}>
                           <td>
-                            <b className="text-white text-sm">{pick.symbol}</b>
+                            <span className={styles.assetIdentity}><InstrumentLogo asset={{market:pick.market==='SET'?'thai':'dr',symbol:pick.symbol}}/><b className="text-white text-sm">{pick.symbol}</b></span>
                             <small className="block text-slate-400 text-[11px]">{pick.name}</small>
                           </td>
                           <td>
@@ -1754,8 +1756,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                     return (
                       <tr key={item.symbol}>
                         <td>
-                          <b>{item.symbol}</b>
-                          <small className="block text-slate-400">{item.name}</small>
+                          <span className={styles.assetIdentity}><InstrumentLogo asset={{market:'dr',symbol:item.symbol}}/><span><b>{item.symbol}</b><small className="block text-slate-400">{item.name}</small></span></span>
                         </td>
                         <td>{item.underlyingUsd?.toFixed(2)} {item.currency}</td>
                         <td>{item.conversionRatio} : 1</td>

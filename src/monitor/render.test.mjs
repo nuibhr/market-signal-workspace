@@ -52,7 +52,7 @@ test('MVP has explicit empty/loading/member states and no sample picks',()=>{
 });
 test('unknown logo stays a local monogram and known logo uses no-referrer without secrets',()=>{
  const unknown=renderToStaticMarkup(React.createElement(Logo,{asset:{market:'us',symbol:'UNKNOWN.a'}}));assert.ok(!unknown.includes('<img'));assert.ok(unknown.includes('UN'));
- const known=renderToStaticMarkup(React.createElement(Logo,{asset:{market:'thai',symbol:'PTT'}}));assert.ok(known.includes('image-stock/PTT.BK.png'));assert.ok(known.includes('referrerPolicy="no-referrer"'));assert.ok(!known.includes('apikey'));
+ const known=renderToStaticMarkup(React.createElement(Logo,{asset:{market:'thai',symbol:'PTT'}}));assert.ok(known.includes('/instrument-logos/thai/PTT.png'));assert.ok(known.includes('referrerPolicy="no-referrer"'));assert.ok(!known.includes('apikey'));
 });
 test('actual record details show entry, exit, timeline, counted state and same ledger summary',()=>{
   const t={id:'exact-record',market:'us',symbol:'NTES',side:'SHORT',status:'CLOSED',publishedAt:now,entryTime:now/1000+900,exitTime:now/1000+1800,trigger:100,stop:105,plan:{entry:100,stop:105,target:90},exit:90,reason:'TP',netR:2};

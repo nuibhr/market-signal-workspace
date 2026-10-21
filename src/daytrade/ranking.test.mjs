@@ -36,8 +36,8 @@ test('actual dashboard ranks fresh engine setups read-only and drops stale/disco
  assert.deepEqual(db.prepare('SELECT * FROM daytrade_forward').all(),before);db.close();
 });
 test('listing identities preserve broker labels and do not invent ambiguous company mappings',()=>{
- assert.match(instrumentIdentity({market:'thai',symbol:'PTT'}).url,/PTT.BK.png$/);
- assert.match(instrumentIdentity({market:'dr',symbol:'NVDA80'}).url,/NVDA.png$/);
+ assert.match(instrumentIdentity({market:'thai',symbol:'PTT'}).url,/instrument-logos\/thai\/PTT.png$/);
+ assert.match(instrumentIdentity({market:'dr',symbol:'NVDA80'}).url,/instrument-logos\/dr\/NVDA80.png$/);
  assert.equal(instrumentIdentity({market:'dr',symbol:'UNKNOWN80'}).url,null);
  assert.match(instrumentIdentity({market:'us',symbol:'NTES.24H'}).url,/NTES.png$/);
  assert.match(instrumentIdentity({market:'us',symbol:'BRK.B'}).url,/BRK-B.png$/);

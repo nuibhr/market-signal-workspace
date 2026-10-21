@@ -209,3 +209,17 @@ test('native worker filters incomplete/delayed bars, records failures and never 
   const blocked=createNativeScanner({db,now:()=>now,clients:{SET:client,TFEX:client},env:{NODE_ENV:'production'}});await blocked();
   assert.equal(JSON.parse(db.prepare('SELECT body FROM daytrade_coverage').get().body).code,'DISPLAY_RIGHTS_NOT_CONFIRMED');db.close();
 });
+test('native discovery cooldown persists across worker restarts while an open position receives priority after one minute',async()=>{
+ const db=memory(),bars=rows(90);let time=(bars.at(-1).time+1800)*1000,calls=[];
+ const stamp=time,all=['thai','dr','tfex'].flatMap(nativeUniverse),symbol=all[0].symbol;
+ for(const a of all)db.prepare('INSERT INTO daytrade_coverage VALUES(?,?,?,?)').run(`native:${a.market}`,a.symbol,'{}',stamp);
+ db.prepare('INSERT INTO daytrade_cursor VALUES(?,?,?)').run('native:thai',symbol,JSON.stringify({last:bars.at(-1).time,pending:null,active:{id:'fixture-native-open'},cooldown:0}));
+ const client={configuration:{configured:true},getCandles:async(s)=>{calls.push(s);return {source:'fixture-native',bars};}};
+ const create=()=>createNativeScanner({db,now:()=>time,clients:{SET:client,TFEX:client},env:{NODE_ENV:'production',SETTRADE_DISPLAY_RIGHTS_CONFIRMED:'true',TFEX_DISPLAY_RIGHTS_CONFIRMED:'true'}});
+ assert.equal((await create()()).status,'idle');time=stamp+59999;assert.equal((await create()()).status,'idle');assert.deepEqual(calls,[]);
+ time=stamp+60000;const result=await create()();assert.equal(result.market,'thai');assert.deepEqual(calls,[symbol]);
+ assert.equal((await create()()).status,'idle','restart must retain the last monitor deadline');
+ // Without active records, full-roster collection resumes only when due.
+ db.prepare('DELETE FROM daytrade_cursor').run();time=stamp+600000;
+ assert.equal((await create()()).status,'checked');assert.equal(calls.length,2);db.close();
+});

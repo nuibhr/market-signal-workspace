@@ -2,9 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { storage } from '../storage/database.mjs';
 import { autoPickReadiness } from '../auto-pick/runner.mjs';
 import { signalUniverse, signalProviderAllowed } from './data.mjs';
-import { activeReferenceSignals, observationSchedule } from './store.mjs';
+import { activeReferenceSignals, observationSchedule,claimSignalLease,releaseSignalLease } from './store.mjs';
 import { signalId } from './model.mjs';
 import { runSignalScan } from './runner.mjs';
+import {monitorDue} from './cadence.mjs';
 
 export function createSignalCloud({readiness=autoPickReadiness,run=runSignalScan,allowed=signalProviderAllowed}={}){
  async function schedule(queue,now=Date.now()){
@@ -15,10 +16,13 @@ export function createSignalCloud({readiness=autoPickReadiness,run=runSignalScan
    const times=new Map((await observationSchedule(market)).map(r=>[r.symbol,r.next_scan_ms]));
    const outstanding=await storage.all(`SELECT payload_json FROM scanner_jobs WHERE market=? AND json_extract(payload_json,'$.kind')='swing' AND state IN ('pending','retry','running')`,market);
    const busy=new Set(outstanding.flatMap(r=>JSON.parse(r.payload_json).symbols));
-   const active=new Set((await activeReferenceSignals(market)).map(s=>s.symbol));
+   const active=new Set((await activeReferenceSignals(market)).filter(s=>monitorDue(s,now)).map(s=>s.symbol));
    const due=signalUniverse(market).filter(a=>(times.get(a.symbol)??0)<=now&&!busy.has(a.symbol)).sort((a,b)=>(times.get(a.symbol)??0)-(times.get(b.symbol)??0));
    const work=[...active].filter(s=>!busy.has(s));
    work.push(...due.filter(a=>!active.has(a.symbol)).slice(0,60).map(a=>a.symbol));
+   // A healthy ten-minute cooldown must not look like a stopped worker at the
+   // seven-minute health threshold. Do not conceal outstanding/stuck jobs.
+   if(!work.length&&!outstanding.length){const token=await claimSignalLease(market,now);if(token)await releaseSignalLease(market,token,now);}
    for(let i=0;i<work.length;i+=4){
     const symbols=work.slice(i,i+4),id=signalId(`swing:${market}:${Math.floor(now/300000)}:${symbols.join(',')}`),at=new Date(now).toISOString();
     await storage.run(`INSERT OR IGNORE INTO scanner_jobs(id,market,session_key,slot,payload_json,available_at,created_at,updated_at,priority) VALUES(?,?,?,?,?,?,?,?,?)`,id,market,'swing',at,JSON.stringify({kind:'swing',symbols}),now,at,at,symbols.some(s=>active.has(s))?0:1);
@@ -42,8 +46,9 @@ export function createSignalCloud({readiness=autoPickReadiness,run=runSignalScan
    const payload=JSON.parse(row.payload_json),known=new Set(signalUniverse(row.market).map(a=>a.symbol));
    if(!readiness().markets.some(m=>m.id===row.market&&m.status==='active')||!allowed(row.market)){await finish('cancelled','SOURCE_NOT_READY');return {status:'cancelled'};}
    if(!Array.isArray(payload.symbols)||!payload.symbols.length||payload.symbols.length>4||payload.symbols.some(s=>!known.has(s)))throw Error('INVALID_JOB');
-   const result=await run(row.market,{symbols:payload.symbols,maxSymbols:4,budgetMs:90000});
-   if(result.status==='busy'||result.status==='partial'||result.status==='blocked'||result.scanned<payload.symbols.length)throw Error('SOURCE_RETRY');
+   const result=await run(row.market,{symbols:payload.symbols,force:false,maxSymbols:4,budgetMs:90000});
+   // A coalesced symbol may already have been checked since this job was queued.
+   if(result.status==='busy'||result.status==='partial'||result.status==='blocked')throw Error('SOURCE_RETRY');
    await finish('done');return {status:'done'};
   }catch(e){const terminal=e.message==='INVALID_JOB'||row.attempts>=5;const delay=Math.min(300000,60000*2**(row.attempts-1));await finish(terminal?'failed':'retry',terminal?'JOB_FAILED':'SOURCE_RETRY',delay);return {status:terminal?'failed':'retry',delaySeconds:delay/1000};}
  }

@@ -1,4 +1,6 @@
 'use client';
+import {pollAfterCompletion} from '../../monitor/poll.mjs';
+import {UI_POLL_INTERVAL_MS} from '../../signals/cadence.mjs';
 import {createContext,useContext,useEffect,useRef,useState} from 'react';
 import {usePathname} from 'next/navigation';
 import {createNotificationInbox} from '../../auto-pick/notification-inbox.mjs';
@@ -120,9 +122,8 @@ export default function MonitorProvider({children}) {
         const history=(await Promise.all([...boxes.current.values(),...externalBoxes.current.values()].filter(b=>b.scope.includes(':')||allowSignals&&b.scope===identity.current).map(b=>b.history()))).flat();
         if(!disposed){setSnapshots(next);setSwingSnapshots(legacy);setErrors(fail);setEvents(history.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)));}
       }
-      if(!disposed)timer=setTimeout(poll,15000);
-    };poll();
-    return()=>{disposed=true;clearTimeout(timer);controller.abort();for(const box of boxes.current.values())box.release();boxes.current.clear();};
+    };const stop=pollAfterCompletion(poll,{intervalMs:UI_POLL_INTERVAL_MS});
+    return()=>{disposed=true;stop();controller.abort();for(const box of boxes.current.values())box.release();boxes.current.clear();};
   },[active,revision]);
   return <Context.Provider value={{snapshots,swingSnapshots,errors,events:[...events,...newsHistory].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)),newsStatus,newsPolicy,newsArticles,gestureReady,enabled,audio,durable,now,toggle,speak,inspectTrade:setRecord,refresh:()=>setRevision(v=>v+1),registerInbox:box=>externalBoxes.current.set(box.scope,box),cancelSpeech:key=>adapter.current?.cancel(key),isSpeechPending:key=>adapter.current?.has(key)}}>{children}{toast&&<aside className="monitor-event-toast" role="status" aria-live="polite"><button className="monitor-toast-close" type="button" aria-label="ปิดแจ้งเตือน" onClick={()=>setToast(null)}>×</button><strong>{eventLabel(toast)} · {toast.symbol}</strong><p>{toast.type==='NEWS'?toast.title:`${toast.side||''} · ราคาอ้างอิง ${toast.price??'—'} · ${MARKET_LABELS[toast.market]}`}</p>{toast.type==='NEWS'?<a href={toast.url} target="_blank" rel="noopener noreferrer">อ่านจาก {toast.source} ↗</a>:tradeReference(toast)&&<button type="button" onClick={()=>{setRecord(tradeReference(toast));setToast(null);}}>ดูไม้ / สถิติ ↗</button>}<small>ทุกเหตุการณ์เก็บในประวัติแจ้งเตือน</small></aside>}{record&&<TradeRecordDialog key={`${record.ledger}:${record.market}:${record.tradeId}`} reference={record} onClose={()=>setRecord(null)}/>}</Context.Provider>;
 }

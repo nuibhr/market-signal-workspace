@@ -1956,3 +1956,5 @@
 .displayLimit { justify-content:space-between; font-size:.85rem; color:#bae6fd; }
 .briefingDetails { margin-top:1rem; color:#b7c8db; }
 .briefingDetails summary { cursor:pointer; font-size:.85rem; }
+
+.assetIdentity{display:inline-flex;align-items:center;gap:10px;vertical-align:middle}

@@ -1,4 +1,7 @@
 'use client';
+import InstrumentLogo from './monitor/instrument-logo.jsx';
+import {pollAfterCompletion} from '../monitor/poll.mjs';
+import {UI_POLL_INTERVAL_MS} from '../signals/cadence.mjs';
 import SignalPerformance from './signal-performance.jsx';
 import {resultOutcome} from '../monitor/results.mjs';
 import { Fragment, useEffect, useRef, useState } from 'react';
@@ -141,11 +144,10 @@ export default function SignalResults({
     setExpanded(null);
     setCopied(false);
     onSnapshot?.({status:'loading',market,strategy});
-    refresh();
-    const interval = window.setInterval(refresh, 15_000);
+    const stop=pollAfterCompletion(refresh,{intervalMs:UI_POLL_INTERVAL_MS});
     return () => {
       controller.abort();
-      window.clearInterval(interval);
+      stop();
     };
   }, [market, status, scope, strategy, page, revision,tradeFocus,onSnapshot]);
 
@@ -409,7 +411,7 @@ export default function SignalResults({
                           </td>
                           <td>
                             <button className="results-symbol" onClick={() => onSelect?.(row.symbol,row.market)}>
-                              {row.symbol} ↗
+                              <InstrumentLogo asset={{market:row.market,symbol:row.symbol}}/> {row.symbol} ↗
                             </button>
                             <span className="asset-market">
                               {MARKETS.find(([id]) => id === row.market)?.[1] ?? row.market}
