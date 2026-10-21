@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import {useMonitor} from '../monitor/monitor-provider.jsx';
-import {sizeReferencePlan} from '../../signals/decision-brief.mjs';
+import {sizeReferencePlan,defaultDecisionLot} from '../../signals/decision-brief.mjs';
 import {pollAfterCompletion} from '../../monitor/poll.mjs';
 import styles from './decision-desk.module.css';
 const n=(v,d=2)=>Number.isFinite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'—';
@@ -19,16 +19,17 @@ export function DecisionPlan({row,capital,riskBudget,lotSize,onCapital,onRisk,on
     <p>Stop ห่าง {n(p.stopPercent)}% · TP1 2R สุทธิหลังต้นทุนสมมติ · ที่เหลือ 50% ตาม Stop คุ้มทุนและ trailing</p>
     <div className={styles.budget}><label>เงินที่จัดสรร (บาท)<input aria-label="เงินที่จัดสรร" type="number" min="1" step="100" value={capital} onChange={e=>onCapital(e.target.value)}/></label><label>ยอมเสี่ยงต่อไม้ (บาท)<input aria-label="งบเสี่ยงต่อไม้" type="number" min="1" step="50" value={riskBudget} onChange={e=>onRisk(e.target.value)}/></label><label>หน่วยต่อชุด (ปรับได้)<input aria-label="จำนวนหน่วยต่อชุด" type="number" min="1" step="1" value={lotSize} onChange={e=>onLot(e.target.value)}/></label></div>
     <div className={styles.sizing} aria-live="polite">{sizing?.quantity>0?<><strong>{n(sizing.quantity,0)} {row.market==='dr'?'หน่วย':'หุ้น'}</strong><span>ใช้เงินประมาณ {n(sizing.estimatedCapital)} บาท · เสี่ยงตามแผน {n(sizing.estimatedRisk)} บาท</span><small>แบ่ง TP1 {n(sizing.tp1Quantity,0)} / ตามเทรนด์ {n(sizing.runnerQuantity,0)} · คิดทีละ 2 ชุดเพื่อแบ่งครึ่ง</small></>:<span>{sizing?'งบยังไม่พอสำหรับ 2 ชุดที่แบ่งขายได้ ลองปรับเงินจัดสรร งบเสี่ยง หรือขนาดชุด':'ใส่เงินจัดสรรและงบเสี่ยงที่มากกว่า 0 โดยงบเสี่ยงไม่เกินเงินจัดสรร'}</span>}</div>
-    <details className={styles.costs}><summary>ต้นทุนและกฎของแผนนี้</summary><p>คอม {n(p.friction?.assumptions?.commissionPercent,4)}% · ค่าธรรมเนียมตลาด {n(p.friction?.assumptions?.marketFeePercent,4)}% · VAT บนคอม {n(p.friction?.assumptions?.commissionVatPercent)}% · Slippage {n(p.friction?.assumptions?.slippagePercent,4)}% ต่อข้าง</p><p>ขนาดชุดเริ่มต้น 100 เป็นค่าที่ปรับได้ ตรวจหน่วยซื้อขายของสินทรัพย์ก่อนใช้ · ความเสี่ยงเป็นประมาณการ Gap และต้นทุนจริงอาจทำให้เสียมากกว่างบ</p></details>
+    <details className={styles.costs}><summary>ต้นทุนและกฎของแผนนี้</summary><p>คอม {n(p.friction?.assumptions?.commissionPercent,4)}% · ค่าธรรมเนียมตลาด {n(p.friction?.assumptions?.marketFeePercent,4)}% · VAT บนคอม {n(p.friction?.assumptions?.commissionVatPercent)}% · Slippage {n(p.friction?.assumptions?.slippagePercent,4)}% ต่อข้าง</p><p>ขนาดชุดเริ่มต้น DR 1 หน่วย / หุ้นไทย 100 หุ้น ปรับได้ตามเงื่อนไขหลักทรัพย์ · ความเสี่ยงเป็นประมาณการ Gap และต้นทุนจริงอาจทำให้เสียมากกว่างบ</p></details>
   </article>;
 }
 export default function DecisionDesk({initialMarket='thai',favorites:initialFavorites=[],favoritesByMarket={},onToggleFavorite,onSelect,onResults,signalAccess=null}){
   const monitor=useMonitor(),[market,setMarket]=useState(initialMarket),[intent,setIntent]=useState('swing'),[savedOnly,setSavedOnly]=useState(false),[query,setQuery]=useState(''),[selected,setSelected]=useState(null);
   const favorites=favoritesByMarket[market]??initialFavorites;
-  const [capital,setCapital]=useState('20000'),[riskBudget,setRiskBudget]=useState('500'),[lotSize,setLotSize]=useState('100'),[filtered,setFiltered]=useState(null),[failure,setFailure]=useState(''),[busy,setBusy]=useState(false);
+  const [capital,setCapital]=useState('20000'),[riskBudget,setRiskBudget]=useState('500'),[lotSize,setLotSize]=useState(()=>String(defaultDecisionLot(initialMarket))),[filtered,setFiltered]=useState(null),[failure,setFailure]=useState(''),[busy,setBusy]=useState(false);
   const [revision,setRevision]=useState(0);
   const favoriteKey=[...favorites].sort().join(','),custom=Boolean(query.trim()||savedOnly);
   useEffect(()=>{setMarket(initialMarket);setSelected(null);},[initialMarket]);
+  useEffect(()=>{setLotSize(String(defaultDecisionLot(market)));},[market]);
   useEffect(()=>{
     if(!custom||signalAccess===false)return;
     const controller=new AbortController();setFiltered(null);setFailure('');setBusy(true);let stop;

@@ -1,4 +1,7 @@
 const positive=n=>Number.isFinite(n)&&n>0;
+// SET DR board lot = 1. Equities default to 100; announced exceptions remain editable.
+// https://www.set.or.th/th/market/information/trading-procedure/trading-units
+export const defaultDecisionLot=market=>market==='dr'?1:100;
 export const DECISION_REASONS={D1_TREND_NOT_UP:'แนวโน้มรายวันยังไม่เป็นขาขึ้น',WAIT_4H_BREAKOUT_CLOSE:'รอ 4H ปิดทะลุ High 20 แท่ง',WAIT_4H_PULLBACK_CLOSE:'รอย่อหา EMA20 แล้ว 4H ปิดกลับ',RELATIVE_VOLUME_BELOW_1:'ปริมาณซื้อขายยังต่ำกว่าค่าเฉลี่ย',STRUCTURAL_STOP_EXCEEDS_8_PERCENT:'Stop ตามโครงสร้างห่างเกิน 8%',RESISTANCE_BEFORE_MINIMUM_NET_REWARD:'แนวต้านอยู่ก่อนเป้ากำไร 2R สุทธิ',CONFIRMED_SWING_REQUIRED:'ยังไม่มี Swing Low ที่ยืนยันแล้ว',D1_4H_55_BARS_REQUIRED:'ประวัติ D1/4H ยังไม่ครบ 55 แท่ง',SCAN_STALE:'ผลสแกนเกินเวลาที่กำหนด',STALE_BARS:'แท่งราคายังไม่เป็นปัจจุบัน',NOT_SCANNED_YET:'ยังไม่ถึงรอบตรวจ',HISTORY_UNAVAILABLE:'แหล่งข้อมูลยังไม่มีประวัติพร้อมใช้',COSTS_REQUIRED:'ยังไม่มีสมมติฐานต้นทุน'};
 export const decisionReason=code=>DECISION_REASONS[code]||'ข้อมูลหรือเงื่อนไขยังไม่พร้อม';
 export function decisionChecks(row){return [
