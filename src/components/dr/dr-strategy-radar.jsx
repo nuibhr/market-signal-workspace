@@ -799,7 +799,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         <button type="button" onClick={()=>setActiveTab('decision')} className={`${styles.tabBtn} ${activeTab==='decision'?styles.tabBtnActive:''}`}>แผนเฝ้าวันนี้ · งบเสี่ยง</button>
         <button type="button" onClick={()=>showAllScans('all')} className={`${styles.tabBtn} ${activeTab==='all-scans'?styles.tabBtnActive:''}`}>สแกนรวม ({scoredThaiStocks.length+scoredDRs.length})</button>
         <button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>ศูนย์สัญญาณ / 100 ไม้ล่าสุด</button>
-        <button
+        {currentMarket!=='thai'&&<button
           type="button"
           onClick={() => {
             setActiveTab('dr-scanner');
@@ -811,7 +811,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           <Zap size={16} />
           <span>⚡ DR80 Scanner (DR Picks)</span>
           <span className={styles.tabCount}>{filteredDRs.length}</span>
-        </button>
+        </button>}
 
         <button
           type="button"
@@ -839,7 +839,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           </span>
         </button>
 
-        <button
+        {currentMarket!=='thai'&&<button
           type="button"
           onClick={() => setActiveTab('dr-bridge')}
           className={`${styles.tabBtn} ${activeTab === 'dr-bridge' ? styles.tabBtnActive : ''}`}
@@ -847,7 +847,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           <Coins size={16} />
           <span>Indicative &amp; Arbitrage Bridge</span>
           <span className={styles.tabBadge}>FX Quote</span>
-        </button>
+        </button>}
 
         <button
           type="button"
@@ -898,7 +898,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
       {/* ──────────────────────────────────────────────────────────────────────────
           TAB 1: DR80 SCANNER (GLOBAL DRs)
           ────────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'dr-scanner' && (
+      {currentMarket!=='thai'&&activeTab === 'dr-scanner' && (
         <div className={styles.tabContent}>
           {/* Bloomberg Header Bar */}
           <div className={styles.integrationBanner}>
@@ -1638,7 +1638,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
       {/* ──────────────────────────────────────────────────────────────────────────
           TAB 4: INDICATIVE & ARBITRAGE BRIDGE
           ────────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'dr-bridge' && (
+      {currentMarket!=='thai'&&activeTab === 'dr-bridge' && (
         <div className={styles.tabContent}>
           <div className={styles.bridgeIntroCard}>
             <div className={styles.bridgeIconWrap}>

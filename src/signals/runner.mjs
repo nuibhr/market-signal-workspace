@@ -3,8 +3,11 @@ import { inspectSignalBars, candidateViews, startReferenceSignal, advanceReferen
 import { activeReferenceSignals, allCostProfiles, claimSignalLease, defaultSignalCosts, insertReferenceSignal,
   observationSchedule, storedObservation, releaseSignalLease, saveObservation, saveReferenceAdvance } from './store.mjs';
 import {discoveryIntervalMs,monitorDue} from './cadence.mjs';
+import {evaluateMinerviniStage2} from '../analysis/minervini-stage2.mjs';
+import {analyzeCandles} from '../analysis/technical.mjs';
+import {loadThaiBenchmark,loadThaiProfile} from './thai-context.mjs';
 
-export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, allowed = signalProviderAllowed } = {}) {
+export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, allowed = signalProviderAllowed,getBenchmark=async()=>null,getProfile=async()=>null } = {}) {
   return async function runSignalScan(market, { symbols = null, force = Boolean(symbols), budgetMs = 20000, maxSymbols = 12, enabled = true } = {}) {
     if (!['thai','dr','us'].includes(market) || !enabled || !allowed(market)) return { status:'blocked',code:'SIGNAL_SOURCE_NOT_READY' };
     const now = clock(), token = await claimSignalLease(market,now,Math.max(120000,budgetMs+60000));
@@ -22,6 +25,8 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
       const queue = [...new Set(symbols || [...activeSymbols.slice(0,Math.max(1,Math.floor(maxSymbols/2))),...due.filter(s=>!monitored.has(s)),...activeSymbols])];
       const profiles = market==='us'?await allCostProfiles():null;
       const deadline = clock()+budgetMs;
+      const benchmark=market==='thai'&&queue.some(s=>force||(schedules.get(s)??0)<=now)?await getBenchmark().catch(()=>null):null;
+      let profileTouched=false;
       for (const symbol of queue) {
         if (scanned>=maxSymbols || clock()>=deadline) break;
         const asset = known.get(symbol); if(!asset)continue;
@@ -36,6 +41,17 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
             try{
               const daily = await load(asset,'1d'), four = await load(asset,'4h');
               snapshot = inspectSignalBars({...asset,signalSource:`D1: ${daily.source} · 4H: ${four.source}`},daily.bars,four.bars,clock());
+              if(market==='thai'){
+                const assessment=evaluateMinerviniStage2(daily.bars,{benchmarkBars:benchmark?.bars??[],now:clock(),costs:defaultSignalCosts(asset)});
+                const d=analyzeCandles(daily.bars,null,'D1',{timeframe:'1d',now:clock()}),last=daily.bars.at(-1);
+                assessment.technical={rsi:d?.rsi14??null,macdHistogram:d?.macdHistogram??null};
+                assessment.volumeBreakout=Boolean(assessment.price>Math.max(...daily.bars.slice(-21,-1).map(b=>b.high))&&assessment.rvol>1.5&&d?.macdHistogram>0);
+                assessment.pullback=Boolean(assessment.ema20&&last.low<=Math.max(assessment.ema20,assessment.ema50)*1.01&&last.close>=assessment.ema20&&last.close<=Math.max(assessment.ema20,assessment.ema50)*1.03&&last.close>=last.open);
+                snapshot.stage2=assessment;
+                // At most one profile refresh per bounded scan; never 150
+                // company requests from a customer's dashboard GET.
+                if(!profileTouched){profileTouched=true;await getProfile(symbol).catch(()=>null);}
+              }
             }catch(error){
               const code=['DISPLAY_RIGHTS_NOT_CONFIRMED','NO_AVAILABLE_CLOSED_BARS','INSTRUMENT_MISMATCH','HISTORY_UNAVAILABLE','TIMEFRAME_NOT_AVAILABLE'].includes(error.code)?error.code:'SOURCE_UNAVAILABLE';
               snapshot={market,symbol,name:asset.name,status:'UNAVAILABLE',code,checkedAt:new Date(clock()).toISOString()};
@@ -71,4 +87,4 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
     } finally { await releaseSignalLease(market,token,clock()); }
   };
 }
-export const runSignalScan = createSignalRunner();
+export const runSignalScan = createSignalRunner({getBenchmark:loadThaiBenchmark,getProfile:loadThaiProfile});

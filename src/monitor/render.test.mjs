@@ -21,8 +21,17 @@ const Cards=component('../components/monitor/opportunity-cards.jsx').default;
 const Logo=component('../components/monitor/instrument-logo.jsx').default;
 const RecordDetails=component('../components/monitor/trade-record.jsx').TradeRecordDetails;
 const DecisionPlan=component('../components/dr/decision-desk.jsx').DecisionPlan;
+const {ThaiScreenerTable,filterThaiRows}=component('../components/thai/thai-screener-dashboard.jsx');
 const now=Date.parse('2026-10-15T15:00:00Z');
 const row={symbol:'NTES',name:'NETEASE INC-ADR',kind:'stock_cfd',status:'READY',price:100,latestBar:now/1000-900,receivedAt:now,bars:100,stale:false,side:null,monitorPlan:{entry:100,side:'LONG',status:'WAITING'}};
+test('Thai table preserves accessible favorites, exact chart action and honest missing values; filters never treat missing fundamentals as cheap',()=>{
+ const rows=[{symbol:'PTT',name:'PTT',market:'thai',section:'SET100',score:8,criteria:[],stage:2,status:'available',templatePass:true,pe:9,dividendPercent:6,rsi:60,rvol:2,rs:{outperforming:true,excessReturnPercent:5}},
+ {symbol:'AOT',name:'AOT',market:'thai',section:'SET100',score:null,criteria:[],stage:null,status:'unavailable',pe:null,dividendPercent:null,rsi:null,rvol:null}];
+ const html=renderToStaticMarkup(React.createElement(ThaiScreenerTable,{rows,favorites:['PTT'],selectedSymbol:'PTT'}));
+ for(const copy of ['ดูกราฟ PTT','เลิกติดตาม PTT','8/8','/instrument-logos/thai/PTT.png','ประวัติไม่ครบ'])assert.ok(html.includes(copy),copy);
+ assert.deepEqual(filterThaiRows(rows,{preset:'dividend'}).map(r=>r.symbol),['PTT']);assert.deepEqual(filterThaiRows(rows,{peMax:15}).map(r=>r.symbol),['PTT']);assert.equal(filterThaiRows(rows,{preset:'orb'}).length,0);
+ assert.deepEqual(filterThaiRows(rows,{savedOnly:true,favorites:['AOT']}).map(r=>r.symbol),['AOT']);
+});
 test('decision card renders canonical net-cost levels and risk sizing without implying an entered trade',()=>{
  const plan={signalEligible:true,entry:100,entryBasis:101,stopLoss:97,minimumTarget:110,netRiskPerUnit:4.5,stopPercent:4,friction:{assumptions:{commissionPercent:0.06,marketFeePercent:0.005,commissionVatPercent:7,slippagePercent:0.15}}};
  const candidate={market:'thai',symbol:'PTT',name:'PTT',mode:'breakout',category:'waiting',price:100,relativeVolume:1.2,trigger:{breakout:101},plan,checks:[{label:'D1 ขาขึ้น',passed:true},{label:'4H ทะลุกรอบ',passed:false}]};

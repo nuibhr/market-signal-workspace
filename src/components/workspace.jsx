@@ -26,6 +26,8 @@ import AutoPickBoard from './auto-pick-board.jsx';
 import SignalResults from './signal-results.jsx';
 import DrStrategyRadar from './dr/dr-strategy-radar.jsx';
 import ProToolsNav from './pro-tools-nav.jsx';
+import ThaiScreenerDashboard from './thai/thai-screener-dashboard.jsx';
+import SignalWorkflow from './dr/signal-workflow.jsx';
 
 const DEFAULT_SYMBOLS = { thai: 'PTT', dr: 'AAPL80', tfex: TFEX_SYMBOLS[0] ?? 'S50', us: 'NVDA', forex: 'EUR/USD' };
 const MARKETS = MARKET_GROUPS.map(group => ({
@@ -177,6 +179,11 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     if (id === 'calendar-page' || id === 'calendar') { window.location.href = '/calendar'; return; }
     if (id === 'developers') { window.location.href = '/developers'; return; }
     setActiveNav(id);
+    if(marketId==='thai'&&['scanner','analysis-tools','daily','autopick','signals','search','favorites','watchlist','overview','chart'].includes(id)){
+      setPopup(null);if(['favorites','watchlist'].includes(id))setFavoritesOpenRequest(v=>v+1);
+      if(id==='chart')scrollToChart();else document.getElementById('section-auto-pick')?.scrollIntoView({behavior:'smooth',block:'start'});
+      return;
+    }
     if (id === 'scanner' || id === 'analysis-tools' || id === 'daily' || id === 'autopick' || id === 'signals') {
       setPopup('scanner');
       return;
@@ -418,23 +425,24 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
       <main className="main-area">
         <header className="topbar">
           <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
-          <div className="topbar-search-area"><SymbolSearch marketId={marketId} onSelect={selectAsset} /></div>
+          <div className="topbar-search-area">{marketId==='thai'?<a className="monitor-account" href="#section-auto-pick">ค้นหา / กรองในตาราง ↓</a>:<SymbolSearch marketId={marketId} onSelect={selectAsset} />}</div>
           <div className="topbar-actions"><a className="monitor-account" href={loginHref}>บัญชีสมาชิก ↗</a><SoundControl/><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
         </header>
 
         <div className="page-content">
           <MarketNavigation current={marketId}/>
-          <ProToolsNav current={marketId} />
-          <section id="section-overview" className="workspace-intro nugaom-welcome">
+          {marketId!=='thai'&&<ProToolsNav current={marketId} />}
+          {marketId!=='thai'&&<section id="section-overview" className="workspace-intro nugaom-welcome">
             <div className="welcome-main">
               <span className="eyebrow">{page.eyebrow}</span>
               <h1>{page.title}</h1>
               <p>{page.description}</p>
               <button className="welcome-explore" onClick={() => navigateTo('daily')}>เปิดเครื่องมือ →</button>
             </div>
-          </section>
+          </section>}
 
-          {['thai','dr'].includes(marketId) && (
+          {marketId==='thai'&&<div id="section-overview"><ThaiScreenerDashboard signalAccess={accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
+          {marketId==='dr' && (
             <DrStrategyRadar
               currentMarket={marketId}
               onSelectSymbol={selectAsset}
@@ -449,7 +457,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           {!['thai','dr','us'].includes(marketId)&&<section id="section-daily" className="market-routine panel"><div><span className="eyebrow">TODAY / {page.short}</span><h2>เครื่องมือประจำตลาด</h2><p>{marketId==='us'?'สัญญาณใช้แท่งรายวันหลังตลาดปิด · กราฟย้อนหลังเลือกดูได้หลายช่วงเวลา':marketId==='forex'?'กราฟย้อนหลังคู่เงิน · AutoPick ยังรอฟีดที่ยืนยันใช้แจ้งเตือนได้':'ดูซีรีส์สัญญาและกราฟจริง · AutoPick ยังรอยืนยันกติกาแต่ละสินค้า'}</p></div><div><button onClick={()=>setPopup('scanner')}>สแกนเชิงลึก</button><button onClick={()=>setPopup('calendar')}>ปฏิทินเศรษฐกิจ</button><button onClick={()=>navigateTo('results')}>ผลงานสัญญาณ</button></div></section>}
           {!['thai','dr','us'].includes(marketId)&&<AutoPickBoard marketId={marketId} onSelect={selectAsset}/>}
 
-          <section className="asset-hero" aria-label="สินทรัพย์ที่เลือก">
+          {marketId!=='thai'&&<section className="asset-hero" aria-label="สินทรัพย์ที่เลือก">
             <div className="hero-copy">
               <div className="hero-overline"><span className="hero-badge">{market.label}</span><span className="hero-separator">/</span><span>{hasRealBars ? `แท่ง ${TIMEFRAME_LABELS[timeframe]} จากแหล่งข้อมูลจริง` : hasTfexConnection ? liveState === 'loading' ? `กำลังอ่าน TFEX OHLC ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? 'ราคา quote ได้ · OHLC กำลังรอข้อมูล' : 'รอข้อมูล TFEX OHLC' : hasFmpConnection ? hasRealQuote ? `ราคา quote จาก ${marketQuote.source} · กราฟยังรอฟีดแท่ง` : quoteState === 'loading' ? 'กำลังอ่านราคา quote' : 'ยังไม่มีราคา quote' : hasSettradeConnection ? liveState === 'loading' ? `กำลังอ่านแท่ง ${TIMEFRAME_LABELS[timeframe]}` : 'ยังไม่มีแท่งราคา' : 'รอเชื่อมข้อมูลราคา'}</span></div>
               <h2>{asset.symbol}{asset.name !== asset.symbol && <span>{asset.name}</span>}</h2>
@@ -457,12 +465,12 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               <div className="hero-details"><span>แหล่งราคา <b>{hasRealQuote ? marketQuote.source : sourceLabel}</b></span><span>{displayedQuote ? 'เวลา quote' : 'แท่งล่าสุด'} <b>{quoteTimeLabel}</b></span><span>{displayedQuote ? 'สถานะ' : 'กรอบเวลา'} <b>{quoteStatusLabel}</b></span>{hasTfexConnection && <span>หน่วยราคา <b>{asset.priceUnit} · {asset.quoteCurrency}</b></span>}</div>
             </div>
             <div className="hero-art"><div className="orbit orbit-one" /><div className="orbit orbit-two" /><div className="hero-glow" /><Image className="hero-mascot" src="/nugaom-mascot.png" width={180} height={180} alt="" priority /><MarketSparkline bars={sparkBars} /><div className="hero-art-label">PRICE STRUCTURE / {asset.symbol}</div></div>
-          </section>
+          </section>}
 
           <div className={`workspace-ticker ${hasRealBars || hasRealQuote ? 'has-live-source' : 'has-preview-source'}`}><span className="ticker-symbol" aria-hidden="true">{hasRealBars || hasRealQuote ? '◉' : '◇'}</span><span className="ticker-copy"><strong>{hasRealBars ? `ข้อมูล ${asset.symbol} พร้อมอ่าน` : hasRealQuote ? `รับราคา quote ของ ${asset.symbol} แล้ว` : `กำลังดู ${asset.symbol} ในโหมดพรีวิว`}</strong><small>{hasRealBars ? `${sourceLabel} · ${TIMEFRAME_LABELS[timeframe]} ล่าสุด ${latestBarLabel}` : hasRealQuote ? hasTfexConnection ? marketQuote.observedAt ? `TFEX Open API · quote ${formatLatestBar({ timeframe: '15m', latestTime: marketQuote.observedAt })} · ยังไม่ใช้วิเคราะห์` : `TFEX Open API · เวลา source ไม่ระบุ · รับ ${formatQuoteReceipt(marketQuote.receivedAt)} · ยังไม่ใช้วิเคราะห์` : `${sourceLabel} · ยังไม่มีแท่งใช้คำนวณ` : `${sourceLabel} · ยังไม่มีแท่งใช้คำนวณ`}</small></span><span className={hasRealBars ? 'ticker-state live' : 'ticker-state'}>{hasRealBars ? liveSeries.chartOnly ? 'HISTORY' : 'REAL OHLC' : hasRealQuote ? 'QUOTE ONLY' : 'PREVIEW'}</span></div>
 
           {marketId==='us'&&<section className="us-catalog-switch" aria-label="เลือกหุ้นหรือ ETF"><UsAssetTabs value={asset.sectionId==='US_ETFS'?'etf':'stock'} onChange={kind=>{const section=kind==='etf'?'US_ETFS':'US_STOCKS';if(asset.sectionId!==section)selectAsset(MARKET_ASSETS.us.find(a=>a.sectionId===section));}}/><span>{asset.sectionId==='US_ETFS'?'ETF · กราฟและคะแนนเทคนิค · ยังไม่มีสัญญาณอัตโนมัติ':'หุ้น · สแกน AutoPick ทั้ง 500 ตัวหลังตลาดปิด'}</span></section>}
-          <div className="favorite-strip"><span>★ หุ้นโปรด</span>{favoriteAssets.length ? favoriteAssets.slice(0,8).map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}>{item.symbol}{item.sectionId==='US_ETFS'&&<small> ETF</small>}</button>) : <small>เก็บตัวที่สนใจ แล้วติดตามราคาและแนวโน้มต่อได้</small>}<button className="favorite-overview" onClick={()=>navigateTo('favorites')}>ดูหุ้นโปรด ({favoriteAssets.length})</button><button className="favorite-toggle" aria-label={`${favorites.includes(asset.symbol)?'เลิกติดตาม':'ติดตาม'} ${asset.symbol} จากกราฟ`} aria-pressed={favorites.includes(asset.symbol)} onClick={() => toggleFavorite(asset.symbol)}>{favorites.includes(asset.symbol) ? '★ บันทึกแล้ว' : '☆ เพิ่มหุ้นโปรด'}</button></div>
+          {marketId!=='thai'&&<div className="favorite-strip"><span>★ หุ้นโปรด</span>{favoriteAssets.length ? favoriteAssets.slice(0,8).map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}>{item.symbol}{item.sectionId==='US_ETFS'&&<small> ETF</small>}</button>) : <small>เก็บตัวที่สนใจ แล้วติดตามราคาและแนวโน้มต่อได้</small>}<button className="favorite-overview" onClick={()=>navigateTo('favorites')}>ดูหุ้นโปรด ({favoriteAssets.length})</button><button className="favorite-toggle" aria-label={`${favorites.includes(asset.symbol)?'เลิกติดตาม':'ติดตาม'} ${asset.symbol} จากกราฟ`} aria-pressed={favorites.includes(asset.symbol)} onClick={() => toggleFavorite(asset.symbol)}>{favorites.includes(asset.symbol) ? '★ บันทึกแล้ว' : '☆ เพิ่มหุ้นโปรด'}</button></div>}
 
 
 
@@ -485,9 +493,10 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
               <AnalysisRail chartOnly={Boolean(liveSeries?.chartOnly)} asset={asset} analysis={analysis} tradePlan={tradePlan} tradePlanState={hasSettradeConnection && timeframe === '1d' && (liveState === 'loading' || planContextState === 'loading') ? 'loading' : planContextState} aiState={currentAnalysis ? aiState : 'idle'} aiResult={currentAiResult} sourceState={liveState} barsCount={hasRealBars ? liveSeries.bars.length : 0} latestDay={latestBarLabel} timeframe={TIMEFRAME_LABELS[timeframe]} timeframeId={timeframe} freshness={liveSeries?.freshness} currentPrice={hasRealQuote && !hasTfexConnection ? marketQuote?.price : hasRealBars ? liveSeries.quote?.price ?? liveSeries.bars.at(-1)?.close : null} sourceLabel={hasRealQuote ? marketQuote.source : sourceLabel} onOpenAutomation={() => navigateTo('autopick')} />
 
-            <LiveMarketWatch market={market} asset={asset} favorites={favorites} favoritesOpenRequest={favoritesOpenRequest} favoritesSynced={Boolean(memberAccount)} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} series={hasRealBars ? liveSeries : null} analysis={analysis} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory(marketId); setPopup('search'); }} />
+            {marketId!=='thai'&&<LiveMarketWatch market={market} asset={asset} favorites={favorites} favoritesOpenRequest={favoritesOpenRequest} favoritesSynced={Boolean(memberAccount)} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} series={hasRealBars ? liveSeries : null} analysis={analysis} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory(marketId); setPopup('search'); }} />}
           </section>
 
+          {marketId==='thai'&&<SignalWorkflow market="thai" onSelect={selectLedgerSymbol}/>}
           {!['dr','thai'].includes(marketId)&&<div id="section-results" className="workspace-results-wrap" style={{marginTop:'24px'}}>
             <SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} sectionId="section-results" />
           </div>}
