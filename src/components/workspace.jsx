@@ -19,6 +19,7 @@ import AnalysisRail from './analysis-rail.jsx';
 import LiveMarketWatch from './live-market-watch.jsx';
 import ChartToolbox from './chart-toolbox.jsx';
 import CandlestickChart from './candlestick-chart.jsx';
+import AmbientLiquidGlass from './ambient-liquid-glass.jsx';
 import { AmbientDepth, MarketScanner, MultiTimeframe, VolumePulse, NewsGuide, NewsFeedState } from './workspace-features.jsx';
 import { WorkspaceSidebar, FinancialCheck, LearningPanel, RoadmapPanel, CalendarPanel, DividendCalendarPanel } from './workspace-hub.jsx';
 import {useAssistantSymbol} from './assistant-provider.jsx';
@@ -124,6 +125,25 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [accountConfigured, setAccountConfigured] = useState(false);
   const [marketQuote, setMarketQuote] = useState(null);
   const [quoteState, setQuoteState] = useState('idle');
+  const [theme, setTheme] = useState('light');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nugaom-theme');
+      if (saved === 'dark' || saved === 'light') {
+        setTheme(saved);
+      }
+    } catch {}
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    try {
+      localStorage.setItem('nugaom-theme', next);
+    } catch {}
+  }
+
   const market = MARKETS.find(item => item.id === activeMarket) ?? MARKETS[0];
   const asset = selectedAsset ?? market;
   useAssistantSymbol(asset.symbol);
@@ -437,15 +457,30 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   }, [popup]);
 
   return (
-    <div className={`app-frame market-workspace monitor-workspace market-${marketId}`} style={{'--market-accent':page.accent,'--market-rgb':page.rgb}}>
-      <AmbientDepth />
+    <div className={`app-frame market-workspace monitor-workspace market-${marketId} ${theme === 'light' ? 'theme-light-glass' : ''}`} data-theme={theme} style={{'--market-accent':page.accent,'--market-rgb':page.rgb}}>
+      <AmbientLiquidGlass isLight={theme === 'light'} />
+      {theme === 'dark' && <AmbientDepth />}
       <WorkspaceSidebar marketId={marketId} activeNav={activeNav} onNavigate={navigateTo} rights={rights} account={memberAccount} loginHref={loginHref} hasRealBars={hasRealBars} favoriteCount={favoriteAssets.length} />
 
       <main className="main-area">
         <header className="topbar">
           <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
           <div className="topbar-search-area">{marketId==='thai'?<a className="monitor-account" href="#section-auto-pick" onClick={event=>{event.preventDefault();chooseThaiView('stage2');}}>ค้นหา / กรองในตาราง ↓</a>:<SymbolSearch marketId={marketId} onSelect={selectAsset} />}</div>
-          <div className="topbar-actions"><a className="monitor-account" href={loginHref}>บัญชีสมาชิก ↗</a><SoundControl/><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
+          <div className="topbar-actions">
+            <button
+              type="button"
+              className={`theme-glass-toggle ${theme === 'light' ? 'light-mode' : 'dark-mode'}`}
+              onClick={toggleTheme}
+              title={theme === 'light' ? 'เปลี่ยนเป็น Dark Pro' : 'เปลี่ยนเป็น Liquid Glass'}
+              aria-label={theme === 'light' ? 'สลับเป็นโหมดมืด Dark Pro' : 'สลับเป็นโหมดสว่าง Liquid Glass'}
+            >
+              <span className="theme-glass-icon">{theme === 'light' ? '☀️' : '🌙'}</span>
+              <span>{theme === 'light' ? 'Liquid Glass' : 'Dark Pro'}</span>
+            </button>
+            <a className="monitor-account" href={loginHref}>บัญชีสมาชิก ↗</a>
+            <SoundControl/>
+            <div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div>
+          </div>
         </header>
 
         <div className="page-content">
