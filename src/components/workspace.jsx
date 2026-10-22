@@ -30,6 +30,7 @@ import ProToolsNav from './pro-tools-nav.jsx';
 import ThaiScreenerDashboard from './thai/thai-screener-dashboard.jsx';
 import ThaiWorkspaceNav,{THAI_VIEWS,thaiViewForHash} from './thai/thai-workspace-nav.jsx';
 import thaiWorkspaceStyles from './thai/thai-workspace.module.css';
+import TfexTerminal from './tfex/tfex-terminal.jsx';
 
 const DEFAULT_SYMBOLS = { thai: 'PTT', dr: 'AAPL80', tfex: TFEX_SYMBOLS[0] ?? 'S50', us: 'NVDA', forex: 'EUR/USD' };
 const MARKETS = MARKET_GROUPS.map(group => ({
@@ -281,9 +282,10 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
       router.push(`${marketHref(item.id, item.symbol)}#chart-panel`);
       return;
     }
-    setActiveMarket(item.id);
-    setSelectedAsset(item);
-    setTimeframe(item.id === 'us' ? '1d' : frame);
+    const fullAsset = ALL_ASSETS.find(a => a.symbol === item.symbol && a.id === item.id) ?? item;
+    setActiveMarket(fullAsset.id);
+    setSelectedAsset(fullAsset);
+    setTimeframe(fullAsset.id === 'us' ? '1d' : frame);
     setPopup(null);
     if(marketId==='thai')chooseThaiView('chart');else scrollToChart();
   }
@@ -494,7 +496,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           <MarketNavigation current={marketId}/>
           {marketId==='thai'&&<ThaiWorkspaceNav view={thaiView} symbol={asset.symbol} onNavigate={chooseThaiView} onOpenScanner={()=>navigateTo('scanner')}/>}
           {marketId!=='thai'&&<ProToolsNav current={marketId} />}
-          {marketId!=='thai'&&<section id="section-overview" className="workspace-intro nugaom-welcome">
+          {marketId!=='thai'&&marketId!=='tfex'&&<section id="section-overview" className="workspace-intro nugaom-welcome">
             <div className="welcome-main">
               <span className="eyebrow">{page.eyebrow}</span>
               <h1>{page.title}</h1>
@@ -523,9 +525,14 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
             />
             </div>
           )}
-          {['tfex','us'].includes(marketId)&&<SignalDesk marketId={marketId} memberId={memberAccount?.id} rights={rights} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={selectAsset} loginHref={loginHref}/>}
-          {!['thai','dr','us'].includes(marketId)&&<section id="section-daily" className="market-routine panel"><div><span className="eyebrow">TODAY / {page.short}</span><h2>เครื่องมือประจำตลาด</h2><p>{marketId==='us'?'สัญญาณใช้แท่งรายวันหลังตลาดปิด · กราฟย้อนหลังเลือกดูได้หลายช่วงเวลา':marketId==='forex'?'กราฟย้อนหลังคู่เงิน · AutoPick ยังรอฟีดที่ยืนยันใช้แจ้งเตือนได้':'ดูซีรีส์สัญญาและกราฟจริง · AutoPick ยังรอยืนยันกติกาแต่ละสินค้า'}</p></div><div><button onClick={()=>setPopup('scanner')}>สแกนเชิงลึก</button><button onClick={()=>setPopup('calendar')}>ปฏิทินเศรษฐกิจ</button><button onClick={()=>navigateTo('results')}>ผลงานสัญญาณ</button></div></section>}
-          {!['thai','dr','us'].includes(marketId)&&<AutoPickBoard marketId={marketId} onSelect={selectAsset}/>}
+          {marketId==='tfex' && (
+            <div id="section-overview">
+              <TfexTerminal selectedSymbol={asset.symbol} onSelect={selectAsset} />
+            </div>
+          )}
+          {marketId==='us'&&<SignalDesk marketId={marketId} memberId={memberAccount?.id} rights={rights} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={selectAsset} loginHref={loginHref}/>}
+          {!['thai','dr','us','tfex'].includes(marketId)&&<section id="section-daily" className="market-routine panel"><div><span className="eyebrow">TODAY / {page.short}</span><h2>เครื่องมือประจำตลาด</h2><p>{marketId==='us'?'สัญญาณใช้แท่งรายวันหลังตลาดปิด · กราฟย้อนหลังเลือกดูได้หลายช่วงเวลา':marketId==='forex'?'กราฟย้อนหลังคู่เงิน · AutoPick ยังรอฟีดที่ยืนยันใช้แจ้งเตือนได้':'ดูซีรีส์สัญญาและกราฟจริง · AutoPick ยังรอยืนยันกติกาแต่ละสินค้า'}</p></div><div><button onClick={()=>setPopup('scanner')}>สแกนเชิงลึก</button><button onClick={()=>setPopup('calendar')}>ปฏิทินเศรษฐกิจ</button><button onClick={()=>navigateTo('results')}>ผลงานสัญญาณ</button></div></section>}
+          {!['thai','dr','us','tfex'].includes(marketId)&&<AutoPickBoard marketId={marketId} onSelect={selectAsset}/>}
 
           {marketId!=='thai'&&<section className="asset-hero" aria-label="สินทรัพย์ที่เลือก">
             <div className="hero-copy">

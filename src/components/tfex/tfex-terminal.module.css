@@ -1,0 +1,1119 @@
+/* ─── TFEX & SET50 OPTIONS PRO TERMINAL STYLESHEET ─── */
+.terminal {
+  --tfex-cyan: #22d3ee;
+  --tfex-purple: #a855f7;
+  --tfex-pink: #ec4899;
+  --tfex-emerald: #10b981;
+  --tfex-amber: #f59e0b;
+  --tfex-rose: #f43f5e;
+  --tfex-card-bg: linear-gradient(145deg, #0e172a 0%, #131f38 100%);
+  --tfex-card-border: rgba(34, 211, 238, 0.22);
+  --tfex-subtle-bg: rgba(15, 23, 42, 0.7);
+
+  background: linear-gradient(150deg, #091024 0%, #0d1733 50%, #080d1e 100%);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin: 14px 0 24px;
+  color: #f1f5f9;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+  scroll-margin-top: 85px;
+}
+
+/* Ambient glow accent */
+.terminal::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -100px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Header & Contract Ticker Strip ─── */
+.header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brand {
+  flex: 1;
+  min-width: 280px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--tfex-cyan);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.eyebrowDot {
+  width: 7px;
+  height: 7px;
+  background: var(--tfex-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--tfex-cyan);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin: 0 0 6px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title small {
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Quick Ticker Chips */
+.contractChips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.contractChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 13px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.contractChip:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: var(--tfex-cyan);
+  transform: translateY(-1px);
+}
+
+.contractChipActive {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18) 0%, rgba(168, 85, 247, 0.18) 100%);
+  border-color: var(--tfex-cyan);
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.35);
+}
+
+.chipSymbol {
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.chipPrice {
+  color: var(--tfex-cyan);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.chipChangeUp {
+  color: var(--tfex-emerald);
+  font-size: 10px;
+}
+
+.chipChangeDown {
+  color: var(--tfex-rose);
+  font-size: 10px;
+}
+
+/* ─── Navigation Tabs ─── */
+.navTabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+  overflow-x: auto;
+}
+
+.navTabBtn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 10px 18px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.navTabBtn:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.navTabBtnActive {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18) 0%, rgba(168, 85, 247, 0.18) 100%);
+  border: 1px solid var(--tfex-cyan);
+  box-shadow: 0 4px 18px rgba(34, 211, 238, 0.25);
+}
+
+.tabIcon {
+  font-size: 16px;
+}
+
+.tabBadge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+.navTabBtnActive .tabBadge {
+  background: var(--tfex-cyan);
+  color: #0f172a;
+  font-weight: 800;
+}
+
+/* ─── TAB 1: SET50 OPTIONS CHAIN & VOLATILITY DESK ─── */
+.optionsDesk {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Sentiment Barometer Row */
+.barometerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.barometerCard {
+  background: var(--tfex-subtle-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.barometerCard::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--tfex-cyan), var(--tfex-purple));
+}
+
+.barometerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.barometerTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.barometerTag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.barometerTagBull {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.barometerTagNeutral {
+  background: rgba(34, 211, 238, 0.2);
+  color: var(--tfex-cyan);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+}
+
+.barometerTagBear {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+}
+
+.barometerValue {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.barometerDesc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* PCR Visual Meter */
+.pcrMeter {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  margin-top: 4px;
+}
+
+.pcrSegmentCall {
+  background: var(--tfex-rose);
+  height: 100%;
+}
+
+.pcrSegmentPut {
+  background: var(--tfex-emerald);
+  height: 100%;
+}
+
+/* Options Controls Bar */
+.optionsControls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 18px;
+}
+
+.optionsFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.optionsFilterGroup label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.filterPillBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filterPillBtnActive {
+  background: var(--tfex-cyan);
+  color: #0f172a;
+  font-weight: 800;
+  border-color: var(--tfex-cyan);
+}
+
+.underlyingSpot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.spotPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(34, 211, 238, 0.15);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  color: var(--tfex-cyan);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+}
+
+/* Options Chain Table */
+.chainTableWrapper {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: #0a1122;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.chainTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.chainTable thead th {
+  padding: 12px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  text-align: center;
+}
+
+.thCallGroup {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.thStrikeGroup {
+  background: rgba(34, 211, 238, 0.15);
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.thPutGroup {
+  background: rgba(244, 63, 94, 0.12);
+  color: #fb7185;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chainTable td {
+  padding: 10px 10px;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ITM / ATM / OTM Highlighting */
+.callItm {
+  background: rgba(16, 185, 129, 0.08);
+  color: #a7f3d0;
+}
+
+.putItm {
+  background: rgba(244, 63, 94, 0.08);
+  color: #fecdd3;
+}
+
+.strikeCell {
+  font-weight: 800;
+  font-size: 13px;
+  color: #ffffff;
+  background: rgba(34, 211, 238, 0.08);
+  border-left: 1px solid rgba(34, 211, 238, 0.2);
+  border-right: 1px solid rgba(34, 211, 238, 0.2);
+}
+
+.atmRow {
+  background: rgba(168, 85, 247, 0.14) !important;
+  box-shadow: inset 0 0 12px rgba(168, 85, 247, 0.25);
+}
+
+.atmRow .strikeCell {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.3) 0%, rgba(168, 85, 247, 0.3) 100%);
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+}
+
+.atmBadge {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #facc15;
+  margin-top: 2px;
+}
+
+.actionBtnMini {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.actionBtnCall {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.actionBtnCall:hover {
+  background: #10b981;
+  color: #0f172a;
+}
+
+.actionBtnPut {
+  background: rgba(244, 63, 94, 0.18);
+  color: #fb7185;
+  border-color: rgba(244, 63, 94, 0.4);
+}
+
+.actionBtnPut:hover {
+  background: #f43f5e;
+  color: #ffffff;
+}
+
+/* ─── Options Strategy Playbook ─── */
+.playbookSection {
+  background: var(--tfex-subtle-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 8px;
+}
+
+.playbookHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.playbookHeader h3 {
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playbookGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.playbookCard {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.playbookCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--tfex-cyan);
+}
+
+.playbookCardTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 4px;
+}
+
+.playbookCardDesc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.playbookRiskProfile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.riskLimited {
+  color: #34d399;
+  font-weight: 700;
+}
+
+.riskDefined {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+/* ─── TAB 2: MARGIN CALL & FORCE CLOSE SAFETY SHIELD ─── */
+.marginDesk {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.shieldBanner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(34, 211, 238, 0.08) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+}
+
+.shieldBannerAlert {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border-color: rgba(244, 63, 94, 0.45);
+}
+
+.shieldIcon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.shieldText {
+  flex: 1;
+}
+
+.shieldText strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #34d399;
+  margin-bottom: 2px;
+}
+
+.shieldBannerAlert .shieldText strong {
+  color: #fb7185;
+}
+
+.shieldText p {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.marginGrid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.3fr;
+  gap: 20px;
+}
+
+/* Input Form Card */
+.formCard {
+  background: var(--tfex-subtle-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formCardTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formRow label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.formInput {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #ffffff;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: var(--tfex-cyan);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+}
+
+.presetGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.presetBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.presetBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.sideToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sideBtn {
+  padding: 9px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.8);
+  color: #94a3b8;
+  transition: all 0.2s ease;
+}
+
+.sideBtnLongActive {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #34d399;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+.sideBtnShortActive {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: #f43f5e;
+  color: #fb7185;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.25);
+}
+
+/* Margin Output Metrics Card */
+.metricsCard {
+  background: var(--tfex-subtle-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.metricHero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.metricBox {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.metricBoxCall {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: linear-gradient(145deg, rgba(245, 158, 11, 0.08) 0%, rgba(15, 23, 42, 0.9) 100%);
+}
+
+.metricBoxForce {
+  border-color: rgba(244, 63, 94, 0.4);
+  background: linear-gradient(145deg, rgba(244, 63, 94, 0.08) 0%, rgba(15, 23, 42, 0.9) 100%);
+}
+
+.metricBoxLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.metricBoxValue {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.metricBoxValueCall {
+  color: #fbbf24;
+}
+
+.metricBoxValueForce {
+  color: #fb7185;
+}
+
+.metricBoxSub {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.marginBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 11px;
+}
+
+.marginRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #cbd5e1;
+}
+
+.marginRow b {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #ffffff;
+}
+
+/* Margin Bar Meter */
+.meterTrack {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+
+.meterFill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.meterFillSafe {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.meterFillWarn {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.meterFillDanger {
+  background: linear-gradient(90deg, #f43f5e, #e11d48);
+  box-shadow: 0 0 10px #f43f5e;
+}
+
+/* ─── TAB 3: FUTURES MATRIX & BASIS DESK ─── */
+.futuresDesk {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.basisHero {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.1) 0%, rgba(168, 85, 247, 0.08) 100%);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.basisInfo {
+  flex: 1;
+  min-width: 250px;
+}
+
+.basisTag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--tfex-cyan);
+  margin-bottom: 4px;
+}
+
+.basisInfo h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 4px;
+  color: #ffffff;
+}
+
+.basisInfo p {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.basisStatGrid {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.basisStatItem {
+  text-align: right;
+}
+
+.basisStatLabel {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 600;
+  display: block;
+}
+
+.basisStatValue {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #ffffff;
+}
+
+.futuresGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.futuresCard {
+  background: var(--tfex-subtle-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.2s ease;
+}
+
+.futuresCard:hover {
+  border-color: var(--tfex-cyan);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.futuresCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.futuresTitleGroup strong {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  display: block;
+}
+
+.futuresTitleGroup small {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.biasPill {
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.biasPillBull {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.biasPillBear {
+  background: rgba(244, 63, 94, 0.18);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+}
+
+.planLevelsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.planCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.planLabel {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.planPrice {
+  font-size: 13px;
+  font-weight: 800;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #ffffff;
+}
+
+.planReward {
+  color: #34d399;
+}
+
+.planRisk {
+  color: #fb7185;
+}
+
+.planBaht {
+  font-size: 9px;
+  color: #cbd5e1;
+}
+
+.futuresCardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #94a3b8;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.futuresCardFooter b {
+  color: #e2e8f0;
+}
+
+/* ─── TAB 4: TFEX 2R POSITION SIZING DESK ─── */
+.sizingDesk {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sizingGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ─── Responsive Adjustments ─── */
+@media (max-width: 1100px) {
+  .barometerGrid {
+    grid-template-columns: 1fr;
+  }
+  .playbookGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .marginGrid, .sizingGrid, .futuresGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .terminal {
+    padding: 16px;
+  }
+  .header {
+    flex-direction: column;
+  }
+  .playbookGrid {
+    grid-template-columns: 1fr;
+  }
+  .planLevelsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}

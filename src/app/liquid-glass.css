@@ -1783,3 +1783,251 @@
   color: #0369a1 !important;
 }
 
+/* ─── TFEX Pro Terminal Light Theme Overrides ─── */
+.market-workspace.theme-light-glass [class*='terminal'],
+[data-theme='light'] [class*='terminal'] {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(14, 165, 233, 0.35) !important;
+  color: #0f172a !important;
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.market-workspace.theme-light-glass [class*='header'],
+[data-theme='light'] [class*='header'] {
+  border-bottom-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+.market-workspace.theme-light-glass [class*='title'],
+[data-theme='light'] [class*='title'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='title'] small,
+[data-theme='light'] [class*='title'] small {
+  background: rgba(14, 165, 233, 0.08) !important;
+  color: #0284c7 !important;
+  border-color: rgba(14, 165, 233, 0.25) !important;
+}
+
+.market-workspace.theme-light-glass [class*='subtitle'],
+[data-theme='light'] [class*='subtitle'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='contractChip'],
+[data-theme='light'] [class*='contractChip'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='contractChipActive'],
+[data-theme='light'] [class*='contractChipActive'] {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(168, 85, 247, 0.12) 100%) !important;
+  border-color: #0284c7 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.2) !important;
+}
+
+.market-workspace.theme-light-glass [class*='chipSymbol'],
+[data-theme='light'] [class*='chipSymbol'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='chipPrice'],
+[data-theme='light'] [class*='chipPrice'] {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='navTabs'],
+[data-theme='light'] [class*='navTabs'] {
+  border-bottom-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='navTabBtn'],
+[data-theme='light'] [class*='navTabBtn'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='navTabBtn']:hover,
+[data-theme='light'] [class*='navTabBtn']:hover {
+  color: #0f172a !important;
+  background: rgba(14, 165, 233, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass [class*='navTabBtnActive'],
+[data-theme='light'] [class*='navTabBtnActive'] {
+  color: #0284c7 !important;
+  background: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.15) !important;
+}
+
+.market-workspace.theme-light-glass [class*='barometerCard'],
+[data-theme='light'] [class*='barometerCard'] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+}
+
+.market-workspace.theme-light-glass [class*='barometerTitle'],
+[data-theme='light'] [class*='barometerTitle'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='barometerValue'],
+[data-theme='light'] [class*='barometerValue'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='barometerDesc'],
+[data-theme='light'] [class*='barometerDesc'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='optionsControls'],
+[data-theme='light'] [class*='optionsControls'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='chainTableWrapper'],
+[data-theme='light'] [class*='chainTableWrapper'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06) !important;
+}
+
+.market-workspace.theme-light-glass [class*='chainTable'] thead th,
+[data-theme='light'] [class*='chainTable'] thead th {
+  border-bottom-color: #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='chainTable'] td,
+[data-theme='light'] [class*='chainTable'] td {
+  border-bottom-color: #f1f5f9 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='strikeCell'],
+[data-theme='light'] [class*='strikeCell'] {
+  background: #f0f9ff !important;
+  border-color: #bae6fd !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='atmRow'],
+[data-theme='light'] [class*='atmRow'] {
+  background: #faf5ff !important;
+}
+
+.market-workspace.theme-light-glass [class*='playbookSection'],
+[data-theme='light'] [class*='playbookSection'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='playbookHeader'] h3,
+[data-theme='light'] [class*='playbookHeader'] h3 {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='playbookCard'],
+[data-theme='light'] [class*='playbookCard'] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04) !important;
+}
+
+.market-workspace.theme-light-glass [class*='playbookCardTitle'],
+[data-theme='light'] [class*='playbookCardTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='playbookRiskProfile'],
+[data-theme='light'] [class*='playbookRiskProfile'] {
+  background: #f1f5f9 !important;
+}
+
+.market-workspace.theme-light-glass [class*='formCard'],
+[data-theme='light'] [class*='formCard'],
+.market-workspace.theme-light-glass [class*='metricsCard'],
+[data-theme='light'] [class*='metricsCard'],
+.market-workspace.theme-light-glass [class*='futuresCard'],
+[data-theme='light'] [class*='futuresCard'] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass [class*='formCardTitle'],
+[data-theme='light'] [class*='formCardTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='formInput'],
+[data-theme='light'] [class*='formInput'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='metricBox'],
+[data-theme='light'] [class*='metricBox'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='marginBreakdown'],
+[data-theme='light'] [class*='marginBreakdown'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='marginRow'],
+[data-theme='light'] [class*='marginRow'] {
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='marginRow'] b,
+[data-theme='light'] [class*='marginRow'] b {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='basisHero'],
+[data-theme='light'] [class*='basisHero'] {
+  background: linear-gradient(135deg, #f0f9ff 0%, #fdf4ff 100%) !important;
+  border-color: #bae6fd !important;
+}
+
+.market-workspace.theme-light-glass [class*='basisInfo'] h3,
+[data-theme='light'] [class*='basisInfo'] h3 {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='basisStatValue'],
+[data-theme='light'] [class*='basisStatValue'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='planLevelsGrid'],
+[data-theme='light'] [class*='planLevelsGrid'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='planPrice'],
+[data-theme='light'] [class*='planPrice'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='planBaht'],
+[data-theme='light'] [class*='planBaht'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='futuresTitleGroup'] strong,
+[data-theme='light'] [class*='futuresTitleGroup'] strong {
+  color: #0f172a !important;
+}
+
