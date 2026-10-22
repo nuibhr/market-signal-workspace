@@ -5,6 +5,7 @@ const NO_STORE = { 'Cache-Control': 'private, no-store, max-age=0' };
 
 const BROKER_NAMES = {
   '022': 'Trinity Securities (บล.ทรีนีตี้)',
+  '003': 'Pi Securities (บล.พาย)',
   '032': 'InnovestX Securities (บล.อินโนเวสท์ เอกซ์)',
   '011': 'Maybank Securities (บล.เมย์แบงก์)',
   '025': 'CGS International Securities (บล.ซีจีเอส)',

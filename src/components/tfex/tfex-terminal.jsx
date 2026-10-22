@@ -96,6 +96,7 @@ const OPTIONS_STRIKES_DATA = [
 
 export const BROKER_OPTIONS = [
   { id: '022', name: 'Trinity Securities', thaiName: 'บล.ทรีนีตี้', popular: true, tag: 'RECOMMENDED' },
+  { id: '003', name: 'Pi Securities', thaiName: 'บล.พาย (มหาชน)', popular: true, tag: 'POPULAR' },
   { id: '032', name: 'InnovestX Securities', thaiName: 'บล.อินโนเวสท์ เอกซ์', popular: true, tag: 'POPULAR' },
   { id: '011', name: 'Maybank Securities', thaiName: 'บล.เมย์แบงก์ (ไทย)', popular: true, tag: 'POPULAR' },
   { id: '025', name: 'CGS International', thaiName: 'บล.ซีจีเอส อินเตอร์เนชั่นแนล', popular: true, tag: 'ACTIVE' },
@@ -811,7 +812,15 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                           onClick={() => syncSettradePortfolio(true, '032')}
                           disabled={settradeLoading}
                         >
-                          {settradeLoading ? 'กำลังโหลด...' : '⚡ ทดลองด้วย InnovestX 032'}
+                          {settradeLoading ? 'กำลังโหลด...' : '⚡ InnovestX 032'}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.byokHudBtnSecondary}
+                          onClick={() => syncSettradePortfolio(true, '003')}
+                          disabled={settradeLoading}
+                        >
+                          {settradeLoading ? 'กำลังโหลด...' : '🥧 ทดลองด้วย Pi 003'}
                         </button>
                       </>
                     )}
@@ -1692,6 +1701,14 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   disabled={settradeLoading}
                 >
                   🌟 ทดลองด่วนด้วย Trinity 022 (บล.ทรีนีตี้)
+                </button>
+                <button
+                  type="button"
+                  className={styles.quickDemoBtn}
+                  onClick={() => syncSettradePortfolio(true, '003')}
+                  disabled={settradeLoading}
+                >
+                  🥧 ทดลองด่วนด้วย Pi 003 (บล.พาย)
                 </button>
                 <button
                   type="button"

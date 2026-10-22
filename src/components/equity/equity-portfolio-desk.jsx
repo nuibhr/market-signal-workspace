@@ -6,6 +6,7 @@ import InstrumentLogo from '../monitor/instrument-logo.jsx';
 
 const BROKER_OPTIONS = [
   { id: '022', name: 'Trinity Securities', thaiName: 'บล.ทรีนีตี้', tag: 'RECOMMENDED' },
+  { id: '003', name: 'Pi Securities', thaiName: 'บล.พาย (มหาชน)', tag: 'POPULAR' },
   { id: '032', name: 'InnovestX Securities', thaiName: 'บล.อินโนเวสท์ เอกซ์', tag: 'POPULAR' },
   { id: '011', name: 'Maybank Securities', thaiName: 'บล.เมย์แบงก์ ประเทศไทย', tag: 'POPULAR' },
   { id: '025', name: 'CGS International', thaiName: 'บล.ซีจีเอส อินเตอร์เนชั่นแนล', tag: 'ACTIVE' },
@@ -117,6 +118,14 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               disabled={loading}
             >
               🌟 ทดลองด่วนด้วย Trinity 022
+            </button>
+            <button
+              type="button"
+              className={styles.byokBtnSecondary}
+              onClick={() => syncPortfolio(true, '003')}
+              disabled={loading}
+            >
+              🥧 ทดลองด้วย Pi 003
             </button>
             <button
               type="button"
@@ -498,6 +507,13 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                   onClick={() => syncPortfolio(true, '022')}
                 >
                   🌟 ทดลองด้วย Trinity 022 (บล.ทรีนีตี้)
+                </button>
+                <button
+                  type="button"
+                  className={styles.quickDemoBtn}
+                  onClick={() => syncPortfolio(true, '003')}
+                >
+                  🥧 ทดลองด้วย Pi 003 (บล.พาย)
                 </button>
                 <button
                   type="button"
