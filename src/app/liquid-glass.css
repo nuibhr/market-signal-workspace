@@ -218,51 +218,286 @@
 }
 
 .market-workspace.theme-light-glass .nav-item.active,
-.market-workspace.theme-light-glass .hub-subnav.active {
+.market-workspace.theme-light-glass .hub-subnav.active,
+[data-theme='light'] .nav-item.active,
+[data-theme='light'] .hub-subnav.active {
   background: rgba(2, 132, 199, 0.12) !important;
   color: #0284c7 !important;
   border-color: rgba(2, 132, 199, 0.3) !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+.market-workspace.theme-light-glass .nav-item.active svg,
+.market-workspace.theme-light-glass .hub-subnav.active svg,
+[data-theme='light'] .nav-item.active svg,
+[data-theme='light'] .hub-subnav.active svg {
+  color: #0284c7 !important;
+  filter: none !important;
+}
+
+.market-workspace.theme-light-glass .hub-group-toggle,
+[data-theme='light'] .hub-group-toggle {
+  background: rgba(241, 245, 249, 0.8) !important;
+  color: #1e293b !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
   font-weight: 600 !important;
+}
+
+.market-workspace.theme-light-glass .hub-group-toggle:hover,
+[data-theme='light'] .hub-group-toggle:hover {
+  background: #e0f2fe !important;
+  color: #0284c7 !important;
+  border-color: #bae6fd !important;
+}
+
+.market-workspace.theme-light-glass .hub-group-index,
+[data-theme='light'] .hub-group-index {
+  color: #0284c7 !important;
+  font-weight: 800 !important;
+}
+
+.market-workspace.theme-light-glass .hub-nav-glyph,
+[data-theme='light'] .hub-nav-glyph {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .hub-account-card,
+[data-theme='light'] .hub-account-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass .hub-account-card strong,
+[data-theme='light'] .hub-account-card strong {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass .hub-account-card small,
+[data-theme='light'] .hub-account-card small {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass .hub-account-arrow,
+[data-theme='light'] .hub-account-arrow {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .sidebar-foot,
+[data-theme='light'] .sidebar-foot {
+  background: rgba(241, 245, 249, 0.8) !important;
+  color: #475569 !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass .sidebar-foot span,
+[data-theme='light'] .sidebar-foot span {
+  color: #64748b !important;
 }
 
 /* ─── 5. Liquid Glass Toolbar (ThaiWorkspaceNav) ─── */
 .market-workspace.theme-light-glass #thai-workspace-navigation,
-.market-workspace.theme-light-glass .ng-pro-suite-nav {
-  background: rgba(255, 255, 255, 0.8) !important;
+.market-workspace.theme-light-glass [class*='toolbar'],
+[data-theme='light'] #thai-workspace-navigation {
+  background: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(24px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.95) !important;
-  box-shadow: 
-    0 10px 30px -4px rgba(15, 23, 42, 0.05),
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.95) !important;
-  border-radius: 18px !important;
-}
-
-.market-workspace.theme-light-glass #thai-workspace-navigation h1 {
+  border: 1px solid rgba(203, 213, 225, 0.9) !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05) !important;
+  border-radius: 16px !important;
   color: #0f172a !important;
 }
 
-.market-workspace.theme-light-glass #thai-workspace-navigation p {
+.market-workspace.theme-light-glass #thai-workspace-navigation h1,
+.market-workspace.theme-light-glass [class*='heading'] h1,
+[data-theme='light'] #thai-workspace-navigation h1 {
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.market-workspace.theme-light-glass #thai-workspace-navigation h1 small,
+.market-workspace.theme-light-glass [class*='heading'] h1 small,
+[data-theme='light'] #thai-workspace-navigation h1 small {
   color: #64748b !important;
 }
 
-.market-workspace.theme-light-glass #thai-workspace-navigation nav a {
-  background: rgba(255, 255, 255, 0.7) !important;
-  border: 1px solid rgba(203, 213, 225, 0.8) !important;
-  color: #334155 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+.market-workspace.theme-light-glass #thai-workspace-navigation p,
+.market-workspace.theme-light-glass [class*='heading'] p,
+[data-theme='light'] #thai-workspace-navigation p {
+  color: #475569 !important;
 }
 
-.market-workspace.theme-light-glass #thai-workspace-navigation nav a[aria-current='location'] {
-  background: #0284c7 !important;
+.market-workspace.theme-light-glass [class*='symbol'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='symbol'] b {
+  color: #0284c7 !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+}
+
+.market-workspace.theme-light-glass .views a,
+.market-workspace.theme-light-glass [class*='views'] a,
+[data-theme='light'] #thai-workspace-navigation nav a {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.18s ease !important;
+}
+
+.market-workspace.theme-light-glass .views a b,
+.market-workspace.theme-light-glass [class*='views'] a b,
+[data-theme='light'] #thai-workspace-navigation nav a b {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass .views a small,
+.market-workspace.theme-light-glass [class*='views'] a small,
+[data-theme='light'] #thai-workspace-navigation nav a small {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass .views a:hover,
+.market-workspace.theme-light-glass [class*='views'] a:hover,
+[data-theme='light'] #thai-workspace-navigation nav a:hover {
+  background: #f0f9ff !important;
+  border-color: #38bdf8 !important;
+  color: #0284c7 !important;
+  transform: translateY(-1px) !important;
+}
+
+.market-workspace.theme-light-glass .views a:hover b,
+.market-workspace.theme-light-glass [class*='views'] a:hover b,
+[data-theme='light'] #thai-workspace-navigation nav a:hover b {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .views a[aria-current],
+.market-workspace.theme-light-glass [class*='views'] a[aria-current],
+[data-theme='light'] #thai-workspace-navigation nav a[aria-current] {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
   color: #ffffff !important;
   border-color: #0284c7 !important;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3) !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28) !important;
 }
 
-.market-workspace.theme-light-glass #thai-workspace-navigation nav a[aria-current='location'] small {
-  color: rgba(255, 255, 255, 0.85) !important;
+.market-workspace.theme-light-glass .views a[aria-current] b,
+.market-workspace.theme-light-glass [class*='views'] a[aria-current] b,
+[data-theme='light'] #thai-workspace-navigation nav a[aria-current] b {
+  color: #ffffff !important;
+}
+
+.market-workspace.theme-light-glass .views a[aria-current] small,
+.market-workspace.theme-light-glass [class*='views'] a[aria-current] small,
+[data-theme='light'] #thai-workspace-navigation nav a[aria-current] small {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Style Scanner button */
+.market-workspace.theme-light-glass [class*='scan'] {
+  background: #ffffff !important;
+  border: 1.5px solid #0284c7 !important;
+  color: #0284c7 !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.12) !important;
+  transition: all 0.18s ease !important;
+}
+
+.market-workspace.theme-light-glass [class*='scan']:hover {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25) !important;
+}
+
+/* ─── 5.1 Market Navigation Destinations in Light Glass ─── */
+.market-workspace.theme-light-glass .market-destinations a,
+[data-theme='light'] .market-destinations a {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+  transition: all 0.18s ease !important;
+  font-weight: 600 !important;
+}
+
+.market-workspace.theme-light-glass .market-destinations a svg,
+[data-theme='light'] .market-destinations a svg {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .market-destinations a:hover,
+[data-theme='light'] .market-destinations a:hover {
+  background: #f0f9ff !important;
+  color: #0284c7 !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+.market-workspace.theme-light-glass .market-destinations a[aria-current='page'],
+[data-theme='light'] .market-destinations a[aria-current='page'] {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28) !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass .market-destinations a[aria-current='page'] svg,
+[data-theme='light'] .market-destinations a[aria-current='page'] svg {
+  color: #ffffff !important;
+}
+
+.market-workspace.theme-light-glass .market-home-link,
+[data-theme='light'] .market-home-link {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+/* ─── 5.2 Pro Tools Navigation in Light Glass ─── */
+.market-workspace.theme-light-glass .ng-pro-suite-nav,
+[data-theme='light'] .ng-pro-suite-nav {
+  background: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+}
+
+.market-workspace.theme-light-glass .ng-pro-pill,
+[data-theme='light'] .ng-pro-pill {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  border-radius: 9px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+  transition: all 0.18s ease !important;
+}
+
+.market-workspace.theme-light-glass .ng-pro-pill:hover,
+[data-theme='light'] .ng-pro-pill:hover {
+  background: #f0f9ff !important;
+  color: #0284c7 !important;
+  border-color: #38bdf8 !important;
+}
+
+.market-workspace.theme-light-glass .ng-pro-pill.is-active,
+[data-theme='light'] .ng-pro-pill.is-active {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.25) !important;
 }
 
 /* ─── 6. Liquid Glass Cards & Panels ─── */
@@ -275,10 +510,10 @@
 .market-workspace.theme-light-glass .holdings-desk,
 .market-workspace.theme-light-glass .daily-desk,
 .market-workspace.theme-light-glass article[class*='desk'] {
-  background: rgba(255, 255, 255, 0.82) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
   box-shadow: 
     0 12px 36px -4px rgba(15, 23, 42, 0.05),
     0 2px 6px -1px rgba(15, 23, 42, 0.02),
@@ -293,10 +528,12 @@
 .market-workspace.theme-light-glass .panel h2,
 .market-workspace.theme-light-glass .panel h3 {
   color: #0f172a !important;
+  font-weight: 800 !important;
 }
 
 .market-workspace.theme-light-glass .hero-price strong {
   color: #0f172a !important;
+  font-weight: 800 !important;
 }
 
 .market-workspace.theme-light-glass .hero-details span {
@@ -306,10 +543,11 @@
 
 .market-workspace.theme-light-glass .hero-details b {
   color: #0f172a !important;
+  font-weight: 700 !important;
 }
 
 .market-workspace.theme-light-glass .favorite-strip {
-  background: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
   border-color: rgba(226, 232, 240, 0.9) !important;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03) !important;
 }
@@ -318,6 +556,7 @@
   background: #ffffff !important;
   color: #334155 !important;
   border: 1px solid #cbd5e1 !important;
+  font-weight: 600 !important;
 }
 
 .market-workspace.theme-light-glass .favorite-strip button:hover {
@@ -340,10 +579,11 @@
 
 .market-workspace.theme-light-glass .timeframe-switch button,
 .market-workspace.theme-light-glass .indicator-strip button {
-  background: rgba(241, 245, 249, 0.8) !important;
+  background: rgba(241, 245, 249, 0.9) !important;
   border: 1px solid #cbd5e1 !important;
-  color: #475569 !important;
+  color: #334155 !important;
   border-radius: 8px !important;
+  font-weight: 600 !important;
 }
 
 .market-workspace.theme-light-glass .timeframe-switch button.selected,
@@ -352,6 +592,7 @@
   color: #ffffff !important;
   border-color: #0284c7 !important;
   box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25) !important;
+  font-weight: 700 !important;
 }
 
 .market-workspace.theme-light-glass .ohlc-strip {
@@ -361,36 +602,99 @@
 
 .market-workspace.theme-light-glass .ohlc-strip b {
   color: #0f172a !important;
+  font-weight: 700 !important;
 }
 
 /* ─── 8. Thai Screener & Data Table in Light Glass ─── */
 .market-workspace.theme-light-glass [class*='dashboard'] {
-  background: rgba(255, 255, 255, 0.88) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
   backdrop-filter: blur(28px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
-  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  border: 1px solid #cbd5e1 !important;
   box-shadow: 
     0 20px 40px -12px rgba(15, 23, 42, 0.06),
     0 1px 3px rgba(15, 23, 42, 0.03),
     inset 0 1px 1px 0 rgba(255, 255, 255, 1) !important;
   color: #0f172a !important;
+  border-radius: 18px !important;
 }
 
 .market-workspace.theme-light-glass [class*='dashboard'] h1,
 .market-workspace.theme-light-glass [class*='dashboard'] h2 {
   color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+.market-workspace.theme-light-glass [class*='dashboard'] h1 span {
+  color: #475569 !important;
 }
 
 .market-workspace.theme-light-glass [class*='dashboard'] p {
   color: #475569 !important;
 }
 
+.market-workspace.theme-light-glass [class*='eyebrow'] {
+  color: #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass [class*='actions'] a {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.15s ease !important;
+}
+
+.market-workspace.theme-light-glass [class*='actions'] a:hover {
+  background: #f0f9ff !important;
+  color: #0284c7 !important;
+  border-color: #38bdf8 !important;
+}
+
+.market-workspace.theme-light-glass [class*='presets'] button {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 30px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.15s ease !important;
+}
+
+.market-workspace.theme-light-glass [class*='presets'] button:hover {
+  background: #f0f9ff !important;
+  color: #0284c7 !important;
+  border-color: #38bdf8 !important;
+}
+
+.market-workspace.theme-light-glass [class*='presets'] button[aria-pressed='true'],
+.market-workspace.theme-light-glass [class*='dashboard'] button[aria-pressed='true'] {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25) !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass [class*='filters'] {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='filters'] label {
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+
 .market-workspace.theme-light-glass [class*='dashboard'] button,
 .market-workspace.theme-light-glass [class*='dashboard'] select,
 .market-workspace.theme-light-glass [class*='dashboard'] input {
-  background: rgba(255, 255, 255, 0.9) !important;
-  color: #1e293b !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
   border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
 
@@ -400,17 +704,17 @@
   border-color: #94a3b8 !important;
 }
 
-.market-workspace.theme-light-glass [class*='dashboard'] button[aria-pressed='true'] {
-  background: #0284c7 !important;
-  color: #ffffff !important;
+.market-workspace.theme-light-glass [class*='dashboard'] input:focus,
+.market-workspace.theme-light-glass [class*='dashboard'] select:focus {
   border-color: #0284c7 !important;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25) !important;
+  outline: 2px solid rgba(2, 132, 199, 0.25) !important;
 }
 
 .market-workspace.theme-light-glass [class*='stats'] {
-  background: rgba(248, 250, 252, 0.85) !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
+  background: rgba(248, 250, 252, 0.95) !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03) !important;
 }
 
 .market-workspace.theme-light-glass [class*='stat'] {
@@ -419,31 +723,59 @@
 
 .market-workspace.theme-light-glass [class*='stat'] strong {
   color: #0f172a !important;
+  font-weight: 800 !important;
 }
 
-.market-workspace.theme-light-glass [class*='stat'] small {
+.market-workspace.theme-light-glass [class*='stat'] em {
   color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='stat'] small,
+.market-workspace.theme-light-glass [class*='stat'] > small {
+  color: #475569 !important;
 }
 
 .market-workspace.theme-light-glass [class*='stat'] p {
   color: #334155 !important;
+  font-weight: 500 !important;
+}
+
+.market-workspace.theme-light-glass [class*='leaders'] button {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass [class*='leaders'] button span {
+  color: #059669 !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass [class*='leaders'] button:hover {
+  background: #f0f9ff !important;
+  border-color: #38bdf8 !important;
 }
 
 .market-workspace.theme-light-glass [class*='tableScroll'] {
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid #cbd5e1 !important;
   background: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03) !important;
 }
 
 .market-workspace.theme-light-glass table {
   color: #0f172a !important;
+  background: #ffffff !important;
 }
 
 .market-workspace.theme-light-glass thead th {
-  background: rgba(241, 245, 249, 0.98) !important;
-  color: #334155 !important;
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
   border-bottom: 2px solid #cbd5e1 !important;
   font-weight: 700 !important;
+  font-size: 11px !important;
 }
 
 .market-workspace.theme-light-glass tbody tr {
@@ -451,64 +783,212 @@
   transition: background 0.15s ease !important;
 }
 
+.market-workspace.theme-light-glass tbody tr:nth-child(even) {
+  background: rgba(248, 250, 252, 0.6) !important;
+}
+
 .market-workspace.theme-light-glass tbody tr:hover {
-  background: rgba(224, 242, 254, 0.5) !important;
+  background: #f0f9ff !important;
+}
+
+.market-workspace.theme-light-glass tbody tr[data-selected='true'] {
+  background: #e0f2fe !important;
+  box-shadow: inset 3px 0 #0284c7 !important;
 }
 
 .market-workspace.theme-light-glass tbody td,
 .market-workspace.theme-light-glass tbody th {
   color: #1e293b !important;
+  border-bottom: 1px solid #e2e8f0 !important;
 }
 
 .market-workspace.theme-light-glass [class*='identity'] b {
   color: #0f172a !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
 }
 
 .market-workspace.theme-light-glass [class*='identity'] small {
-  color: #64748b !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+.market-workspace.theme-light-glass tbody td b {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass table small {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [data-tone='up'] {
+  color: #059669 !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass [data-tone='down'] {
+  color: #e11d48 !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass [data-tone='neutral'] {
+  color: #475569 !important;
 }
 
 .market-workspace.theme-light-glass [class*='badge'] {
   background: #f1f5f9 !important;
   border: 1px solid #cbd5e1 !important;
-  color: #334155 !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+}
+
+.market-workspace.theme-light-glass [class*='badge'][data-tone='up'] {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+
+.market-workspace.theme-light-glass [class*='badge'][data-tone='down'] {
+  background: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #9f1239 !important;
 }
 
 .market-workspace.theme-light-glass [class*='chartButton'] {
   background: #0284c7 !important;
   color: #ffffff !important;
-  border-color: #0284c7 !important;
+  border: 1px solid #0284c7 !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2) !important;
+  transition: all 0.15s ease !important;
 }
 
 .market-workspace.theme-light-glass [class*='chartButton']:hover {
   background: #0369a1 !important;
+  border-color: #0369a1 !important;
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3) !important;
+}
+
+.market-workspace.theme-light-glass [class*='criteria'] summary {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='criteria'] ul {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+  color: #1e293b !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+}
+
+.market-workspace.theme-light-glass [class*='criteria'] li {
+  color: #334155 !important;
 }
 
 .market-workspace.theme-light-glass [class*='advancedFilters'] summary {
   background: #f8fafc !important;
   border: 1px solid #cbd5e1 !important;
-  color: #334155 !important;
+  color: #1e293b !important;
+  font-weight: 600 !important;
 }
 
 .market-workspace.theme-light-glass [class*='risk'] {
-  background: rgba(240, 253, 250, 0.7) !important;
+  background: rgba(240, 253, 250, 0.9) !important;
   border: 1px solid #99f6e4 !important;
   color: #0f766e !important;
+  border-radius: 10px !important;
 }
 
 .market-workspace.theme-light-glass [class*='risk'] b {
   color: #0f766e !important;
+  font-weight: 700 !important;
 }
 
 .market-workspace.theme-light-glass [class*='risk'] span {
   color: #115e59 !important;
+  font-weight: 600 !important;
+}
+
+.market-workspace.theme-light-glass [class*='risk'] label {
+  color: #134e4a !important;
+  font-weight: 600 !important;
+}
+
+.market-workspace.theme-light-glass [class*='risk'] input {
+  background: #ffffff !important;
+  border: 1px solid #5eead4 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='riskDetails'] {
+  border-color: #99f6e4 !important;
+  color: #0f766e !important;
+}
+
+.market-workspace.theme-light-glass [class*='riskDetails'] summary {
+  color: #0f766e !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass [class*='method'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='method'] summary {
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+
+.market-workspace.theme-light-glass [class*='method'] p {
+  color: #475569 !important;
 }
 
 .market-workspace.theme-light-glass [class*='notice'],
 .market-workspace.theme-light-glass [class*='message'] {
-  background: rgba(254, 252, 232, 0.8) !important;
+  background: #fefce8 !important;
   border: 1px solid #fef08a !important;
   color: #854d0e !important;
+  border-radius: 10px !important;
+}
+
+.market-workspace.theme-light-glass [class*='notice'] a,
+.market-workspace.theme-light-glass [class*='message'] a {
+  color: #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass [class*='pagination'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='pagination'] button {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+  font-weight: 600 !important;
+}
+
+/* Modals & Dropdown in Light Glass */
+.market-workspace.theme-light-glass .account-menu,
+.market-workspace.theme-light-glass .modal-card,
+[data-theme='light'] .account-menu,
+[data-theme='light'] .modal-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12) !important;
+  border-radius: 16px !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .account-menu button:hover,
+[data-theme='light'] .account-menu button:hover {
+  background: #f0f9ff !important;
+  color: #0284c7 !important;
 }
 
 /* Financial Color Enhancements */
@@ -516,14 +996,14 @@
 .market-workspace.theme-light-glass [data-tone='up'],
 .market-workspace.theme-light-glass span.pos {
   color: #059669 !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
 }
 
 .market-workspace.theme-light-glass .negative,
 .market-workspace.theme-light-glass [data-tone='down'],
 .market-workspace.theme-light-glass span.neg {
   color: #e11d48 !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
 }
 
 /* ─── 9. Theme Switcher Button ─── */

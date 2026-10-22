@@ -130,15 +130,11 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('nugaom-theme');
-      if (saved === 'dark' || saved === 'light') {
-        setTheme(saved);
-        if (typeof document !== 'undefined') {
-          document.documentElement.setAttribute('data-theme', saved);
-        }
-      } else {
-        if (typeof document !== 'undefined') {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        }
+      const initial = (saved === 'dark' || saved === 'light') ? saved : 'dark';
+      setTheme(initial);
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', initial);
+        if (document.body) document.body.setAttribute('data-theme', initial);
       }
     } catch {}
   }, []);
@@ -150,6 +146,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
       localStorage.setItem('nugaom-theme', next);
       if (typeof document !== 'undefined') {
         document.documentElement.setAttribute('data-theme', next);
+        if (document.body) document.body.setAttribute('data-theme', next);
       }
     } catch {}
   }

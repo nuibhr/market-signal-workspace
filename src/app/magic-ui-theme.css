@@ -27,9 +27,9 @@
 }
 
 /* ─── 2. Global Dark Background & Digital Waves ─── */
-body:not([data-theme='light']),
+html:not([data-theme='light']) body:not([data-theme='light']),
 [data-theme='dark'] body,
-.market-workspace:not(.theme-light-glass) {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) {
   background-color: #080D1B !important;
   background-image: 
     radial-gradient(circle at 10% 15%, rgba(34, 211, 238, 0.07) 0%, transparent 40%),
@@ -172,9 +172,9 @@ body:not([data-theme='light']),
 }
 
 /* ─── 3. Sidebar & Navigation Menu (Magic UI Style) ─── */
-.market-workspace:not(.theme-light-glass) .sidebar,
-.market-workspace:not(.theme-light-glass) .hub-sidebar,
-body:not([data-theme='light']) .sidebar {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .sidebar,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-sidebar,
+html:not([data-theme='light']) body:not([data-theme='light']) .sidebar {
   background: #0A1324 !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
@@ -183,99 +183,99 @@ body:not([data-theme='light']) .sidebar {
 }
 
 /* Brand */
-.market-workspace:not(.theme-light-glass) .brand strong,
-body:not([data-theme='light']) .brand strong {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .brand strong,
+html:not([data-theme='light']) body:not([data-theme='light']) .brand strong {
   color: #F1F5F9 !important;
   letter-spacing: 2.2px !important;
 }
 
-.market-workspace:not(.theme-light-glass) .brand small,
-body:not([data-theme='light']) .brand small {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .brand small,
+html:not([data-theme='light']) body:not([data-theme='light']) .brand small {
   color: #22D3EE !important;
   font-weight: 600 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .brand-mark,
-body:not([data-theme='light']) .brand-mark {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .brand-mark,
+html:not([data-theme='light']) body:not([data-theme='light']) .brand-mark {
   box-shadow: 0 0 16px rgba(34, 211, 238, 0.35) !important;
 }
 
 /* Sidebar Section Captions */
-.market-workspace:not(.theme-light-glass) .side-label,
-.market-workspace:not(.theme-light-glass) .hub-sidebar-caption,
-body:not([data-theme='light']) .hub-sidebar-caption {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .side-label,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-sidebar-caption,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-sidebar-caption {
   color: #94A3B8 !important;
   font-weight: 600 !important;
   letter-spacing: 1.4px !important;
 }
 
 /* Account Card in Sidebar */
-.market-workspace:not(.theme-light-glass) .hub-account-card,
-body:not([data-theme='light']) .hub-account-card {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-account-card,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-account-card {
   background: #111C33 !important;
   border: 1px solid #243550 !important;
   border-radius: 12px !important;
   transition: var(--magic-transition) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .hub-account-card:hover,
-body:not([data-theme='light']) .hub-account-card:hover {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-account-card:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-account-card:hover {
   background: #1C3250 !important;
   border-color: #22D3EE !important;
   box-shadow: 0 0 14px rgba(34, 211, 238, 0.18) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .hub-account-card strong,
-body:not([data-theme='light']) .hub-account-card strong {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-account-card strong,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-account-card strong {
   color: #F1F5F9 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .hub-account-card small,
-body:not([data-theme='light']) .hub-account-card small {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-account-card small,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-account-card small {
   color: #94A3B8 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .hub-account-arrow,
-body:not([data-theme='light']) .hub-account-arrow {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-account-arrow,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-account-arrow {
   color: #22D3EE !important;
 }
 
 /* Menu Group Toggles */
-.market-workspace:not(.theme-light-glass) .hub-group-toggle,
-body:not([data-theme='light']) .hub-group-toggle {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-group-toggle,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-group-toggle {
   color: #94A3B8 !important;
   border-radius: var(--magic-radius-menu) !important;
   transition: var(--magic-transition) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .hub-group-toggle:hover,
-body:not([data-theme='light']) .hub-group-toggle:hover {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-group-toggle:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-group-toggle:hover {
   background: #1C3250 !important;
   color: #F1F5F9 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .hub-group-index,
-body:not([data-theme='light']) .hub-group-index {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-group-index,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-group-index {
   color: #22D3EE !important;
   font-weight: 700 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .hub-nav-glyph,
-body:not([data-theme='light']) .hub-nav-glyph {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-nav-glyph,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-nav-glyph {
   color: #94A3B8 !important;
   transition: color 180ms ease !important;
 }
 
-.market-workspace:not(.theme-light-glass) .hub-group-toggle:hover .hub-nav-glyph,
-body:not([data-theme='light']) .hub-group-toggle:hover .hub-nav-glyph {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-group-toggle:hover .hub-nav-glyph,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-group-toggle:hover .hub-nav-glyph {
   color: #22D3EE !important;
 }
 
 /* Menu Items (Default State) */
-.market-workspace:not(.theme-light-glass) .nav-item,
-.market-workspace:not(.theme-light-glass) .hub-subnav,
-body:not([data-theme='light']) .hub-subnav,
-body:not([data-theme='light']) .nav-item {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .nav-item,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-subnav,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-subnav,
+html:not([data-theme='light']) body:not([data-theme='light']) .nav-item {
   color: #94A3B8 !important;
   background: transparent !important;
   border: 1px solid transparent !important;
@@ -288,35 +288,35 @@ body:not([data-theme='light']) .nav-item {
   gap: 10px !important;
 }
 
-.market-workspace:not(.theme-light-glass) .nav-item svg,
-.market-workspace:not(.theme-light-glass) .hub-subnav svg,
-body:not([data-theme='light']) .hub-subnav svg {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .nav-item svg,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-subnav svg,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-subnav svg {
   color: #94A3B8 !important;
   transition: color 180ms ease, transform 180ms ease !important;
 }
 
 /* Menu Items (Hover State) */
-.market-workspace:not(.theme-light-glass) .nav-item:hover,
-.market-workspace:not(.theme-light-glass) .hub-subnav:hover,
-body:not([data-theme='light']) .hub-subnav:hover,
-body:not([data-theme='light']) .nav-item:hover {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .nav-item:hover,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-subnav:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-subnav:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .nav-item:hover {
   background: #1C3250 !important;
   color: #F1F5F9 !important;
   border-color: rgba(34, 211, 238, 0.25) !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .nav-item:hover svg,
-.market-workspace:not(.theme-light-glass) .hub-subnav:hover svg,
-body:not([data-theme='light']) .hub-subnav:hover svg {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .nav-item:hover svg,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-subnav:hover svg,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-subnav:hover svg {
   color: #22D3EE !important;
 }
 
 /* Menu Items (Active / Selected State - Magic UI Neon Glow) */
-.market-workspace:not(.theme-light-glass) .nav-item.active,
-.market-workspace:not(.theme-light-glass) .hub-subnav.active,
-body:not([data-theme='light']) .hub-subnav.active,
-body:not([data-theme='light']) .nav-item.active {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .nav-item.active,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-subnav.active,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-subnav.active,
+html:not([data-theme='light']) body:not([data-theme='light']) .nav-item.active {
   background: linear-gradient(90deg, #163A63 0%, #1e40af 100%) !important;
   color: #22D3EE !important;
   border: 1px solid #22D3EE !important;
@@ -324,15 +324,15 @@ body:not([data-theme='light']) .nav-item.active {
   font-weight: 700 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .nav-item.active svg,
-.market-workspace:not(.theme-light-glass) .hub-subnav.active svg,
-body:not([data-theme='light']) .hub-subnav.active svg {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .nav-item.active svg,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-subnav.active svg,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-subnav.active svg {
   color: #22D3EE !important;
   filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.6)) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .hub-subnav em,
-body:not([data-theme='light']) .hub-subnav em {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-subnav em,
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-subnav em {
   background: rgba(34, 211, 238, 0.15) !important;
   color: #22D3EE !important;
   border: 1px solid rgba(34, 211, 238, 0.4) !important;
@@ -341,8 +341,8 @@ body:not([data-theme='light']) .hub-subnav em {
 }
 
 /* ─── 4. Top Navbar & Dropdown Menu ─── */
-.market-workspace:not(.theme-light-glass) .topbar,
-body:not([data-theme='light']) .topbar {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .topbar,
+html:not([data-theme='light']) body:not([data-theme='light']) .topbar {
   background: rgba(11, 20, 38, 0.88) !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
@@ -350,40 +350,40 @@ body:not([data-theme='light']) .topbar {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .topbar-context small,
-body:not([data-theme='light']) .topbar-context small {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .topbar-context small,
+html:not([data-theme='light']) body:not([data-theme='light']) .topbar-context small {
   color: #94A3B8 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .topbar-context strong,
-body:not([data-theme='light']) .topbar-context strong {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .topbar-context strong,
+html:not([data-theme='light']) body:not([data-theme='light']) .topbar-context strong {
   color: #F1F5F9 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .topbar-context span,
-body:not([data-theme='light']) .topbar-context span {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .topbar-context span,
+html:not([data-theme='light']) body:not([data-theme='light']) .topbar-context span {
   background: #172641 !important;
   color: #22D3EE !important;
   border: 1px solid #243550 !important;
   border-radius: 6px !important;
 }
 
-.market-workspace:not(.theme-light-glass) .market-clock,
-body:not([data-theme='light']) .market-clock {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-clock,
+html:not([data-theme='light']) body:not([data-theme='light']) .market-clock {
   color: #94A3B8 !important;
   background: #111C33 !important;
   border: 1px solid #243550 !important;
   border-radius: 99px !important;
 }
 
-.market-workspace:not(.theme-light-glass) .status-dot.connected,
-body:not([data-theme='light']) .status-dot.connected {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .status-dot.connected,
+html:not([data-theme='light']) body:not([data-theme='light']) .status-dot.connected {
   background: #22D3EE !important;
   box-shadow: 0 0 10px #22D3EE !important;
 }
 
-.market-workspace:not(.theme-light-glass) .monitor-account,
-body:not([data-theme='light']) .monitor-account {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .monitor-account,
+html:not([data-theme='light']) body:not([data-theme='light']) .monitor-account {
   background: #111C33 !important;
   border: 1px solid #243550 !important;
   color: #94A3B8 !important;
@@ -391,8 +391,8 @@ body:not([data-theme='light']) .monitor-account {
   transition: var(--magic-transition) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .monitor-account:hover,
-body:not([data-theme='light']) .monitor-account:hover {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .monitor-account:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .monitor-account:hover {
   background: #1C3250 !important;
   color: #22D3EE !important;
   border-color: #22D3EE !important;
@@ -400,10 +400,10 @@ body:not([data-theme='light']) .monitor-account:hover {
 }
 
 /* Dropdown & Modals in Dark Mode */
-.market-workspace:not(.theme-light-glass) .account-menu,
-.market-workspace:not(.theme-light-glass) .modal-card,
-body:not([data-theme='light']) .account-menu,
-body:not([data-theme='light']) .modal-card {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .account-menu,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .modal-card,
+html:not([data-theme='light']) body:not([data-theme='light']) .account-menu,
+html:not([data-theme='light']) body:not([data-theme='light']) .modal-card {
   background: #111C33 !important;
   border: 1px solid #243550 !important;
   backdrop-filter: blur(16px) !important;
@@ -412,8 +412,8 @@ body:not([data-theme='light']) .modal-card {
   color: #F1F5F9 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .account-menu button:hover,
-body:not([data-theme='light']) .account-menu button:hover {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .account-menu button:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .account-menu button:hover {
   background: #1C3250 !important;
   color: #22D3EE !important;
 }
@@ -436,8 +436,8 @@ body:not([data-theme='light']) .account-menu button:hover {
 }
 
 /* ─── 6. Market Navigation Destinations ─── */
-.market-workspace:not(.theme-light-glass) .market-destinations a,
-body:not([data-theme='light']) .market-destinations a {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a,
+html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a {
   background: #111C33 !important;
   border: 1px solid #243550 !important;
   color: #94A3B8 !important;
@@ -446,8 +446,8 @@ body:not([data-theme='light']) .market-destinations a {
   transition: var(--magic-transition) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .market-destinations a:hover,
-body:not([data-theme='light']) .market-destinations a:hover {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a:hover {
   background: #1C3250 !important;
   color: #F1F5F9 !important;
   border-color: rgba(34, 211, 238, 0.45) !important;
@@ -455,8 +455,8 @@ body:not([data-theme='light']) .market-destinations a:hover {
   transform: translateY(-1px) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .market-destinations a[aria-current='page'],
-body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a[aria-current='page'],
+html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
   background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
   color: #22D3EE !important;
   border-color: #22D3EE !important;
@@ -465,8 +465,8 @@ body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
 }
 
 /* ─── 7. Thai Workspace Nav Toolbar ─── */
-.market-workspace:not(.theme-light-glass) #thai-workspace-navigation,
-.market-workspace:not(.theme-light-glass) [class*='toolbar'] {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) #thai-workspace-navigation,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='toolbar'] {
   background: rgba(17, 28, 51, 0.9) !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
@@ -475,18 +475,18 @@ body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
 }
 
-.market-workspace:not(.theme-light-glass) #thai-workspace-navigation h1,
-.market-workspace:not(.theme-light-glass) [class*='heading'] h1 {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) #thai-workspace-navigation h1,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='heading'] h1 {
   color: #F1F5F9 !important;
 }
 
-.market-workspace:not(.theme-light-glass) #thai-workspace-navigation p,
-.market-workspace:not(.theme-light-glass) [class*='heading'] p {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) #thai-workspace-navigation p,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='heading'] p {
   color: #94A3B8 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .views a,
-.market-workspace:not(.theme-light-glass) [class*='views'] a {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views'] a {
   background: #0A1324 !important;
   border: 1px solid #243550 !important;
   color: #94A3B8 !important;
@@ -494,16 +494,16 @@ body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
   transition: var(--magic-transition) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .views a:hover,
-.market-workspace:not(.theme-light-glass) [class*='views'] a:hover {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a:hover,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views'] a:hover {
   background: #1C3250 !important;
   color: #F1F5F9 !important;
   border-color: rgba(34, 211, 238, 0.4) !important;
   box-shadow: 0 0 12px rgba(34, 211, 238, 0.16) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .views a[aria-current],
-.market-workspace:not(.theme-light-glass) [class*='views'] a[aria-current] {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a[aria-current],
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views'] a[aria-current] {
   background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
   color: #22D3EE !important;
   border-color: #22D3EE !important;
@@ -511,16 +511,16 @@ body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
 }
 
 /* ─── 8. Pro Tools Suite Navigation ─── */
-.market-workspace:not(.theme-light-glass) .ng-pro-suite-nav,
-body:not([data-theme='light']) .ng-pro-suite-nav {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-pro-suite-nav,
+html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-suite-nav {
   background: rgba(17, 28, 51, 0.88) !important;
   backdrop-filter: blur(16px) !important;
   border: 1px solid #243550 !important;
   border-radius: 14px !important;
 }
 
-.market-workspace:not(.theme-light-glass) .ng-pro-pill,
-body:not([data-theme='light']) .ng-pro-pill {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-pro-pill,
+html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-pill {
   background: #0A1324 !important;
   border: 1px solid #243550 !important;
   color: #94A3B8 !important;
@@ -528,15 +528,15 @@ body:not([data-theme='light']) .ng-pro-pill {
   transition: var(--magic-transition) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .ng-pro-pill:hover,
-body:not([data-theme='light']) .ng-pro-pill:hover {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-pro-pill:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-pill:hover {
   background: #1C3250 !important;
   color: #F1F5F9 !important;
   border-color: rgba(34, 211, 238, 0.4) !important;
 }
 
-.market-workspace:not(.theme-light-glass) .ng-pro-pill.is-active,
-body:not([data-theme='light']) .ng-pro-pill.is-active {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-pro-pill.is-active,
+html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-pill.is-active {
   background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
   color: #22D3EE !important;
   border-color: #22D3EE !important;
@@ -544,12 +544,12 @@ body:not([data-theme='light']) .ng-pro-pill.is-active {
 }
 
 /* ─── 9. Cards, Panels, and Elevated Surfaces ─── */
-.market-workspace:not(.theme-light-glass) .panel,
-.market-workspace:not(.theme-light-glass) .chart-panel,
-.market-workspace:not(.theme-light-glass) .nugaom-welcome,
-.market-workspace:not(.theme-light-glass) .asset-hero,
-.market-workspace:not(.theme-light-glass) [class*='dashboard'],
-body:not([data-theme='light']) .panel {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .panel,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-panel,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .nugaom-welcome,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .asset-hero,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='dashboard'],
+html:not([data-theme='light']) body:not([data-theme='light']) .panel {
   background: #111C33 !important;
   border: 1px solid #243550 !important;
   border-radius: 16px !important;
@@ -558,28 +558,28 @@ body:not([data-theme='light']) .panel {
 }
 
 /* Elevated Surfaces (Stats & Headers) */
-.market-workspace:not(.theme-light-glass) [class*='stats'],
-.market-workspace:not(.theme-light-glass) [class*='stat'],
-.market-workspace:not(.theme-light-glass) thead th {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stats'],
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stat'],
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) thead th {
   background: #172641 !important;
   border-color: #243550 !important;
   color: #F1F5F9 !important;
 }
 
-.market-workspace:not(.theme-light-glass) [class*='stat'] strong {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stat'] strong {
   color: #22D3EE !important;
 }
 
-.market-workspace:not(.theme-light-glass) [class*='stat'] small {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stat'] small {
   color: #94A3B8 !important;
 }
 
 /* Inputs, Selects, Buttons in Dark Mode */
-.market-workspace:not(.theme-light-glass) input,
-.market-workspace:not(.theme-light-glass) select,
-.market-workspace:not(.theme-light-glass) [class*='dashboard'] button,
-.market-workspace:not(.theme-light-glass) [class*='dashboard'] select,
-.market-workspace:not(.theme-light-glass) [class*='dashboard'] input {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) input,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) select,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='dashboard'] button,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='dashboard'] select,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='dashboard'] input {
   background: #172641 !important;
   border: 1px solid #243550 !important;
   color: #F1F5F9 !important;
@@ -587,13 +587,13 @@ body:not([data-theme='light']) .panel {
   transition: var(--magic-transition) !important;
 }
 
-.market-workspace:not(.theme-light-glass) [class*='dashboard'] button:hover,
-.market-workspace:not(.theme-light-glass) [class*='dashboard'] select:hover {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='dashboard'] button:hover,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='dashboard'] select:hover {
   background: #1C3250 !important;
   border-color: #22D3EE !important;
 }
 
-.market-workspace:not(.theme-light-glass) [class*='dashboard'] button[aria-pressed='true'] {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='dashboard'] button[aria-pressed='true'] {
   background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
   color: #22D3EE !important;
   border-color: #22D3EE !important;
@@ -601,24 +601,24 @@ body:not([data-theme='light']) .panel {
 }
 
 /* Text Hierarchy */
-.market-workspace:not(.theme-light-glass) h1,
-.market-workspace:not(.theme-light-glass) h2,
-.market-workspace:not(.theme-light-glass) h3 {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) h1,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) h2,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) h3 {
   color: #F1F5F9 !important;
 }
 
-.market-workspace:not(.theme-light-glass) p,
-.market-workspace:not(.theme-light-glass) small {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) p,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) small {
   color: #94A3B8 !important;
 }
 
 /* Financial Accents */
-.market-workspace:not(.theme-light-glass) .positive,
-.market-workspace:not(.theme-light-glass) [data-tone='up'] {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .positive,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [data-tone='up'] {
   color: #10B981 !important;
 }
 
-.market-workspace:not(.theme-light-glass) .negative,
-.market-workspace:not(.theme-light-glass) [data-tone='down'] {
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .negative,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [data-tone='down'] {
   color: #F43F5E !important;
 }
