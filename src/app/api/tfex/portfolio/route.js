@@ -4,12 +4,13 @@ export const dynamic = 'force-dynamic';
 const NO_STORE = { 'Cache-Control': 'private, no-store, max-age=0' };
 
 const BROKER_NAMES = {
-  '032': 'InnovestX Securities',
-  '011': 'Maybank Securities (Thailand)',
-  '025': 'CGS International Securities',
-  '001': 'Bualuang Securities',
-  '006': 'Kiatnakin Phatra Securities',
-  '028': 'Globlex Securities',
+  '022': 'Trinity Securities (บล.ทรีนีตี้)',
+  '032': 'InnovestX Securities (บล.อินโนเวสท์ เอกซ์)',
+  '011': 'Maybank Securities (บล.เมย์แบงก์)',
+  '025': 'CGS International Securities (บล.ซีจีเอส)',
+  '001': 'Bualuang Securities (บล.บัวหลวง)',
+  '006': 'Kiatnakin Phatra Securities (บล.เกียรตินาคินภัทร)',
+  '028': 'Globlex Securities (บล.โกลเบล็ก)',
   '098': 'Settrade Sandbox / Testnet',
 };
 

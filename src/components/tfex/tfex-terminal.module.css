@@ -163,64 +163,239 @@
   font-size: 10px;
 }
 
-/* ─── Navigation Tabs ─── */
-.navTabs {
+/* ─── CYBER COMMAND BAR (NEW PRO NAVIGATION) ─── */
+.commandBar {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 18px 0 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 12px;
-  overflow-x: auto;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 18px 0 22px;
+  padding: 6px;
+  background: rgba(11, 19, 38, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 16px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
 }
 
-.navTabBtn {
+.commandTabsGroup {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 6px;
+  flex: 1;
+  min-width: 320px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.commandTabsGroup::-webkit-scrollbar {
+  display: none;
+}
+
+.commandTab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 12px;
-  padding: 10px 18px;
+  padding: 8px 14px;
   color: #94a3b8;
-  font-size: 13px;
-  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  flex: 1;
+  min-width: 175px;
 }
 
-.navTabBtn:hover {
+.commandTab:hover {
   color: #f1f5f9;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
-.navTabBtnActive {
+.commandTabActive {
+  background: linear-gradient(145deg, rgba(34, 211, 238, 0.15) 0%, rgba(168, 85, 247, 0.12) 100%);
+  border: 1px solid rgba(34, 211, 238, 0.5);
   color: #ffffff;
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18) 0%, rgba(168, 85, 247, 0.18) 100%);
-  border: 1px solid var(--tfex-cyan);
-  box-shadow: 0 4px 18px rgba(34, 211, 238, 0.25);
+  box-shadow: 0 4px 20px rgba(34, 211, 238, 0.2), inset 0 0 12px rgba(34, 211, 238, 0.1);
 }
 
-.tabIcon {
-  font-size: 16px;
+.commandTabHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
 }
 
-.tabBadge {
+.commandTabIcon {
+  font-size: 13px;
+  color: var(--tfex-cyan);
+  font-weight: 800;
+}
+
+.commandTabTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: -0.2px;
+}
+
+.commandTabActive .commandTabTitle {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.commandTabBadge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  margin-left: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.commandTabActive .commandTabBadge {
+  background: rgba(34, 211, 238, 0.2);
+  color: var(--tfex-cyan);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+}
+
+.commandTabSub {
   font-size: 10px;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
+  color: #64748b;
+  font-weight: 500;
+  display: block;
+}
+
+.commandTabActive .commandTabSub {
   color: #cbd5e1;
 }
 
-.navTabBtnActive .tabBadge {
-  background: var(--tfex-cyan);
-  color: #0f172a;
-  font-weight: 800;
+/* Pulsing LED Dot */
+.livePulseDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulseLed 1.8s infinite ease-in-out;
+  margin-right: 4px;
 }
+
+.livePulseDotGreen {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulseLed 1.8s infinite ease-in-out;
+}
+
+@keyframes pulseLed {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+/* Right-side quick action in command bar */
+.commandBarGatewayPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gatewayConnectedPill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gatewayConnectedPill:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+}
+
+.gatewayPillText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.gatewayPillText b {
+  font-size: 11px;
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.gatewayPillText span {
+  font-size: 9px;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.gatewayEquityChip {
+  font-size: 11px;
+  font-weight: 800;
+  color: #34d399;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.gatewayConnectBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  color: #f1f5f9;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gatewayConnectBtn:hover {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%);
+  border-color: var(--tfex-cyan);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.3);
+  transform: translateY(-1px);
+}
+
+.gatewayBadge022 {
+  background: rgba(34, 211, 238, 0.2);
+  color: var(--tfex-cyan);
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
 
 /* ─── TAB 1: SET50 OPTIONS CHAIN & VOLATILITY DESK ─── */
 .optionsDesk {
@@ -1090,37 +1265,73 @@
 }
 
 /* ─── TFEX WHAT-IF SIMULATOR & PORTFOLIO RISK MONITOR ─── */
-.subModeSwitch {
-  display: inline-flex;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 4px;
-  gap: 4px;
-  margin-bottom: 16px;
+.segmentedSubmodeContainer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 18px;
 }
 
-.subModeBtn {
+.segmentedSubmodeTrack {
+  display: inline-flex;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 5px;
+  gap: 6px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.segmentedSubmodeItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: transparent;
   border: 1px solid transparent;
   color: #94a3b8;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 7px;
+  padding: 8px 16px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.subModeBtn:hover {
+.segmentedSubmodeItem:hover {
   color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
 }
 
-.subModeBtnActive {
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
-  border-color: var(--tfex-cyan);
+.segmentedSubmodeItemActive {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(168, 85, 247, 0.16) 100%);
+  border-color: rgba(34, 211, 238, 0.5);
   color: #ffffff;
-  box-shadow: 0 0 10px rgba(34, 211, 238, 0.25);
+  box-shadow: 0 4px 14px rgba(34, 211, 238, 0.25), inset 0 0 10px rgba(34, 211, 238, 0.1);
+}
+
+.segmentedIcon {
+  font-size: 14px;
+}
+
+.segmentedLabel {
+  letter-spacing: -0.2px;
+}
+
+.segmentedChip {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.segmentedSubmodeItemActive .segmentedChip {
+  background: rgba(34, 211, 238, 0.25);
+  color: var(--tfex-cyan);
+  border: 1px solid rgba(34, 211, 238, 0.4);
 }
 
 .whatIfHero {
@@ -1293,34 +1504,53 @@
   margin: 0;
 }
 
-/* ─── SETTRADE OPEN API BYOK INTEGRATION ─── */
-.byokBar {
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.08) 0%, rgba(168, 85, 247, 0.06) 100%);
-  border: 1px solid rgba(34, 211, 238, 0.3);
-  border-radius: 14px;
-  padding: 14px 18px;
-  margin-bottom: 16px;
+/* ─── HUD BYOK TERMINAL CARD (FUTURISTIC RETRO-NEON HUD) ─── */
+.byokHudBar {
+  position: relative;
+  background: linear-gradient(145deg, rgba(13, 23, 48, 0.9) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.byokHudGlow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #22d3ee, #a855f7, transparent);
+  opacity: 0.8;
+}
+
+.byokHudContent {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
-  backdrop-filter: blur(10px);
 }
 
-.byokInfo {
+.byokHudLeft {
   flex: 1;
   min-width: 280px;
 }
 
-.byokHeaderLine {
+.byokHudBadgeRow {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 
-.byokTag {
+.byokHudTag {
+  display: inline-flex;
+  align-items: center;
   background: rgba(34, 211, 238, 0.15);
   border: 1px solid rgba(34, 211, 238, 0.4);
   color: var(--tfex-cyan);
@@ -1328,130 +1558,253 @@
   font-weight: 800;
   padding: 2px 8px;
   border-radius: 6px;
-  text-transform: uppercase;
   letter-spacing: 0.8px;
 }
 
-.byokStatusConnected {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.byokEnclaveBadge {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
   color: #34d399;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.6px;
 }
 
-.byokStatusDisconnected {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.byokPingBadge {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #94a3b8;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
 }
 
-.byokTitle {
-  font-size: 13px;
-  font-weight: 700;
+.byokHudTitle {
+  font-size: 14px;
+  font-weight: 800;
   color: #ffffff;
-  margin: 0;
+  margin: 0 0 4px;
+  letter-spacing: -0.2px;
 }
 
-.byokDesc {
+.byokHudDesc {
   font-size: 11px;
   color: #94a3b8;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
-.byokActions {
+.byokHudStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.byokHudStatCard {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.byokHudStatLabel {
+  font-size: 9px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.byokHudStatVal {
+  font-size: 13px;
+  font-weight: 800;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.byokHudActions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.byokBtnPrimary {
+.byokHudBtnPrimary {
   background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
   color: #ffffff;
   border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 11px;
-  font-weight: 700;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 800;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
+  gap: 7px;
+  box-shadow: 0 4px 18px rgba(6, 182, 212, 0.4);
   transition: all 0.2s ease;
 }
 
-.byokBtnPrimary:hover {
+.byokHudBtnPrimary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(6, 182, 212, 0.5);
+  box-shadow: 0 6px 24px rgba(6, 182, 212, 0.55);
 }
 
-.byokBtnSecondary {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+.byokHudBtnSecondary {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #f1f5f9;
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.byokBtnSecondary:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.3);
+.byokHudBtnSecondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
 }
 
-.byokBtnDanger {
+.byokHudBtnDanger {
   background: rgba(244, 63, 94, 0.12);
   border: 1px solid rgba(244, 63, 94, 0.3);
   color: #fb7185;
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 10px;
+  padding: 10px 14px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.byokBtnDanger:hover {
-  background: rgba(244, 63, 94, 0.2);
+.byokHudBtnDanger:hover {
+  background: rgba(244, 63, 94, 0.22);
 }
 
-.byokLiveStats {
+/* ─── INTERACTIVE BROKER GRID (IN MODAL) ─── */
+.formLabelRow {
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  flex-wrap: wrap;
+  margin-bottom: 8px;
 }
 
-.byokStatItem {
+.formLabelHint {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.brokerGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.brokerCard {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  position: relative;
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.byokStatLabel {
-  font-size: 9px;
+.brokerCard:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(34, 211, 238, 0.4);
+  transform: translateY(-1px);
+}
+
+.brokerCardActive {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18) 0%, rgba(168, 85, 247, 0.14) 100%);
+  border: 1px solid var(--tfex-cyan);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.3);
+}
+
+.brokerCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+.brokerCode {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--tfex-cyan);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.brokerTag {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
   color: #94a3b8;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.byokStatVal {
-  font-size: 12px;
+.brokerCardActive .brokerTag {
+  background: rgba(34, 211, 238, 0.25);
+  color: #ffffff;
+}
+
+.brokerName {
+  font-size: 11px;
   font-weight: 700;
   color: #ffffff;
 }
+
+.brokerThaiName {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.quickDemoPresetRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.quickDemoBtn {
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  color: var(--tfex-cyan);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quickDemoBtn:hover {
+  background: rgba(34, 211, 238, 0.2);
+  border-color: var(--tfex-cyan);
+  transform: translateY(-1px);
+}
+
 
 /* Modal Overlay & Card */
 .modalOverlay {

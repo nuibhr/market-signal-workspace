@@ -2178,3 +2178,135 @@
   color: #0f172a !important;
 }
 
+/* Command Bar (Light Theme) */
+.market-workspace.theme-light-glass [class*='commandBar'],
+[data-theme='light'] [class*='commandBar'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+}
+
+.market-workspace.theme-light-glass [class*='commandTab'],
+[data-theme='light'] [class*='commandTab'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='commandTab']:hover,
+[data-theme='light'] [class*='commandTab']:hover {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='commandTabActive'],
+[data-theme='light'] [class*='commandTabActive'] {
+  background: linear-gradient(145deg, rgba(2, 132, 199, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%) !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.15) !important;
+}
+
+.market-workspace.theme-light-glass [class*='commandTabTitle'],
+[data-theme='light'] [class*='commandTabTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='commandTabSub'],
+[data-theme='light'] [class*='commandTabSub'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='commandTabBadge'],
+[data-theme='light'] [class*='commandTabBadge'] {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='commandTabActive'] [class*='commandTabBadge'],
+[data-theme='light'] [class*='commandTabActive'] [class*='commandTabBadge'] {
+  background: #e0f2fe !important;
+  color: #0284c7 !important;
+  border: 1px solid #bae6fd !important;
+}
+
+/* Segmented Submode (Light Theme) */
+.market-workspace.theme-light-glass [class*='segmentedSubmodeTrack'],
+[data-theme='light'] [class*='segmentedSubmodeTrack'] {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='segmentedSubmodeItem'],
+[data-theme='light'] [class*='segmentedSubmodeItem'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='segmentedSubmodeItemActive'],
+[data-theme='light'] [class*='segmentedSubmodeItemActive'] {
+  background: #ffffff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* HUD BYOK Bar (Light Theme) */
+.market-workspace.theme-light-glass [class*='byokHudBar'],
+[data-theme='light'] [class*='byokHudBar'] {
+  background: linear-gradient(145deg, #f0f9ff 0%, #f8fafc 100%) !important;
+  border-color: #bae6fd !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06) !important;
+}
+
+.market-workspace.theme-light-glass [class*='byokHudTitle'],
+[data-theme='light'] [class*='byokHudTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='byokHudDesc'],
+[data-theme='light'] [class*='byokHudDesc'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='byokHudStatCard'],
+[data-theme='light'] [class*='byokHudStatCard'] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='byokHudBtnSecondary'],
+[data-theme='light'] [class*='byokHudBtnSecondary'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+/* Broker Grid (Light Theme) */
+.market-workspace.theme-light-glass [class*='brokerCard'],
+[data-theme='light'] [class*='brokerCard'] {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='brokerCard']:hover,
+[data-theme='light'] [class*='brokerCard']:hover {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='brokerCardActive'],
+[data-theme='light'] [class*='brokerCardActive'] {
+  background: #e0f2fe !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.2) !important;
+}
+
+.market-workspace.theme-light-glass [class*='brokerName'],
+[data-theme='light'] [class*='brokerName'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='quickDemoBtn'],
+[data-theme='light'] [class*='quickDemoBtn'] {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+

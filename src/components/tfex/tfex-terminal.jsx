@@ -94,6 +94,17 @@ const OPTIONS_STRIKES_DATA = [
   { strike: 940, callPrice: 0.6, callBid: 0.5, callAsk: 0.7, callOi: 3100, callVol: 210, callIv: 18.0, putPrice: 47.4, putBid: 46.8, putAsk: 48.0, putOi: 1120, putVol: 110, putIv: 13.5 },
 ];
 
+export const BROKER_OPTIONS = [
+  { id: '022', name: 'Trinity Securities', thaiName: 'บล.ทรีนีตี้', popular: true, tag: 'RECOMMENDED' },
+  { id: '032', name: 'InnovestX Securities', thaiName: 'บล.อินโนเวสท์ เอกซ์', popular: true, tag: 'POPULAR' },
+  { id: '011', name: 'Maybank Securities', thaiName: 'บล.เมย์แบงก์ (ไทย)', popular: true, tag: 'POPULAR' },
+  { id: '025', name: 'CGS International', thaiName: 'บล.ซีจีเอส อินเตอร์เนชั่นแนล', popular: true, tag: 'ACTIVE' },
+  { id: '001', name: 'Bualuang Securities', thaiName: 'บล.บัวหลวง', popular: false, tag: 'SUPPORTED' },
+  { id: '006', name: 'Kiatnakin Phatra', thaiName: 'บล.เกียรตินาคินภัทร', popular: false, tag: 'SUPPORTED' },
+  { id: '028', name: 'Globlex Securities', thaiName: 'บล.โกลเบล็ก', popular: false, tag: 'SUPPORTED' },
+  { id: '098', name: 'Settrade Sandbox', thaiName: 'ระบบทดสอบ Sandbox', popular: false, tag: 'TESTNET' },
+];
+
 export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
   const [activeTab, setActiveTab] = useState('options'); // 'options' | 'futures' | 'margin' | 'sizing'
   const [optionsFilter, setOptionsFilter] = useState('atm'); // 'atm' | 'all' | 'highOi'
@@ -123,7 +134,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
 
   // ─── SETTRADE OPEN API (BYOK) STATE ───
   const [showSettradeModal, setShowSettradeModal] = useState(false);
-  const [settradeBrokerId, setSettradeBrokerId] = useState('032');
+  const [settradeBrokerId, setSettradeBrokerId] = useState('022'); // Default to Trinity Securities (022)
   const [settradeAppId, setSettradeAppId] = useState('');
   const [settradeAppSecret, setSettradeAppSecret] = useState('');
   const [settradeAppCode, setSettradeAppCode] = useState('');
@@ -134,14 +145,18 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
   const [settradeError, setSettradeError] = useState(null);
   const [syncToast, setSyncToast] = useState(null);
 
-  const syncSettradePortfolio = async (isDemo = false) => {
+  const syncSettradePortfolio = async (isDemo = false, demoBrokerId = null) => {
     setSettradeLoading(true);
     setSettradeError(null);
+    const targetBrokerId = demoBrokerId || settradeBrokerId;
+    if (demoBrokerId) {
+      setSettradeBrokerId(demoBrokerId);
+    }
     try {
       const payload = isDemo
-        ? { brokerId: settradeBrokerId, isDemo: true }
+        ? { brokerId: targetBrokerId, isDemo: true }
         : {
-            brokerId: settradeBrokerId,
+            brokerId: targetBrokerId,
             appId: settradeAppId,
             appSecret: settradeAppSecret,
             appCode: settradeAppCode,
@@ -193,6 +208,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
     setSyncToast('ตัดการเชื่อมต่อพอร์ต Settrade แล้ว (กลับสู่โหมดจำลองพอร์ตทั่วไป)');
     setTimeout(() => setSyncToast(null), 4000);
   };
+
 
 
   // Current product spec for single margin desk
@@ -321,45 +337,90 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
         </div>
       </div>
 
-      {/* ─── Navigation Tabs ─── */}
-      <nav className={styles.navTabs} aria-label="เมนูระบบเทอร์มินัล TFEX">
-        <button
-          type="button"
-          className={`${styles.navTabBtn} ${activeTab === 'options' ? styles.navTabBtnActive : ''}`}
-          onClick={() => setActiveTab('options')}
-        >
-          <span className={styles.tabIcon}>⚡</span>
-          <span>SET50 Options Chain & Volatility</span>
-          <span className={styles.tabBadge}>PCR 1.14</span>
-        </button>
-        <button
-          type="button"
-          className={`${styles.navTabBtn} ${activeTab === 'margin' ? styles.navTabBtnActive : ''}`}
-          onClick={() => setActiveTab('margin')}
-        >
-          <span className={styles.tabIcon}>🛡️</span>
-          <span>Portfolio Risk & What-If Simulator</span>
-          <span className={styles.tabBadge}>What-If Live</span>
-        </button>
-        <button
-          type="button"
-          className={`${styles.navTabBtn} ${activeTab === 'futures' ? styles.navTabBtnActive : ''}`}
-          onClick={() => setActiveTab('futures')}
-        >
-          <span className={styles.tabIcon}>📊</span>
-          <span>Futures Matrix & Basis Desk</span>
-          <span className={styles.tabBadge}>Basis +1.40</span>
-        </button>
-        <button
-          type="button"
-          className={`${styles.navTabBtn} ${activeTab === 'sizing' ? styles.navTabBtnActive : ''}`}
-          onClick={() => setActiveTab('sizing')}
-        >
-          <span className={styles.tabIcon}>🎯</span>
-          <span>TFEX 2R Position Sizing Desk</span>
-          <span className={styles.tabBadge}>{calculatedContracts} สัญญา</span>
-        </button>
+      {/* ─── Cyber Command Bar (Navigation Tabs) ─── */}
+      <nav className={styles.commandBar} aria-label="เมนูระบบเทอร์มินัล TFEX">
+        <div className={styles.commandTabsGroup}>
+          <button
+            type="button"
+            className={`${styles.commandTab} ${activeTab === 'options' ? styles.commandTabActive : ''}`}
+            onClick={() => setActiveTab('options')}
+          >
+            <div className={styles.commandTabHeader}>
+              <span className={styles.commandTabIcon}>◈</span>
+              <span className={styles.commandTabTitle}>Options Chain & Greeks</span>
+              <span className={styles.commandTabBadge}>PCR 1.14</span>
+            </div>
+            <span className={styles.commandTabSub}>Max Pain 900 · 4 Playbooks</span>
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.commandTab} ${activeTab === 'margin' ? styles.commandTabActive : ''}`}
+            onClick={() => setActiveTab('margin')}
+          >
+            <div className={styles.commandTabHeader}>
+              <span className={styles.commandTabIcon} style={{ color: '#22d3ee' }}>⚡</span>
+              <span className={styles.commandTabTitle}>What-If Simulator & Risk</span>
+              <span className={styles.commandTabBadge}>
+                <span className={styles.livePulseDot} />
+                LIVE LAB
+              </span>
+            </div>
+            <span className={styles.commandTabSub}>Cross-Asset Stress & De-Risk</span>
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.commandTab} ${activeTab === 'futures' ? styles.commandTabActive : ''}`}
+            onClick={() => setActiveTab('futures')}
+          >
+            <div className={styles.commandTabHeader}>
+              <span className={styles.commandTabIcon} style={{ color: '#38bdf8' }}>▲</span>
+              <span className={styles.commandTabTitle}>Futures Matrix & Basis</span>
+              <span className={styles.commandTabBadge}>Basis +1.40</span>
+            </div>
+            <span className={styles.commandTabSub}>S50 Contango · 2R Bias Desk</span>
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.commandTab} ${activeTab === 'sizing' ? styles.commandTabActive : ''}`}
+            onClick={() => setActiveTab('sizing')}
+          >
+            <div className={styles.commandTabHeader}>
+              <span className={styles.commandTabIcon} style={{ color: '#10b981' }}>⌖</span>
+              <span className={styles.commandTabTitle}>2R Position Sizing Desk</span>
+              <span className={styles.commandTabBadge}>{calculatedContracts} สัญญา</span>
+            </div>
+            <span className={styles.commandTabSub}>Risk Budget · Money Guard</span>
+          </button>
+        </div>
+
+        {/* Right side quick action indicator in Command Bar */}
+        <div className={styles.commandBarGatewayPill}>
+          {settradeConnected ? (
+            <div className={styles.gatewayConnectedPill} onClick={() => setShowSettradeModal(true)}>
+              <span className={styles.livePulseDotGreen} />
+              <div className={styles.gatewayPillText}>
+                <b>{settradeAccount?.brokerName?.split(' ')[0] || 'TRINITY'}</b>
+                <span>{settradeAccount?.accountNo || 'ACTIVE'}</span>
+              </div>
+              <span className={styles.gatewayEquityChip}>{settradeAccount?.equity?.toLocaleString()} ฿</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={styles.gatewayConnectBtn}
+              onClick={() => setShowSettradeModal(true)}
+            >
+              <span>🔑</span>
+              <span>ต่อโบรค (BYOK)</span>
+              <span className={styles.gatewayBadge022}>022 / 032</span>
+            </button>
+          )}
+        </div>
       </nav>
+
 
       {/* ─── TAB 1: SET50 OPTIONS CHAIN & VOLATILITY DESK ─── */}
       {activeTab === 'options' && (
@@ -608,22 +669,28 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
       {/* ─── TAB 2: PORTFOLIO RISK & WHAT-IF SIMULATOR ─── */}
       {activeTab === 'margin' && (
         <div className={styles.marginDesk}>
-          {/* Submode Switcher */}
-          <div className={styles.subModeSwitch} role="tablist" aria-label="โหมดการวิเคราะห์ความเสี่ยง">
-            <button
-              type="button"
-              className={`${styles.subModeBtn} ${riskSubMode === 'whatif' ? styles.subModeBtnActive : ''}`}
-              onClick={() => setRiskSubMode('whatif')}
-            >
-              ⚡ TFEX What-If Simulator (จำลองพอร์ตผสม Multi-Asset)
-            </button>
-            <button
-              type="button"
-              className={`${styles.subModeBtn} ${riskSubMode === 'single' ? styles.subModeBtnActive : ''}`}
-              onClick={() => setRiskSubMode('single')}
-            >
-              🛡️ Single Contract Shield (วิเคราะห์เจาะจงรายสัญญา)
-            </button>
+          {/* Segmented Submode Control */}
+          <div className={styles.segmentedSubmodeContainer}>
+            <div className={styles.segmentedSubmodeTrack} role="tablist" aria-label="โหมดการวิเคราะห์ความเสี่ยง">
+              <button
+                type="button"
+                className={`${styles.segmentedSubmodeItem} ${riskSubMode === 'whatif' ? styles.segmentedSubmodeItemActive : ''}`}
+                onClick={() => setRiskSubMode('whatif')}
+              >
+                <span className={styles.segmentedIcon}>⚡</span>
+                <span className={styles.segmentedLabel}>TFEX What-If Simulator</span>
+                <span className={styles.segmentedChip}>Multi-Asset Lab</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.segmentedSubmodeItem} ${riskSubMode === 'single' ? styles.segmentedSubmodeItemActive : ''}`}
+                onClick={() => setRiskSubMode('single')}
+              >
+                <span className={styles.segmentedIcon}>🛡️</span>
+                <span className={styles.segmentedLabel}>Single Contract Margin Shield</span>
+                <span className={styles.segmentedChip}>Individual Risk</span>
+              </button>
+            </div>
           </div>
 
           {/* ── SUBMODE 1: WHAT-IF SIMULATOR ── */}
@@ -637,101 +704,118 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 </div>
               )}
 
-              {/* Settrade Open API BYOK Status & Sync Bar */}
-              <div className={styles.byokBar}>
-                <div className={styles.byokInfo}>
-                  <div className={styles.byokHeaderLine}>
-                    <span className={styles.byokTag}>SETTRADE OPEN API</span>
-                    {settradeConnected ? (
-                      <span className={styles.byokStatusConnected}>
-                        ● ซิงค์พอร์ตจริงสำเร็จ ({settradeAccount?.brokerName || 'Settrade'})
+              {/* Settrade Open API BYOK Status & Sync Bar (HUD Style) */}
+              <div className={styles.byokHudBar}>
+                <div className={styles.byokHudGlow} />
+                <div className={styles.byokHudContent}>
+                  <div className={styles.byokHudLeft}>
+                    <div className={styles.byokHudBadgeRow}>
+                      <span className={styles.byokHudTag}>
+                        <span className={styles.livePulseDot} />
+                        SETTRADE OPEN API GATEWAY
                       </span>
-                    ) : (
-                      <span className={styles.byokStatusDisconnected}>
-                        ○ ยังไม่ได้เชื่อมต่อพอร์ต (ใช้โหมดจำลองทั่วไป)
+                      <span className={styles.byokEnclaveBadge}>
+                        🔒 ZERO-CUSTODY CLIENT ENCLAVE
                       </span>
+                      {settradeConnected && (
+                        <span className={styles.byokPingBadge}>⚡ 38ms</span>
+                      )}
+                    </div>
+                    <h4 className={styles.byokHudTitle}>
+                      {settradeConnected
+                        ? `${settradeAccount?.brokerName} · บัญชี ${settradeAccount?.accountNo}`
+                        : 'Bring Your Own Key (BYOK) · เชื่อมโยงพอร์ตทรีนีตี้ (022) หรือโบรคเกอร์ของคุณ'}
+                    </h4>
+                    <p className={styles.byokHudDesc}>
+                      {settradeConnected
+                        ? `ซิงค์สถานะสัญญาจริงและระดับ Margin จากตลาด TFEX เข้า What-If Simulator เรียบร้อยแล้ว`
+                        : 'ดึงสัญญา S50 / GO และเงินประกันจริงมาคำนวณความเสี่ยง ปลอดภัยระดับสูงสุด ไม่มีการบันทึก Key ลงฐานข้อมูลส่วนกลาง'}
+                    </p>
+
+                    {settradeConnected && settradeAccount && (
+                      <div className={styles.byokHudStats}>
+                        <div className={styles.byokHudStatCard}>
+                          <span className={styles.byokHudStatLabel}>Equity จริง</span>
+                          <span className={styles.byokHudStatVal} style={{ color: '#22d3ee' }}>
+                            {settradeAccount.equity?.toLocaleString()} ฿
+                          </span>
+                        </div>
+                        <div className={styles.byokHudStatCard}>
+                          <span className={styles.byokHudStatLabel}>Excess Equity (EE)</span>
+                          <span className={styles.byokHudStatVal} style={{ color: '#34d399' }}>
+                            {settradeAccount.excessEquity?.toLocaleString()} ฿
+                          </span>
+                        </div>
+                        <div className={styles.byokHudStatCard}>
+                          <span className={styles.byokHudStatLabel}>Margin ที่ใช้ (IM)</span>
+                          <span className={styles.byokHudStatVal} style={{ color: '#fbbf24' }}>
+                            {settradeAccount.totalIm?.toLocaleString()} ฿ ({settradeAccount.marginUsagePct}%)
+                          </span>
+                        </div>
+                        <div className={styles.byokHudStatCard}>
+                          <span className={styles.byokHudStatLabel}>สัญญาในพอร์ต</span>
+                          <span className={styles.byokHudStatVal} style={{ color: '#a78bfa' }}>
+                            S50 ({whatIfS50Contracts} สัญญา) · GO ({whatIfGoContracts} สัญญา)
+                          </span>
+                        </div>
+                      </div>
                     )}
                   </div>
-                  <h4 className={styles.byokTitle}>
-                    {settradeConnected
-                      ? `บัญชี: ${settradeAccount?.accountNo} · เงินทุนจริง ${settradeAccount?.equity?.toLocaleString()} บาท`
-                      : 'Bring Your Own Key (BYOK) · ซิงค์พอร์ต TFEX ของคุณเข้าสู่ Simulator'}
-                  </h4>
-                  <p className={styles.byokDesc}>
-                    {settradeConnected
-                      ? `ดึงสถานะสัญญา S50 (${whatIfS50Contracts} สัญญา) และ GO (${whatIfGoContracts} สัญญา) เข้าสู่ตัวจำลองเรียบร้อยแล้ว`
-                      : 'นำ App ID & Secret จากโบรกเกอร์ของคุณมาใส่เพื่อดึงพอร์ตจริงคำนวณความเสี่ยง ปลอดภัยแบบ Zero-Custody (ไม่เก็บ Key บนเซิร์ฟเวอร์)'}
-                  </p>
 
-                  {settradeConnected && settradeAccount && (
-                    <div className={styles.byokLiveStats}>
-                      <div className={styles.byokStatItem}>
-                        <span className={styles.byokStatLabel}>เงินทุนจริง (Equity)</span>
-                        <span className={styles.byokStatVal}>{settradeAccount.equity?.toLocaleString()} ฿</span>
-                      </div>
-                      <div className={styles.byokStatItem}>
-                        <span className={styles.byokStatLabel}>เงินประกันคงเหลือ (EE)</span>
-                        <span className={styles.byokStatVal} style={{ color: '#34d399' }}>{settradeAccount.excessEquity?.toLocaleString()} ฿</span>
-                      </div>
-                      <div className={styles.byokStatItem}>
-                        <span className={styles.byokStatLabel}>เงินประกันที่ใช้ (IM)</span>
-                        <span className={styles.byokStatVal}>{settradeAccount.totalIm?.toLocaleString()} ฿ ({settradeAccount.marginUsagePct}%)</span>
-                      </div>
-                      <div className={styles.byokStatItem}>
-                        <span className={styles.byokStatLabel}>สถานะสัญญา</span>
-                        <span className={styles.byokStatVal} style={{ color: '#38bdf8' }}>
-                          S50 ({whatIfS50Contracts} สัญญา {whatIfS50Side}) · GO ({whatIfGoContracts} สัญญา {whatIfGoSide})
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className={styles.byokActions}>
-                  {settradeConnected ? (
-                    <>
-                      <button
-                        type="button"
-                        className={styles.byokBtnPrimary}
-                        onClick={() => syncSettradePortfolio(settradeAccount?.mode === 'DEMO')}
-                        disabled={settradeLoading}
-                      >
-                        {settradeLoading ? 'กำลังซิงค์...' : '🔄 รีเฟรชพอร์ต'}
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.byokBtnSecondary}
-                        onClick={() => setShowSettradeModal(true)}
-                      >
-                        ⚙️ จัดการ API Key
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.byokBtnDanger}
-                        onClick={disconnectSettrade}
-                      >
-                        ตัดการเชื่อมต่อ
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        className={styles.byokBtnPrimary}
-                        onClick={() => setShowSettradeModal(true)}
-                      >
-                        ⚡ เชื่อมต่อ Settrade Open API
-                      </button>
-                      <button
-                        type="button"
-                        className={styles.byokBtnSecondary}
-                        onClick={() => syncSettradePortfolio(true)}
-                        disabled={settradeLoading}
-                      >
-                        {settradeLoading ? 'กำลังโหลด...' : '🧪 ทดลองด้วย Demo Sandbox'}
-                      </button>
-                    </>
-                  )}
+                  <div className={styles.byokHudActions}>
+                    {settradeConnected ? (
+                      <>
+                        <button
+                          type="button"
+                          className={styles.byokHudBtnPrimary}
+                          onClick={() => syncSettradePortfolio(settradeAccount?.mode === 'DEMO')}
+                          disabled={settradeLoading}
+                        >
+                          {settradeLoading ? 'กำลังซิงค์...' : '🔄 รีเฟรชพอร์ต'}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.byokHudBtnSecondary}
+                          onClick={() => setShowSettradeModal(true)}
+                        >
+                          ⚙️ สลับโบรค / แก้ Key
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.byokHudBtnDanger}
+                          onClick={disconnectSettrade}
+                        >
+                          ตัดการเชื่อมต่อ
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className={styles.byokHudBtnPrimary}
+                          onClick={() => setShowSettradeModal(true)}
+                        >
+                          ⚡ เชื่อมต่อ Settrade Open API
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.byokHudBtnSecondary}
+                          onClick={() => syncSettradePortfolio(true, '022')}
+                          disabled={settradeLoading}
+                        >
+                          {settradeLoading ? 'กำลังโหลด...' : '🌟 ทดลองด้วย Trinity 022'}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.byokHudBtnSecondary}
+                          onClick={() => syncSettradePortfolio(true, '032')}
+                          disabled={settradeLoading}
+                        >
+                          {settradeLoading ? 'กำลังโหลด...' : '⚡ ทดลองด้วย InnovestX 032'}
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1594,22 +1678,68 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
               </div>
             )}
 
+            {/* Quick Demo Preset Chips */}
             <div className={styles.formGroup}>
-              <label className={styles.formLabel}>เลือกโบรกเกอร์ที่เปิดใช้งาน Settrade Open API</label>
-              <select
-                className={styles.formSelect}
-                value={settradeBrokerId}
-                onChange={(e) => setSettradeBrokerId(e.target.value)}
-              >
-                <option value="032">032 - บริษัทหลักทรัพย์ อินโนเวสท์ เอกซ์ (InnovestX)</option>
-                <option value="011">011 - บริษัทหลักทรัพย์ เมย์แบงก์ (Maybank Thailand)</option>
-                <option value="025">025 - บริษัทหลักทรัพย์ ซีจีเอส อินเตอร์เนชั่นแนล (CGS International)</option>
-                <option value="001">001 - บริษัทหลักทรัพย์ บัวหลวง (Bualuang Securities)</option>
-                <option value="006">006 - บริษัทหลักทรัพย์ เกียรตินาคินภัทร (Kiatnakin Phatra)</option>
-                <option value="028">028 - บริษัทหลักทรัพย์ โกลเบล็ก (Globlex)</option>
-                <option value="098">098 - Settrade Open API Sandbox / Testnet</option>
-              </select>
+              <div className={styles.formLabelRow}>
+                <label className={styles.formLabel}>ทดลองเชื่อมต่อด่วน (One-Click Demo Sandbox)</label>
+                <span className={styles.formLabelHint}>ไม่ต้องกรอก Key เอง</span>
+              </div>
+              <div className={styles.quickDemoPresetRow}>
+                <button
+                  type="button"
+                  className={styles.quickDemoBtn}
+                  onClick={() => syncSettradePortfolio(true, '022')}
+                  disabled={settradeLoading}
+                >
+                  🌟 ทดลองด่วนด้วย Trinity 022 (บล.ทรีนีตี้)
+                </button>
+                <button
+                  type="button"
+                  className={styles.quickDemoBtn}
+                  onClick={() => syncSettradePortfolio(true, '032')}
+                  disabled={settradeLoading}
+                >
+                  ⚡ ทดลองด่วนด้วย InnovestX 032
+                </button>
+                <button
+                  type="button"
+                  className={styles.quickDemoBtn}
+                  onClick={() => syncSettradePortfolio(true, '011')}
+                  disabled={settradeLoading}
+                >
+                  🏦 ทดลองด่วนด้วย Maybank 011
+                </button>
+              </div>
             </div>
+
+            {/* Interactive Broker Selection Grid */}
+            <div className={styles.formGroup}>
+              <div className={styles.formLabelRow}>
+                <label className={styles.formLabel}>เลือกโบรกเกอร์ (Broker Provider)</label>
+                <span className={styles.formLabelHint}>คลิกเลือกเพื่อผูกบัญชี</span>
+              </div>
+              <div className={styles.brokerGrid}>
+                {BROKER_OPTIONS.map((b) => {
+                  const isSelected = settradeBrokerId === b.id;
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      className={`${styles.brokerCard} ${isSelected ? styles.brokerCardActive : ''}`}
+                      onClick={() => setSettradeBrokerId(b.id)}
+                    >
+                      <div className={styles.brokerCardTop}>
+                        <span className={styles.brokerCode}>[{b.id}]</span>
+                        <span className={styles.brokerTag}>{b.tag}</span>
+                      </div>
+                      <div className={styles.brokerName}>{b.name}</div>
+                      <div className={styles.brokerThaiName}>{b.thaiName}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
 
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>App ID</label>
