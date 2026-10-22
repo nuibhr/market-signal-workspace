@@ -361,8 +361,15 @@ export default function UsStage2Desk({
   onSelect,
   favorites = [],
   onToggleFavorite,
+  activeTab: externalTab,
+  onTabChange,
 }) {
-  const [activeTab, setActiveTab] = useState('focus'); // focus, rotation, fx, sizing, screener
+  const [internalTab, setInternalTab] = useState('focus'); // focus, rotation, fx, sizing, screener
+  const activeTab = externalTab ?? internalTab;
+  const setActiveTab = (tab) => {
+    if (onTabChange) onTabChange(tab);
+    setInternalTab(tab);
+  };
   const [focusFilter, setFocusFilter] = useState('top3'); // top3, mag7, rs, volume, favorites
   const [searchQuery, setSearchQuery] = useState('');
   const [sectorFilter, setSectorFilter] = useState('all');
@@ -549,7 +556,7 @@ export default function UsStage2Desk({
   };
 
   return (
-    <section className={styles.desk} aria-label="US 500 Equities and Thematic ETFs Stage 2 Command Desk">
+    <section id="us-stage2-command-desk" className={styles.desk} aria-label="US 500 Equities and Thematic ETFs Stage 2 Command Desk">
       {/* ─── 1. Header Bar with Market Session Badge ─── */}
       <div className={styles.header}>
         <div className={styles.brand}>

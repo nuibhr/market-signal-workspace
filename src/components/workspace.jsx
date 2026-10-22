@@ -33,6 +33,7 @@ import thaiWorkspaceStyles from './thai/thai-workspace.module.css';
 import TfexTerminal from './tfex/tfex-terminal.jsx';
 import EquityPortfolioDesk from './equity/equity-portfolio-desk.jsx';
 import UsStage2Desk from './us/us-stage2-desk.jsx';
+import UsWorkspaceNav from './us/us-workspace-nav.jsx';
 
 const DEFAULT_SYMBOLS = { thai: 'PTT', dr: 'AAPL80', tfex: TFEX_SYMBOLS[0] ?? 'S50', us: 'NVDA', forex: 'EUR/USD' };
 const MARKETS = MARKET_GROUPS.map(group => ({
@@ -117,6 +118,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [popup, setPopup] = useState(null);
   const [resultsRequest,setResultsRequest]=useState(0);
   const [thaiView,setThaiView]=useState(initialSymbol?'chart':'stage2');
+  const [usTab, setUsTab] = useState('focus');
   const modalRef = useRef(null);
   const popupTriggerRef = useRef(null);
   const [symbolQuery, setSymbolQuery] = useState('');
@@ -497,7 +499,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
         <div className="page-content">
           <MarketNavigation current={marketId}/>
           {marketId==='thai'&&<ThaiWorkspaceNav view={thaiView} symbol={asset.symbol} onNavigate={chooseThaiView} onOpenScanner={()=>navigateTo('scanner')}/>}
-          {marketId!=='thai'&&<ProToolsNav current={marketId} />}
+          {marketId==='us'&&<UsWorkspaceNav activeTab={usTab} symbol={asset.symbol} onTabChange={setUsTab} onScrollToChart={scrollToChart}/>}
+          {marketId!=='thai'&&marketId!=='us'&&<ProToolsNav current={marketId} />}
           {marketId!=='thai'&&marketId!=='tfex'&&marketId!=='us'&&<section id="section-overview" className="workspace-intro nugaom-welcome">
             <div className="welcome-main">
               <span className="eyebrow">{page.eyebrow}</span>
@@ -540,6 +543,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
                 onSelect={selectAsset}
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}
+                activeTab={usTab}
+                onTabChange={setUsTab}
               />
             </div>
           )}

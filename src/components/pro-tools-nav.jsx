@@ -74,6 +74,15 @@ export const PRO_TOOLS_CONFIG = [
     badge: 'Radar & Audio',
     color: '#f59e0b', // Amber
   },
+  {
+    id: 'us',
+    href: '/us',
+    label: 'US Stage 2 Desk',
+    sublabel: 'S&P 500 & Thematic ETFs',
+    icon: TrendingUp,
+    badge: 'US 500',
+    color: '#38bdf8', // Cyan
+  },
 ];
 
 export default function ProToolsNav({ current = 'risk' }) {

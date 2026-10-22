@@ -10,7 +10,8 @@ const markets = [
   { id: 'thai', number: '01', name: 'หุ้นไทย', en: 'THAI EQUITIES', detail: 'จากหุ้นที่สนใจ สู่จังหวะที่มีแผน', tags: 'สแกนตลาด · สัญญาณ · หุ้นโปรด · ปันผล', tone: '#c8e3a0', glyph: 'TH' },
   { id: 'dr', number: '02', name: 'DR', en: 'GLOBAL, CLOSE TO HOME', detail: 'ติดตามสินทรัพย์โลก ในกระดานของคุณ', tags: 'Strategy Tracker · Camarilla · Indicative Bridge', tone: '#edd5a3', glyph: 'DR' },
   { id: 'tfex', number: '03', name: 'TFEX', en: 'FUTURES WORKSPACE', detail: 'มองกราฟ แยกสัญญา จับภาพตลาด', tags: 'กราฟ · ซีรีส์สัญญา · เครื่องมือวิเคราะห์', tone: '#e9bfb1', glyph: 'FX' },
-  { id: 'forex', number: '04', name: 'Forex / CFD', en: 'VANTAGE MT5 COMMAND CENTER', detail: 'ค้นหาตลาด และเชื่อมข้อมูลจาก Vantage MT5', tags: 'Scanner · กราฟ · เครื่องมือจัดการความเสี่ยง', tone: '#cbc1df', glyph: '↔' },
+  { id: 'us', number: '04', name: 'หุ้นสหรัฐฯ & Global ETFs', en: 'US 500 & THEMATIC ETFS', detail: 'สแกนหุ้นผู้นำ Stage 2 และเมกะเทรนด์โลก', tags: 'Stage 2 Leaders · ETF Rotation · USD/THB Hedge', tone: '#38bdf8', glyph: 'US' },
+  { id: 'forex', number: '05', name: 'Forex / CFD', en: 'VANTAGE MT5 COMMAND CENTER', detail: 'ค้นหาตลาด และเชื่อมข้อมูลจาก Vantage MT5', tags: 'Scanner · กราฟ · เครื่องมือจัดการความเสี่ยง', tone: '#cbc1df', glyph: '↔' },
 ];
 
 export default function HomeLanding() {
@@ -19,24 +20,26 @@ export default function HomeLanding() {
     <header className="ng-header">
       <Link href="/" className="ng-brand" aria-label="Nugaom AI Pick หน้าแรก"><Image src="/nugaom-mascot.png" width={40} height={40} alt="" priority /><span>NUGAOM<small>AI PICK / MARKET INTELLIGENCE</small></span></Link>
       <nav aria-label="เมนูหลัก">
-        <Link href="/dr" style={{ color: '#f59e0b', fontWeight: '800', background: 'rgba(245, 158, 11, 0.12)', padding: '5px 12px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>🎯 DR Strategy & ปันผลไทย</Link>
+        <Link href="/us" style={{ color: '#38bdf8', fontWeight: '800', background: 'rgba(56, 189, 248, 0.12)', padding: '5px 12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.35)' }}>🇺🇸 หุ้นสหรัฐฯ &amp; ETFs</Link>
+        <Link href="/dr" style={{ color: '#f59e0b', fontWeight: '800', background: 'rgba(245, 158, 11, 0.12)', padding: '5px 12px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>🎯 DR Strategy</Link>
+        <Link href="/tfex" style={{ color: '#ff9970', fontWeight: '800' }}>⚡ TFEX</Link>
+        <Link href="/thai" style={{ color: '#72dfb3', fontWeight: '800' }}>🇹🇭 หุ้นไทย</Link>
         <a href="#discover">เลือกตลาด</a>
         <a href="#products-suite">ผลิตภัณฑ์ทั้งหมด</a>
         <a href="#pro-analysis-suite" style={{ color: '#0284c7', fontWeight: '700' }}>เครื่องมือสถาบัน ⚡</a>
-        <a href="#how-it-works">วิธีใช้งาน</a>
         <Link href="/thai#section-results">ผลงานสัญญาณ</Link>
         <Link href="/community">ชุมชนและทีม</Link>
       </nav>
       <Link href="/account" className="ng-login">เข้าใช้ด้วย LINE / ทดลอง <ArrowUpRight size={16} aria-hidden="true" /></Link>
     </header>
     <div style={{ maxWidth: '1200px', margin: '14px auto 0', padding: '0 20px' }}>
-      <div style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(16, 185, 129, 0.18) 100%)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '16px', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+      <div style={{ background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.18) 0%, rgba(168, 85, 247, 0.18) 100%)', border: '1px solid rgba(56, 189, 248, 0.35)', borderRadius: '16px', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ background: '#f59e0b', color: '#0f172a', fontWeight: '900', fontSize: '11px', padding: '3px 8px', borderRadius: '6px' }}>NEW 2026</span>
-          <span style={{ fontSize: '14px', fontWeight: '700', color: '#ffffff' }}>เปิดใช้งาน DR80 Strategy Tracker & เรดาร์หุ้นปันผลไทย (SETHD) แล้ว!</span>
+          <span style={{ background: '#38bdf8', color: '#0f172a', fontWeight: '900', fontSize: '11px', padding: '3px 8px', borderRadius: '6px' }}>NEW LAUNCH</span>
+          <span style={{ fontSize: '14px', fontWeight: '700', color: '#ffffff' }}>เปิดตัวศูนย์บัญชาการหุ้นสหรัฐฯ S&amp;P 500 &amp; Thematic ETFs (Stage 2 Leaderboard) แล้ว!</span>
         </div>
-        <Link href="/dr" style={{ background: '#f59e0b', color: '#0f172a', fontWeight: '800', fontSize: '13px', padding: '8px 18px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-          เปิดโต๊ะ DR Strategy & ปันผลไทยทันที <span>→</span>
+        <Link href="/us" style={{ background: '#38bdf8', color: '#0f172a', fontWeight: '800', fontSize: '13px', padding: '8px 18px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+          เปิดโต๊ะ US 500 &amp; Thematic ETFs ทันที <span>→</span>
         </Link>
       </div>
     </div>
@@ -81,7 +84,7 @@ export default function HomeLanding() {
       <details><summary>ผลงานสัญญาณกับพอร์ตโค้ชต่างกันอย่างไร?</summary><p>ผลงานสัญญาณนับจากรายการและราคาเข้า–ออกที่ระบบบันทึก ส่วนผลจำลองและพอร์ตโค้ชแบบ Paper Trade แสดงป้ายแยกไว้ ผลย้อนหลังไม่ได้รับประกันผลในอนาคต</p></details>
       <details><summary>เข้าสู่ระบบและเริ่มทดลองอย่างไร?</summary><p>กดเข้าใช้ด้วย LINE แล้วทำขั้นตอนในหน้าบัญชีให้ครบ ตรวจสถานะทดลองใช้ 14 วันและสิทธิสมาชิกได้จากหน้านั้น</p></details>
     </div></section>
-    <footer className="ng-footer"><div><Link href="/" className="ng-footer-brand">NUGAOM AI PICK<span>YOUR MARKET. YOUR MOMENT.</span></Link><div><a href="#discover">เลือกตลาด</a><Link href="/forex">Forex / CFD</Link><Link href="/community">ชุมชนและทีม</Link><Link href="/coaches">พอร์ตโค้ช · Paper</Link><Link href="/account">บัญชีของฉัน</Link></div></div><p>เครื่องมือช่วยวิเคราะห์ ไม่ใช่คำแนะนำในการลงทุน การลงทุนมีความเสี่ยง ผู้ใช้งานควรศึกษาข้อมูลและตัดสินใจด้วยตนเอง</p><small>© {new Date().getFullYear()} Nugaom AI Pick <span>3D: Nugaom / Three.js · <a href="/landing-pages/licenses/THREE-LICENSE">MIT License</a></span></small></footer>
+    <footer className="ng-footer"><div><Link href="/" className="ng-footer-brand">NUGAOM AI PICK<span>YOUR MARKET. YOUR MOMENT.</span></Link><div><a href="#discover">เลือกตลาด</a><Link href="/thai">หุ้นไทย</Link><Link href="/dr">DR</Link><Link href="/tfex">TFEX</Link><Link href="/us">หุ้นสหรัฐฯ &amp; ETFs</Link><Link href="/forex">Forex / CFD</Link><Link href="/community">ชุมชนและทีม</Link><Link href="/coaches">พอร์ตโค้ช · Paper</Link><Link href="/account">บัญชีของฉัน</Link></div></div><p>เครื่องมือช่วยวิเคราะห์ ไม่ใช่คำแนะนำในการลงทุน การลงทุนมีความเสี่ยง ผู้ใช้งานควรศึกษาข้อมูลและตัดสินใจด้วยตนเอง</p><small>© {new Date().getFullYear()} Nugaom AI Pick <span>3D: Nugaom / Three.js · <a href="/landing-pages/licenses/THREE-LICENSE">MIT License</a></span></small></footer>
 
     {/* Mobile Navigation Dock */}
     <MobileDock />

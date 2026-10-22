@@ -10,7 +10,7 @@ const MARKET_METADATA = {
   thai: { feed: 'Settrade Open API', quality: 'Delayed · รอบ 15m / 1D', status: 'พร้อมประเมิน' },
   dr: { feed: 'KTB DR80 · หุ้นโลก', quality: 'EOD Closed Bars', status: 'พร้อมประเมิน' },
   tfex: { feed: 'TFEX Open API', quality: 'Delayed · สัญญา TFEX', status: 'รอจับคู่สัญญา' },
-  us: { feed: 'Vantage CFD / FMP', quality: 'Strict Closed Bars 15m', status: 'พร้อมประเมิน' },
+  us: { feed: 'S&P 500 / Nasdaq EOD', quality: 'Stage 2 & Thematic ETFs', status: 'พร้อมใช้งาน' },
   forex: { feed: 'Vantage MT5 EA', quality: 'Read-only Connector', status: 'พร้อมเชื่อมต่อ' },
 };
 export default function MarketLobby(){
