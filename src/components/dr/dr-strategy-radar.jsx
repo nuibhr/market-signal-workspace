@@ -54,6 +54,7 @@ import ScanRules from './scan-rules.jsx';
 import SignalWorkflow from './signal-workflow.jsx';
 import WholeMarketScans from './whole-market-scans.jsx';
 import DecisionDesk from './decision-desk.jsx';
+import EquityPortfolioDesk from '../equity/equity-portfolio-desk.jsx';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getRsiLabel(rsi) {
@@ -982,8 +983,25 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             {liveData?.avgDivYield&&liveData.avgDivYield!=='—'?`${liveData.avgDivYield}% Yield`:'รอข้อมูล Yield'}
           </span>
         </button>}
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('portfolio')}
+          className={`${styles.tabBtn} ${activeTab === 'portfolio' ? styles.tabBtnActive : ''}`}
+        >
+          <Zap size={16} />
+          <span>⚡ พอร์ต &amp; API (ALGO_EQ)</span>
+          <span className={styles.tabBadge} style={{ background: 'rgba(34, 211, 238, 0.2)', color: '#22d3ee' }}>
+            022 / 032
+          </span>
+        </button>
       </div>
 
+      {activeTab === 'portfolio' && (
+        <section className={styles.workflowPanel} aria-label="พอร์ตหุ้นไทยและ DR">
+          <EquityPortfolioDesk onSelectSymbol={handleGoToChart} />
+        </section>
+      )}
       {activeTab==='decision'&&<DecisionDesk initialMarket={currentMarket} fixedMarket favorites={favorites} favoritesByMarket={favoritesByMarket} onToggleFavorite={onToggleFavorite} onSelect={handleGoToChart} onResults={openResults} signalAccess={signalAccess}/>}
       <div hidden={activeTab!=='workflow'}><SignalWorkflow market={resultsMarket} onSelect={(symbol,market)=>handleGoToChart({symbol,market:market??resultsMarket})} viewRequest={resultsView} onSnapshot={receiveResults}/></div>
       {activeTab==='all-scans'&&<section className={styles.workflowPanel} aria-label="สแกนรวม">

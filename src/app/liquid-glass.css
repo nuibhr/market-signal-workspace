@@ -2310,3 +2310,80 @@
   color: #0284c7 !important;
 }
 
+/* Equity & DR Portfolio Desk (Light Theme) */
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_byokBar'],
+[data-theme='light'] [class*='equity-portfolio-desk_byokBar'] {
+  background: linear-gradient(145deg, #f0f9ff 0%, #f8fafc 100%) !important;
+  border-color: #bae6fd !important;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08) !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_byokTitle'],
+[data-theme='light'] [class*='equity-portfolio-desk_byokTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_byokDesc'],
+[data-theme='light'] [class*='equity-portfolio-desk_byokDesc'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_hudCard'],
+[data-theme='light'] [class*='equity-portfolio-desk_hudCard'] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_hudCardVal'],
+[data-theme='light'] [class*='equity-portfolio-desk_hudCardVal'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_allocationCard'],
+[data-theme='light'] [class*='equity-portfolio-desk_allocationCard'],
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_drSection'],
+[data-theme='light'] [class*='equity-portfolio-desk_drSection'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_tableWrapper'],
+[data-theme='light'] [class*='equity-portfolio-desk_tableWrapper'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06) !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_portfolioTable'] th,
+[data-theme='light'] [class*='equity-portfolio-desk_portfolioTable'] th {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_portfolioTable'] td,
+[data-theme='light'] [class*='equity-portfolio-desk_portfolioTable'] td {
+  color: #0f172a !important;
+  border-color: #f1f5f9 !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_symbolText'],
+[data-theme='light'] [class*='equity-portfolio-desk_symbolText'],
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_drCardSymbol'],
+[data-theme='light'] [class*='equity-portfolio-desk_drCardSymbol'],
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_allocationTitle'],
+[data-theme='light'] [class*='equity-portfolio-desk_allocationTitle'],
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_drSectionTitle'],
+[data-theme='light'] [class*='equity-portfolio-desk_drSectionTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='equity-portfolio-desk_drCard'],
+[data-theme='light'] [class*='equity-portfolio-desk_drCard'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+
