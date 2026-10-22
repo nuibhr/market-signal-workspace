@@ -1,0 +1,543 @@
+/* ==========================================================================
+   Magic UI × daisyUI Futuristic Dark Theme
+   Dark Navy (#080D1B) with Neon Cyan (#22D3EE) & Electric Purple (#8B5CF6)
+   ========================================================================== */
+
+/* ─── 1. CSS Custom Properties ─── */
+:root {
+  --magic-main-bg: #080D1B;
+  --magic-bg-gradient: linear-gradient(145deg, #080D1B, #0B1530, #080D1B);
+  --magic-sidebar-bg: #0A1324;
+  --magic-navbar-bg: #0B1426;
+  --magic-card-bg: #111C33;
+  --magic-surface: #172641;
+  --magic-cyan: #22D3EE;
+  --magic-purple: #8B5CF6;
+  --magic-pink: #EC4899;
+  --magic-hover: #1C3250;
+  --magic-active: #163A63;
+  --magic-border: #243550;
+  --magic-border-cyan: rgba(34, 211, 238, 0.22);
+  --magic-text-primary: #F1F5F9;
+  --magic-text-secondary: #94A3B8;
+  --magic-cyan-glow: 0 0 16px rgba(34, 211, 238, 0.22);
+  --magic-purple-glow: 0 0 16px rgba(139, 92, 246, 0.22);
+  --magic-radius-menu: 11px;
+  --magic-transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── 2. Global Dark Background & Digital Waves ─── */
+body:not([data-theme='light']),
+[data-theme='dark'] body,
+.market-workspace:not(.theme-light-glass) {
+  background-color: #080D1B !important;
+  background-image: 
+    radial-gradient(circle at 10% 15%, rgba(34, 211, 238, 0.07) 0%, transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(139, 92, 246, 0.08) 0%, transparent 45%),
+    linear-gradient(145deg, #080D1B, #0B1530, #080D1B) !important;
+  color: #F1F5F9 !important;
+}
+
+/* Digital Waves & Ambient Glow in Dark Mode */
+.ambient-liquid-wrap.is-dark {
+  opacity: 1 !important;
+  background: linear-gradient(145deg, #080D1B, #0B1530, #080D1B) !important;
+}
+
+.ambient-liquid-wrap.is-dark .liquid-blob.blob-1 {
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.16) 0%, rgba(34, 211, 238, 0.03) 50%, transparent 70%) !important;
+  mix-blend-mode: screen !important;
+}
+
+.ambient-liquid-wrap.is-dark .liquid-blob.blob-2 {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.18) 0%, rgba(139, 92, 246, 0.04) 55%, transparent 70%) !important;
+  mix-blend-mode: screen !important;
+}
+
+.ambient-liquid-wrap.is-dark .liquid-blob.blob-3 {
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, rgba(236, 72, 153, 0.02) 50%, transparent 70%) !important;
+  mix-blend-mode: screen !important;
+}
+
+.ambient-liquid-wrap.is-dark .liquid-blob.blob-4 {
+  background: radial-gradient(circle, rgba(30, 64, 175, 0.18) 0%, rgba(30, 64, 175, 0.04) 50%, transparent 70%) !important;
+  mix-blend-mode: screen !important;
+}
+
+.magic-digital-waves {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.magic-waves-svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+/* Fine Digital Grid Overlay */
+.ambient-liquid-wrap.is-dark .ambient-glass-frost {
+  background-image: 
+    radial-gradient(rgba(34, 211, 238, 0.08) 1px, transparent 1px),
+    radial-gradient(rgba(139, 92, 246, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px, 80px 80px;
+  background-position: 0 0, 20px 20px;
+  background-color: transparent !important;
+}
+
+/* ─── 3. Sidebar & Navigation Menu (Magic UI Style) ─── */
+.market-workspace:not(.theme-light-glass) .sidebar,
+.market-workspace:not(.theme-light-glass) .hub-sidebar,
+body:not([data-theme='light']) .sidebar {
+  background: #0A1324 !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border-right: 1px solid #243550 !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Brand */
+.market-workspace:not(.theme-light-glass) .brand strong,
+body:not([data-theme='light']) .brand strong {
+  color: #F1F5F9 !important;
+  letter-spacing: 2.2px !important;
+}
+
+.market-workspace:not(.theme-light-glass) .brand small,
+body:not([data-theme='light']) .brand small {
+  color: #22D3EE !important;
+  font-weight: 600 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .brand-mark,
+body:not([data-theme='light']) .brand-mark {
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.35) !important;
+}
+
+/* Sidebar Section Captions */
+.market-workspace:not(.theme-light-glass) .side-label,
+.market-workspace:not(.theme-light-glass) .hub-sidebar-caption,
+body:not([data-theme='light']) .hub-sidebar-caption {
+  color: #94A3B8 !important;
+  font-weight: 600 !important;
+  letter-spacing: 1.4px !important;
+}
+
+/* Account Card in Sidebar */
+.market-workspace:not(.theme-light-glass) .hub-account-card,
+body:not([data-theme='light']) .hub-account-card {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  border-radius: 12px !important;
+  transition: var(--magic-transition) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .hub-account-card:hover,
+body:not([data-theme='light']) .hub-account-card:hover {
+  background: #1C3250 !important;
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.18) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .hub-account-card strong,
+body:not([data-theme='light']) .hub-account-card strong {
+  color: #F1F5F9 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .hub-account-card small,
+body:not([data-theme='light']) .hub-account-card small {
+  color: #94A3B8 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .hub-account-arrow,
+body:not([data-theme='light']) .hub-account-arrow {
+  color: #22D3EE !important;
+}
+
+/* Menu Group Toggles */
+.market-workspace:not(.theme-light-glass) .hub-group-toggle,
+body:not([data-theme='light']) .hub-group-toggle {
+  color: #94A3B8 !important;
+  border-radius: var(--magic-radius-menu) !important;
+  transition: var(--magic-transition) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .hub-group-toggle:hover,
+body:not([data-theme='light']) .hub-group-toggle:hover {
+  background: #1C3250 !important;
+  color: #F1F5F9 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .hub-group-index,
+body:not([data-theme='light']) .hub-group-index {
+  color: #22D3EE !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .hub-nav-glyph,
+body:not([data-theme='light']) .hub-nav-glyph {
+  color: #94A3B8 !important;
+  transition: color 180ms ease !important;
+}
+
+.market-workspace:not(.theme-light-glass) .hub-group-toggle:hover .hub-nav-glyph,
+body:not([data-theme='light']) .hub-group-toggle:hover .hub-nav-glyph {
+  color: #22D3EE !important;
+}
+
+/* Menu Items (Default State) */
+.market-workspace:not(.theme-light-glass) .nav-item,
+.market-workspace:not(.theme-light-glass) .hub-subnav,
+body:not([data-theme='light']) .hub-subnav,
+body:not([data-theme='light']) .nav-item {
+  color: #94A3B8 !important;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--magic-radius-menu) !important;
+  padding: 8px 12px !important;
+  transition: var(--magic-transition) !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.market-workspace:not(.theme-light-glass) .nav-item svg,
+.market-workspace:not(.theme-light-glass) .hub-subnav svg,
+body:not([data-theme='light']) .hub-subnav svg {
+  color: #94A3B8 !important;
+  transition: color 180ms ease, transform 180ms ease !important;
+}
+
+/* Menu Items (Hover State) */
+.market-workspace:not(.theme-light-glass) .nav-item:hover,
+.market-workspace:not(.theme-light-glass) .hub-subnav:hover,
+body:not([data-theme='light']) .hub-subnav:hover,
+body:not([data-theme='light']) .nav-item:hover {
+  background: #1C3250 !important;
+  color: #F1F5F9 !important;
+  border-color: rgba(34, 211, 238, 0.25) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .nav-item:hover svg,
+.market-workspace:not(.theme-light-glass) .hub-subnav:hover svg,
+body:not([data-theme='light']) .hub-subnav:hover svg {
+  color: #22D3EE !important;
+}
+
+/* Menu Items (Active / Selected State - Magic UI Neon Glow) */
+.market-workspace:not(.theme-light-glass) .nav-item.active,
+.market-workspace:not(.theme-light-glass) .hub-subnav.active,
+body:not([data-theme='light']) .hub-subnav.active,
+body:not([data-theme='light']) .nav-item.active {
+  background: linear-gradient(90deg, #163A63 0%, #1e40af 100%) !important;
+  color: #22D3EE !important;
+  border: 1px solid #22D3EE !important;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.22), inset 0 0 1px rgba(34, 211, 238, 0.6) !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .nav-item.active svg,
+.market-workspace:not(.theme-light-glass) .hub-subnav.active svg,
+body:not([data-theme='light']) .hub-subnav.active svg {
+  color: #22D3EE !important;
+  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.6)) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .hub-subnav em,
+body:not([data-theme='light']) .hub-subnav em {
+  background: rgba(34, 211, 238, 0.15) !important;
+  color: #22D3EE !important;
+  border: 1px solid rgba(34, 211, 238, 0.4) !important;
+  border-radius: 99px !important;
+  font-weight: 700 !important;
+}
+
+/* ─── 4. Top Navbar & Dropdown Menu ─── */
+.market-workspace:not(.theme-light-glass) .topbar,
+body:not([data-theme='light']) .topbar {
+  background: rgba(11, 20, 38, 0.88) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(34, 211, 238, 0.2) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .topbar-context small,
+body:not([data-theme='light']) .topbar-context small {
+  color: #94A3B8 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .topbar-context strong,
+body:not([data-theme='light']) .topbar-context strong {
+  color: #F1F5F9 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .topbar-context span,
+body:not([data-theme='light']) .topbar-context span {
+  background: #172641 !important;
+  color: #22D3EE !important;
+  border: 1px solid #243550 !important;
+  border-radius: 6px !important;
+}
+
+.market-workspace:not(.theme-light-glass) .market-clock,
+body:not([data-theme='light']) .market-clock {
+  color: #94A3B8 !important;
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  border-radius: 99px !important;
+}
+
+.market-workspace:not(.theme-light-glass) .status-dot.connected,
+body:not([data-theme='light']) .status-dot.connected {
+  background: #22D3EE !important;
+  box-shadow: 0 0 10px #22D3EE !important;
+}
+
+.market-workspace:not(.theme-light-glass) .monitor-account,
+body:not([data-theme='light']) .monitor-account {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+  border-radius: 99px !important;
+  transition: var(--magic-transition) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .monitor-account:hover,
+body:not([data-theme='light']) .monitor-account:hover {
+  background: #1C3250 !important;
+  color: #22D3EE !important;
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.22) !important;
+}
+
+/* Dropdown & Modals in Dark Mode */
+.market-workspace:not(.theme-light-glass) .account-menu,
+.market-workspace:not(.theme-light-glass) .modal-card,
+body:not([data-theme='light']) .account-menu,
+body:not([data-theme='light']) .modal-card {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  backdrop-filter: blur(16px) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+  border-radius: 14px !important;
+  color: #F1F5F9 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .account-menu button:hover,
+body:not([data-theme='light']) .account-menu button:hover {
+  background: #1C3250 !important;
+  color: #22D3EE !important;
+}
+
+/* ─── 5. Theme Switcher Toggle (Magic UI Dark vs Liquid Glass Light) ─── */
+.theme-glass-toggle.dark-mode {
+  background: #0A1324 !important;
+  color: #22D3EE !important;
+  border: 1px solid #243550 !important;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.15) !important;
+  border-radius: 99px !important;
+  transition: var(--magic-transition) !important;
+}
+
+.theme-glass-toggle.dark-mode:hover {
+  background: #1C3250 !important;
+  color: #F1F5F9 !important;
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.3) !important;
+}
+
+/* ─── 6. Market Navigation Destinations ─── */
+.market-workspace:not(.theme-light-glass) .market-destinations a,
+body:not([data-theme='light']) .market-destinations a {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+  border-radius: var(--magic-radius-menu) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  transition: var(--magic-transition) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .market-destinations a:hover,
+body:not([data-theme='light']) .market-destinations a:hover {
+  background: #1C3250 !important;
+  color: #F1F5F9 !important;
+  border-color: rgba(34, 211, 238, 0.45) !important;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.18) !important;
+  transform: translateY(-1px) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .market-destinations a[aria-current='page'],
+body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
+  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
+  color: #22D3EE !important;
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.28) !important;
+  font-weight: 700 !important;
+}
+
+/* ─── 7. Thai Workspace Nav Toolbar ─── */
+.market-workspace:not(.theme-light-glass) #thai-workspace-navigation,
+.market-workspace:not(.theme-light-glass) [class*='toolbar'] {
+  background: rgba(17, 28, 51, 0.9) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid #243550 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
+}
+
+.market-workspace:not(.theme-light-glass) #thai-workspace-navigation h1,
+.market-workspace:not(.theme-light-glass) [class*='heading'] h1 {
+  color: #F1F5F9 !important;
+}
+
+.market-workspace:not(.theme-light-glass) #thai-workspace-navigation p,
+.market-workspace:not(.theme-light-glass) [class*='heading'] p {
+  color: #94A3B8 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .views a,
+.market-workspace:not(.theme-light-glass) [class*='views'] a {
+  background: #0A1324 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+  border-radius: 9px !important;
+  transition: var(--magic-transition) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .views a:hover,
+.market-workspace:not(.theme-light-glass) [class*='views'] a:hover {
+  background: #1C3250 !important;
+  color: #F1F5F9 !important;
+  border-color: rgba(34, 211, 238, 0.4) !important;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.16) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .views a[aria-current],
+.market-workspace:not(.theme-light-glass) [class*='views'] a[aria-current] {
+  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
+  color: #22D3EE !important;
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25) !important;
+}
+
+/* ─── 8. Pro Tools Suite Navigation ─── */
+.market-workspace:not(.theme-light-glass) .ng-pro-suite-nav,
+body:not([data-theme='light']) .ng-pro-suite-nav {
+  background: rgba(17, 28, 51, 0.88) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid #243550 !important;
+  border-radius: 14px !important;
+}
+
+.market-workspace:not(.theme-light-glass) .ng-pro-pill,
+body:not([data-theme='light']) .ng-pro-pill {
+  background: #0A1324 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+  border-radius: 9px !important;
+  transition: var(--magic-transition) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .ng-pro-pill:hover,
+body:not([data-theme='light']) .ng-pro-pill:hover {
+  background: #1C3250 !important;
+  color: #F1F5F9 !important;
+  border-color: rgba(34, 211, 238, 0.4) !important;
+}
+
+.market-workspace:not(.theme-light-glass) .ng-pro-pill.is-active,
+body:not([data-theme='light']) .ng-pro-pill.is-active {
+  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
+  color: #22D3EE !important;
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25) !important;
+}
+
+/* ─── 9. Cards, Panels, and Elevated Surfaces ─── */
+.market-workspace:not(.theme-light-glass) .panel,
+.market-workspace:not(.theme-light-glass) .chart-panel,
+.market-workspace:not(.theme-light-glass) .nugaom-welcome,
+.market-workspace:not(.theme-light-glass) .asset-hero,
+.market-workspace:not(.theme-light-glass) [class*='dashboard'],
+body:not([data-theme='light']) .panel {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+  color: #F1F5F9 !important;
+}
+
+/* Elevated Surfaces (Stats & Headers) */
+.market-workspace:not(.theme-light-glass) [class*='stats'],
+.market-workspace:not(.theme-light-glass) [class*='stat'],
+.market-workspace:not(.theme-light-glass) thead th {
+  background: #172641 !important;
+  border-color: #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+.market-workspace:not(.theme-light-glass) [class*='stat'] strong {
+  color: #22D3EE !important;
+}
+
+.market-workspace:not(.theme-light-glass) [class*='stat'] small {
+  color: #94A3B8 !important;
+}
+
+/* Inputs, Selects, Buttons in Dark Mode */
+.market-workspace:not(.theme-light-glass) input,
+.market-workspace:not(.theme-light-glass) select,
+.market-workspace:not(.theme-light-glass) [class*='dashboard'] button,
+.market-workspace:not(.theme-light-glass) [class*='dashboard'] select,
+.market-workspace:not(.theme-light-glass) [class*='dashboard'] input {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+  border-radius: 8px !important;
+  transition: var(--magic-transition) !important;
+}
+
+.market-workspace:not(.theme-light-glass) [class*='dashboard'] button:hover,
+.market-workspace:not(.theme-light-glass) [class*='dashboard'] select:hover {
+  background: #1C3250 !important;
+  border-color: #22D3EE !important;
+}
+
+.market-workspace:not(.theme-light-glass) [class*='dashboard'] button[aria-pressed='true'] {
+  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
+  color: #22D3EE !important;
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.25) !important;
+}
+
+/* Text Hierarchy */
+.market-workspace:not(.theme-light-glass) h1,
+.market-workspace:not(.theme-light-glass) h2,
+.market-workspace:not(.theme-light-glass) h3 {
+  color: #F1F5F9 !important;
+}
+
+.market-workspace:not(.theme-light-glass) p,
+.market-workspace:not(.theme-light-glass) small {
+  color: #94A3B8 !important;
+}
+
+/* Financial Accents */
+.market-workspace:not(.theme-light-glass) .positive,
+.market-workspace:not(.theme-light-glass) [data-tone='up'] {
+  color: #10B981 !important;
+}
+
+.market-workspace:not(.theme-light-glass) .negative,
+.market-workspace:not(.theme-light-glass) [data-tone='down'] {
+  color: #F43F5E !important;
+}

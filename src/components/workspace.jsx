@@ -125,13 +125,20 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [accountConfigured, setAccountConfigured] = useState(false);
   const [marketQuote, setMarketQuote] = useState(null);
   const [quoteState, setQuoteState] = useState('idle');
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('nugaom-theme');
       if (saved === 'dark' || saved === 'light') {
         setTheme(saved);
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } else {
+        if (typeof document !== 'undefined') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
       }
     } catch {}
   }, []);
@@ -141,6 +148,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     setTheme(next);
     try {
       localStorage.setItem('nugaom-theme', next);
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', next);
+      }
     } catch {}
   }
 
@@ -471,11 +481,11 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               type="button"
               className={`theme-glass-toggle ${theme === 'light' ? 'light-mode' : 'dark-mode'}`}
               onClick={toggleTheme}
-              title={theme === 'light' ? 'เปลี่ยนเป็น Dark Pro' : 'เปลี่ยนเป็น Liquid Glass'}
-              aria-label={theme === 'light' ? 'สลับเป็นโหมดมืด Dark Pro' : 'สลับเป็นโหมดสว่าง Liquid Glass'}
+              title={theme === 'light' ? 'เปลี่ยนเป็น Magic Dark' : 'เปลี่ยนเป็น Liquid Glass Light'}
+              aria-label={theme === 'light' ? 'สลับเป็นโหมดมืด Magic Dark' : 'สลับเป็นโหมดสว่าง Liquid Glass'}
             >
               <span className="theme-glass-icon">{theme === 'light' ? '☀️' : '🌙'}</span>
-              <span>{theme === 'light' ? 'Liquid Glass' : 'Dark Pro'}</span>
+              <span>{theme === 'light' ? 'Liquid Glass' : 'Magic Dark'}</span>
             </button>
             <a className="monitor-account" href={loginHref}>บัญชีสมาชิก ↗</a>
             <SoundControl/>

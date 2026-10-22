@@ -18,6 +18,7 @@ import './focus-performance.css';
 import './signal-desk.css';
 import './monitor.css';
 import './liquid-glass.css';
+import './magic-ui-theme.css';
 import AssistantProvider from '../components/assistant-provider.jsx';
 import MonitorProvider from '../components/monitor/monitor-provider.jsx';
 
