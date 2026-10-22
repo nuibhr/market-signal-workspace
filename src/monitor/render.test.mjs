@@ -24,6 +24,24 @@ const DecisionPlan=component('../components/dr/decision-desk.jsx').DecisionPlan;
 const {ThaiScreenerTable,filterThaiRows}=component('../components/thai/thai-screener-dashboard.jsx');
 const Radar=component('../components/dr/dr-strategy-radar.jsx').default;
 const {MarketScanner}=component('../components/workspace-features.jsx');
+const {default:ThaiWorkspaceNav,THAI_VIEWS,thaiViewForHash}=component('../components/thai/thai-workspace-nav.jsx');
+test('Thai workspace exposes stable deep links, one selected view and a reachable style scanner',()=>{
+ for(const view of THAI_VIEWS){
+  const html=renderToStaticMarkup(React.createElement(ThaiWorkspaceNav,{view:view.id,symbol:'PTT'}));
+  assert.equal((html.match(/aria-current="location"/g)??[]).length,1);
+  for(const target of THAI_VIEWS)assert.ok(html.includes(`href="${target.hash}"`));
+  assert.equal(thaiViewForHash(view.hash),view.id);
+  assert.ok(html.includes('สแกนตามสไตล์'));assert.ok(html.includes('PTT'));
+ }
+ assert.equal(thaiViewForHash('#section-overview'),'stage2');
+});
+test('compact Thai table keeps chart and plan identities while revealing optional metrics only when requested',()=>{
+ const row={symbol:'PTT',market:'thai',section:'SET100',score:8,stage:2,status:'available',criteria:[],rsi:62,pe:9,rvol:2,plan:{entry:30,stopLoss:28,minimumTarget:35,stopPercent:7},planFrame:'4H'};
+ const compact=renderToStaticMarkup(React.createElement(ThaiScreenerTable,{rows:[row],showMetrics:false}));
+ const detailed=renderToStaticMarkup(React.createElement(ThaiScreenerTable,{rows:[row],showMetrics:true}));
+ for(const html of [compact,detailed]){assert.ok(html.includes('ดูกราฟ PTT'));assert.ok(html.includes('30 / 28 / 35'));}
+ for(const label of ['RSI14','P/E / Div%','RVOL / RS vs SET']){assert.ok(!compact.includes(label));assert.ok(detailed.includes(label));}
+});
 test('restored Radar renders only its market tools and one canonical ledger; the style scanner retains both styles',()=>{
  for(const market of ['thai','dr']){
   const html=renderToStaticMarkup(React.createElement(Radar,{currentMarket:market,signalAccess:false}));

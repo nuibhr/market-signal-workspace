@@ -27,6 +27,8 @@ import SignalResults from './signal-results.jsx';
 import DrStrategyRadar from './dr/dr-strategy-radar.jsx';
 import ProToolsNav from './pro-tools-nav.jsx';
 import ThaiScreenerDashboard from './thai/thai-screener-dashboard.jsx';
+import ThaiWorkspaceNav,{THAI_VIEWS,thaiViewForHash} from './thai/thai-workspace-nav.jsx';
+import thaiWorkspaceStyles from './thai/thai-workspace.module.css';
 
 const DEFAULT_SYMBOLS = { thai: 'PTT', dr: 'AAPL80', tfex: TFEX_SYMBOLS[0] ?? 'S50', us: 'NVDA', forex: 'EUR/USD' };
 const MARKETS = MARKET_GROUPS.map(group => ({
@@ -110,6 +112,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [favoritesOpenRequest,setFavoritesOpenRequest]=useState(0);
   const [popup, setPopup] = useState(null);
   const [resultsRequest,setResultsRequest]=useState(0);
+  const [thaiView,setThaiView]=useState(initialSymbol?'chart':'stage2');
   const modalRef = useRef(null);
   const popupTriggerRef = useRef(null);
   const [symbolQuery, setSymbolQuery] = useState('');
@@ -172,6 +175,22 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     return () => controller.abort();
   }, []);
 
+  function chooseThaiView(view,{history=true,scroll=true}={}){
+    const target=THAI_VIEWS.find(item=>item.id===view)??THAI_VIEWS[0];
+    setThaiView(target.id);setActiveNav(target.id==='chart'?'chart':target.id==='results'?'results':'overview');setPopup(null);
+    if(target.id==='results')setResultsRequest(v=>v+1);
+    if(history&&window.location.hash!==target.hash)window.history.pushState(null,'',target.hash);
+    if(!scroll)return;
+    if(target.id==='chart')scrollToChart();
+    else requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('thai-workspace-navigation')?.scrollIntoView({behavior:'smooth',block:'start'})));
+  }
+  useEffect(()=>{
+    if(marketId!=='thai')return;
+    const sync=()=>chooseThaiView(!window.location.hash&&initialSymbol?'chart':thaiViewForHash(window.location.hash),{history:false,scroll:Boolean(window.location.hash)});
+    sync();window.addEventListener('hashchange',sync);window.addEventListener('popstate',sync);
+    return()=>{window.removeEventListener('hashchange',sync);window.removeEventListener('popstate',sync);};
+  },[marketId,initialSymbol]);
+
   function navigateTo(id) {
     if (id === 'account' || id === 'membership') { window.location.href = '/account'; return; }
     if (id === 'risk' || id === 'financial') { window.location.href = '/risk'; return; }
@@ -180,7 +199,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     setActiveNav(id);
     if(marketId==='thai'&&['search','favorites','watchlist','overview','chart'].includes(id)){
       setPopup(null);if(['favorites','watchlist'].includes(id))setFavoritesOpenRequest(v=>v+1);
-      if(id==='chart')scrollToChart();else document.getElementById('section-auto-pick')?.scrollIntoView({behavior:'smooth',block:'start'});
+      chooseThaiView(id==='chart'?'chart':'stage2');
       return;
     }
     if (id === 'scanner' || id === 'analysis-tools' || id === 'daily' || id === 'autopick' || id === 'signals') {
@@ -188,6 +207,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
       return;
     }
     if (id === 'results') {
+      if(marketId==='thai'){chooseThaiView('results');return;}
       if(['dr','thai'].includes(marketId)){
         setPopup(null);setResultsRequest(v=>v+1);
         requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('section-results')?.scrollIntoView({behavior:'smooth',block:'start'})));
@@ -222,7 +242,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
       if (el) {
         const stickyNav=document.querySelector('.ng-pro-suite-nav');
         const navBottom=stickyNav?(parseFloat(window.getComputedStyle(stickyNav).top)||0)+stickyNav.getBoundingClientRect().height:0;
-        const offset=Math.max(document.querySelector('.topbar')?.getBoundingClientRect().height||0,navBottom)+16;
+        const offset=Math.max(document.querySelector('.topbar')?.getBoundingClientRect().height||0,navBottom,marketId==='thai'?(document.getElementById('thai-workspace-navigation')?.getBoundingClientRect().height||0):0)+16;
         const y = el.getBoundingClientRect().top + window.pageYOffset - offset;
         window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
@@ -238,13 +258,13 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     setSelectedAsset(item);
     setTimeframe(item.id === 'us' ? '1d' : frame);
     setPopup(null);
-    scrollToChart();
+    if(marketId==='thai')chooseThaiView('chart');else scrollToChart();
   }
 
   function selectFrame(frame) {
     setTimeframe(['us','forex'].includes(asset.id)&&frame==='4h'?'1d':frame);
     setPopup(null);
-    scrollToChart();
+    if(marketId==='thai')chooseThaiView('chart');else scrollToChart();
   }
 
   function selectLedgerSymbol(symbol,market) {
@@ -424,12 +444,13 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
       <main className="main-area">
         <header className="topbar">
           <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
-          <div className="topbar-search-area">{marketId==='thai'?<a className="monitor-account" href="#section-auto-pick">ค้นหา / กรองในตาราง ↓</a>:<SymbolSearch marketId={marketId} onSelect={selectAsset} />}</div>
+          <div className="topbar-search-area">{marketId==='thai'?<a className="monitor-account" href="#section-auto-pick" onClick={event=>{event.preventDefault();chooseThaiView('stage2');}}>ค้นหา / กรองในตาราง ↓</a>:<SymbolSearch marketId={marketId} onSelect={selectAsset} />}</div>
           <div className="topbar-actions"><a className="monitor-account" href={loginHref}>บัญชีสมาชิก ↗</a><SoundControl/><div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div></div>
         </header>
 
         <div className="page-content">
           <MarketNavigation current={marketId}/>
+          {marketId==='thai'&&<ThaiWorkspaceNav view={thaiView} symbol={asset.symbol} onNavigate={chooseThaiView} onOpenScanner={()=>navigateTo('scanner')}/>}
           {marketId!=='thai'&&<ProToolsNav current={marketId} />}
           {marketId!=='thai'&&<section id="section-overview" className="workspace-intro nugaom-welcome">
             <div className="welcome-main">
@@ -440,11 +461,16 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
             </div>
           </section>}
 
-          {marketId==='thai'&&<div id="section-overview"><ThaiScreenerDashboard signalAccess={accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} onOpenStyleScanner={()=>navigateTo('scanner')} onResults={()=>navigateTo('results')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
+          {marketId==='thai'&&<div id="section-overview" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='stage2'}><ThaiScreenerDashboard compact visible={thaiView==='stage2'} signalAccess={accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} onOpenStyleScanner={()=>navigateTo('scanner')} onResults={()=>navigateTo('results')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
           {['thai','dr'].includes(marketId) && (
+            <div className={thaiWorkspaceStyles.panel} hidden={marketId==='thai'&&!['radar','results'].includes(thaiView)}>
             <DrStrategyRadar
               key={marketId}
               currentMarket={marketId}
+              compact={marketId==='thai'}
+              workspaceView={marketId==='thai'?thaiView:null}
+              onOpenResults={()=>chooseThaiView('results')}
+              visible={marketId!=='thai'||['radar','results'].includes(thaiView)}
               onOpenStyleScanner={()=>navigateTo('scanner')}
               onSelectSymbol={selectAsset}
               resultsRequest={resultsRequest}
@@ -453,6 +479,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               onToggleFavorite={toggleFavorite}
               signalAccess={accountReady?Boolean(rights?.capabilities?.autoPickFeed):null}
             />
+            </div>
           )}
           {['tfex','us'].includes(marketId)&&<SignalDesk marketId={marketId} memberId={memberAccount?.id} rights={rights} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={selectAsset} loginHref={loginHref}/>}
           {!['thai','dr','us'].includes(marketId)&&<section id="section-daily" className="market-routine panel"><div><span className="eyebrow">TODAY / {page.short}</span><h2>เครื่องมือประจำตลาด</h2><p>{marketId==='us'?'สัญญาณใช้แท่งรายวันหลังตลาดปิด · กราฟย้อนหลังเลือกดูได้หลายช่วงเวลา':marketId==='forex'?'กราฟย้อนหลังคู่เงิน · AutoPick ยังรอฟีดที่ยืนยันใช้แจ้งเตือนได้':'ดูซีรีส์สัญญาและกราฟจริง · AutoPick ยังรอยืนยันกติกาแต่ละสินค้า'}</p></div><div><button onClick={()=>setPopup('scanner')}>สแกนเชิงลึก</button><button onClick={()=>setPopup('calendar')}>ปฏิทินเศรษฐกิจ</button><button onClick={()=>navigateTo('results')}>ผลงานสัญญาณ</button></div></section>}

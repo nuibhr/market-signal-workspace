@@ -234,14 +234,18 @@ function TechnicalAccordion({ scored, currentPrice }) {
   );
 }
 
-export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',resultsRequest=0,favorites=[],favoritesByMarket={},onToggleFavorite,signalAccess=null,onOpenStyleScanner }) {
+export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',resultsRequest=0,favorites=[],favoritesByMarket={},onToggleFavorite,signalAccess=null,onOpenStyleScanner,compact=false,visible=true,workspaceView=null,onOpenResults }) {
   // Navigation tabs
   const [activeTab, setActiveTab] = useState(currentMarket==='thai'?'thai-scanner':'decision');
+  const [showSummary,setShowSummary]=useState(false);
+  const lastRadarTab=useRef(currentMarket==='thai'?'thai-scanner':'decision');
+  useEffect(()=>{if(workspaceView==='results')setActiveTab('workflow');else if(workspaceView==='radar')setActiveTab(lastRadarTab.current);},[workspaceView]);
+  useEffect(()=>{if(activeTab!=='workflow')lastRadarTab.current=activeTab;},[activeTab]);
   const [resultsMarket,setResultsMarket]=useState(currentMarket);
   const [resultsView,setResultsView]=useState(null);
   const [resultSnapshots,setResultSnapshots]=useState({});
   const receiveResults=useCallback(snapshot=>setResultSnapshots(previous=>({...previous,[snapshot.market]:snapshot})),[]);
-  const openResults=market=>{setResultsMarket(market);setResultsView(previous=>({scope:'closed',sequence:(previous?.sequence??0)+1}));setActiveTab('workflow');};
+  const openResults=market=>{if(compact&&onOpenResults){onOpenResults();return;}setResultsMarket(market);setResultsView(previous=>({scope:'closed',sequence:(previous?.sequence??0)+1}));setActiveTab('workflow');};
   useEffect(()=>{if(resultsRequest>0){setResultsMarket(currentMarket);setResultsView(previous=>({scope:'closed',sequence:(previous?.sequence??0)+1}));setActiveTab('workflow');}},[resultsRequest,currentMarket]);
   const [filterMode, setFilterMode] = useState('all'); // 'all' | 'bullish' | 'buyzone' | 'highscore'
   const [ledgerFilter, setLedgerFilter] = useState('all'); // 'all' | 'dr' | 'thai' | 'buyzone' | 'tp' | 'sl'
@@ -281,6 +285,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     setResultsMarket(currentMarket);
   }, [currentMarket]);
 
+  useEffect(()=>{if(!visible||workspaceView==='results')speakerRef.current?.stop();},[visible,workspaceView]);
+
   // Live market clock
   useEffect(() => {
     const timer = setInterval(() => {
@@ -305,6 +311,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
   // Read the shared ten-minute feed while visible; no overlapping requests.
   useEffect(() => {
+    if(!visible||workspaceView==='results')return;
     const controller=new AbortController();
     let mounted=true;
     const loadFeed=async()=>{
@@ -315,7 +322,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     };
     const stop=pollAfterCompletion(loadFeed,{intervalMs:DISCOVERY_INTERVAL_MS});
     return ()=>{mounted=false;controller.abort();stop();};
-  }, []);
+  }, [visible,workspaceView]);
 
   useEffect(()=>{
     if(liveData?.updatedAt)setLastScanTime(new Date(liveData.updatedAt).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'})+' น.');
@@ -617,8 +624,9 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   };
 
   return (
-    <section id="section-radar" className={styles.container} aria-label={currentMarket==='thai'?'Thai Strategy Radar':'DR Strategy Radar'}>
-      <div className={styles.feedNotice} role="status" aria-live="polite">
+    <section id="section-radar" className={`${styles.container} ${compact?styles.compactContainer:''}`} aria-label={currentMarket==='thai'?'Thai Strategy Radar':'DR Strategy Radar'}>
+      {compact&&<header className={styles.compactIntro}><h2>{workspaceView==='results'?'100 ไม้ล่าสุด · หุ้นไทย':'Radar หุ้นไทย · แผนเฝ้าเดิม'}</h2>{workspaceView!=='results'&&<button type="button" aria-expanded={showSummary} onClick={()=>setShowSummary(v=>!v)}>{showSummary?'ซ่อนสรุปตลาด / เสียงอ่าน':'สรุปตลาด / เสียงอ่าน'}</button>}</header>}
+      <div hidden={compact&&workspaceView==='results'} className={styles.feedNotice} role="status" aria-live="polite">
         {feedError || (liveData ? `ผลสแกนแท่งปิดรายวัน · ${currentMarket==='thai'?'หุ้นไทย':'DR'} ${liveData.coverage[currentMarket].available}/${liveData.coverage[currentMarket].total} · ${liveData.feedSource}` : 'กำลังโหลดข้อมูลสแกน…')}
         {feedError.includes('สมาชิก')&&<a href="/account#membership-plans">ดูแพ็กเกจ / เข้าสู่ระบบ ↗</a>}
         {liveData?.unavailable?.some(i=>i.market===currentMarket)&&<span>ข้อมูลไม่พร้อม: {liveData.unavailable.filter(i=>i.market===currentMarket).map(i=>i.symbol).join(', ')} · ไม่ใช้ราคาสมมติคำนวณ</span>}
@@ -644,6 +652,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         </div>
       )}
 
+      <div hidden={compact&&!showSummary||compact&&workspaceView==='results'}>
       {/* Header Banner */}
       <div className={styles.heroHeader}>
         <div className={styles.heroLeft}>
@@ -795,13 +804,14 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         </details>
       </div>
 
-      <ScanRules coverage={liveData?.coverage} currentMarket={currentMarket}/>
+      </div>
+      <div hidden={compact&&workspaceView==='results'}><ScanRules coverage={liveData?.coverage} currentMarket={currentMarket}/></div>
       {/* Main Tabs Navigation */}
-      <div className={styles.navTabs}>
-        <button type="button" onClick={onOpenStyleScanner} className={styles.tabBtn}>สแกนตามสไตล์ (Swing/Scalp) ↗</button>
+      <div className={styles.navTabs} hidden={compact&&workspaceView==='results'}>
+        {!compact&&<button type="button" onClick={onOpenStyleScanner} className={styles.tabBtn}>สแกนตามสไตล์ (Swing/Scalp) ↗</button>}
         <button type="button" onClick={()=>setActiveTab('decision')} className={`${styles.tabBtn} ${activeTab==='decision'?styles.tabBtnActive:''}`}>แผนเฝ้าวันนี้ · งบเสี่ยง</button>
         <button type="button" onClick={()=>showAllScans('all')} className={`${styles.tabBtn} ${activeTab==='all-scans'?styles.tabBtnActive:''}`}>สแกนรวม ({scoredThaiStocks.length+scoredDRs.length})</button>
-        <button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>ศูนย์สัญญาณ / 100 ไม้ล่าสุด</button>
+        {!compact&&<button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>ศูนย์สัญญาณ / 100 ไม้ล่าสุด</button>}
         {currentMarket!=='thai'&&<button
           type="button"
           onClick={() => {
