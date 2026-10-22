@@ -59,19 +59,19 @@ export const PRO_TOOLS_CONFIG = [
   {
     id: 'thai',
     href: '/thai',
-    label: 'สแกนเนอร์ตลาด',
-    sublabel: 'Smart Money AutoPick',
+    label: 'Stage 2 Screener',
+    sublabel: 'Minervini Trend & RS Leaders',
     icon: Compass,
-    badge: 'Scanner',
+    badge: 'Stage 2',
     color: '#059669', // Emerald
   },
   {
     id: 'dr-strategy',
     href: '/dr-strategy',
-    label: 'DR & หุ้นไทย Radar',
-    sublabel: 'Camarilla + Picks Ledger',
+    label: 'Strategy Radar',
+    sublabel: 'Camarilla & Trade Ledger',
     icon: Sparkles,
-    badge: 'Picks + Audio',
+    badge: 'Radar & Audio',
     color: '#f59e0b', // Amber
   },
 ];

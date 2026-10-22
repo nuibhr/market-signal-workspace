@@ -186,7 +186,7 @@ export default function SignalResults({
       <div className="section-heading">
         <div>
           <div className="eyebrow">VERIFIED FORWARD LEDGER</div>
-          <h2 id={`${sectionId}-title`}>ศูนย์สัญญาณ · ติดตามและผล 100 ไม้ล่าสุด</h2>
+          <h2 id={`${sectionId}-title`}>Trade Ledger · บันทึกผลงานสัญญาณ 100 ไม้ล่าสุด</h2>
           <p>
             รอเข้า → กำลังติดตาม → ปิดครบ · ใช้รหัสไม้และบันทึกชุดเดียวกัน กดช่องผลเพื่อดูเหตุการณ์ของไม้นั้น
           </p>

@@ -2,8 +2,8 @@
 
 export default function SignalPerformance({ summary, trades = [], onSelect,onInspect,selectedKey }) {
   const latest = [...trades].reverse();
-  return <article className="panel rolling-performance" aria-label="ประวัติ 100 ไม้ล่าสุด">
-    <div className="rolling-heading"><div><span className="eyebrow">บันทึกชุดเดียวกับผลงานสัญญาณ</span><h3>100 ไม้ที่ปิดล่าสุด</h3><p>นับจากราคาเข้าและราคาออกที่บันทึกไว้ ทุกไม้เปิดดูลำดับเหตุการณ์ได้ในรายการด้านล่าง</p></div><span className="rolling-sample"><b>{summary.closed}</b> / {summary.windowSize} ไม้</span></div>
+  return <article className="panel rolling-performance" aria-label="Trade Ledger 100 ไม้ล่าสุด">
+    <div className="rolling-heading"><div><span className="eyebrow">VERIFIED FORWARD LEDGER</span><h3>Trade Ledger · 100 ไม้ที่ปิดล่าสุด</h3><p>นับจากราคาเข้าและราคาออกที่บันทึกไว้ ทุกไม้เปิดดูลำดับเหตุการณ์ได้ในรายการด้านล่าง</p></div><span className="rolling-sample"><b>{summary.closed}</b> / {summary.windowSize} ไม้</span></div>
     <div className="trade-tape" aria-label={`ชนะ ${summary.wins} แพ้ ${summary.losses} เสมอ ${summary.flat}`}>
       {latest.map(row => <button key={row.key??row.id} className={row.returnPercent > 0 ? 'win' : row.returnPercent < 0 ? 'loss' : 'flat'} aria-pressed={selectedKey===row.key} onClick={() => onInspect?onInspect(row):onSelect?.(row.symbol,row.market)} aria-label={`${row.symbol} ราคาเข้า ${row.entryPrice} ราคาออก ${row.exitPrice} ผล ${row.returnPercent.toFixed(2)} เปอร์เซ็นต์ ${onInspect?'ดูไม้และเหตุการณ์':'เปิดกราฟ'}`} title={`${row.symbol} · ${row.entryPrice} → ${row.exitPrice} · ${row.returnPercent.toFixed(2)}% · ${row.key??row.id}`} />)}
       {Array.from({ length: Math.max(0, summary.windowSize - latest.length) }, (_, index) => <span className="unrecorded" key={`empty-${index}`} aria-hidden="true" />)}

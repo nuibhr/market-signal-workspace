@@ -625,7 +625,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
   return (
     <section id="section-radar" className={`${styles.container} ${compact?styles.compactContainer:''}`} aria-label={currentMarket==='thai'?'Thai Strategy Radar':'DR Strategy Radar'}>
-      {compact&&<header className={styles.compactIntro}><h2>{workspaceView==='results'?'100 ไม้ล่าสุด · หุ้นไทย':'Radar หุ้นไทย · แผนเฝ้าเดิม'}</h2>{workspaceView!=='results'&&<button type="button" aria-expanded={showSummary} onClick={()=>setShowSummary(v=>!v)}>{showSummary?'ซ่อนสรุปตลาด / เสียงอ่าน':'สรุปตลาด / เสียงอ่าน'}</button>}</header>}
+      {compact&&<header className={styles.compactIntro}><h2>{workspaceView==='results'?'Trade Ledger · บันทึกผล 100 ไม้ล่าสุด':'Thai Strategy Radar · แผนกลยุทธ์'}</h2>{workspaceView!=='results'&&<button type="button" aria-expanded={showSummary} onClick={()=>setShowSummary(v=>!v)}>{showSummary?'ซ่อนสรุปเสียงวิเคราะห์':'🔊 สรุปเสียง / วิเคราะห์เช้า'}</button>}</header>}
       <div hidden={compact&&workspaceView==='results'} className={styles.feedNotice} role="status" aria-live="polite">
         {feedError || (liveData ? `ผลสแกนแท่งปิดรายวัน · ${currentMarket==='thai'?'หุ้นไทย':'DR'} ${liveData.coverage[currentMarket].available}/${liveData.coverage[currentMarket].total} · ${liveData.feedSource}` : 'กำลังโหลดข้อมูลสแกน…')}
         {feedError.includes('สมาชิก')&&<a href="/account#membership-plans">ดูแพ็กเกจ / เข้าสู่ระบบ ↗</a>}
@@ -661,7 +661,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <span>{currentMarket==='thai'?'THAI EQUITIES STRATEGY RADAR':'DR STRATEGY RADAR'}</span>
           </div>
           <h2 className={styles.title}>
-            {currentMarket==='thai'?'Radar หุ้นไทย':'Radar DR'} <span>รู้จังหวะ รู้ความเสี่ยง ติดตามได้ทั้งวัน</span>
+            {currentMarket==='thai'?'Thai Strategy Radar':'DR Strategy Radar'} <span>รู้จังหวะ รู้ความเสี่ยง ติดตามได้ทั้งวัน</span>
           </h2>
           <p className={styles.subtitle}>
             เลือกวางแผน Swing หลายวัน หรือเช็กราคาระหว่างวันจากหุ้นโปรด พร้อมเหตุผลที่ยังต้องรอและงบเสี่ยงต่อไม้
@@ -701,7 +701,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             </div>
             <div>
               <h3 className={styles.morningHeading}>
-                <span>สรุปแผนเฝ้าดูจาก Radar (กดฟังเอง)</span>
+                <span>สรุปแผนเฝ้าดูประจำวัน Strategy Radar</span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
                   {currentMarket==='thai'?'ตลาดหุ้นไทย':'ตลาด DR'}
                 </span>
@@ -809,9 +809,9 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
       {/* Main Tabs Navigation */}
       <div className={styles.navTabs} hidden={compact&&workspaceView==='results'}>
         {!compact&&<button type="button" onClick={onOpenStyleScanner} className={styles.tabBtn}>สแกนตามสไตล์ (Swing/Scalp) ↗</button>}
-        <button type="button" onClick={()=>setActiveTab('decision')} className={`${styles.tabBtn} ${activeTab==='decision'?styles.tabBtnActive:''}`}>แผนเฝ้าวันนี้ · งบเสี่ยง</button>
-        <button type="button" onClick={()=>showAllScans('all')} className={`${styles.tabBtn} ${activeTab==='all-scans'?styles.tabBtnActive:''}`}>สแกนรวม ({scoredThaiStocks.length+scoredDRs.length})</button>
-        {!compact&&<button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>ศูนย์สัญญาณ / 100 ไม้ล่าสุด</button>}
+        <button type="button" onClick={()=>setActiveTab('decision')} className={`${styles.tabBtn} ${activeTab==='decision'?styles.tabBtnActive:''}`}>🎯 แผนเทรด &amp; คุมความเสี่ยง</button>
+        <button type="button" onClick={()=>showAllScans('all')} className={`${styles.tabBtn} ${activeTab==='all-scans'?styles.tabBtnActive:''}`}>📊 ผลสแกนทั้งหมด ({scoredThaiStocks.length+scoredDRs.length})</button>
+        {!compact&&<button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>📑 Trade Ledger (100 ไม้ล่าสุด)</button>}
         {currentMarket!=='thai'&&<button
           type="button"
           onClick={() => {
@@ -846,7 +846,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           className={`${styles.tabBtn} ${activeTab === 'picks-ledger' ? styles.tabBtnActive : ''}`}
         >
           <ListChecks size={16} />
-          <span>📋 แผนเฝ้าดูส่วนตัว</span>
+          <span>⭐ รายการเฝ้าดูส่วนตัว</span>
           <span className={styles.tabBadge} style={{ background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8' }}>
             {marketPicks.length} ไม้
           </span>
@@ -868,7 +868,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           className={`${styles.tabBtn} ${activeTab === 'thai-dividend' ? styles.tabBtnActive : ''}`}
         >
           <PieChart size={16} />
-          <span>พอร์ตหุ้นปันผลไทย · ข้อมูลอ้างอิง</span>
+          <span>ปันผลสูง / สถิติ XD</span>
           <span className={styles.tabBadge} style={{ background: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }}>
             {liveData?.avgDivYield&&liveData.avgDivYield!=='—'?`${liveData.avgDivYield}% Yield`:'รอข้อมูล Yield'}
           </span>
@@ -878,7 +878,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
       {activeTab==='decision'&&<DecisionDesk initialMarket={currentMarket} fixedMarket favorites={favorites} favoritesByMarket={favoritesByMarket} onToggleFavorite={onToggleFavorite} onSelect={handleGoToChart} onResults={openResults} signalAccess={signalAccess}/>}
       <div hidden={activeTab!=='workflow'}><SignalWorkflow market={resultsMarket} onSelect={(symbol,market)=>handleGoToChart({symbol,market:market??resultsMarket})} viewRequest={resultsView} onSnapshot={receiveResults}/></div>
       {activeTab==='all-scans'&&<section className={styles.workflowPanel} aria-label="สแกนรวม">
-        <h3>สแกนรวม · ทุกตัวในชุด Radar</h3>
+        <h3>ผลสแกนกลยุทธ์รวม · ทุกตัวในชุด Radar</h3>
         <p>หน้าเด่นแสดง 5 ตัว ส่วนที่เกินยังอยู่ที่นี่ · รายการเฝ้าดูไม่ใช่การยืนยัน Entry · จำนวนหุ้นที่สแกนไม่เปลี่ยนตามจำนวนที่แสดง</p>
         <div className={styles.workflowControls}>
           <span>ตลาด {currentMarket==='thai'?'หุ้นไทย':'DR'}</span>

@@ -66,7 +66,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
     <header className={styles.heading}><div><span className={styles.eyebrow}>MARKET MVP / {MARKET_LABELS[market]}</span><h2>ตัวเด่นผ่านเกณฑ์สแกน</h2><p>สูงสุด 5 ตัว · เรียงคะแนนคุณภาพเทคนิค 1–100 · แท่งปิด 15m</p></div><button onClick={()=>{setRevision(v=>v+1);monitor?.refresh();}}>อัปเดต</button></header>
     <nav className={styles.dock} aria-label="เครื่องมือสแกน">
       {[['picks','◎ MVP · Top 5'],['chart','▥ กราฟและแผน'],['history','◷ สถิติ / ประวัติ'],['prices','≡ ติดตามราคา']].map(([key,title])=><button key={key} onClick={()=>navigate(key)} aria-pressed={view==='mvp'&&key===activeSection}>{title}</button>)}
-      {legacyScanner&&<button onClick={()=>setView(v=>v==='legacy'?'mvp':'legacy')} aria-pressed={view==='legacy'}>Swing รุ่นเดิม ↗</button>}
+      {legacyScanner&&<button onClick={()=>setView(v=>v==='legacy'?'mvp':'legacy')} aria-pressed={view==='legacy'}>Swing Strategy Desk ↗</button>}
     </nav>
     {view==='legacy'?legacyScanner:<>
     {error&&<div className={styles.notice} role="status">{error==='SIGN_IN_REQUIRED'?<>เข้าสู่ระบบ LINE เพื่อดูข้อมูลและประวัติของคุณ <Link href="/account">เข้าสู่ระบบ ↗</Link></>:error==='NODE_RECEIVER_REQUIRED'?'ตัวสแกนชุดนี้ต้องใช้ Node server ที่เก็บข้อมูลถาวร':'โหลดข้อมูลสแกนไม่ได้ กำลังลองใหม่'}</div>}
