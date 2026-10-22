@@ -2,8 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {generateStrategyFeed,loadScanSeries} from './strategy-feed.mjs';
 import {requestStrategyFeed} from './strategy-client.mjs';
-import {radarChartAsset} from './chart-target.mjs';
+import {radarChartAsset,radarRowsForMarket} from './chart-target.mjs';
 const now=Date.parse('2026-10-20T08:00:00Z');
+test('shared saved Radar plans and voice rows are scoped by market without deleting the other market or accepting unknown identities',()=>{
+ const rows=[{symbol:'PTT',market:'SET'},{symbol:'AAPL80',market:'DR80'},{symbol:'KBANK',market:'thai'},{symbol:'MSFT80',market:'dr'},{symbol:'UNKNOWN',market:'other'}];
+ const before=JSON.stringify(rows);
+ assert.deepEqual(radarRowsForMarket(rows,'thai').map(r=>r.symbol),['PTT','KBANK']);
+ assert.deepEqual(radarRowsForMarket(rows,'dr').map(r=>r.symbol),['AAPL80','MSFT80']);
+ assert.deepEqual(radarRowsForMarket(rows,'unknown'),[]);assert.equal(JSON.stringify(rows),before);
+});
 const series=asset=>({symbol:asset.symbol,instrumentId:asset.instrumentId,timeframe:'1d',source:'fixture closed history',chartOnly:true,
   bars:Array.from({length:90},(_,i)=>({time:new Date(now-(90-i)*86400000).toISOString().slice(0,10),open:20+i/10,high:21+i/10,low:19+i/10,close:20.5+i/10,volume:1000}))});
 test('a failed provider is unavailable, never a synthetic price, pick or closed trade',async()=>{

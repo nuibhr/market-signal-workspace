@@ -27,7 +27,6 @@ import SignalResults from './signal-results.jsx';
 import DrStrategyRadar from './dr/dr-strategy-radar.jsx';
 import ProToolsNav from './pro-tools-nav.jsx';
 import ThaiScreenerDashboard from './thai/thai-screener-dashboard.jsx';
-import SignalWorkflow from './dr/signal-workflow.jsx';
 
 const DEFAULT_SYMBOLS = { thai: 'PTT', dr: 'AAPL80', tfex: TFEX_SYMBOLS[0] ?? 'S50', us: 'NVDA', forex: 'EUR/USD' };
 const MARKETS = MARKET_GROUPS.map(group => ({
@@ -179,7 +178,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     if (id === 'calendar-page' || id === 'calendar') { window.location.href = '/calendar'; return; }
     if (id === 'developers') { window.location.href = '/developers'; return; }
     setActiveNav(id);
-    if(marketId==='thai'&&['scanner','analysis-tools','daily','autopick','signals','search','favorites','watchlist','overview','chart'].includes(id)){
+    if(marketId==='thai'&&['search','favorites','watchlist','overview','chart'].includes(id)){
       setPopup(null);if(['favorites','watchlist'].includes(id))setFavoritesOpenRequest(v=>v+1);
       if(id==='chart')scrollToChart();else document.getElementById('section-auto-pick')?.scrollIntoView({behavior:'smooth',block:'start'});
       return;
@@ -441,10 +440,12 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
             </div>
           </section>}
 
-          {marketId==='thai'&&<div id="section-overview"><ThaiScreenerDashboard signalAccess={accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
-          {marketId==='dr' && (
+          {marketId==='thai'&&<div id="section-overview"><ThaiScreenerDashboard signalAccess={accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} onOpenStyleScanner={()=>navigateTo('scanner')} onResults={()=>navigateTo('results')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
+          {['thai','dr'].includes(marketId) && (
             <DrStrategyRadar
+              key={marketId}
               currentMarket={marketId}
+              onOpenStyleScanner={()=>navigateTo('scanner')}
               onSelectSymbol={selectAsset}
               resultsRequest={resultsRequest}
               favorites={favorites}
@@ -496,7 +497,6 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
             {marketId!=='thai'&&<LiveMarketWatch market={market} asset={asset} favorites={favorites} favoritesOpenRequest={favoritesOpenRequest} favoritesSynced={Boolean(memberAccount)} selectedQuote={hasRealQuote ? marketQuote : hasRealBars ? liveSeries.quote : null} series={hasRealBars ? liveSeries : null} analysis={analysis} timeframe={TIMEFRAME_LABELS[timeframe]} onSelect={selectAsset} onToggleFavorite={toggleFavorite} onRefreshQuote={() => setReloadNonce(value => value + 1)} onOpenScanner={() => setPopup('scanner')} onOpenSearch={() => { setSymbolQuery(''); setSymbolCategory(marketId); setPopup('search'); }} />}
           </section>
 
-          {marketId==='thai'&&<SignalWorkflow market="thai" onSelect={selectLedgerSymbol}/>}
           {!['dr','thai'].includes(marketId)&&<div id="section-results" className="workspace-results-wrap" style={{marginTop:'24px'}}>
             <SignalResults fixedMarket={marketId} onSelect={selectLedgerSymbol} loginHref={loginHref} sectionId="section-results" />
           </div>}

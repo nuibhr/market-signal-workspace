@@ -62,7 +62,7 @@ export function AmbientDepth() {
 
 const SCAN_STYLES = [
   { id: 'swing', label: '🎯 Swing Trading (2-5 วัน)', frame: '4h', desc: 'คัดโครงสร้างยก High/Low ย่อแตะ EMA20/50 หรือเบรกแนวต้าน พร้อมเป้าหมาย 2R' },
-  { id: 'scalp', label: '⚡ Scalping / Daytrade (15m)', frame: '15m', desc: 'สแกน 15m ORB ทะลุกรอบ 30 นาทีแรก + เหนือ VWAP พร้อม Volume จบในวัน' },
+  { id: 'scalp', label: '⚡ Scalping / Daytrade (15m)', frame: '15m', desc: 'ตรวจโครงสร้างราคา โมเมนตัม และเงื่อนไขเทคนิคจากแท่งปิด 15 นาที' },
   { id: 'eod', label: '📊 EOD / Position (ปิดวัน)', frame: '1d', desc: 'สแกนแท่งปิดวัน New High 20 วัน + วอลุ่มสะสมผิดปกติ (RVOL > 1.2x)' },
 ];
 
@@ -122,7 +122,7 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
     <div className="feature-intro"><div><span className="feature-kicker">REGIME SCANNER · MULTI-STRATEGY ENGINE</span><p>เลือกสไตล์การสแกนและอ่านแนวโน้มจากแท่ง {effectiveTimeframe.toUpperCase()} อัตโนมัติ</p></div><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ สแกนอีกครั้ง</button></div>
 
     {/* Style Selector */}
-    <div className="ng-strategy-tabs-bar" role="tablist" style={{margin:'8px 0 12px 0'}}>
+    <div className="ng-strategy-tabs-bar" role="tablist" aria-label="เลือกสไตล์การสแกน" style={{margin:'8px 0 12px 0'}}>
       {SCAN_STYLES.map(style => (
         <button
           key={style.id}
@@ -140,6 +140,7 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
       <strong>{currentStyleObj.label}</strong>: {currentStyleObj.desc}
     </div>
 
+    {scanStyle==='scalp'&&['thai','dr'].includes(category)&&<StatusNote>โหมด Scalp ใช้ตรวจกราฟ 15 นาทีและเปิดกราฟได้ · ข้อมูลหน่วงอย่างน้อย 15 นาที · ยังพักการประกาศไม้ Daytrade ใหม่ ประวัติเดิมคงอยู่</StatusNote>}
     <div className="feature-market-tabs">{market.id==='us'?<UsAssetTabs value={usKind} onChange={value=>{setUsKind(value);setQuery('');setExpanded('');setConditionFilter('');}}/>:MARKET_GROUPS.filter(group=>group.id===market.id).map(group => <button key={group.id} className={category === group.id ? 'selected' : ''} onClick={() => { setCategory(group.id); setQuery(''); setExpanded(''); setConditionFilter(''); }}>{group.label}</button>)}</div>
     <div className="scanner-controls"><label><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder={`ค้นหาใน ${MARKET_GROUPS.find(item => item.id === category)?.label ?? ''}`} /></label><span>{state === 'loading' ? 'กำลังสแกน…' : `ตรวจ ${candidates.length} symbols`}</span></div>
     <StatusNote>สแกนสูงสุด 6 ตัวต่อครั้งจากรายการที่เห็น · กรอบเวลา {effectiveTimeframe.toUpperCase()} สำหรับสไตล์ {currentStyleObj.label} · <a href="/risk" style={{color:'#0284c7',fontWeight:600}}>คำนวณขนาดไม้ &amp; Stop Loss ↗</a></StatusNote>
@@ -149,7 +150,7 @@ export function MarketScanner({ asset, market, favorites, timeframe, onSelect })
       const evidence = series ? analyzeCandles(series.bars, series.quote?.price ?? null, effectiveTimeframe, {timeframe: effectiveTimeframe}) : null;
       const trend = evidence?.trend === 'up' ? 'ขาขึ้น' : evidence?.trend === 'down' ? 'ขาลง' : evidence ? 'ออกข้าง' : 'รอฟีด';
       const open = expanded === item.symbol;
-      return <FragmentRow key={item.symbol} item={item} series={series} evidence={evidence} trend={trend} open={open} loading={state === 'loading'} onExpand={() => setExpanded(open ? '' : item.symbol)} onSelect={() => onSelect(item)} />;
+      return <FragmentRow key={item.symbol} item={item} series={series} evidence={evidence} trend={trend} open={open} loading={state === 'loading'} onExpand={() => setExpanded(open ? '' : item.symbol)} onSelect={() => onSelect(item,effectiveTimeframe)} />;
     })}</tbody></table>{state !== 'loading' && visibleCandidates.length === 0 && <div className="feature-empty">ไม่พบสัญลักษณ์ที่ตรงกับเงื่อนไขนี้</div>}</div>
   </div>;
 }

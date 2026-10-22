@@ -22,6 +22,22 @@ const Logo=component('../components/monitor/instrument-logo.jsx').default;
 const RecordDetails=component('../components/monitor/trade-record.jsx').TradeRecordDetails;
 const DecisionPlan=component('../components/dr/decision-desk.jsx').DecisionPlan;
 const {ThaiScreenerTable,filterThaiRows}=component('../components/thai/thai-screener-dashboard.jsx');
+const Radar=component('../components/dr/dr-strategy-radar.jsx').default;
+const {MarketScanner}=component('../components/workspace-features.jsx');
+test('restored Radar renders only its market tools and one canonical ledger; the style scanner retains both styles',()=>{
+ for(const market of ['thai','dr']){
+  const html=renderToStaticMarkup(React.createElement(Radar,{currentMarket:market,signalAccess:false}));
+  assert.ok(html.includes(market==='thai'?'Thai Strategy Radar':'DR Strategy Radar'));
+  assert.equal(html.includes('หุ้นไทย Scanner (SET Picks)'),market==='thai');
+  assert.equal(html.includes('DR80 Scanner (DR Picks)'),market==='dr');
+  assert.equal(html.includes('Indicative &amp; Arbitrage Bridge'),market==='dr');
+  assert.equal(html.split('id="section-results"').length-1,1);
+  assert.ok(html.includes('สแกนตามสไตล์ (Swing/Scalp)'));
+ }
+ const html=renderToStaticMarkup(React.createElement(MarketScanner,{asset:{symbol:'PTT',id:'thai'},market:{id:'thai'},favorites:[]}));
+ for(const text of ['เลือกสไตล์การสแกน','Swing Trading','Scalping / Daytrade','EOD / Position','4H'])assert.ok(html.includes(text),text);
+ assert.ok(!html.includes('AAPL80'));
+});
 const now=Date.parse('2026-10-15T15:00:00Z');
 const row={symbol:'NTES',name:'NETEASE INC-ADR',kind:'stock_cfd',status:'READY',price:100,latestBar:now/1000-900,receivedAt:now,bars:100,stale:false,side:null,monitorPlan:{entry:100,side:'LONG',status:'WAITING'}};
 test('Thai table preserves accessible favorites, exact chart action and honest missing values; filters never treat missing fundamentals as cheap',()=>{
