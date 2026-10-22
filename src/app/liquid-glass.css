@@ -1715,3 +1715,71 @@
   color: #1e293b !important;
 }
 
+/* DR Arbitrage & Focus Cards (Light Theme) */
+.market-workspace.theme-light-glass [class*='drGuard'],
+[data-theme='light'] [class*='drGuard'] {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(16, 185, 129, 0.08) 100%) !important;
+  border-color: rgba(14, 165, 233, 0.4) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+}
+.market-workspace.theme-light-glass [class*='drGuardHead'] strong,
+[data-theme='light'] [class*='drGuardHead'] strong {
+  color: #0369a1 !important;
+}
+.market-workspace.theme-light-glass [class*='drGuardContent'] p,
+[data-theme='light'] [class*='drGuardContent'] p {
+  color: #334155 !important;
+}
+.market-workspace.theme-light-glass [class*='drGuardContent'] b,
+[data-theme='light'] [class*='drGuardContent'] b {
+  color: #0f172a !important;
+}
+.market-workspace.theme-light-glass [class*='drFocusSection'],
+[data-theme='light'] [class*='drFocusSection'] {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(14, 165, 233, 0.35) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06) !important;
+}
+.market-workspace.theme-light-glass [class*='drFocusHeader'] h3,
+[data-theme='light'] [class*='drFocusHeader'] h3 {
+  color: #0f172a !important;
+}
+.market-workspace.theme-light-glass [class*='drFocusHeader'] p,
+[data-theme='light'] [class*='drFocusHeader'] p {
+  color: #64748b !important;
+}
+.market-workspace.theme-light-glass [class*='drFocusCard'],
+[data-theme='light'] [class*='drFocusCard'] {
+  background: #ffffff !important;
+  border-color: rgba(14, 165, 233, 0.28) !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06) !important;
+}
+.market-workspace.theme-light-glass [class*='drFocusAsset'] strong,
+[data-theme='light'] [class*='drFocusAsset'] strong {
+  color: #0f172a !important;
+}
+.market-workspace.theme-light-glass [class*='drFairValueBox'],
+[data-theme='light'] [class*='drFairValueBox'],
+.market-workspace.theme-light-glass [class*='drLevelsGrid'],
+[data-theme='light'] [class*='drLevelsGrid'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+.market-workspace.theme-light-glass [class*='drFairValueBox'] strong,
+[data-theme='light'] [class*='drFairValueBox'] strong,
+.market-workspace.theme-light-glass [class*='drLevelsGrid'] strong,
+[data-theme='light'] [class*='drLevelsGrid'] strong {
+  color: #0f172a !important;
+}
+.market-workspace.theme-light-glass [class*='bridgeStrip'],
+[data-theme='light'] [class*='bridgeStrip'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+.market-workspace.theme-light-glass [class*='drAdvantage'],
+[data-theme='light'] [class*='drAdvantage'] {
+  background: #f0f9ff !important;
+  border-color: #7dd3fc !important;
+  color: #0369a1 !important;
+}
+

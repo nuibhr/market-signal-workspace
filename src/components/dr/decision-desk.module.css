@@ -3,3 +3,4 @@
 @media(max-width:600px){.desk{padding:15px}.heading{flex-direction:column}.heading h2{font-size:21px}.counts{grid-template-columns:1fr 1fr}.plan{padding:15px}.checks{grid-template-columns:1fr}.levels strong{font-size:18px}.levels>div{padding:10px}.planHeading{flex-direction:column}.budget{grid-template-columns:1fr}.budget label:last-child{grid-column:auto}.shortlist{grid-template-columns:1fr}.intents button{flex:1;padding-inline:9px}.controls{align-items:stretch}.controls>label{flex:1}.controls>button{align-self:stretch}.pager{justify-content:space-between}}
 
 .assetIdentity{display:inline-flex;align-items:center;gap:10px;vertical-align:middle;min-width:0}.shortlist .assetIdentity>span:last-child{min-width:0;font-size:15px}.planHeading h3.assetIdentity{display:flex}
+.drAdvantage{margin:12px 0;padding:11px 14px;background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.3);border-radius:10px;font-size:11px;line-height:1.6;color:#bae6fd}

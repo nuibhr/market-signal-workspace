@@ -383,6 +383,28 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
       }));
   }, [liveData, scoredDRs,currentMarket]);
 
+  const drGuardStats = useMemo(() => {
+    if (currentMarket !== 'dr' || !scoredDRs.length) return null;
+    const premiumCount = scoredDRs.filter((d) => d.bridge?.status === 'PREMIUM' || ((d.bridge?.diffPct ?? 0) > 1.5)).length;
+    const discountCount = scoredDRs.filter((d) => d.bridge?.status === 'DISCOUNT' || ((d.bridge?.diffPct ?? 0) < -1.5)).length;
+    const fairCount = scoredDRs.filter((d) => d.bridge?.status === 'FAIR' || (Math.abs(d.bridge?.diffPct ?? 0) <= 1.5)).length;
+    return { premiumCount, discountCount, fairCount, total: scoredDRs.length };
+  }, [currentMarket, scoredDRs]);
+
+  const topDrFocus = useMemo(() => {
+    if (currentMarket !== 'dr' || !scoredDRs.length) return [];
+    return [...scoredDRs]
+      .filter((d) => d.scored?.entry && d.scored?.sl && d.scored?.tp1)
+      .sort((a, b) => {
+        const scoreDiff = (b.scored?.totalScore ?? 0) - (a.scored?.totalScore ?? 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        const diffA = Math.abs(a.bridge?.diffPct ?? 0);
+        const diffB = Math.abs(b.bridge?.diffPct ?? 0);
+        return diffA - diffB;
+      })
+      .slice(0, 3);
+  }, [currentMarket, scoredDRs]);
+
   const allMorningSignals = useMemo(() => {
     if (liveData?.allMorningSignals?.length) return radarRowsForMarket(liveData.allMorningSignals,currentMarket);
     return [...topMorningThai, ...topMorningDr];
@@ -691,6 +713,93 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           </div>
         </div>
       </div>
+
+      {currentMarket === 'dr' && drGuardStats && (
+        <aside className={styles.drGuard} aria-label="DR Arbitrage & Fair Value Guard">
+          <div className={styles.drGuardIcon} aria-hidden="true">🛡️</div>
+          <div className={styles.drGuardContent}>
+            <div className={styles.drGuardHead}>
+              <strong>ระบบตรวจจับส่วนต่างราคา DR Arbitrage &amp; Fair Value Guard</strong>
+              <span className={styles.drGuardBadge}>Live Pricing Shield</span>
+            </div>
+            <p>
+              ระบบตรวจจับพบ DR ที่เทรดแพงกว่าหุ้นแม่เกินเกณฑ์ (Overpriced Premium) <b>{drGuardStats.premiumCount} ตัว</b> (แจ้งเตือนระวังอย่าเพิ่งไล่ราคา) และชี้เป้า DR ที่มีแต้มต่อต้นทุน Fair/Discount <b>{drGuardStats.discountCount + drGuardStats.fairCount} ตัว</b> จากทั้งหมด {drGuardStats.total} ตัวในระบบ ช่วยป้องกันการขาดทุนจากสเปรดแฝงบนกระดาน SET
+            </p>
+          </div>
+        </aside>
+      )}
+
+      {currentMarket === 'dr' && topDrFocus.length > 0 && (
+        <section className={styles.drFocusSection} aria-label="Top 3 DR High Conviction Focus Picks">
+          <div className={styles.drFocusHeader}>
+            <span className={styles.drFocusBadge}>⭐ Daily DR High Conviction</span>
+            <h3>Top 3 DR หุ้นเทค &amp; ผู้นำโลก (พร้อม Fair Value และเป้าหมาย 2R)</h3>
+            <p>คัดกรอง DR ที่มีโครงสร้างเทรนด์แข็งแกร่งที่สุด พร้อมกรอบราคาเข้า-คัท-ทำกำไร และส่วนต่างราคายุติธรรมทันที</p>
+          </div>
+          <div className={styles.drFocusGrid}>
+            {topDrFocus.map((item) => (
+              <article key={item.symbol} className={styles.drFocusCard}>
+                <div className={styles.drFocusHead}>
+                  <div className={styles.drFocusAsset}>
+                    <InstrumentLogo asset={{ market: 'dr', symbol: item.symbol }} />
+                    <div>
+                      <strong>{item.symbol}</strong>
+                      <small>{item.name} · หุ้นแม่ ${item.underlyingUsd?.toFixed(2)}</small>
+                    </div>
+                  </div>
+                  <span className={styles.drScorePill}>Score {item.scored?.totalScore ?? '—'}/16</span>
+                </div>
+                
+                <div className={styles.drFairValueBox}>
+                  <div>
+                    <span>ราคาตลาด SET</span>
+                    <strong>{item.currentDrPrice?.toFixed(2)} ฿</strong>
+                  </div>
+                  <div>
+                    <span>ราคาประเมินจริง (Fair)</span>
+                    <strong>{item.bridge ? `${item.bridge.fairPriceThb.toFixed(2)} ฿` : '—'}</strong>
+                  </div>
+                  <div>
+                    <span>สเปรด P/D</span>
+                    <strong style={{ color: item.bridge?.diffPct < 0 ? '#10b981' : ((item.bridge?.diffPct ?? 0) > 1.5 ? '#f59e0b' : '#38bdf8') }}>
+                      {item.bridge ? `${item.bridge.diffPct > 0 ? '+' : ''}${item.bridge.diffPct.toFixed(2)}%` : '—'}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className={styles.drLevelsGrid}>
+                  <div>
+                    <span>จุดเข้า (Entry)</span>
+                    <strong>{item.scored?.entry?.toFixed(2)} ฿</strong>
+                  </div>
+                  <div>
+                    <span>Stop Loss (คัท)</span>
+                    <strong className={styles.stopLossText}>{item.scored?.sl?.toFixed(2)} ฿</strong>
+                  </div>
+                  <div>
+                    <span>เป้า TP1 (2R)</span>
+                    <strong className={styles.targetText}>{item.scored?.tp1?.toFixed(2)} ฿</strong>
+                  </div>
+                </div>
+
+                <div className={styles.drFocusFoot}>
+                  <span className={styles.drStatusTag} style={{ backgroundColor: `${item.bridge?.color || '#38bdf8'}20`, color: item.bridge?.color || '#38bdf8' }}>
+                    {item.bridge?.label || 'Fair Value'}
+                  </span>
+                  <div className={styles.drFocusActions}>
+                    <button type="button" onClick={() => setActiveTab('decision')}>
+                      คำนวณไม้ ↗
+                    </button>
+                    <button type="button" onClick={() => handleGoToChart(item)} aria-label={`ดูกราฟ ${item.symbol}`}>
+                      ดูกราฟ ↗
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── TOP MORNING AUDIO SIGNAL BRIEFING BANNER ── */}
       <div className={styles.morningBriefingCard}>
@@ -1074,6 +1183,15 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       </span>
                     </div>
                   </div>
+
+                  {item.bridge && (
+                    <div className={styles.bridgeStrip}>
+                      <span>Fair Value: <b>{item.bridge.fairPriceThb.toFixed(2)} ฿</b></span>
+                      <strong style={{ color: item.bridge.diffPct < 0 ? '#10b981' : ((item.bridge.diffPct ?? 0) > 1.5 ? '#f59e0b' : '#38bdf8') }}>
+                        {item.bridge.diffPct > 0 ? '+' : ''}{item.bridge.diffPct.toFixed(2)}% ({item.bridge.status})
+                      </strong>
+                    </div>
+                  )}
 
                   {/* Score Breakdown Bar */}
                   <div className={styles.scoreSection}>
