@@ -99,22 +99,32 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
   const [optionsFilter, setOptionsFilter] = useState('atm'); // 'atm' | 'all' | 'highOi'
   const [selectedStrategy, setSelectedStrategy] = useState(null);
 
-  // Margin Shield State
+  // Margin Shield State (Single Asset)
   const [marginEquity, setMarginEquity] = useState(200000);
   const [marginProduct, setMarginProduct] = useState('S50');
   const [marginContracts, setMarginContracts] = useState(5);
   const [marginSide, setMarginSide] = useState('LONG');
   const [marginEntry, setMarginEntry] = useState(894.2);
 
+  // ─── TFEX WHAT-IF SIMULATOR STATE (Multi-Asset Portfolio Stress Testing) ───
+  const [riskSubMode, setRiskSubMode] = useState('whatif'); // 'whatif' | 'single'
+  const [whatIfEquity, setWhatIfEquity] = useState(300000);
+  const [whatIfS50Side, setWhatIfS50Side] = useState('LONG');
+  const [whatIfS50Contracts, setWhatIfS50Contracts] = useState(5);
+  const [whatIfGoSide, setWhatIfGoSide] = useState('LONG');
+  const [whatIfGoContracts, setWhatIfGoContracts] = useState(2);
+  const [whatIfS50Shock, setWhatIfS50Shock] = useState(-15); // -15 points shock
+  const [whatIfGoShock, setWhatIfGoShock] = useState(-20); // -20 USD shock
+
   // 2R Sizing State
   const [sizingCapital, setSizingCapital] = useState(300000);
   const [sizingRiskPct, setSizingRiskPct] = useState(2);
   const [sizingSlPoints, setSizingSlPoints] = useState(5.0);
 
-  // Current product spec for margin desk
+  // Current product spec for single margin desk
   const currentSpec = TFEX_SPECS[marginProduct] || TFEX_SPECS.S50;
 
-  // Margin calculations
+  // Single margin calculations
   const totalIm = marginContracts * currentSpec.im;
   const totalMm = marginContracts * currentSpec.mm;
   const totalFm = marginContracts * currentSpec.fm;
@@ -137,9 +147,39 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
     ? (marginEntry - pointsToForce).toFixed(2)
     : (marginEntry + pointsToForce).toFixed(2);
 
-  // Safety rating
   const isDangerousLeverage = pointsToCall < 30 || Number(marginUsagePct) > 75;
   const isModerateLeverage = pointsToCall >= 30 && pointsToCall < 70;
+
+  // ─── What-If Multi-Asset Stress Calculations ───
+  const simS50PointDiff = whatIfS50Side === 'LONG' ? whatIfS50Shock : -whatIfS50Shock;
+  const simS50Pl = simS50PointDiff * whatIfS50Contracts * TFEX_SPECS.S50.multiplier;
+
+  const simGoPointDiff = whatIfGoSide === 'LONG' ? whatIfGoShock : -whatIfGoShock;
+  const simGoPl = simGoPointDiff * whatIfGoContracts * TFEX_SPECS.GO.multiplier;
+
+  const simTotalPl = simS50Pl + simGoPl;
+  const simNewEquity = Math.max(0, whatIfEquity + simTotalPl);
+
+  const whatIfTotalIm = (whatIfS50Contracts * TFEX_SPECS.S50.im) + (whatIfGoContracts * TFEX_SPECS.GO.im);
+  const whatIfTotalMm = (whatIfS50Contracts * TFEX_SPECS.S50.mm) + (whatIfGoContracts * TFEX_SPECS.GO.mm);
+  const whatIfTotalFm = (whatIfS50Contracts * TFEX_SPECS.S50.fm) + (whatIfGoContracts * TFEX_SPECS.GO.fm);
+
+  const whatIfMarginUsagePct = simNewEquity > 0 ? ((whatIfTotalIm / simNewEquity) * 100).toFixed(1) : '999';
+  const whatIfBufferToCall = simNewEquity - whatIfTotalMm;
+  const whatIfBufferToForce = simNewEquity - whatIfTotalFm;
+  const isWhatIfCallTriggered = simNewEquity < whatIfTotalMm;
+  const isWhatIfForceTriggered = simNewEquity < whatIfTotalFm;
+
+  let deRiskAdvice = '';
+  if (isWhatIfCallTriggered) {
+    const deficit = Math.abs(whatIfBufferToCall);
+    const s50ToTrim = Math.min(whatIfS50Contracts, Math.ceil(deficit / (TFEX_SPECS.S50.im * 0.7)));
+    deRiskAdvice = `🚨 วิกฤต! พอร์ตจะโดน MARGIN CALL ทันที (เงินประกันขาด ${deficit.toLocaleString()} บาท) แนะนำปิด Long S50 ลงอย่างน้อย ${s50ToTrim} สัญญา หรือปิด GO 1 สัญญา เพื่อหยุดการขาดทุนและหลุดพ้นจากระดับ Margin Call ทันที!`;
+  } else if (Number(whatIfMarginUsagePct) > 65) {
+    deRiskAdvice = `⚠️ ความเสี่ยงเริ่มตึงตัว (Margin Usage ${whatIfMarginUsagePct}%): หากตลาดกระแทกตามสมมติฐานนี้ แนะนำ 'ลดสถานะ S50 ลง 2 สัญญา' (คืนเงินประกัน 21,700฿) หรือ 'ปิด GO 1 สัญญา' (คืนเงินประกัน 31,500฿) เพื่อดึง Margin Usage กลับมาต่ำกว่า 50% ให้ปลอดภัยต่อการเปิดกระโดด Gap ข้ามคืน!`;
+  } else {
+    deRiskAdvice = `✓ พอร์ตมีความปลอดภัยสูง: เงินทุนสำรองคงเหลือ ${Math.max(0, simNewEquity - whatIfTotalIm).toLocaleString()} บาท ยังรองรับการย่อตัวของ SET50 (${whatIfS50Shock >= 0 ? '+' : ''}${whatIfS50Shock} จุด) และทองคำ (${whatIfGoShock >= 0 ? '+' : ''}${whatIfGoShock}$) ได้โดยไม่โดน Margin Call`;
+  }
 
   // Sizing calculations
   const maxRiskTHB = (sizingCapital * (sizingRiskPct / 100));
@@ -224,8 +264,8 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
           onClick={() => setActiveTab('margin')}
         >
           <span className={styles.tabIcon}>🛡️</span>
-          <span>Margin Call & Force Close Safety Shield</span>
-          <span className={styles.tabBadge}>ทนได้ {pointsToCall.toFixed(0)} จุด</span>
+          <span>Portfolio Risk & What-If Simulator</span>
+          <span className={styles.tabBadge}>What-If Live</span>
         </button>
         <button
           type="button"
@@ -491,189 +531,523 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
         </div>
       )}
 
-      {/* ─── TAB 2: MARGIN CALL & FORCE CLOSE SAFETY SHIELD ─── */}
+      {/* ─── TAB 2: PORTFOLIO RISK & WHAT-IF SIMULATOR ─── */}
       {activeTab === 'margin' && (
         <div className={styles.marginDesk}>
-          {/* Safety Shield Banner */}
-          <div className={`${styles.shieldBanner} ${isDangerousLeverage ? styles.shieldBannerAlert : ''}`}>
-            <span className={styles.shieldIcon}>{isDangerousLeverage ? '⚠️' : '🛡️'}</span>
-            <div className={styles.shieldText}>
-              <strong>
-                {isDangerousLeverage
-                  ? 'คำเตือน: ความเสี่ยงพอร์ต Overleverage สูง เสี่ยงต่อการโดน Margin Call!'
-                  : isModerateLeverage
-                    ? 'ระดับความเสี่ยงปานกลาง: ควรตั้ง Stop Loss ชัดเจนก่อนเปิดสถานะ'
-                    : 'พอร์ตมีกันชนปลอดภัยสูง: ทนต่อความผันผวนและการเปิดกระโดด Gap ได้ดี'}
-              </strong>
-              <p>
-                ระบบจำลองเงินประกันตามเกณฑ์ TFEX จริง: Initial Margin (IM), Maintenance Margin (MM 70%), และ Force Close Margin (FM 30%)
-              </p>
-            </div>
+          {/* Submode Switcher */}
+          <div className={styles.subModeSwitch} role="tablist" aria-label="โหมดการวิเคราะห์ความเสี่ยง">
+            <button
+              type="button"
+              className={`${styles.subModeBtn} ${riskSubMode === 'whatif' ? styles.subModeBtnActive : ''}`}
+              onClick={() => setRiskSubMode('whatif')}
+            >
+              ⚡ TFEX What-If Simulator (จำลองพอร์ตผสม Multi-Asset)
+            </button>
+            <button
+              type="button"
+              className={`${styles.subModeBtn} ${riskSubMode === 'single' ? styles.subModeBtnActive : ''}`}
+              onClick={() => setRiskSubMode('single')}
+            >
+              🛡️ Single Contract Shield (วิเคราะห์เจาะจงรายสัญญา)
+            </button>
           </div>
 
-          <div className={styles.marginGrid}>
-            {/* Input Form */}
-            <div className={styles.formCard}>
-              <h3 className={styles.formCardTitle}>⚙️ พารามิเตอร์พอร์ตจำลอง</h3>
+          {/* ── SUBMODE 1: WHAT-IF SIMULATOR ── */}
+          {riskSubMode === 'whatif' && (
+            <div>
+              {/* What-If Hero Banner */}
+              <div className={styles.whatIfHero}>
+                <div className={styles.whatIfHeroInfo}>
+                  <span className={styles.whatIfHeroTag}>PORTFOLIO STRESS TESTING</span>
+                  <h3>TFEX What-If Simulator · ผลกระทบต่อพอร์ตภายใต้สภาวะวิกฤต</h3>
+                  <p>
+                    จำลองผลกระทบเมื่อตลาดผันผวนพร้อมกัน: ถือ S50 {whatIfS50Contracts} สัญญา ({whatIfS50Side}) และ Gold Online {whatIfGoContracts} สัญญา ({whatIfGoSide})
+                    เมื่อ SET50 เปลี่ยน {whatIfS50Shock >= 0 ? `+${whatIfS50Shock}` : whatIfS50Shock} จุด และทองคำเปลี่ยน {whatIfGoShock >= 0 ? `+${whatIfGoShock}` : whatIfGoShock}$
+                  </p>
+                </div>
+                <div className={styles.whatIfPlTotal}>
+                  <div className={styles.whatIfPlLabel}>กำไร/ขาดทุนจำลองสุทธิ (SIMULATED P/L)</div>
+                  <div className={`${styles.whatIfPlValue} ${simTotalPl >= 0 ? styles.whatIfPlPositive : styles.whatIfPlNegative}`}>
+                    {simTotalPl >= 0 ? `+${simTotalPl.toLocaleString()}` : simTotalPl.toLocaleString()} <small style={{ fontSize: '13px' }}>บาท</small>
+                  </div>
+                  <small style={{ color: '#94a3b8' }}>
+                    Equity ใหม่: <b style={{ color: '#ffffff' }}>{simNewEquity.toLocaleString()} บาท</b>
+                  </small>
+                </div>
+              </div>
 
-              <div className={styles.formRow}>
-                <label>เงินสดในพอร์ต (Equity): {marginEquity.toLocaleString()} บาท</label>
-                <div className={styles.presetGroup}>
-                  {[50000, 100000, 200000, 500000, 1000000].map(amt => (
-                    <button
-                      key={amt}
-                      type="button"
-                      className={styles.presetBtn}
-                      onClick={() => setMarginEquity(amt)}
+              <div className={styles.whatIfGrid}>
+                {/* Left Column: Holdings & Shocks */}
+                <div className={styles.formCard}>
+                  <h3 className={styles.formCardTitle}>📦 สถานะพอร์ตและปัจจัยกระแทก (Holdings & Shocks)</h3>
+
+                  <div className={styles.formRow}>
+                    <label>เงินสดในพอร์ต (Starting Equity): {whatIfEquity.toLocaleString()} บาท</label>
+                    <div className={styles.presetGroup}>
+                      {[150000, 200000, 300000, 500000, 1000000].map(amt => (
+                        <button
+                          key={amt}
+                          type="button"
+                          className={styles.presetBtn}
+                          onClick={() => setWhatIfEquity(amt)}
+                        >
+                          {(amt / 1000).toLocaleString()}k
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Position 1: S50 Index Futures */}
+                  <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '12px', color: '#22d3ee' }}>1. SET50 Futures (S50Z26)</strong>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>IM: {(whatIfS50Contracts * TFEX_SPECS.S50.im).toLocaleString()} ฿</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8' }}>ทิศทางสถานะ:</label>
+                        <div className={styles.sideToggle}>
+                          <button
+                            type="button"
+                            className={`${styles.sideBtn} ${whatIfS50Side === 'LONG' ? styles.sideBtnLongActive : ''}`}
+                            onClick={() => setWhatIfS50Side('LONG')}
+                            style={{ padding: '6px' }}
+                          >
+                            LONG 🟢
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.sideBtn} ${whatIfS50Side === 'SHORT' ? styles.sideBtnShortActive : ''}`}
+                            onClick={() => setWhatIfS50Side('SHORT')}
+                            style={{ padding: '6px' }}
+                          >
+                            SHORT 🔴
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8' }}>จำนวนสัญญา (S50):</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={30}
+                          className={styles.formInput}
+                          value={whatIfS50Contracts}
+                          onChange={e => setWhatIfS50Contracts(Math.max(1, Number(e.target.value)))}
+                          style={{ padding: '6px 10px' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Position 2: Gold Online Futures */}
+                  <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '12px', color: '#fbbf24' }}>2. Gold Online Futures (GOZ26)</strong>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>IM: {(whatIfGoContracts * TFEX_SPECS.GO.im).toLocaleString()} ฿</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8' }}>ทิศทางสถานะ:</label>
+                        <div className={styles.sideToggle}>
+                          <button
+                            type="button"
+                            className={`${styles.sideBtn} ${whatIfGoSide === 'LONG' ? styles.sideBtnLongActive : ''}`}
+                            onClick={() => setWhatIfGoSide('LONG')}
+                            style={{ padding: '6px' }}
+                          >
+                            LONG 🟢
+                          </button>
+                          <button
+                            type="button"
+                            className={`${styles.sideBtn} ${whatIfGoSide === 'SHORT' ? styles.sideBtnShortActive : ''}`}
+                            onClick={() => setWhatIfGoSide('SHORT')}
+                            style={{ padding: '6px' }}
+                          >
+                            SHORT 🔴
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '10px', color: '#94a3b8' }}>จำนวนสัญญา (GO):</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={20}
+                          className={styles.formInput}
+                          value={whatIfGoContracts}
+                          onChange={e => setWhatIfGoContracts(Math.max(1, Number(e.target.value)))}
+                          style={{ padding: '6px 10px' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stress Sliders */}
+                  <div className={styles.stressControlCard}>
+                    <div className={styles.stressTitle}>
+                      <span>⚡ สมมติฐานการเปลี่ยนแปลงของ SET50:</span>
+                      <b style={{ color: whatIfS50Shock >= 0 ? '#34d399' : '#fb7185', fontFamily: 'monospace' }}>
+                        {whatIfS50Shock >= 0 ? `+${whatIfS50Shock}` : whatIfS50Shock} จุด
+                      </b>
+                    </div>
+                    <input
+                      type="range"
+                      min={-40}
+                      max={40}
+                      step={1}
+                      value={whatIfS50Shock}
+                      onChange={e => setWhatIfS50Shock(Number(e.target.value))}
+                      style={{ width: '100%', accentColor: 'var(--tfex-cyan)' }}
+                    />
+                    <div className={styles.scenarioPresetRow}>
+                      {[-20, -15, -10, 0, 10, 15, 20].map(pts => (
+                        <button
+                          key={pts}
+                          type="button"
+                          className={styles.scenarioChip}
+                          onClick={() => setWhatIfS50Shock(pts)}
+                          style={whatIfS50Shock === pts ? { background: '#22d3ee', color: '#0f172a', fontWeight: 800 } : {}}
+                        >
+                          {pts >= 0 ? `+${pts}` : pts} pt
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={styles.stressControlCard}>
+                    <div className={styles.stressTitle}>
+                      <span>⚡ สมมติฐานการเปลี่ยนแปลงของราคาทองคำ (GO):</span>
+                      <b style={{ color: whatIfGoShock >= 0 ? '#34d399' : '#fb7185', fontFamily: 'monospace' }}>
+                        {whatIfGoShock >= 0 ? `+${whatIfGoShock}` : whatIfGoShock} USD
+                      </b>
+                    </div>
+                    <input
+                      type="range"
+                      min={-80}
+                      max={80}
+                      step={5}
+                      value={whatIfGoShock}
+                      onChange={e => setWhatIfGoShock(Number(e.target.value))}
+                      style={{ width: '100%', accentColor: '#fbbf24' }}
+                    />
+                    <div className={styles.scenarioPresetRow}>
+                      {[-40, -20, -10, 0, 10, 20, 40].map(usd => (
+                        <button
+                          key={usd}
+                          type="button"
+                          className={styles.scenarioChip}
+                          onClick={() => setWhatIfGoShock(usd)}
+                          style={whatIfGoShock === usd ? { background: '#fbbf24', color: '#0f172a', fontWeight: 800 } : {}}
+                        >
+                          {usd >= 0 ? `+${usd}` : usd}$
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Preset Scenarios Buttons */}
+                  <div style={{ marginTop: '10px' }}>
+                    <small style={{ color: '#94a3b8', display: 'block', marginBottom: '6px' }}>สถานการณ์จำลองสำเร็จรูป:</small>
+                    <div className={styles.scenarioPresetRow}>
+                      <button
+                        type="button"
+                        className={styles.scenarioChip}
+                        onClick={() => { setWhatIfS50Shock(-15); setWhatIfGoShock(-20); }}
+                      >
+                        💥 Panic Double Shock (-15pt S50, -20$ GO)
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.scenarioChip}
+                        onClick={() => { setWhatIfS50Shock(-20); setWhatIfGoShock(30); }}
+                      >
+                        🛡️ Flight to Gold (-20pt S50, +30$ GO)
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.scenarioChip}
+                        onClick={() => { setWhatIfS50Shock(15); setWhatIfGoShock(25); }}
+                      >
+                        🚀 Twin Bull (+15pt S50, +25$ GO)
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.scenarioChip}
+                        onClick={() => { setWhatIfS50Shock(0); setWhatIfGoShock(0); }}
+                      >
+                        🔄 ล้างค่า Baseline
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Outcomes & De-risking Guidance */}
+                <div className={styles.metricsCard}>
+                  <div>
+                    <h3 className={styles.formCardTitle} style={{ marginBottom: '14px' }}>
+                      📊 ผลกระทบต่อระดับเงินประกัน &amp; การทนผิดทาง
+                    </h3>
+
+                    <div className={styles.metricHero}>
+                      <div className={`${styles.metricBox} ${isWhatIfCallTriggered ? styles.metricBoxForce : styles.metricBoxCall}`}>
+                        <div className={styles.metricBoxLabel}>สถานะ MARGIN CALL</div>
+                        <div className={`${styles.metricBoxValue} ${isWhatIfCallTriggered ? styles.metricBoxValueForce : styles.metricBoxValueCall}`}>
+                          {isWhatIfCallTriggered ? 'TRIGGERED 🚨' : 'SAFE ZONE ✓'}
+                        </div>
+                        <div className={styles.metricBoxSub}>
+                          {isWhatIfCallTriggered
+                            ? `ขาดเงินประกัน MM: ${Math.abs(whatIfBufferToCall).toLocaleString()} ฿`
+                            : `กันชนเหนือ MM: +${whatIfBufferToCall.toLocaleString()} ฿`}
+                        </div>
+                      </div>
+
+                      <div className={styles.metricBox} style={{ borderColor: 'rgba(34, 211, 238, 0.4)' }}>
+                        <div className={styles.metricBoxLabel}>สัดส่วน MARGIN USAGE</div>
+                        <div className={styles.metricBoxValue} style={{ color: Number(whatIfMarginUsagePct) > 70 ? '#fb7185' : '#22d3ee' }}>
+                          {whatIfMarginUsagePct}%
+                        </div>
+                        <div className={styles.metricBoxSub}>
+                          IM รวม: <b>{whatIfTotalIm.toLocaleString()} ฿</b>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Impact Breakdown Rows */}
+                  <div className={styles.marginBreakdown}>
+                    <div className={styles.marginRow}>
+                      <span>ผลกระทบสัญญา S50 ({whatIfS50Contracts} สัญญา @ {whatIfS50Shock} pt):</span>
+                      <b style={{ color: simS50Pl >= 0 ? '#34d399' : '#fb7185' }}>
+                        {simS50Pl >= 0 ? `+${simS50Pl.toLocaleString()}` : simS50Pl.toLocaleString()} บาท
+                      </b>
+                    </div>
+                    <div className={styles.marginRow}>
+                      <span>ผลกระทบสัญญา GO ({whatIfGoContracts} สัญญา @ {whatIfGoShock}$):</span>
+                      <b style={{ color: simGoPl >= 0 ? '#34d399' : '#fb7185' }}>
+                        {simGoPl >= 0 ? `+${simGoPl.toLocaleString()}` : simGoPl.toLocaleString()} บาท
+                      </b>
+                    </div>
+                    <div className={styles.marginRow}>
+                      <span>กำไร/ขาดทุนสุทธิ (Net P/L Impact):</span>
+                      <b style={{ color: simTotalPl >= 0 ? '#34d399' : '#fb7185', fontSize: '13px' }}>
+                        {simTotalPl >= 0 ? `+${simTotalPl.toLocaleString()}` : simTotalPl.toLocaleString()} บาท
+                      </b>
+                    </div>
+                    <div className={styles.marginRow}>
+                      <span>เงินสดคงเหลือสุทธิ (Simulated Equity):</span>
+                      <b style={{ color: '#ffffff' }}>{simNewEquity.toLocaleString()} บาท</b>
+                    </div>
+                    <div className={styles.marginRow}>
+                      <span>ระดับเงินประกันรักษาสภาพ (Combined MM 70%):</span>
+                      <b>{whatIfTotalMm.toLocaleString()} บาท</b>
+                    </div>
+                    <div className={styles.marginRow}>
+                      <span>ระดับบังคับปิดสัญญา (Combined FM 30%):</span>
+                      <b style={{ color: '#fb7185' }}>{whatIfTotalFm.toLocaleString()} บาท</b>
+                    </div>
+                  </div>
+
+                  {/* De-risking Action Prescription */}
+                  <div className={styles.deRiskBox}>
+                    <div className={styles.deRiskTitle}>
+                      <span>🎯</span>
+                      <span>คำแนะนำการปรับพอร์ตเพื่อคุมความเสี่ยง (De-Risking Action)</span>
+                    </div>
+                    <p className={styles.deRiskText}>
+                      {deRiskAdvice}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── SUBMODE 2: SINGLE CONTRACT SAFETY SHIELD ── */}
+          {riskSubMode === 'single' && (
+            <div>
+              {/* Safety Shield Banner */}
+              <div className={`${styles.shieldBanner} ${isDangerousLeverage ? styles.shieldBannerAlert : ''}`}>
+                <span className={styles.shieldIcon}>{isDangerousLeverage ? '⚠️' : '🛡️'}</span>
+                <div className={styles.shieldText}>
+                  <strong>
+                    {isDangerousLeverage
+                      ? 'คำเตือน: ความเสี่ยงพอร์ต Overleverage สูง เสี่ยงต่อการโดน Margin Call!'
+                      : isModerateLeverage
+                        ? 'ระดับความเสี่ยงปานกลาง: ควรตั้ง Stop Loss ชัดเจนก่อนเปิดสถานะ'
+                        : 'พอร์ตมีกันชนปลอดภัยสูง: ทนต่อความผันผวนและการเปิดกระโดด Gap ได้ดี'}
+                  </strong>
+                  <p>
+                    ระบบจำลองเงินประกันตามเกณฑ์ TFEX จริง: Initial Margin (IM), Maintenance Margin (MM 70%), และ Force Close Margin (FM 30%)
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.marginGrid}>
+                {/* Input Form */}
+                <div className={styles.formCard}>
+                  <h3 className={styles.formCardTitle}>⚙️ พารามิเตอร์พอร์ตจำลองรายสัญญา</h3>
+
+                  <div className={styles.formRow}>
+                    <label>เงินสดในพอร์ต (Equity): {marginEquity.toLocaleString()} บาท</label>
+                    <div className={styles.presetGroup}>
+                      {[50000, 100000, 200000, 500000, 1000000].map(amt => (
+                        <button
+                          key={amt}
+                          type="button"
+                          className={styles.presetBtn}
+                          onClick={() => setMarginEquity(amt)}
+                        >
+                          {(amt / 1000).toLocaleString()}k
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="range"
+                      min={30000}
+                      max={1000000}
+                      step={10000}
+                      value={marginEquity}
+                      onChange={e => setMarginEquity(Number(e.target.value))}
+                      style={{ width: '100%', accentColor: 'var(--tfex-cyan)', margin: '8px 0' }}
+                    />
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <label>สินค้าอนุพันธ์:</label>
+                    <select
+                      className={styles.formInput}
+                      value={marginProduct}
+                      onChange={e => {
+                        const prod = e.target.value;
+                        setMarginProduct(prod);
+                        setMarginEntry(TFEX_SPECS[prod].futuresPrice);
+                      }}
                     >
-                      {(amt / 1000).toLocaleString()}k
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="range"
-                  min={30000}
-                  max={1000000}
-                  step={10000}
-                  value={marginEquity}
-                  onChange={e => setMarginEquity(Number(e.target.value))}
-                  style={{ width: '100%', accentColor: 'var(--tfex-cyan)', margin: '8px 0' }}
-                />
-              </div>
+                      <option value="S50">S50 Index Futures (IM 10,850 ฿ · 200 ฿/จุด)</option>
+                      <option value="GO">Gold Online Futures (IM 31,500 ฿ · 300 ฿/USD)</option>
+                      <option value="SVF">Silver Online Futures (IM 26,250 ฿ · 3,000 ฿/USD)</option>
+                      <option value="USD">USD Futures (IM 1,050 ฿ · 1,000 ฿/จุด)</option>
+                    </select>
+                  </div>
 
-              <div className={styles.formRow}>
-                <label>สินค้าอนุพันธ์:</label>
-                <select
-                  className={styles.formInput}
-                  value={marginProduct}
-                  onChange={e => {
-                    const prod = e.target.value;
-                    setMarginProduct(prod);
-                    setMarginEntry(TFEX_SPECS[prod].futuresPrice);
-                  }}
-                >
-                  <option value="S50">S50 Index Futures (IM 10,850 ฿ · 200 ฿/จุด)</option>
-                  <option value="GO">Gold Online Futures (IM 31,500 ฿ · 300 ฿/USD)</option>
-                  <option value="SVF">Silver Online Futures (IM 26,250 ฿ · 3,000 ฿/USD)</option>
-                  <option value="USD">USD Futures (IM 1,050 ฿ · 1,000 ฿/จุด)</option>
-                </select>
-              </div>
-
-              <div className={styles.formRow}>
-                <label>ทิศทางสถานะ (Position Side):</label>
-                <div className={styles.sideToggle}>
-                  <button
-                    type="button"
-                    className={`${styles.sideBtn} ${marginSide === 'LONG' ? styles.sideBtnLongActive : ''}`}
-                    onClick={() => setMarginSide('LONG')}
-                  >
-                    🟢 LONG (เก็งกำไรขาขึ้น)
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.sideBtn} ${marginSide === 'SHORT' ? styles.sideBtnShortActive : ''}`}
-                    onClick={() => setMarginSide('SHORT')}
-                  >
-                    🔴 SHORT (เก็งกำไรขาลง)
-                  </button>
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <label>จำนวนสัญญา (Contracts): {marginContracts} สัญญา</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={50}
-                  className={styles.formInput}
-                  value={marginContracts}
-                  onChange={e => setMarginContracts(Math.max(1, Number(e.target.value)))}
-                />
-              </div>
-
-              <div className={styles.formRow}>
-                <label>ราคาต้นทุน (Entry Price):</label>
-                <input
-                  type="number"
-                  step={currentSpec.tickSize}
-                  className={styles.formInput}
-                  value={marginEntry}
-                  onChange={e => setMarginEntry(Number(e.target.value))}
-                />
-              </div>
-            </div>
-
-            {/* Calculations & Metrics Card */}
-            <div className={styles.metricsCard}>
-              <div>
-                <h3 className={styles.formCardTitle} style={{ marginBottom: '14px' }}>
-                  📊 ผลวิเคราะห์ความปลอดภัยของพอร์ต
-                </h3>
-
-                <div className={styles.metricHero}>
-                  <div className={`${styles.metricBox} ${styles.metricBoxCall}`}>
-                    <div className={styles.metricBoxLabel}>ทนผิดทางได้ก่อน MARGIN CALL</div>
-                    <div className={`${styles.metricBoxValue} ${styles.metricBoxValueCall}`}>
-                      {pointsToCall.toFixed(1)} <small style={{ fontSize: '13px' }}>{currentSpec.unit}</small>
-                    </div>
-                    <div className={styles.metricBoxSub}>
-                      ระดับราคาเตือน: <b>{callPriceTrigger}</b>
+                  <div className={styles.formRow}>
+                    <label>ทิศทางสถานะ (Position Side):</label>
+                    <div className={styles.sideToggle}>
+                      <button
+                        type="button"
+                        className={`${styles.sideBtn} ${marginSide === 'LONG' ? styles.sideBtnLongActive : ''}`}
+                        onClick={() => setMarginSide('LONG')}
+                      >
+                        🟢 LONG (เก็งกำไรขาขึ้น)
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.sideBtn} ${marginSide === 'SHORT' ? styles.sideBtnShortActive : ''}`}
+                        onClick={() => setMarginSide('SHORT')}
+                      >
+                        🔴 SHORT (เก็งกำไรขาลง)
+                      </button>
                     </div>
                   </div>
 
-                  <div className={`${styles.metricBox} ${styles.metricBoxForce}`}>
-                    <div className={styles.metricBoxLabel}>ทนผิดทางได้ก่อน FORCE CLOSE</div>
-                    <div className={`${styles.metricBoxValue} ${styles.metricBoxValueForce}`}>
-                      {pointsToForce.toFixed(1)} <small style={{ fontSize: '13px' }}>{currentSpec.unit}</small>
+                  <div className={styles.formRow}>
+                    <label>จำนวนสัญญา (Contracts): {marginContracts} สัญญา</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      className={styles.formInput}
+                      value={marginContracts}
+                      onChange={e => setMarginContracts(Math.max(1, Number(e.target.value)))}
+                    />
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <label>ราคาต้นทุน (Entry Price):</label>
+                    <input
+                      type="number"
+                      step={currentSpec.tickSize}
+                      className={styles.formInput}
+                      value={marginEntry}
+                      onChange={e => setMarginEntry(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+
+                {/* Calculations & Metrics Card */}
+                <div className={styles.metricsCard}>
+                  <div>
+                    <h3 className={styles.formCardTitle} style={{ marginBottom: '14px' }}>
+                      📊 ผลวิเคราะห์ความปลอดภัยของพอร์ต
+                    </h3>
+
+                    <div className={styles.metricHero}>
+                      <div className={`${styles.metricBox} ${styles.metricBoxCall}`}>
+                        <div className={styles.metricBoxLabel}>ทนผิดทางได้ก่อน MARGIN CALL</div>
+                        <div className={`${styles.metricBoxValue} ${styles.metricBoxValueCall}`}>
+                          {pointsToCall.toFixed(1)} <small style={{ fontSize: '13px' }}>{currentSpec.unit}</small>
+                        </div>
+                        <div className={styles.metricBoxSub}>
+                          ระดับราคาเตือน: <b>{callPriceTrigger}</b>
+                        </div>
+                      </div>
+
+                      <div className={`${styles.metricBox} ${styles.metricBoxForce}`}>
+                        <div className={styles.metricBoxLabel}>ทนผิดทางได้ก่อน FORCE CLOSE</div>
+                        <div className={`${styles.metricBoxValue} ${styles.metricBoxValueForce}`}>
+                          {pointsToForce.toFixed(1)} <small style={{ fontSize: '13px' }}>{currentSpec.unit}</small>
+                        </div>
+                        <div className={styles.metricBoxSub}>
+                          ระดับราคาบังคับปิด: <b>{forcePriceTrigger}</b>
+                        </div>
+                      </div>
                     </div>
-                    <div className={styles.metricBoxSub}>
-                      ระดับราคาบังคับปิด: <b>{forcePriceTrigger}</b>
+                  </div>
+
+                  {/* Margin Usage Meter */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '6px' }}>
+                      <span>สัดส่วนการใช้ Margin (IM Utilization):</span>
+                      <b style={{ color: Number(marginUsagePct) > 75 ? '#fb7185' : '#34d399' }}>{marginUsagePct}%</b>
+                    </div>
+                    <div className={styles.meterTrack}>
+                      <div
+                        className={`${styles.meterFill} ${
+                          Number(marginUsagePct) > 75
+                            ? styles.meterFillDanger
+                            : Number(marginUsagePct) > 40
+                              ? styles.meterFillWarn
+                              : styles.meterFillSafe
+                        }`}
+                        style={{ width: `${Math.min(100, Number(marginUsagePct))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Margin Breakdown Table */}
+                  <div className={styles.marginBreakdown}>
+                    <div className={styles.marginRow}>
+                      <span>เงินประกันเริ่มต้น (IM Required):</span>
+                      <b>{totalIm.toLocaleString()} บาท</b>
+                    </div>
+                    <div className={styles.marginRow}>
+                      <span>เงินประกันรักษาสภาพ (MM 70%):</span>
+                      <b>{totalMm.toLocaleString()} บาท</b>
+                    </div>
+                    <div className={styles.marginRow}>
+                      <span>เงินประกันขั้นต่ำบังคับปิด (FM 30%):</span>
+                      <b>{totalFm.toLocaleString()} บาท</b>
+                    </div>
+                    <div className={styles.marginRow}>
+                      <span>เงินสดคงเหลือเพื่อรองรับความเสี่ยง:</span>
+                      <b style={{ color: '#34d399' }}>{Math.max(0, marginEquity - totalIm).toLocaleString()} บาท</b>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Margin Usage Meter */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '6px' }}>
-                  <span>สัดส่วนการใช้ Margin (IM Utilization):</span>
-                  <b style={{ color: Number(marginUsagePct) > 75 ? '#fb7185' : '#34d399' }}>{marginUsagePct}%</b>
-                </div>
-                <div className={styles.meterTrack}>
-                  <div
-                    className={`${styles.meterFill} ${
-                      Number(marginUsagePct) > 75
-                        ? styles.meterFillDanger
-                        : Number(marginUsagePct) > 40
-                          ? styles.meterFillWarn
-                          : styles.meterFillSafe
-                    }`}
-                    style={{ width: `${Math.min(100, Number(marginUsagePct))}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Margin Breakdown Table */}
-              <div className={styles.marginBreakdown}>
-                <div className={styles.marginRow}>
-                  <span>เงินประกันเริ่มต้น (IM Required):</span>
-                  <b>{totalIm.toLocaleString()} บาท</b>
-                </div>
-                <div className={styles.marginRow}>
-                  <span>เงินประกันรักษาสภาพ (MM 70%):</span>
-                  <b>{totalMm.toLocaleString()} บาท</b>
-                </div>
-                <div className={styles.marginRow}>
-                  <span>เงินประกันขั้นต่ำบังคับปิด (FM 30%):</span>
-                  <b>{totalFm.toLocaleString()} บาท</b>
-                </div>
-                <div className={styles.marginRow}>
-                  <span>เงินสดคงเหลือเพื่อรองรับความเสี่ยง:</span>
-                  <b style={{ color: '#34d399' }}>{Math.max(0, marginEquity - totalIm).toLocaleString()} บาท</b>
-                </div>
-              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 

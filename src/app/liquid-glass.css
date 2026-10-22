@@ -2031,3 +2031,76 @@
   color: #0f172a !important;
 }
 
+/* ─── What-If Simulator Light Theme Overrides ─── */
+.market-workspace.theme-light-glass [class*='subModeSwitch'],
+[data-theme='light'] [class*='subModeSwitch'] {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='subModeBtn'],
+[data-theme='light'] [class*='subModeBtn'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='subModeBtnActive'],
+[data-theme='light'] [class*='subModeBtnActive'] {
+  background: #ffffff !important;
+  color: #0284c7 !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.2) !important;
+}
+
+.market-workspace.theme-light-glass [class*='whatIfHero'],
+[data-theme='light'] [class*='whatIfHero'] {
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%) !important;
+  border-color: #bae6fd !important;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass [class*='whatIfHeroInfo'] h3,
+[data-theme='light'] [class*='whatIfHeroInfo'] h3 {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='stressControlCard'],
+[data-theme='light'] [class*='stressControlCard'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='stressTitle'],
+[data-theme='light'] [class*='stressTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='scenarioChip'],
+[data-theme='light'] [class*='scenarioChip'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='scenarioChip']:hover,
+[data-theme='light'] [class*='scenarioChip']:hover {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='deRiskBox'],
+[data-theme='light'] [class*='deRiskBox'] {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+.market-workspace.theme-light-glass [class*='deRiskTitle'],
+[data-theme='light'] [class*='deRiskTitle'] {
+  color: #b45309 !important;
+}
+
+.market-workspace.theme-light-glass [class*='deRiskText'],
+[data-theme='light'] [class*='deRiskText'] {
+  color: #78350f !important;
+}
+
