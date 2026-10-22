@@ -129,8 +129,9 @@ export default function MonitorProvider({children}) {
 }
 export function SoundControl(){
   const monitor=useMonitor();if(!monitor)return null;
-  const label=monitor.audio==='unsupported'?'ไม่รองรับเสียง':['blocked','failed'].includes(monitor.audio)?'เบราว์เซอร์ยังไม่เล่นเสียง · ลองอีกครั้ง':!monitor.enabled?'เสียงปิด':monitor.audio==='speaking'?'กำลังอ่านแจ้งเตือน':monitor.audio==='starting'?'กำลังขอเล่นเสียง':!monitor.gestureReady?'เสียงเปิด · แตะหน้าเว็บครั้งแรก':'เสียงเปิด · รอเหตุการณ์';
-  return <button className="monitor-sound" type="button" aria-pressed={monitor.enabled} disabled={monitor.audio==='unsupported'} onClick={monitor.toggle} title="ควบคุมเสียงทุกตลาด · การปิดเสียงไม่หยุดสแกนหรือบันทึก">{monitor.enabled?'◖))':'◖×'} <span>{label}</span></button>;
+  const label=monitor.audio==='unsupported'?'ไม่รองรับเสียง':['blocked','failed'].includes(monitor.audio)?'แตะเพื่อเปิดเสียง':!monitor.enabled?'ปิดเสียง':monitor.audio==='speaking'?'กำลังอ่านเสียง':monitor.audio==='starting'?'กำลังเริ่มเสียง':!monitor.gestureReady?'แตะเพื่อเปิดเสียง':'เปิดเสียงแล้ว';
+  const icon=monitor.enabled?'🔊':'🔇';
+  return <button className="monitor-sound" type="button" aria-pressed={monitor.enabled} disabled={monitor.audio==='unsupported'} onClick={monitor.toggle} title="ควบคุมเสียงแจ้งเตือนทุกตลาด · ปิดเสียงยังคงบันทึกสถิติตามปกติ"><span className="sound-icon" aria-hidden="true">{icon}</span><span className="sound-label">{label}</span></button>;
 }
 export function AlertHistory(){
   const m=useMonitor(),[count,setCount]=useState(20);if(!m)return null;

@@ -622,3 +622,618 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .negati
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [data-tone='down'] {
   color: #F43F5E !important;
 }
+
+/* ==========================================================================
+   UNIFIED SCANNER & SCREENER SYSTEM (MAGIC UI DARK THEME)
+   Applies across Thai Screener, DR Strategy Radar, US/TFEX SignalDesk,
+   AutoPick Board, SignalResults, Daytrade Workspace, and Market Scanner.
+   ========================================================================== */
+
+/* ── 1. Sound Control Capsule Button (High Visibility & Clear Readability) ── */
+html:not([data-theme='light']) .monitor-sound,
+body:not([data-theme='light']) .monitor-sound {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 14px !important;
+  border-radius: 99px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+  white-space: nowrap !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+html:not([data-theme='light']) .monitor-sound .sound-icon,
+body:not([data-theme='light']) .monitor-sound .sound-icon {
+  font-size: 14px !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+}
+
+html:not([data-theme='light']) .monitor-sound .sound-label,
+body:not([data-theme='light']) .monitor-sound .sound-label {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
+  color: #F1F5F9 !important;
+  white-space: nowrap !important;
+}
+
+html:not([data-theme='light']) .monitor-sound:hover,
+body:not([data-theme='light']) .monitor-sound:hover {
+  background: #1C3250 !important;
+  border-color: #22D3EE !important;
+  color: #22D3EE !important;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.25) !important;
+}
+
+html:not([data-theme='light']) .monitor-sound[aria-pressed='true'],
+body:not([data-theme='light']) .monitor-sound[aria-pressed='true'] {
+  background: rgba(34, 211, 238, 0.12) !important;
+  border: 1px solid rgba(34, 211, 238, 0.6) !important;
+  color: #22D3EE !important;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+}
+
+html:not([data-theme='light']) .monitor-sound[aria-pressed='true'] .sound-label,
+body:not([data-theme='light']) .monitor-sound[aria-pressed='true'] .sound-label {
+  color: #22D3EE !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.4) !important;
+}
+
+html:not([data-theme='light']) .monitor-sound[aria-pressed='false'],
+body:not([data-theme='light']) .monitor-sound[aria-pressed='false'] {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  color: #CBD5E1 !important;
+}
+
+html:not([data-theme='light']) .monitor-sound[aria-pressed='false'] .sound-label,
+body:not([data-theme='light']) .monitor-sound[aria-pressed='false'] .sound-label {
+  color: #CBD5E1 !important;
+}
+
+/* ── 2. Signal Desk (US & TFEX Screeners) ── */
+html:not([data-theme='light']) .signal-desk {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .signal-desk h2 {
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .signal-desk small,
+html:not([data-theme='light']) .signal-desk p {
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) .signal-desk input,
+html:not([data-theme='light']) .signal-desk select {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+  border-radius: 8px !important;
+}
+
+html:not([data-theme='light']) .signal-desk input:focus,
+html:not([data-theme='light']) .signal-desk select:focus {
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.25) !important;
+  outline: none !important;
+}
+
+html:not([data-theme='light']) .signal-desk button {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+  border-radius: 8px !important;
+  transition: var(--magic-transition) !important;
+}
+
+html:not([data-theme='light']) .signal-desk button:hover {
+  background: #1C3250 !important;
+  border-color: #22D3EE !important;
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .signal-table th {
+  background: #172641 !important;
+  color: #94A3B8 !important;
+  border-bottom: 1px solid #243550 !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.5px !important;
+}
+
+html:not([data-theme='light']) .signal-table td {
+  border-bottom: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .signal-table .signal-link {
+  color: #22D3EE !important;
+  font-weight: 700 !important;
+}
+
+html:not([data-theme='light']) .signal-state {
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+}
+
+html:not([data-theme='light']) .signal-state.pass {
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #34D399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+
+html:not([data-theme='light']) .signal-state.reject {
+  background: rgba(244, 63, 94, 0.16) !important;
+  color: #FB7185 !important;
+  border: 1px solid rgba(244, 63, 94, 0.35) !important;
+}
+
+html:not([data-theme='light']) .signal-state.wait {
+  background: rgba(245, 158, 11, 0.16) !important;
+  color: #FBBF24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+html:not([data-theme='light']) .signal-track-grid article,
+html:not([data-theme='light']) .signal-stats,
+html:not([data-theme='light']) .signal-replay {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  border-radius: 14px !important;
+}
+
+html:not([data-theme='light']) .signal-note,
+html:not([data-theme='light']) .signal-coverage,
+html:not([data-theme='light']) .signal-costs {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+}
+
+/* ── 3. DR Strategy Radar & Decision Desk ── */
+html:not([data-theme='light']) [class*='dr-strategy_container'],
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='container'] {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) [class*='statBox'] {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  border-radius: 12px !important;
+}
+
+html:not([data-theme='light']) [class*='statVal'] {
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) [class*='statLabel'] {
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) [class*='tabBtn'] {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+  border-radius: 10px !important;
+  transition: var(--magic-transition) !important;
+}
+
+html:not([data-theme='light']) [class*='tabBtn']:hover {
+  background: #1C3250 !important;
+  border-color: #22D3EE !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) [class*='tabBtnActive'] {
+  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
+  border-color: #22D3EE !important;
+  color: #22D3EE !important;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.25) !important;
+}
+
+html:not([data-theme='light']) [class*='filterPill'] {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) [class*='filterPillActive'] {
+  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
+  border-color: #22D3EE !important;
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) [class*='radarCard'] {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+html:not([data-theme='light']) [class*='desk'] {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) [class*='counts']>div,
+html:not([data-theme='light']) [class*='levels']>div {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) [class*='shortlist'] article {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) [class*='shortlist'] article[data-selected='true'] {
+  border-color: #22D3EE !important;
+  background: #1C3250 !important;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.2) !important;
+}
+
+html:not([data-theme='light']) [class*='plan'] {
+  background: #0B1426 !important;
+  border: 1px solid #243550 !important;
+}
+
+/* ── 4. AutoPick Board & Signal Results ── */
+html:not([data-theme='light']) .auto-pick-board {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .auto-pick-badge {
+  background: rgba(34, 211, 238, 0.12) !important;
+  border: 1px solid rgba(34, 211, 238, 0.4) !important;
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .auto-pick-market {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .auto-pick-market.active {
+  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.25) !important;
+}
+
+html:not([data-theme='light']) .auto-pick-market.active strong {
+  color: #FFFFFF !important;
+}
+
+html:not([data-theme='light']) .auto-pick-market.active span {
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .auto-pick-signal {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) .auto-pick-levels span {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) .auto-pick-levels b {
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .auto-pick-signal-foot button {
+  background: #1C3250 !important;
+  border: 1px solid #22D3EE !important;
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .auto-pick-events>div {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .auto-pick-voice {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) .auto-pick-worker {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) .signal-results {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  border-radius: 16px !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .results-refresh,
+html:not([data-theme='light']) .results-footer button {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .results-refresh:hover,
+html:not([data-theme='light']) .results-footer button:not(:disabled):hover {
+  background: #1C3250 !important;
+  border-color: #22D3EE !important;
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .results-filters select {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .results-events {
+  background: #0B1426 !important;
+  border-top: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+}
+
+/* ── 5. Market Scanner & Strategy Selector (workspace-features) ── */
+html:not([data-theme='light']) .scanner-view {
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .feature-intro p {
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) .feature-kicker {
+  color: #22D3EE !important;
+  font-weight: 700 !important;
+}
+
+html:not([data-theme='light']) .ng-strategy-tab-btn {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+  transition: var(--magic-transition) !important;
+}
+
+html:not([data-theme='light']) .ng-strategy-tab-btn:hover {
+  background: #1C3250 !important;
+  border-color: #22D3EE !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .ng-strategy-tab-btn.is-active {
+  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
+  border-color: #22D3EE !important;
+  color: #22D3EE !important;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.25) !important;
+}
+
+html:not([data-theme='light']) .ng-strategy-desc-banner {
+  background: rgba(34, 211, 238, 0.08) !important;
+  border: 1px solid rgba(34, 211, 238, 0.25) !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .ng-strategy-desc-banner strong {
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .scanner-controls input {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .scanner-condition-chips button {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) .scanner-condition-chips button.selected {
+  background: #163A63 !important;
+  border-color: #22D3EE !important;
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .feature-status-note {
+  background: rgba(23, 38, 65, 0.6) !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) .scanner-table-wrap {
+  border: 1px solid #243550 !important;
+  background: #111C33 !important;
+}
+
+html:not([data-theme='light']) .scanner-table thead,
+html:not([data-theme='light']) .scanner-table th {
+  background: #172641 !important;
+  color: #94A3B8 !important;
+  border-bottom: 1px solid #243550 !important;
+  font-weight: 700 !important;
+}
+
+html:not([data-theme='light']) .scanner-table td {
+  border-top: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .scanner-row.open {
+  background: #162B4A !important;
+}
+
+html:not([data-theme='light']) .scanner-symbol strong {
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .scanner-symbol:hover strong {
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .trend-chip {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) .trend-chip.up {
+  background: rgba(16, 185, 129, 0.16) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  color: #34D399 !important;
+}
+
+html:not([data-theme='light']) .trend-chip.down {
+  background: rgba(244, 63, 94, 0.16) !important;
+  border-color: rgba(244, 63, 94, 0.5) !important;
+  color: #FB7185 !important;
+}
+
+html:not([data-theme='light']) .expand-button {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .scanner-evidence {
+  background: #0B1426 !important;
+  border-top: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) .scanner-evidence-head {
+  color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .scanner-metrics span {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) .scanner-metrics b {
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .mtf-card {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .mtf-card:hover {
+  background: #172641 !important;
+  border-color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .volume-summary div {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+}
+
+/* ── 6. Daytrade Workspace ── */
+html:not([data-theme='light']) [class*='daytrade_workspace'],
+html:not([data-theme='light']) [class*='daytrade_panel'] {
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) [class*='daytrade_panel'] {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+}
+
+html:not([data-theme='light']) [class*='dock'] {
+  background: rgba(17, 28, 51, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) [class*='dock'] button {
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) [class*='dock'] button:hover {
+  background: #1C3250 !important;
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) [class*='dock'] button[aria-pressed='true'] {
+  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
+  border-color: #22D3EE !important;
+  color: #22D3EE !important;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.25) !important;
+}
+
+html:not([data-theme='light']) [class*='opportunity'] {
+  background: #172641 !important;
+  border: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) [class*='opportunity']:hover,
+html:not([data-theme='light']) [class*='opportunity'][data-selected='true'] {
+  background: #1C3250 !important;
+  border-color: #22D3EE !important;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.2) !important;
+}
+
+html:not([data-theme='light']) [class*='pickIdentity'] strong,
+html:not([data-theme='light']) [class*='pickScore']>strong,
+html:not([data-theme='light']) [class*='pickPrice']>strong {
+  color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) [class*='pickCondition'] {
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) [class*='opportunityEmpty'] {
+  background: #172641 !important;
+  border: 1px dashed #243550 !important;
+}
+
+html:not([data-theme='light']) [class*='daytrade_tableWrap'] {
+  background: #111C33 !important;
+  border: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) [class*='daytrade_tableWrap'] th {
+  background: #172641 !important;
+  color: #94A3B8 !important;
+  border-bottom: 1px solid #243550 !important;
+}
+
+html:not([data-theme='light']) [class*='daytrade_tableWrap'] td {
+  border-top: 1px solid #243550 !important;
+  color: #F1F5F9 !important;
+}
+

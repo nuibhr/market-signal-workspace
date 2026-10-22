@@ -1049,3 +1049,585 @@
   font-size: 13px;
   line-height: 1;
 }
+
+/* ==========================================================================
+   UNIFIED SCANNER & SCREENER SYSTEM (LIQUID GLASS LIGHT THEME)
+   Applies across Thai Screener, DR Strategy Radar, US/TFEX SignalDesk,
+   AutoPick Board, SignalResults, Daytrade Workspace, and Market Scanner.
+   ========================================================================== */
+
+/* ── 1. Sound Control Capsule Button (Liquid Glass Light Mode) ── */
+.market-workspace.theme-light-glass .monitor-sound,
+[data-theme='light'] .monitor-sound {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 14px !important;
+  border-radius: 99px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+  white-space: nowrap !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+.market-workspace.theme-light-glass .monitor-sound .sound-icon,
+[data-theme='light'] .monitor-sound .sound-icon {
+  font-size: 14px !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+}
+
+.market-workspace.theme-light-glass .monitor-sound .sound-label,
+[data-theme='light'] .monitor-sound .sound-label {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  white-space: nowrap !important;
+}
+
+.market-workspace.theme-light-glass .monitor-sound:hover,
+[data-theme='light'] .monitor-sound:hover {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15) !important;
+}
+
+.market-workspace.theme-light-glass .monitor-sound:hover .sound-label,
+[data-theme='light'] .monitor-sound:hover .sound-label {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .monitor-sound[aria-pressed='true'],
+[data-theme='light'] .monitor-sound[aria-pressed='true'] {
+  background: rgba(236, 253, 245, 0.95) !important;
+  border: 1px solid #10b981 !important;
+  color: #065f46 !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.18), inset 0 1px rgba(255, 255, 255, 0.9) !important;
+}
+
+.market-workspace.theme-light-glass .monitor-sound[aria-pressed='true'] .sound-label,
+[data-theme='light'] .monitor-sound[aria-pressed='true'] .sound-label {
+  color: #065f46 !important;
+  font-weight: 800 !important;
+}
+
+.market-workspace.theme-light-glass .monitor-sound[aria-pressed='false'],
+[data-theme='light'] .monitor-sound[aria-pressed='false'] {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass .monitor-sound[aria-pressed='false'] .sound-label,
+[data-theme='light'] .monitor-sound[aria-pressed='false'] .sound-label {
+  color: #1e293b !important;
+}
+
+/* ── 2. Signal Desk (US & TFEX Screeners) ── */
+.market-workspace.theme-light-glass .signal-desk,
+[data-theme='light'] .signal-desk {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05) !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .signal-desk h2,
+[data-theme='light'] .signal-desk h2 {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .signal-desk small,
+.market-workspace.theme-light-glass .signal-desk p,
+[data-theme='light'] .signal-desk small,
+[data-theme='light'] .signal-desk p {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass .signal-desk input,
+.market-workspace.theme-light-glass .signal-desk select,
+[data-theme='light'] .signal-desk input,
+[data-theme='light'] .signal-desk select {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  border-radius: 8px !important;
+}
+
+.market-workspace.theme-light-glass .signal-desk button,
+[data-theme='light'] .signal-desk button {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  border-radius: 8px !important;
+}
+
+.market-workspace.theme-light-glass .signal-desk button:hover,
+[data-theme='light'] .signal-desk button:hover {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .signal-table th,
+[data-theme='light'] .signal-table th {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass .signal-table td,
+[data-theme='light'] .signal-table td {
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .signal-table .signal-link,
+[data-theme='light'] .signal-table .signal-link {
+  color: #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass .signal-track-grid article,
+.market-workspace.theme-light-glass .signal-stats,
+.market-workspace.theme-light-glass .signal-replay,
+[data-theme='light'] .signal-track-grid article,
+[data-theme='light'] .signal-stats,
+[data-theme='light'] .signal-replay {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04) !important;
+}
+
+.market-workspace.theme-light-glass .signal-note,
+.market-workspace.theme-light-glass .signal-coverage,
+.market-workspace.theme-light-glass .signal-costs,
+[data-theme='light'] .signal-note,
+[data-theme='light'] .signal-coverage,
+[data-theme='light'] .signal-costs {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+/* ── 3. DR Strategy Radar & Decision Desk ── */
+.market-workspace.theme-light-glass [class*='dr-strategy_container'],
+.market-workspace.theme-light-glass [class*='container'],
+[data-theme='light'] [class*='dr-strategy_container'] {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05) !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='statBox'],
+[data-theme='light'] [class*='statBox'] {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='statVal'],
+[data-theme='light'] [class*='statVal'] {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='statLabel'],
+[data-theme='light'] [class*='statLabel'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='tabBtn'],
+[data-theme='light'] [class*='tabBtn'] {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='tabBtn']:hover,
+[data-theme='light'] [class*='tabBtn']:hover {
+  background: #f0f9ff !important;
+  color: #0284c7 !important;
+  border-color: #38bdf8 !important;
+}
+
+.market-workspace.theme-light-glass [class*='tabBtnActive'],
+[data-theme='light'] [class*='tabBtnActive'] {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25) !important;
+}
+
+.market-workspace.theme-light-glass [class*='radarCard'],
+[data-theme='light'] [class*='radarCard'] {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04) !important;
+}
+
+.market-workspace.theme-light-glass [class*='desk'],
+[data-theme='light'] [class*='desk'] {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='counts']>div,
+.market-workspace.theme-light-glass [class*='levels']>div,
+[data-theme='light'] [class*='counts']>div,
+[data-theme='light'] [class*='levels']>div {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='shortlist'] article,
+[data-theme='light'] [class*='shortlist'] article {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='shortlist'] article[data-selected='true'],
+[data-theme='light'] [class*='shortlist'] article[data-selected='true'] {
+  border-color: #0284c7 !important;
+  background: #f0f9ff !important;
+}
+
+.market-workspace.theme-light-glass [class*='plan'],
+[data-theme='light'] [class*='plan'] {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+/* ── 4. AutoPick Board & Signal Results ── */
+.market-workspace.theme-light-glass .auto-pick-board,
+[data-theme='light'] .auto-pick-board {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05) !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-head h2,
+[data-theme='light'] .auto-pick-head h2 {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-head p,
+[data-theme='light'] .auto-pick-head p {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-badge,
+[data-theme='light'] .auto-pick-badge {
+  background: rgba(2, 132, 199, 0.1) !important;
+  border: 1px solid rgba(2, 132, 199, 0.3) !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-market,
+[data-theme='light'] .auto-pick-market {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-market strong,
+[data-theme='light'] .auto-pick-market strong {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-market.active,
+[data-theme='light'] .auto-pick-market.active {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-market.active strong,
+.market-workspace.theme-light-glass .auto-pick-market.active span,
+.market-workspace.theme-light-glass .auto-pick-market.active small,
+[data-theme='light'] .auto-pick-market.active strong,
+[data-theme='light'] .auto-pick-market.active span,
+[data-theme='light'] .auto-pick-market.active small {
+  color: #ffffff !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-signal,
+[data-theme='light'] .auto-pick-signal {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-signal strong,
+[data-theme='light'] .auto-pick-signal strong {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-levels span,
+[data-theme='light'] .auto-pick-levels span {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-levels b,
+[data-theme='light'] .auto-pick-levels b {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-signal-foot button,
+[data-theme='light'] .auto-pick-signal-foot button {
+  background: #f0f9ff !important;
+  border: 1px solid #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-events>div,
+[data-theme='light'] .auto-pick-events>div {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-voice,
+[data-theme='light'] .auto-pick-voice {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass .auto-pick-voice strong,
+[data-theme='light'] .auto-pick-voice strong {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .signal-results,
+[data-theme='light'] .signal-results {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .results-refresh,
+.market-workspace.theme-light-glass .results-footer button,
+[data-theme='light'] .results-refresh,
+[data-theme='light'] .results-footer button {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass .results-refresh:hover,
+.market-workspace.theme-light-glass .results-footer button:not(:disabled):hover,
+[data-theme='light'] .results-refresh:hover,
+[data-theme='light'] .results-footer button:not(:disabled):hover {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .results-filters select,
+[data-theme='light'] .results-filters select {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .results-events,
+[data-theme='light'] .results-events {
+  background: #f8fafc !important;
+  border-top: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+/* ── 5. Market Scanner & Strategy Selector (workspace-features) ── */
+.market-workspace.theme-light-glass .scanner-view,
+[data-theme='light'] .scanner-view {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .feature-intro p,
+[data-theme='light'] .feature-intro p {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass .feature-kicker,
+[data-theme='light'] .feature-kicker {
+  color: #0284c7 !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass .ng-strategy-tab-btn,
+[data-theme='light'] .ng-strategy-tab-btn {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass .ng-strategy-tab-btn:hover,
+[data-theme='light'] .ng-strategy-tab-btn:hover {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .ng-strategy-tab-btn.is-active,
+[data-theme='light'] .ng-strategy-tab-btn.is-active {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25) !important;
+}
+
+.market-workspace.theme-light-glass .ng-strategy-desc-banner,
+[data-theme='light'] .ng-strategy-desc-banner {
+  background: #f0f9ff !important;
+  border: 1px solid #bae6fd !important;
+  color: #0369a1 !important;
+}
+
+.market-workspace.theme-light-glass .scanner-controls input,
+[data-theme='light'] .scanner-controls input {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .scanner-condition-chips button,
+[data-theme='light'] .scanner-condition-chips button {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass .scanner-condition-chips button.selected,
+[data-theme='light'] .scanner-condition-chips button.selected {
+  background: #0284c7 !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+.market-workspace.theme-light-glass .feature-status-note,
+[data-theme='light'] .feature-status-note {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass .scanner-table-wrap,
+[data-theme='light'] .scanner-table-wrap {
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+}
+
+.market-workspace.theme-light-glass .scanner-table thead,
+.market-workspace.theme-light-glass .scanner-table th,
+[data-theme='light'] .scanner-table thead,
+[data-theme='light'] .scanner-table th {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass .scanner-table td,
+[data-theme='light'] .scanner-table td {
+  border-top: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .scanner-row.open,
+[data-theme='light'] .scanner-row.open {
+  background: #f0f9ff !important;
+}
+
+.market-workspace.theme-light-glass .scanner-symbol strong,
+[data-theme='light'] .scanner-symbol strong {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .scanner-symbol:hover strong,
+[data-theme='light'] .scanner-symbol:hover strong {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .trend-chip,
+[data-theme='light'] .trend-chip {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass .trend-chip.up,
+[data-theme='light'] .trend-chip.up {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+
+.market-workspace.theme-light-glass .trend-chip.down,
+[data-theme='light'] .trend-chip.down {
+  background: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #9f1239 !important;
+}
+
+.market-workspace.theme-light-glass .expand-button,
+[data-theme='light'] .expand-button {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass .scanner-evidence,
+[data-theme='light'] .scanner-evidence {
+  background: #f8fafc !important;
+  border-top: 1px solid #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass .scanner-evidence-head,
+[data-theme='light'] .scanner-evidence-head {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .scanner-metrics span,
+[data-theme='light'] .scanner-metrics span {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass .scanner-metrics b,
+[data-theme='light'] .scanner-metrics b {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .mtf-card,
+[data-theme='light'] .mtf-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .mtf-card:hover,
+[data-theme='light'] .mtf-card:hover {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .volume-summary div,
+[data-theme='light'] .volume-summary div {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
