@@ -2104,3 +2104,77 @@
   color: #78350f !important;
 }
 
+/* Settrade Open API BYOK Light Theme */
+.market-workspace.theme-light-glass [class*='byokBar'],
+[data-theme='light'] [class*='byokBar'] {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(147, 51, 234, 0.05) 100%) !important;
+  border-color: rgba(2, 132, 199, 0.3) !important;
+}
+
+.market-workspace.theme-light-glass [class*='byokTitle'],
+[data-theme='light'] [class*='byokTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='byokDesc'],
+[data-theme='light'] [class*='byokDesc'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='byokStatVal'],
+[data-theme='light'] [class*='byokStatVal'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='byokBtnSecondary'],
+[data-theme='light'] [class*='byokBtnSecondary'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='modalContent'],
+[data-theme='light'] [class*='modalContent'] {
+  background: #ffffff !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25) !important;
+}
+
+.market-workspace.theme-light-glass [class*='modalTitle'],
+[data-theme='light'] [class*='modalTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='modalCloseBtn'],
+[data-theme='light'] [class*='modalCloseBtn'] {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='formLabel'],
+[data-theme='light'] [class*='formLabel'] {
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='formInput'],
+.market-workspace.theme-light-glass [class*='formSelect'],
+[data-theme='light'] [class*='formInput'],
+[data-theme='light'] [class*='formSelect'] {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='guideSection'],
+[data-theme='light'] [class*='guideSection'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='guideTitle'],
+[data-theme='light'] [class*='guideTitle'] {
+  color: #0f172a !important;
+}
+
