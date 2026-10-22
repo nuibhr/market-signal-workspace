@@ -416,7 +416,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
             >
               <span>🔑</span>
               <span>ต่อโบรค (BYOK)</span>
-              <span className={styles.gatewayBadge022}>022 / 032</span>
+              <span className={styles.gatewayBadge022}>022 / 003 / 032</span>
             </button>
           )}
         </div>

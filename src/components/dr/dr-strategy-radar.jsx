@@ -992,7 +992,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           <Zap size={16} />
           <span>⚡ พอร์ต &amp; API (ALGO_EQ)</span>
           <span className={styles.tabBadge} style={{ background: 'rgba(34, 211, 238, 0.2)', color: '#22d3ee' }}>
-            022 / 032
+            022 / 003 / 032
           </span>
         </button>
       </div>

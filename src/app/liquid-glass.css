@@ -2386,4 +2386,332 @@
   border-color: #e2e8f0 !important;
 }
 
+/* ─── US 500 & Global ETFs Stage 2 Desk Light Theme Overrides ─── */
+.market-workspace.theme-light-glass [class*='us-stage2-desk_desk'],
+[data-theme='light'] [class*='us-stage2-desk_desk'] {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(14, 165, 233, 0.35) !important;
+  color: #0f172a !important;
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_header'],
+[data-theme='light'] [class*='us-stage2-desk_header'] {
+  border-bottom-color: rgba(226, 232, 240, 0.8) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_title'],
+[data-theme='light'] [class*='us-stage2-desk_title'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_subtitle'],
+[data-theme='light'] [class*='us-stage2-desk_subtitle'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_guardBanner'],
+[data-theme='light'] [class*='us-stage2-desk_guardBanner'] {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(14, 165, 233, 0.05) 100%) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_guardContent'] strong,
+[data-theme='light'] [class*='us-stage2-desk_guardContent'] strong {
+  color: #059669 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_guardContent'] p,
+[data-theme='light'] [class*='us-stage2-desk_guardContent'] p {
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_guardContent'] b,
+[data-theme='light'] [class*='us-stage2-desk_guardContent'] b {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_commandBar'],
+[data-theme='light'] [class*='us-stage2-desk_commandBar'] {
+  background: rgba(241, 245, 249, 0.95) !important;
+  border-color: #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_commandTab'],
+[data-theme='light'] [class*='us-stage2-desk_commandTab'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_commandTab']:hover,
+[data-theme='light'] [class*='us-stage2-desk_commandTab']:hover {
+  background: #ffffff !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_commandTabActive'],
+[data-theme='light'] [class*='us-stage2-desk_commandTabActive'] {
+  background: #ffffff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_commandTabSub'],
+[data-theme='light'] [class*='us-stage2-desk_commandTabSub'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_commandTabActive'] [class*='us-stage2-desk_commandTabSub'],
+[data-theme='light'] [class*='us-stage2-desk_commandTabActive'] [class*='us-stage2-desk_commandTabSub'] {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_commandBarFxChip'],
+[data-theme='light'] [class*='us-stage2-desk_commandBarFxChip'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_filterPill'],
+[data-theme='light'] [class*='us-stage2-desk_filterPill'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_filterPill']:hover,
+[data-theme='light'] [class*='us-stage2-desk_filterPill']:hover {
+  background: #f0f9ff !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_filterPillActive'],
+[data-theme='light'] [class*='us-stage2-desk_filterPillActive'] {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_searchBox'],
+[data-theme='light'] [class*='us-stage2-desk_searchBox'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_searchInput'],
+[data-theme='light'] [class*='us-stage2-desk_searchInput'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_stage2Card'],
+[data-theme='light'] [class*='us-stage2-desk_stage2Card'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_stage2CardTopPick'],
+[data-theme='light'] [class*='us-stage2-desk_stage2CardTopPick'] {
+  border-color: #f59e0b !important;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.15) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_cardSymbol'],
+[data-theme='light'] [class*='us-stage2-desk_cardSymbol'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_cardName'],
+[data-theme='light'] [class*='us-stage2-desk_cardName'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_cardPrice'],
+[data-theme='light'] [class*='us-stage2-desk_cardPrice'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_blueprintGrid'],
+[data-theme='light'] [class*='us-stage2-desk_blueprintGrid'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_blueprintVal'],
+[data-theme='light'] [class*='us-stage2-desk_blueprintVal'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_blueprintLabel'],
+[data-theme='light'] [class*='us-stage2-desk_blueprintLabel'] {
+  color: #64748b !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_blueprintSub'],
+[data-theme='light'] [class*='us-stage2-desk_blueprintSub'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_cardActionBtn'],
+[data-theme='light'] [class*='us-stage2-desk_cardActionBtn'] {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_cardActionBtn']:hover,
+[data-theme='light'] [class*='us-stage2-desk_cardActionBtn']:hover {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_rotationExplainer'],
+[data-theme='light'] [class*='us-stage2-desk_rotationExplainer'] {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_rotationExplainerLeft'] h3,
+[data-theme='light'] [class*='us-stage2-desk_rotationExplainerLeft'] h3 {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_rotationExplainerLeft'] p,
+[data-theme='light'] [class*='us-stage2-desk_rotationExplainerLeft'] p {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_quadrantBox'],
+[data-theme='light'] [class*='us-stage2-desk_quadrantBox'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_etfItem'],
+[data-theme='light'] [class*='us-stage2-desk_etfItem'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_etfSymbol'],
+[data-theme='light'] [class*='us-stage2-desk_etfSymbol'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_etfName'],
+[data-theme='light'] [class*='us-stage2-desk_etfName'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_fxControlPanel'],
+[data-theme='light'] [class*='us-stage2-desk_fxControlPanel'],
+.market-workspace.theme-light-glass [class*='us-stage2-desk_fxOutcomeBox'],
+[data-theme='light'] [class*='us-stage2-desk_fxOutcomeBox'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_fxSectionTitle'],
+[data-theme='light'] [class*='us-stage2-desk_fxSectionTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_fxInputLabel'],
+[data-theme='light'] [class*='us-stage2-desk_fxInputLabel'],
+.market-workspace.theme-light-glass [class*='us-stage2-desk_fxStatLabel'],
+[data-theme='light'] [class*='us-stage2-desk_fxStatLabel'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_fxStatValue'],
+[data-theme='light'] [class*='us-stage2-desk_fxStatValue'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_scenarioChip'],
+[data-theme='light'] [class*='us-stage2-desk_scenarioChip'] {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_scenarioChipActive'],
+[data-theme='light'] [class*='us-stage2-desk_scenarioChipActive'] {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_sizingCard'],
+[data-theme='light'] [class*='us-stage2-desk_sizingCard'],
+.market-workspace.theme-light-glass [class*='us-stage2-desk_sizingResultCard'],
+[data-theme='light'] [class*='us-stage2-desk_sizingResultCard'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_sizingTitle'],
+[data-theme='light'] [class*='us-stage2-desk_sizingTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_inputField'] label,
+[data-theme='light'] [class*='us-stage2-desk_inputField'] label {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_inputField'] input,
+[data-theme='light'] [class*='us-stage2-desk_inputField'] input {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_sizingBigDisplay'],
+[data-theme='light'] [class*='us-stage2-desk_sizingBigDisplay'] {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_sizingBigNum'],
+[data-theme='light'] [class*='us-stage2-desk_sizingBigNum'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_sizingDetailLabel'],
+[data-theme='light'] [class*='us-stage2-desk_sizingDetailLabel'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_sizingDetailVal'],
+[data-theme='light'] [class*='us-stage2-desk_sizingDetailVal'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_tableContainer'],
+[data-theme='light'] [class*='us-stage2-desk_tableContainer'] {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_screenerTable'] th,
+[data-theme='light'] [class*='us-stage2-desk_screenerTable'] th {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_screenerTable'] td,
+[data-theme='light'] [class*='us-stage2-desk_screenerTable'] td {
+  color: #0f172a !important;
+  border-color: #f1f5f9 !important;
+}
+
+
 
