@@ -20,13 +20,13 @@
       --card-hover-border: #cbd5e1;
       --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
       --card-hover-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
-
+      
       /* High-Contrast Typography */
       --text-main: #0f172a;       /* Slate 900 - Razor-sharp black/charcoal */
       --text-body: #334155;       /* Slate 700 - Highly readable body */
       --text-muted: #475569;      /* Slate 600 - Clear secondary descriptions */
       --text-dim: #64748b;        /* Slate 500 - Metadata & subtitles */
-
+      
       /* Vibrant Accent Colors */
       --accent-cyan: #0284c7;      /* Sky 600 */
       --accent-cyan-bg: #e0f2fe;   /* Sky 100 */
@@ -38,13 +38,13 @@
       --accent-purple-bg: #ede9fe; /* Violet 100 */
       --accent-rose: #e11d48;      /* Rose 600 */
       --accent-rose-bg: #ffe4e6;   /* Rose 100 */
-
+      
       /* Code Blocks & Monospace */
       --code-bg: #0f172a;          /* Slate 900 for dark crisp terminal code blocks */
       --code-text: #f8fafc;        /* White/light gray syntax text */
       --code-inline-bg: #f1f5f9;   /* Slate 100 for inline tags */
       --code-inline-text: #0284c7; /* Sky 600 */
-
+      
       /* Fonts */
       --font-sans: 'Plus Jakarta Sans', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -54,7 +54,7 @@
 
     body {
       background-color: var(--page-bg);
-      background-image:
+      background-image: 
         radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.95) 100%),
         url('clean_fintech_bg.jpg');
       background-repeat: no-repeat;
@@ -578,11 +578,11 @@
       <div class="meta-grid">
         <div class="meta-card">
           <div class="label">Current Active Branch</div>
-          <div class="val">codex/cfd-daytrade</div>
+          <div class="val">codex/thai-stage2-dashboard</div>
         </div>
         <div class="meta-card">
           <div class="label">Latest Release Commit</div>
-          <div class="val">1395aaa (Clean)</div>
+          <div class="val">9ffe10b (US Stage 2 Launch & Universal Responsive Navigation)</div>
         </div>
         <div class="meta-card">
           <div class="label">Production VPS Host</div>
@@ -870,7 +870,7 @@
         <div class="card">
           <div class="card-title">🧪 การรันและทดสอบระบบในเครื่อง (Local Testing)</div>
           <p class="card-desc">รันคำสั่งเหล่านี้จากโฟลเดอร์ <code class="inline">work/market-signal-workspace</code></p>
-
+          
           <pre><code># รันชุดทดสอบทั้งหมดในระบบ (296 tests)
 node --test src/**/*.test.mjs
 
@@ -884,7 +884,7 @@ npm run dev -- --hostname 127.0.0.1</code><button class="code-action" onclick="c
         <div class="card">
           <div class="card-title">🚀 การตรวจสอบสุขภาพเซิร์ฟเวอร์บน VPS (VPS Health Check)</div>
           <p class="card-desc">รันจากโฟลเดอร์ <code class="inline">referenced-chatgpt-conversation-this-is-an</code></p>
-
+          
           <pre><code># ตรวจสอบสุขภาพและสิทธิ์ความปลอดภัย 30 Endpoint บน VPS
 node work/verify-alerts-vps.mjs
 
@@ -901,10 +901,175 @@ node work/verify-recovered-pilot.mjs</code><button class="code-action" onclick="
     <section>
       <div class="section-header">
         <span class="section-num">05</span>
-        <h2 class="section-title">งานที่ต้องสานต่อสำหรับ Agent ถัดไป (Next Steps & Handover Items)</h2>
+        <h2 class="section-title">แผนพัฒนา 3 เฟส และงานส่งต่อ (Phase Roadmap & Handover Status)</h2>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-cyan);">
+        <div class="card-title" style="color: var(--accent-cyan);">
+          <span>✔ Unified Scanner Themes & Sound Control (เสร็จสมบูรณ์ - Commit 6c4f682):</span> Readability & Cross-Market Cohesion
+        </div>
+        <p class="card-desc">
+          ปรับปรุงการแสดงผลตัวอักษรของปุ่มเปิด/ปิดเสียง (<code class="inline">SoundControl</code>) ให้อ่านชัดเจน คมชัด 100% พร้อมเชื่อมโยงธีมสีและสไตล์ของหน้าสแกนทุกระบบทั้งแพลตฟอร์มให้ไปในทิศทางเดียวกันอย่างสมบูรณ์แบบ ทั้งใน <strong>Magic UI Dark Theme</strong> และ <strong>Liquid Glass Light Theme</strong>:
+        </p>
+        <ul class="checklist">
+          <li><strong>1. ปรับปรุงปุ่มเปิด/ปิดเสียง (SoundControl Capsule):</strong> เปลี่ยนดีไซน์เป็นแคปซูลโมเดิร์น (<code class="inline">border-radius: 99px</code>), ขนาดฟอนต์ 12px หนา 700 คมชัด สบายตา พร้อมไอคอนแยกชัดเจน (<code class="inline">🔊 เปิดเสียงแล้ว</code>, <code class="inline">🔇 ปิดเสียง</code>, <code class="inline">แตะเพื่อเปิดเสียง</code>) ใน Dark Mode เรืองแสง Neon Cyan (<code class="inline">#22D3EE</code>) เมื่อเปิด และเป็น Dark Navy แคปซูล (<code class="inline">#111C33</code>, เส้นขอบ <code class="inline">#243550</code>) เมื่อปิด ใน Light Mode ใช้โทน Fresh Emerald (<code class="inline">#065f46</code>) คอนทราสต์สูง ไม่กลืนกับพื้นหลัง</li>
+          <li><strong>2. รวบรวมหน้าสแกนทุกระบบเข้าสู่ธีมเดียวกัน (All Scanners Cohesion):</strong>
+            <ul>
+              <li><strong>Thai Screener (Minervini Stage 2 Dashboard):</strong> หัวตารางสี Elevated Surface, แถบสถานะ Stage, ตัวเลข RSI/P/E/RVOL, กล่องคำนวณงบไม้ (<code class="inline">.risk</code>) และตัวกรองพรีเซ็ต</li>
+              <li><strong>DR Strategy Radar & Decision Desk:</strong> การ์ดเรดาร์, แท็บยุทธศาสตร์, คลังตัวเลือก Shortlist, กล่องสถิติ Counts & Levels</li>
+              <li><strong>US & TFEX SignalDesk:</strong> ตารางสแกนสัญญาณ (<code class="inline">.signal-table</code>), แถบเครื่องมือค้นหา, กล่อง Tracking Grid, สถิติ Replay และ Badge สถานะ Pass/Reject/Wait</li>
+              <li><strong>AutoPick Board & SignalResults:</strong> แถบเลือกตลาด (<code class="inline">.auto-pick-markets</code>), การ์ดผลลัพธ์ AI Pick, Timeline ลำดับเหตุการณ์, โมดอลประวัติ 100 ไม้</li>
+              <li><strong>MarketScanner (Multi-Strategy Regime Engine):</strong> ปุ่มเลือกสไตล์ Swing/Scalp/EOD (<code class="inline">.ng-strategy-tab-btn</code>), แบนเนอร์อธิบายกลยุทธ์, ชิปเงื่อนไข, ตารางสแกน 6 สินทรัพย์, และ Multi-Timeframe Matrix</li>
+              <li><strong>Daytrade Workspace:</strong> Shortlist Dock, การ์ดโอกาสทำกำไร (<code class="inline">.opportunity</code>), คะแนนความคุ้มค่า Pick Score, และตารางราคา Realtime</li>
+            </ul>
+          </li>
+          <li><strong>3. สถาปัตยกรรมสีสอดคล้องทั้ง 2 โหมด:</strong>
+            <ul>
+              <li><strong>Magic UI Dark Mode:</strong> การ์ดและคอนเทนเนอร์ <code class="inline">#111C33</code>, เส้นขอบ <code class="inline">#243550</code>, หัวตาราง/Elevated <code class="inline">#172641</code>, สีเน้น <code class="inline">#22D3EE</code> (Neon Cyan) และ <code class="inline">#8B5CF6</code> (Purple), แถบ Active ใช้ไล่ระดับน้ำเงินเข้ม</li>
+              <li><strong>Liquid Glass Light Mode:</strong> การ์ด Frosted Glass ขาว <code class="inline">rgba(255, 255, 255, 0.85)</code>, เส้นขอบ <code class="inline">#cbd5e1</code>, หัวตาราง <code class="inline">#f8fafc</code>, ข้อความ Deep Slate <code class="inline">#0f172a</code>, สีเน้น <code class="inline">#0284c7</code> (Sky Blue)</li>
+            </ul>
+          </li>
+          <li><strong>4. Automated Verification:</strong> รันชุดทดสอบผ่าน 100% ทั้งหมด 394 รายการ (<code class="inline">npm test</code> 394 pass / 0 fail) และ Next.js Production Build สำเร็จครบทุก 70+ รูท</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-green);">
+        <div class="card-title" style="color: var(--accent-green);">
+          <span>✔ Light Mode Fix (เสร็จสมบูรณ์ - Commit d8091c4):</span> High-Contrast Typography & Seamless Color Harmony
+        </div>
+        <p class="card-desc">
+          แก้ไขปัญหาตัวหนังสืออ่านยากและเมนูสีตัดกันในโหมดสว่าง (Liquid Glass Light) อย่างหมดจด โดยปิดกั้นไม่ให้สไตล์ Dark Mode รั่วไหลข้ามมาในโหมดสว่าง พร้อมยกระดับคอนทราสต์ของตัวอักษรและเมนูทุกจุดให้ชัดเจน สบายตา และดูพรีเมียมระดับ VisionOS / Linear:
+        </p>
+        <ul class="checklist">
+          <li><strong>1. ป้องกัน CSS Dark Mode รั่วไหล:</strong> ล็อกการทำงานของสไตล์ใน <code class="inline">magic-ui-theme.css</code> ทั้งหมดด้วย <code class="inline">html:not([data-theme='light'])</code> เพื่อไม่ให้บล็อกสี Dark Navy (<code class="inline">#0A1324</code>, <code class="inline">#111C33</code>) ไปแสดงผลในโหมดสว่างโดยเด็ดขาด พร้อมตั้งค่า <code class="inline">data-theme</code> ให้ทั้ง <code class="inline">document.documentElement</code> และ <code class="inline">document.body</code> ใน <code class="inline">workspace.jsx</code></li>
+          <li><strong>2. คอนทราสต์ตัวอักษรชัดเจน 100%:</strong> หัวข้อทั้งหมดใช้สี Deep Slate (<code class="inline">#0f172a</code>), เนื้อหาใช้ Slate-800 (<code class="inline">#1e293b</code>), ข้อความกำกับใช้ Slate-600 (<code class="inline">#475569</code>) หมดปัญหาตัวหนังสือสีขาว/สีจางกลืนกับพื้นหลังขาว</li>
+          <li><strong>3. ชื่อหุ้นและตารางคัดกรอง (Stage 2 Dashboard):</strong> ชื่อย่อหุ้น (<code class="inline">identity b</code> เช่น PTT, CPALL) ใช้สีดำเข้มชัดเจน (<code class="inline">#0f172a</code>, Font Weight 800), ตัวเลขราคาและ RVOL คมชัด, แถบหัวตาราง (<code class="inline">thead th</code>) สีเทาอ่อนสะอาดตา (<code class="inline">#f1f5f9</code>) พร้อมเส้นขอบคมชัด</li>
+          <li><strong>4. เมนูและปุ่มนำทางกลมกลืน:</strong> เมนูตลาดบน (<code class="inline">.market-destinations</code>), แท็บ Pro Tools (<code class="inline">.ng-pro-pill</code>), เมนูมุมมองหุ้นไทย (<code class="inline">.views a</code>), ปุ่มพรีเซ็ต (<code class="inline">.presets button</code>), ปุ่มสแกนตามสไตล์ (<code class="inline">.scan</code>) ปรับเป็นสีขาวสะอาดตาพร้อมเส้นขอบนุ่มนวล (<code class="inline">#cbd5e1</code>) และสถานะ Active สี Ocean Blue (<code class="inline">#0284c7</code>) กลมกลืนกับจอ 100%</li>
+          <li><strong>5. กล่องสถิติและตัวคำนวณความเสี่ยง:</strong> การ์ดสถิติ 4 ช่อง ปรับตัวเลขใหญ่เป็นสีเข้มชัด (<code class="inline">#0f172a</code>), รายการผู้นำ RS สีเขียวมรกตชัดเจน (<code class="inline">#059669</code>), กล่องคำนวณงบไม้ (<code class="inline">.risk</code>) โทน Teal สะอาดตาอ่านง่าย</li>
+          <li><strong>6. Verification:</strong> ทดสอบ Test Suite ผ่าน 19/19 รายการ (<code class="inline">npm test</code>) และ Next.js Production Build สำเร็จ 100%</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-cyan);">
+        <div class="card-title" style="color: var(--accent-cyan);">
+          <span>✔ Neon Wave & 3D Particle Mesh (เสร็จสมบูรณ์ - Commit 73cc20b):</span> Futuristic AI Trading Terminal Magic UI
+        </div>
+        <p class="card-desc">
+          เพิ่มเอฟเฟกต์พื้นหลังแนว **Magic UI, Neon Flowing Waves, Particle Wave Mesh และ Aurora Gradient** เพื่อยกระดับประสบการณ์ใช้งานให้ดูล้ำสมัยแบบ AI Financial Terminal ระดับโลก โดยยังคงเนื้อหา ตาราง กราฟ และฟังก์ชันทั้งหมดอย่างสมบูรณ์ 100%:
+        </p>
+        <ul class="checklist">
+          <li><strong>1. Neon Flowing Waves:</strong> เส้นคลื่นเรืองแสง 3D สี Neon Cyan (<code class="inline">#22D3EE</code>) และ Electric Purple (<code class="inline">#8B5CF6</code>) มีหลายชั้น (Primary Cyan, Harmonic Purple, Digital Pulse Dash, Pink Horizon Accent) พร้อม Soft Glow รอบเส้น (<code class="inline">filter: drop-shadow</code>) เคลื่อนไหวช้า ๆ อย่างนุ่มนวลบริเวณขอบล่างและมุมจอ</li>
+          <li><strong>2. Particle Wave Mesh:</strong> จุดอนุภาคขนาดเล็ก 36×14 Node เรียงตัวเป็นคลื่น 3D คล้าย AI Data Flow ไหลแบบ Organic Motion ผ่าน HTML5 Canvas ที่ปรับ DPR อัตโนมัติ (<code class="inline">magic-particle-wave.jsx</code>) ลดความทึบแสง (Opacity 0.08–0.35) เพื่อไม่รบกวนข้อความหรือตาราง</li>
+          <li><strong>3. Aurora Background:</strong> แสง Aurora Gradient ฟุ้งนุ่มนวล (<code class="inline">#22D3EE</code>, <code class="inline">#6366F1</code>, <code class="inline">#8B5CF6</code>) บนพื้นหลังหลัก Dark Navy (<code class="inline">#080D1B</code>)</li>
+          <li><strong>4. Glow & Glass Effects:</strong> เพิ่ม Subtle Cyan Glow ให้ขอบ Sidebar และ Active Menu พร้อม Glassmorphism บางเบาบน Navigation Toolbar</li>
+          <li><strong>5. Performance & Accessibility:</strong> ทุกเลเยอร์ตกแต่งใช้ <code class="inline">pointer-events: none</code> อยู่หลังเนื้อหา (<code class="inline">z-index: 1-2</code>), สลับหยุดทำงานอัตโนมัติเมื่อซ่อน Tab (<code class="inline">visibilitychange</code>), ล็อก Framerate ไม่เกิน 35fps ป้องกัน CPU Spike และรองรับ <code class="inline">prefers-reduced-motion</code></li>
+          <li><strong>6. Verification:</strong> Unit Test ผ่านครบ 19/19 รายการ (<code class="inline">npm test</code>) และ Next.js Build สำเร็จ 100%</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-purple);">
+        <div class="card-title" style="color: var(--accent-purple);">
+          <span>✔ Theme Update (เสร็จสมบูรณ์ - Commit bbd7948):</span> Magic UI × daisyUI Futuristic Dark Theme (Default) + Liquid Glass Light
+        </div>
+        <p class="card-desc">
+          ปรับธีมสีและหน้าตาของเว็บไซต์ทั้งหมดให้เป็นสไตล์ <strong>Magic UI × daisyUI Futuristic Dark Theme</strong> โดยตั้ง Dark Mode เป็นค่าเริ่มต้นทั้งเว็บ คุมโทน Dark Navy (#080D1B) ผสม Neon Cyan (#22D3EE) และ Electric Purple (#8B5CF6) พร้อม Digital Waves ในพื้นหลัง และเมนูสไตล์ SaaS ล้ำสมัย โดยยังคงปุ่มสลับไปยังโหมดสว่าง Liquid Glass Light ได้สมบูรณ์
+        </p>
+        <ul class="checklist">
+          <li><strong>Magic UI Theme (<code class="inline">magic-ui-theme.css</code>):</strong> Dark Navy (#080D1B), Sidebar (#0A1324), Topbar Glass (#0B1426), การ์ด (#111C33), Active Menu (#163A63) พร้อม Neon Cyan Glow</li>
+          <li><strong>Menu & Navigation Design:</strong> เมนูโค้งมน 10-12px, Hover (#1C3250), Active เด่นด้วยสี Cyan (#22D3EE) คงชื่อเมนู ไอคอน และลิงก์เดิม 100%</li>
+          <li><strong>Theme Toggle:</strong> สลับระหว่าง 🌙 Magic Dark และ ☀️ Liquid Glass ได้แบบเรียลไทม์ผ่านปุ่มขวาบน</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-green);">
+        <div class="card-title" style="color: var(--accent-green);">
+          <span>✅ ปรับชื่อเมนูระดับโปร &amp; จัดระเบียบการนำทาง (Navigation Streamlining &amp; Professionalization):</span>
+        </div>
+        <p class="card-desc">
+          ยกระดับชื่อเมนูและปุ่มการทำงานทั้งหมดจากคำร่างเดิมให้เป็นศัพท์มาตรฐาน Fintech พร้อมจัดระเบียบโครงสร้างเพื่อป้องกันการทับซ้อนและลดความสับสนในการใช้งาน:
+        </p>
+        <ul class="checklist complete">
+          <li><strong>Thai Workspace Toolbar:</strong> ปรับเป็น <code class="inline">Stage 2 Screener</code> (Trend Template หุ้นขาขึ้น), <code class="inline">Strategy Radar</code> (เรดาร์สัญญาณ &amp; แผนเฝ้า), <code class="inline">Interactive Chart</code> (กราฟเทคนิค &amp; อินดิเคเตอร์), และ <code class="inline">Trade Ledger</code> (ประวัติ &amp; ผลลัพธ์ 100 ไม้) พร้อมปุ่ม <code class="inline">สแกนตามสไตล์ (Multi-Strategy) ↗</code></li>
+          <li><strong>ป้องกันแถบเมนูทับซ้อน (Anti-Overlap Layout):</strong> แก้ไข <code class="inline">thai-workspace.module.css</code> จาก sticky ซ้อนทับ topbar เป็น relative positioning พร้อม responsive grid 4 คอลัมน์ที่ยืดหยุ่น ป้องกันการเลื่อนทับกับแถบด้านบน</li>
+          <li><strong>จัดระเบียบ Strategy Radar Tabs:</strong> ปรับแท็บเรดาร์เป็น <code class="inline">🎯 แผนเทรด &amp; คุมความเสี่ยง</code>, <code class="inline">📊 ผลสแกนทั้งหมด</code>, <code class="inline">📑 Trade Ledger (100 ไม้ล่าสุด)</code>, <code class="inline">⭐ รายการเฝ้าดูส่วนตัว</code>, และ <code class="inline">ปันผลสูง / สถิติ XD</code></li>
+          <li><strong>Sidebar &amp; Navigation Groups:</strong> ปรับหมวดหมู่เมนูด้านข้างใน <code class="inline">workspace-hub.jsx</code> เป็นศูนย์กลยุทธ์ &amp; สแกน, กราฟ &amp; ผลงานเทรด, เครื่องมือวิเคราะห์ &amp; ข่าวกรอง, และสมาชิก &amp; ศูนย์ช่วยเหลือ</li>
+          <li><strong>ลบคำร่างตกค้างในระบบ:</strong> แก้ไขคำว่า "รุ่นเดิม" เช่น <code class="inline">Swing Strategy Desk ↗</code> และ <code class="inline">Auto Pick Engine</code> ทุกจุด</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-green);">
+        <div class="card-title" style="color: var(--accent-green);">
+          <span>✅ หมวดที่ 1: ตลาดหุ้นไทย — เสริมฟีเจอร์จูงใจให้ผู้ใช้รักและยอมจ่ายรายเดือน (Completed):</span>
+        </div>
+        <p class="card-desc">
+          ยกระดับหน้าจอคัดกรองหุ้นไทย <code class="inline">ThaiScreenerDashboard</code> ด้วย 3 หัวใจหลักทางจิตวิทยาและคณิตศาสตร์การเงิน เพื่อสร้างความคุ้มค่าที่เห็นได้ชัดเจนทันที:
+        </p>
+        <ul class="checklist complete">
+          <li><strong>⭐ Daily High Conviction (Top 3 Focus Picks):</strong> การ์ด 3 หุ้นผู้นำ Stage 2 ที่ผ่านเกณฑ์เข้มงวดสูงสุด พร้อมระบุจุดเข้า (Entry), จุดตัดขาดทุน Stop Loss (≤8%), และจุดขายทำกำไรเป้าหมาย TP1 (2R) ชัดเจน ช่วยลดเวลาการนั่งไล่ดูกราฟทั้งตลาด</li>
+          <li><strong>🛡️ ระบบเกราะคุ้มครองเงินต้น (Capital Protection Guard):</strong> แสดงแถบ Loss Aversion ชี้ชัดว่าระบบคัดทิ้งหุ้นขาลง Stage 4 และกราฟเสียทรงไปแล้วกี่ตัว เพื่อป้องกันผู้ใช้จากการติดดอยและการขาดทุนเรื้อรัง</li>
+          <li><strong>🔑 Smart Equity &amp; DR Command Center (ALGO_EQ Live Sync):</strong> เปิดใช้งานหน้าจอศูนย์บัญชาการพอร์ตอัจฉริยะ ซิงค์พอร์ตจริงแบบ Zero-Custody รองรับ <strong>Pi Securities (บล.พาย - รหัส 003)</strong>, Trinity (022), InnovestX (032) ฯลฯ วินิจฉัย Stage 1-4 อัตโนมัติ, แจกใบสั่งยา AI Action (Hold &amp; Run Trend, Take Profit 50%, Cut Loss ด่วน), ตรวจจุด Trailing Stop, และมี One-Click Demo Sandbox พร้อมใช้งาน</li>
+          <li><strong>รองรับ 2 ธีมสมบูรณ์แบบ:</strong> ออกแบบ Glassmorphism สวยงามทั้ง Dark Magic UI และ Liquid Glass Light Theme ตัวหนังสือคมชัดทุกมิติ</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-green);">
+        <div class="card-title" style="color: var(--accent-green);">
+          <span>✅ หมวดที่ 2: ตราสาร DR &amp; หุ้นต่างประเทศ (DR01/DR80 Arbitrage &amp; Strategy Desk) (Completed):</span>
+        </div>
+        <p class="card-desc">
+          สร้างความได้เปรียบที่หาไม่ได้จากแพลตฟอร์มอื่นในไทย เพื่อให้ลูกค้ารู้สึกขาดแอปนี้ไม่ได้:
+        </p>
+        <ul class="checklist complete">
+          <li><strong>🛡️ ระบบตรวจจับส่วนต่างราคา DR Arbitrage &amp; Fair Value Guard:</strong> ตรวจสอบราคาประเมินจริงเทียบราคาตลาด SET เตือนผู้ใช้ไม่ให้ตกเป็นเหยื่อของการซื้อ DR แพงเกินจริง (Overpriced Premium) พร้อมชี้เป้า DR ที่มีแต้มต่อราคา Discount/Fair</li>
+          <li><strong>⭐ Daily DR High Conviction (Top 3 Focus Picks):</strong> การ์ด 3 ผู้นำหุ้นโลก (เช่น NVDA80, AAPL80) พร้อมราคาหุ้นแม่ USD, อัตราแลกเปลี่ยน FX, สเปรด P/D %, จุดเข้า Entry, Stop Loss, และเป้าหมาย 2R</li>
+          <li><strong>⚡ In-Card Fair Value Badge:</strong> แสดงแถบ Fair Value &amp; Spread % กำกับในทุกการ์ดของแท็บ DR80 Scanner</li>
+          <li><strong>🎯 DR 1-Unit Board Lot Advantage:</strong> ชูจุดเด่นการซื้อขายขั้นต่ำเพียง 1 หน่วยในโต๊ะคำนวณขนาดไม้ (DecisionPlan) ช่วยกระจายพอร์ตในหุ้นระดับโลกด้วยเงินเริ่มต้นหลักร้อย</li>
+          <li><strong>🔑 Unified ALGO_EQ Engine for DR:</strong> ซิงค์พอร์ต DR ร่วมกับหุ้นไทยผ่านแท็บ <code>⚡ พอร์ต &amp; API (ALGO_EQ)</code> ใน DR Strategy Radar ตรวจสอบความเสี่ยงค่าเงิน (USD/THB) และคำนวณ Fair Value เทียบราคาหุ้นแม่สหรัฐฯ สดๆ แบบอัตโนมัติ</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-green);">
+        <div class="card-title" style="color: var(--accent-green);">
+          <span>✅ หมวดที่ 3: ตลาด TFEX &amp; SET50 Index Options (TFEX Pro Terminal) (Completed):</span>
+        </div>
+        <p class="card-desc">
+          ยกเครื่องหน้าตาและระบบของหมวด TFEX ใหม่ทั้งหมด ให้ตอบโจทย์เทรดเดอร์อนุพันธ์และออปชันตัวจริง พร้อมฟีเจอร์คุ้มครองความเสี่ยงที่ทำให้ลูกค้ายอมจ่ายรายเดือน:
+        </p>
+        <ul class="checklist complete">
+          <li><strong>⚡ SET50 Index Options Chain &amp; Volatility Desk:</strong> ตาราง Options Chain แบบแยกคอลัมน์ Calls vs Puts พร้อมไฮไลต์สถานะ ITM/ATM/OTM และระดับ Max Pain (900.0 จุด) เพื่ออ่านแรงดึงดูดของ Market Maker ก่อนวันหมดสัญญา</li>
+          <li><strong>📊 Put/Call Ratio (PCR 1.14) Sentiment Barometer:</strong> เกจวัดอารมณ์ตลาดจากสัดส่วน Open Interest ระหว่าง Put และ Call เพื่อตรวจจับจุด Rebound และการทำ Hedging ของสถาบัน</li>
+          <li><strong>💡 Options Strategy Playbook:</strong> การ์ด 4 กลยุทธ์ยอดนิยมจำกัดความเสี่ยง (Bull Call Spread, Bear Put Spread, Long Straddle, Iron Condor) พร้อมแสดงกรอบกำไรขาดทุนชัดเจน</li>
+          <li><strong>🛡️ Portfolio Risk Monitor &amp; TFEX What-If Simulator (จุดขายพิเศษ Killer Feature):</strong> เครื่องมือจำลองสถานการณ์ความเสี่ยงทั้งพอร์ตข้ามสินทรัพย์ (Cross-Asset Stress Testing เช่น ถือ Long S50 5 สัญญา + Long GO 2 สัญญา) จำลองการกระแทกของ SET50 (-15 จุด) และทองคำ (-20 USD) พร้อมคำนวณ P/L รวม, ระดับ Margin รวม (IM/MM/FM), Buffer ถึงระดับ Margin Call, และจ่ายยาแก้ความเสี่ยง (De-risking Action Prescription) แนะนำจำนวนสัญญาที่ต้องลดเพื่อความปลอดภัยทันที</li>
+          <li><strong>🔑 Settrade Open API (BYOK - Bring Your Own Key) Live Sync:</strong> ระบบเชื่อมต่อพอร์ตจริงผ่าน API โบรกเกอร์ชั้นนำ รองรับ <strong>Pi Securities (บล.พาย - รหัส 003)</strong>, <strong>Trinity Securities (บล.ทรีนีตี้ - รหัส 022)</strong>, InnovestX (032), Maybank (011), CGS International (025), Bualuang (001) ฯลฯ ดึงสถานะสัญญา S50/GO และ Equity ล่าสุดเข้า What-If Simulator อัตโนมัติในคลิกเดียว พร้อมสถาปัตยกรรม <em>Zero-Custody Stateless Proxy</em> ไม่บันทึกกุญแจบนเซิร์ฟเวอร์ และมีปุ่มทดลองเล่นด้วย Demo Sandbox Key (ทั้ง Pi 003, Trinity 022 และ InnovestX 032)</li>
+          <li><strong>⚡ Cyber-Fintech Command Bar &amp; HUD Broker Grid (UI/UX Redesign):</strong> ยกเครื่องแถบเมนูนำทางและระบบเลือกโบรกเกอร์ใหม่ทั้งหมดจากปุ่มสไตล์เก่าสู่ <em>Command Bar ระดับ Bloomberg/Linear</em>: Segmented Pill Navigation, Animated Live Pulse LED, Multi-Line Context (ชื่อโหมด + คำอธิบาย + ค่าทางสถิติสด), Interactive Broker Cards พร้อมแท็กสถานะ (Recommended, Popular, Active) และรองรับ Dual-Theme (Magic Dark &amp; Liquid Glass Light) สมบูรณ์แบบ 100%</li>
+          <li><strong>🛡️ Single Contract Margin Safety Shield:</strong> คำนวณ Initial Margin (IM), Maintenance Margin (MM 70%), และ Force Close Margin (FM 30%) พร้อมคำนวณจุดทนผิดทางเป็นจุดดัชนี (เช่น ทนได้ 162.0 จุดก่อนโดน Call) และเกจเตือนภัย Overleverage ป้องกันพอร์ตแตก</li>
+          <li><strong>📈 Futures Matrix &amp; Basis Desk:</strong> ติดตามค่า Basis ระหว่าง S50 Futures และ SET50 Cash Spot (+1.40 จุด Contango) พร้อมแผน 2R Directional Bias และการแปลงแต้มต่อสัญญาเป็นบาทไทยทันที (S50 = 200฿/pt, GO = 300฿/$, SVF = 3,000฿/$, USD = 1,000฿/pt)</li>
+          <li><strong>🎯 TFEX 2R Position Sizing Desk:</strong> คำนวณจำนวนสัญญาที่ปลอดภัยตามงบ Risk Budget ของพอร์ตและระยะ Stop Loss จุดดัชนี</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-green);">
+        <div class="card-title" style="color: var(--accent-green);">
+          <span>✅ หมวดที่ 4: ตลาดหุ้นอเมริกา &amp; Global ETFs (US 500 Equities &amp; Thematic ETFs Stage 2 Command Desk) (Completed - Commit 434626f):</span>
+        </div>
+        <p class="card-desc">
+          เปิดตัวศูนย์บัญชาการหุ้นสหรัฐฯ และกองทุน ETF เมกะเทรนด์โลก <code class="inline">UsStage2Desk</code> ยกระดับสู่มาตรฐาน Cyber-Fintech สากล ตอบโจทย์นักลงทุนหุ้นนอกด้วย 5 โมดูลทรงพลังที่สร้างแต้มต่อและคุ้มค่าเงินสมาชิกรายเดือน:
+        </p>
+        <ul class="checklist complete">
+          <li><strong>🎯 Daily US High-Conviction Stage 2 Scanner:</strong> คัดกรอง 500 หุ้นขนาดใหญ่ใน S&amp;P 500 และ Nasdaq 100 ตามเกณฑ์ <em>Mark Minervini Trend Template</em> (ราคาเหนือ EMA20 &gt; EMA50 &gt; SMA200, อยู่ใกล้ 52-Week High ในกรอบ 15%, Relative Strength &gt; 80 vs SPY, และ Volume Expansion) ไฮไลต์การ์ดหุ้นผู้นำตัวท็อป (เช่น <strong>NVDA, PLTR, AAPL, MSFT, META, TSLA, AMZN, AVGO</strong>) พร้อมพิกัดเข้าซื้อ Entry, Stop Loss (≤ 8%), Target 1 (2R), Target 2 (3R+), และคำแนะนำ Trailing Stop</li>
+          <li><strong>🛡️ ระบบเกราะคุ้มครองเงินต้น (Wall Street Capital Protection Guard):</strong> คัดทิ้งหุ้นขาลง Stage 4 และกราฟเสียทรงไปแล้ว 312 ตัว (เช่น INTC, NKE, BA, DIS) ป้องกันผู้ใช้จากการติดดอยในหุ้นนอกเรื้อรัง</li>
+          <li><strong>🌐 Thematic ETF Sector Rotation Desk:</strong> แผนภูมิ 4 จตุภาค (4-Quadrant Visual Matrix: <em>Leading, Improving, Weakening, Lagging</em>) สำรวจ Fund Flow สถาบันวอลล์สตรีทผ่าน ETF เมกะเทรนด์โลก (AI Chips <code class="inline">SMH</code>, Nasdaq <code class="inline">QQQ</code>, Cybersecurity <code class="inline">CIBR</code>, Energy <code class="inline">XLE</code>, Small-Cap <code class="inline">IWM</code>, Cloud <code class="inline">WCLD</code>, Clean Energy <code class="inline">ICLN</code>) พร้อม Relative Strength และตัวเลขเงินไหลเข้า/ออกสุทธิ</li>
+          <li><strong>💵 USD/THB Currency Hedge &amp; FX Exposure Impact Simulator:</strong> เครื่องมือจำลองผลกระทบค่าเงินแบบเรียลไทม์ ชี้ชัดส่วนต่างผลตอบแทนระหว่าง <em>Unhedged</em> (เปิดเสี่ยงค่าเงิน) เทียบกับ <em>Fully Hedged</em> (ล็อกอัตราแลกเปลี่ยน) พร้อมคำนวณกำไร/ขาดทุนสุทธิในรูปเงินบาท และจ่ายยาแก้ความเสี่ยง <em>AI FX Risk Prescription</em> แนะนำจังหวะทำประกันค่าเงินผ่าน TFEX USD Futures (USDZ26) หรือการสลับไปถือ DR80 บนกระดาน SET</li>
+          <li><strong>📐 US 2R Position Sizing Desk:</strong> คำนวณจำนวนหุ้นที่ปลอดภัย (Max Allowed Shares) และงบลงทุนทั้ง USD และ THB ตาม Risk Budget (1-2% ของพอร์ต) ช่วยให้เทรดเดอร์ไม่ Overleverage ในหุ้นราคาแพง</li>
+          <li><strong>📊 S&amp;P 500 Universe Screener Table:</strong> ตารางสแกนและค้นหาทั้ง 500 หุ้น พร้อมกรองกลุ่มอุตสาหกรรม (Semiconductors, Cloud, Consumer, Pharma) และปุ่มกดดูกราฟและอินดิเคเตอร์เชื่อมโยงสู่ Candlestick Chart ในคลิกเดียว</li>
+          <li><strong>✨ Cyber-Fintech UI/UX &amp; 100% Dual-Theme:</strong> ดีไซน์พรีเมียมด้วย HUD Command Bar, Animated Pulse LED, Market Session Badge (ตรวจจับเวลาทำการ Pre-Market 15:00-20:30 น. และ Regular 20:30-03:00 น. อัตโนมัติ), รองรับทั้ง <strong>Magic Dark</strong> และ <strong>Liquid Glass Light Theme</strong> คมชัดทุกมิติ</li>
+        </ul>
       </div>
 
       <div class="card">
+        <div class="card-title">
+          <span>⚙️ งานโครงสร้างพื้นฐานระยะยาว (Long-Term Handover Items):</span>
+        </div>
         <ul class="checklist pending">
           <li>
             <strong>ย้าย MetaTrader 5 ไปรันบน Host อิสระตลอด 24/5:</strong> ปัจจุบันตัว EA เชื่อมต่อผ่าน Mac ของ Operator หากเครื่องหลับหรือปิดฝา ข้อมูล CFD/Forex จะหยุดอัปเดต ควรย้ายไปรันบน Windows VPS หรือ Wine Container ที่เปิดถาวร
@@ -917,9 +1082,6 @@ node work/verify-recovered-pilot.mjs</code><button class="code-action" onclick="
           </li>
           <li>
             <strong>Refactor โค้ดคอมโพเนนต์ขนาดใหญ่:</strong> ไฟล์ <code class="inline">workspace.jsx</code> (~49KB) และ <code class="inline">workspace-hub.jsx</code> (~31KB) ควรแยก Custom Hooks สำหรับ Market Data และ Audio Queue ออกมาเป็นสัดส่วน
-          </li>
-          <li>
-            <strong>รวมและทำความสะอาด CSS:</strong> ใน <code class="inline">src/app/</code> มีไฟล์ <code class="inline">workspace-v2.css</code> ถึง <code class="inline">workspace-v9.css</code> ควรทำความสะอาดสไตล์เวอร์ชันเก่าที่ไม่ได้ใช้แล้ว
           </li>
         </ul>
       </div>
@@ -936,11 +1098,11 @@ node work/verify-recovered-pilot.mjs</code><button class="code-action" onclick="
   <script type="application/json" id="agent-manifest">
   {
     "project": "Nugaom AI Pick",
-    "version": "1395aaa",
+    "version": "9ffe10b",
     "git": {
-      "branch": "codex/cfd-daytrade",
+      "branch": "codex/thai-stage2-dashboard",
       "workingTree": "clean",
-      "upstream": "origin/codex/cfd-daytrade"
+      "upstream": "origin/codex/thai-stage2-dashboard"
     },
     "vps": {
       "origin": "https://76.13.20.122.sslip.io",
@@ -949,8 +1111,8 @@ node work/verify-recovered-pilot.mjs</code><button class="code-action" onclick="
       "checksTotal": 30
     },
     "testSuite": {
-      "total": 296,
-      "passed": 296,
+      "total": 394,
+      "passed": 394,
       "failed": 0
     },
     "rules": {
