@@ -19,7 +19,12 @@ export function isYahooCandleStart(ms,timeframe,market){
 export function yahooInstrument(asset){
  if(['thai','dr'].includes(asset.id))return {ticker:`${asset.symbol}.BK`,currency:'THB',zone:'Asia/Bangkok',exchange:'SET'};
  if(asset.id==='us')return {ticker:asset.symbol,currency:'USD',zone:'America/New_York'};
- if(asset.id==='forex'&&/^[A-Z]{3}\/[A-Z]{3}$/.test(asset.symbol)&&!asset.symbol.startsWith('XAU')&&!asset.symbol.startsWith('XAG'))return {ticker:`${asset.symbol.replace('/','')}=X`,currency:asset.symbol.split('/')[1],zone:'UTC',exchange:'CCY'};
+ if(asset.id==='forex'){
+  if(asset.symbol==='XAU/USD'||asset.symbol==='XAUUSD')return {ticker:'GC=F',currency:'USD',zone:'UTC',exchange:'CMX'};
+  if(asset.symbol==='XAG/USD'||asset.symbol==='XAGUSD')return {ticker:'SI=F',currency:'USD',zone:'UTC',exchange:'CMX'};
+  if(/^[A-Z]{3}\/[A-Z]{3}$/.test(asset.symbol))return {ticker:`${asset.symbol.replace('/','')}=X`,currency:asset.symbol.split('/')[1],zone:'UTC',exchange:'CCY'};
+  if(/^[A-Z]{6}$/.test(asset.symbol))return {ticker:`${asset.symbol}=X`,currency:asset.symbol.slice(3),zone:'UTC',exchange:'CCY'};
+ }
  return null;
 }
 export async function getYahooHistory(asset,timeframe='1d',options={}){
@@ -51,7 +56,7 @@ async function load(asset,instrument,timeframe,{now=Date.now(),chartFetcher=yaho
   if(timeframe!=='1d'&&!isYahooCandleStart(ms,timeframe,asset.id))continue;
   if(!Number.isFinite(ms)||ms>now||timeframe==='1d'&&(time>today||time===today&&!dailyClosed)||timeframe!=='1d'&&(time+durations[timeframe])*1000>now)continue;
   if(![q.open,q.high,q.low,q.close].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>0)||q.high<Math.max(q.open,q.close,q.low)||q.low>Math.min(q.open,q.close))continue;
-  const volume=asset.id==='forex'?0:q.volume;
+  const volume=asset.id==='forex'?(q.volume||1):q.volume;
   if(!Number.isFinite(volume)||volume<0)continue;
   if(byTime.has(time)){byTime.delete(time);duplicates.add(time);continue;}if(duplicates.has(time))continue;
   byTime.set(time,{time,open:q.open,high:q.high,low:q.low,close:q.close,volume});

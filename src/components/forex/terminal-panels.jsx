@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
+  AlertCircle,
   ArrowUpRight,
   Bell,
   BookOpen,
   CalendarDays,
+  CheckCircle2,
   Clock3,
+  ExternalLink,
   Globe2,
   Plus,
+  Send,
   ShieldCheck,
   Sparkles,
+  Volume2,
   Wallet,
 } from "lucide-react";
 import {
@@ -633,23 +638,259 @@ export function Journal({
     </section>
   );
 }
-export function Alerts({ enabled, onChange }) {
+export function Alerts({ enabled = {}, onChange }) {
+  const [telegramToken, setTelegramToken] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+  const [sending, setSending] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [showGuide, setShowGuide] = useState(false);
+  const [activeTab, setActiveTab] = useState("telegram");
+
+  useEffect(() => {
+    try {
+      const savedToken = localStorage.getItem("nugaom_telegram_token") || "";
+      const savedChatId = localStorage.getItem("nugaom_telegram_chat_id") || "";
+      if (savedToken) setTelegramToken(savedToken);
+      if (savedChatId) setTelegramChatId(savedChatId);
+    } catch {}
+  }, []);
+
+  const handleSaveCredentials = (token, chatId) => {
+    setTelegramToken(token);
+    setTelegramChatId(chatId);
+    try {
+      localStorage.setItem("nugaom_telegram_token", token);
+      localStorage.setItem("nugaom_telegram_chat_id", chatId);
+    } catch {}
+  };
+
+  const handleTestSend = async () => {
+    if (!telegramToken.trim() || !telegramChatId.trim()) {
+      setTestResult({
+        ok: false,
+        error: "กรุณาระบุ Telegram Bot Token และ Chat ID / Channel ก่อนกดทดสอบ",
+      });
+      return;
+    }
+    setSending(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/alerts/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "test",
+          token: telegramToken.trim(),
+          chatId: telegramChatId.trim(),
+          signal: {
+            symbol: "XAUUSD",
+            side: "LONG",
+            signalTime: Math.floor(Date.now() / 1000),
+            atr: 8.25,
+            plan: {
+              entry: 2720.5,
+              stop: 2704.0,
+              target: 2753.5,
+              risk: 16.5,
+            },
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "ส่งสัญญาณไม่สำเร็จ");
+      }
+      setTestResult({
+        ok: true,
+        message: data.message || "ส่งข้อความสัญญาณทดสอบเข้า Telegram สำเร็จ!",
+      });
+    } catch (err) {
+      setTestResult({ ok: false, error: err.message });
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
-    <section className={styles.panel}>
+    <section className={styles.panel} aria-label="ศูนย์การแจ้งเตือนสัญญาณเทรด">
       <PanelHeading
         icon={Bell}
-        title="AI ALERTS / การแจ้งเตือน"
-        label="PREVIEW"
+        title="AI ALERTS · ศูนย์แจ้งเตือนสัญญาณสด"
+        label="LIVE BROADCAST"
       />
-      <p className={styles.note}>
-        ทดลองตั้งค่าบนหน้าจอ ยังไม่มีการส่งแจ้งเตือนจริง
-      </p>
+
+      <div className={styles.alertHeaderPill}>
+        <span className={styles.liveDot} />
+        <span>ระบบ Cloud แจ้งเตือนเรียลไทม์ 24 ชม. ไม่ต้องเปิดคอม</span>
+      </div>
+
+      <div className={styles.channelTabs}>
+        <button
+          type="button"
+          aria-pressed={activeTab === "telegram"}
+          onClick={() => setActiveTab("telegram")}
+          className={activeTab === "telegram" ? styles.channelTabActive : styles.channelTab}
+        >
+          <Send size={13} /> Telegram (แนะนำ · ฟรี 100%)
+        </button>
+        <button
+          type="button"
+          aria-pressed={activeTab === "voice"}
+          onClick={() => setActiveTab("voice")}
+          className={activeTab === "voice" ? styles.channelTabActive : styles.channelTab}
+        >
+          <Volume2 size={13} /> เสียงน้องนักออม
+        </button>
+        <button
+          type="button"
+          aria-pressed={activeTab === "line"}
+          onClick={() => setActiveTab("line")}
+          className={activeTab === "line" ? styles.channelTabActive : styles.channelTab}
+        >
+          <ShieldCheck size={13} /> LINE Official
+        </button>
+      </div>
+
+      {activeTab === "telegram" && (
+        <div className={styles.telegramBox}>
+          <div className={styles.telegramBadge}>
+            <span className={styles.costBadge}>0 บาท · ไม่จำกัดข้อความ</span>
+            <small>เด้งเข้ามือถือเสี้ยววินาที</small>
+          </div>
+
+          <div className={styles.inputStack}>
+            <label className={styles.inputLabel}>
+              <span>Telegram Bot Token</span>
+              <input
+                type="password"
+                className={styles.textInput}
+                placeholder="เช่น 123456789:ABCdefGhIJKlmNoPQRstUVwxyZ"
+                value={telegramToken}
+                onChange={(e) => handleSaveCredentials(e.target.value, telegramChatId)}
+              />
+            </label>
+
+            <label className={styles.inputLabel}>
+              <span>Telegram Chat ID หรือ @ชื่อแชนแนล</span>
+              <input
+                type="text"
+                className={styles.textInput}
+                placeholder="เช่น @MySignalChannel หรือ -1001234567890"
+                value={telegramChatId}
+                onChange={(e) => handleSaveCredentials(telegramToken, e.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className={styles.btnRow}>
+            <button
+              type="button"
+              className={styles.dispatchBtn}
+              onClick={handleTestSend}
+              disabled={sending}
+            >
+              <Send size={14} />
+              {sending ? "กำลังยิงสัญญาณ…" : "ทดสอบส่งสัญญาณเข้า Telegram ทันที"}
+            </button>
+            <button
+              type="button"
+              className={styles.guideToggle}
+              onClick={() => setShowGuide((v) => !v)}
+            >
+              {showGuide ? "ซ่อนวิธีสร้างบอท" : "📖 วิธีสร้างบอทใน 2 นาที"}
+            </button>
+          </div>
+
+          {testResult && (
+            <div
+              className={testResult.ok ? styles.successBox : styles.errorBox}
+              role="status"
+            >
+              {testResult.ok ? (
+                <>
+                  <CheckCircle2 size={16} />
+                  <span>{testResult.message}</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle size={16} />
+                  <span>{testResult.error}</span>
+                </>
+              )}
+            </div>
+          )}
+
+          {showGuide && (
+            <div className={styles.guideBox}>
+              <strong>วิธีตั้งค่า Telegram Bot เพื่อรับสัญญาณฟรี:</strong>
+              <ol>
+                <li>เปิดแอป Telegram ค้นหา <code>@BotFather</code> แล้วพิมพ์ <code>/newbot</code> เพื่อสร้างบอทและรับ <b>HTTP API Token</b></li>
+                <li>สร้าง Telegram Channel หรือ Group ของคุณ แล้วกดเพิ่มบอทที่คุณสร้างให้เป็น <b>Administrator</b></li>
+                <li>ใส่ <b>Bot Token</b> และ <b>@ชื่อแชนแนล</b> ในช่องด้านบน แล้วกดปุ่มทดสอบได้ทันที!</li>
+              </ol>
+            </div>
+          )}
+
+          <div className={styles.previewCard}>
+            <span className={styles.previewKicker}>ตัวอย่างข้อความที่ลูกค้าจะได้รับใน Telegram:</span>
+            <pre className={styles.previewText}>
+{`⚡ NUGAOM AI · สัญญาณเดย์เทรด 15m คมชัด ⚡
+────────────────────────
+🏆 สินทรัพย์: #XAUUSD (Spot Gold / ทองคำ)
+📊 คำสั่ง: 🟢 BUY (ซื้อ / ฝั่ง LONG)
+⏱️ เวลาแท่งปิด: 14:15 น. (15 นาที)
+
+🎯 จุดเข้า (Entry): 2,720.50
+🛑 จุดตัดขาดทุน (SL): 2,704.00
+🏁 เป้าหมายทำกำไร (TP 2R): 2,753.50
+⚖️ Risk/Reward Ratio: 1 : 2.0 (ระยะเสี่ยง: 16.50)
+────────────────────────
+💡 วินัยคุมพอร์ต: คุมความเสี่ยงไม่เกิน 1–2% ของเงินทุน
+🔗 เปิดดูกราฟสด: https://nugaom.com/forex ↗`}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "voice" && (
+        <div className={styles.voiceBox}>
+          <div className={styles.voiceHeader}>
+            <Volume2 size={24} className={styles.voiceIcon} />
+            <div>
+              <strong>น้องนักออม · Voice Synthesizer</strong>
+              <small>เสียงพูดภาษาไทยแจ้งจุดเข้า Entry / SL / TP อัตโนมัติ</small>
+            </div>
+          </div>
+          <p className={styles.voiceDesc}>
+            ระบบจะส่งเสียงพูดภาษาไทยแจ้งพิกัดจุดเข้าและเป้าหมายทันทีที่แท่ง 15m ปิดและเงื่อนไขเทรดผ่านเกณฑ์ โดยผู้ใช้สามารถเปิดหน้านี้ทิ้งไว้บน iPad หรือคอมพิวเตอร์เพื่อฟังเสียงเตือนขณะทำงานได้ทันที
+          </p>
+          <div className={styles.voiceSample}>
+            <span>ตัวอย่างเสียงประกาศ:</span>
+            <em>"XAUUSD ฟอเร็กซ์ LONG เข้าไม้ ราคาอ้างอิง 2720 จุดตัดขาดทุน 2704 เป้าหมาย 2753"</em>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "line" && (
+        <div className={styles.lineBox}>
+          <div className={styles.lineNotice}>
+            <ShieldCheck size={18} />
+            <div>
+              <strong>การแจ้งเตือนผ่าน LINE Official Account (Messaging API)</strong>
+              <p>
+                LINE Notify ปิดให้บริการถาวรแล้ว (มี.ค. 2025) การส่งผ่าน LINE OA ในแพ็กเกจฟรีจำกัดเพียง 300–500 ข้อความ/เดือน หากมีผู้ใช้หลายคนส่งสัญญาณทุกวันจะเกินโควตาทันที แนะนำให้ใช้ <b>Telegram Channel</b> เป็นช่องทางหลักเนื่องจากฟรี 100% ไม่จำกัดจำนวนข้อความ
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={styles.alertRows}>
         {[
           ["Price", "Price alert", "ติดตามระดับราคาที่สนใจ"],
-          ["AI", "AI signal", "ติดตามสัญญาณใหม่จากระบบ"],
+          ["AI", "AI 15m signal", "ติดตามสัญญาณใหม่จากระบบแท่ง 15m"],
           ["News", "Economic news", "เหตุการณ์เศรษฐกิจสำคัญ"],
-          ["MT5", "MT5 connection", "สถานะและการซิงก์สินทรัพย์"],
+          ["Voice", "Thai voice announcement", "เปิดระบบเสียงน้องนักออม"],
         ].map(([key, label, description]) => (
           <div key={key}>
             <span className={styles.alertIcon}>
@@ -660,22 +901,19 @@ export function Alerts({ enabled, onChange }) {
               <small>{description}</small>
             </span>
             <button
+              type="button"
               role="switch"
               aria-label={`ตัวอย่าง ${label}`}
-              aria-checked={enabled[key]}
+              aria-checked={enabled[key] ?? true}
               className={styles.toggle}
               onClick={() =>
-                onChange((value) => ({ ...value, [key]: !value[key] }))
+                onChange?.((value) => ({ ...value, [key]: !value[key] }))
               }
             >
               <i />
             </button>
           </div>
         ))}
-      </div>
-      <div className={styles.alertDelivery}>
-        <ShieldCheck size={16} />
-        ช่องทาง LINE และการแจ้งเตือนจริงจะเปิดในระยะถัดไป
       </div>
     </section>
   );

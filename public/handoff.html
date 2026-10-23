@@ -1083,6 +1083,50 @@ node work/verify-recovered-pilot.mjs</code><button class="code-action" onclick="
         </ul>
       </div>
 
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-cyan);">
+        <div class="card-title" style="color: var(--accent-cyan);">
+          <span>✅ หมวดที่ 6: สถาปัตยกรรมแท่งเทียน Forex &amp; Gold (Candlestick Data Feeds) และแนวทางรันระบบ 24/7 โดยไม่ต้องเปิดคอมพิวเตอร์ (Zero-PC Cloud Blueprint):</span>
+        </div>
+        <p class="card-desc">
+          ไขข้อข้องใจเรื่องแหล่งข้อมูลแท่งเทียนย้อนหลัง (OHLCV Bars), การประเมิน TradingView vs TradingView MCP, และการวางสถาปัตยกรรมคลาวด์เพื่อให้ระบบส่งสัญญาณพร้อมเสียงเตือนภาษาไทยอัตโนมัติ โดยที่ Operator ไม่ต้องเปิดคอมพิวเตอร์ทิ้งไว้ตลอด 24 ชั่วโมง:
+        </p>
+        <ul class="checklist complete">
+          <li><strong>🔍 วิเคราะห์ TradingView &amp; TradingView MCP:</strong> ชี้แจงข้อเท็จจริงว่า TradingView ไม่มี Public REST API ฟรีสำหรับให้ Server ดึงแท่งเทียนย้อนหลัง (OHLCV) โดยตรง การใช้ MCP หรือ Headless Browser Scraping มีความเสี่ยงสูงต่อการถูกบล็อกด้วย Cloudflare Captcha และยังคงต้องมีเครื่องเปิดทิ้งไว้ แต่ <em>ท่าไม้ตายที่ดีที่สุดของ TradingView คือ "TradingView Cloud Webhook"</em> โดยเขียน Indicator/Alert บน TradingView แล้วให้เซิร์ฟเวอร์ TradingView ส่ง HTTP POST Webhook (พร้อม JSON พิกัด Entry, SL, TP) เข้าสู่ Cloudflare Worker ของเราทันที ซึ่งเป็นแบบ Serverless 100%</li>
+          <li><strong>⚡ 3 แหล่งเชื่อมต่อแท่งเทียนหลังบ้านที่รันได้จริง 24/7:</strong>
+            <br>• <strong>Option A (Serverless Cloud API - แนะนำสูงสุด / ฟรี 100%):</strong> ดึงผ่าน <code class="inline">yahoo-finance2</code> ใน <code class="inline">src/market-data/yahoo-history.mjs</code> รองรับทั้งทองคำ COMEX (<code class="inline">GC=F</code>), โลหะเงิน (<code class="inline">SI=F</code>), และสกุลเงินหลัก (<code class="inline">EURUSD=X</code>, <code class="inline">USDJPY=X</code>) แท่ง 15m ปิดจริงย้อนหลังกว่า 3,800 แท่ง รันบน Cloudflare Worker ได้ทันทีโดยไม่ต้องมีเซิร์ฟเวอร์
+            <br>• <strong>Option B (TradingView Cloud Webhook):</strong> ตั้ง Alert บนชาร์ต TradingView ให้ยิง Webhook มาที่ Endpoint หลังบ้านเมื่อแท่ง 15m ปิด ไม่ต้องเขียนสแกนเนอร์เอง
+            <br>• <strong>Option C (Central Headless MT5 Docker บน VPS - $3-$5/เดือน):</strong> โครงสร้างพร้อมใช้ใน <code class="inline">src/forex-mt5/hosting/</code> เช่า VPS Linux ขนาดเล็ก รัน Docker Wine + Vantage MT5 + <code class="inline">NugaomReadOnlyBridge.ex5</code> ดูดราคาบิด/ออฟเฟอร์และสเปรดสด 1,268 รายการเข้า D1 กลางตลอด 24/5</li>
+          <li><strong>☁️ สถาปัตยกรรมรันระบบ 24/7 โดยไม่ต้องเปิดคอมพิวเตอร์ (Zero-PC Cloud Architecture):</strong>
+            <br>1. <strong>Cloud Scheduled Scanner (Cloudflare Cron Worker):</strong> ใช้พิมพ์เขียว <code class="inline">deploy/cloudflare/wrangler.scanner.jsonc</code> ตั้ง Trigger <code class="inline">*/15 * * * *</code> ให้ระบบ Cloudflare Edge ตื่นมาดึงแท่งเทียนที่เพิ่งปิด คำนวณแผนเทรดผ่าน <code class="inline">setupAt()</code> ใน <code class="inline">src/daytrade/engine.mjs</code> แล้วบันทึกลงฐานข้อมูล <strong>Cloudflare D1</strong> โดยอัตโนมัติ
+            <br>2. <strong>Client Audio Engine (น้องนักออม Voice Alert):</strong> เมื่อลูกค้าเปิดหน้าเว็บผ่านมือถือหรือคอม <code class="inline">MonitorProvider</code> จะตรวจจับไม้ใหม่และอ่านออกเสียงภาษาไทยทันที (<code class="inline">XAUUSD ฟอเร็กซ์ LONG เข้าไม้ ราคาอ้างอิง...</code>) พร้อมระบบแจ้งเตือนต่อยอดสู่ LINE OA / Telegram Bot ได้แบบไม่ต้องเปิดหน้าจอทิ้งไว้</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-green);">
+        <div class="card-title" style="color: var(--accent-green);">
+          <span>✅ หมวดที่ 7: ระบบแจ้งเตือนสัญญาณเทรดอัตโนมัติผ่าน Telegram &amp; Voice (Instant Alert Notification Engine) (Completed):</span>
+        </div>
+        <p class="card-desc">
+          สร้างระบบกระจายสัญญาณเทรดสดเข้า Telegram และระบบเสียงภาษาไทยน้องนักออมแบบเรียลไทม์ ชี้ชัดความได้เปรียบของ Telegram ที่เหนือกว่า LINE สำหรับเทรดเดอร์ (ฟรี 100% ตลอดชีพ ไม่จำกัดจำนวนข้อความ ไร้ขีดจำกัดผู้ติดตาม เด้งแจ้งเตือนเสี้ยววินาที):
+        </p>
+        <ul class="checklist complete">
+          <li><strong>🚀 วิเคราะห์เปรียบเทียบ Telegram vs LINE (ทำไม Telegram ถึงชนะขาดลอย):</strong>
+            <br>• <strong>Telegram (ทางเลือกอันดับ 1 / ประหยัด &amp; ตอบโจทย์ที่สุด):</strong> ฟรี 100% ไม่มีลิมิตข้อความ สามารถสร้าง Channel หรือ Group แล้วบรอดแคสต์สัญญาณ Entry, SL, TP (2R) ไปยังสมาชิกนับหมื่นคนพร้อมกันได้โดยไม่มีค่าบริการรายเดือน ความเร็วแจ้งเตือนต่ำกว่า 0.5 วินาที พร้อมจัดฟอร์แมต HTML/Markdown สวยงาม คมชัด มีปุ่มกดเปิดดูกราฟบนเว็บทันที
+            <br>• <strong>LINE:</strong> LINE Notify ปิดตัวถาวรแล้ว (มี.ค. 2025) ขณะที่ LINE Messaging API (LINE OA) แพ็กเกจฟรีจำกัดเพียง 300–500 ข้อความต่อเดือน หากส่งสัญญาณวันละ 3–5 ตัวให้ลูกค้า 50 คน โควตาจะหมดตั้งแต่วันที่ 2–3 และต้องจ่ายค่าแพ็กเกจ Pro ขั้นต่ำ 1,200–1,500 บาทต่อเดือน
+          </li>
+          <li><strong>⚡ โมดูล Broadcaster แกนกลาง (<code class="inline">src/notifications/broadcaster.mjs</code>):</strong> รองรับฟังก์ชัน <code class="inline">sendTelegramMessage</code>, <code class="inline">verifyTelegramBot</code>, และ <code class="inline">formatTelegramTradeMessage</code> จัดระเบียบข้อความแจ้งเตือนด้วย Emoji ทิศทาง (🟢 BUY / 🔴 SHORT), ระดับราคา Entry, SL, TP 2R, ระยะเสี่ยงต่อ ATR, และลิงก์ชาร์ตอัจฉริยะ</li>
+          <li><strong>📡 API Endpoint สำหรับทดสอบและบรอดแคสต์ (<code class="inline">/api/alerts/telegram</code>):</strong> รองรับการทดสอบส่งข้อความ One-Click Test จากหน้าบ้าน ตรวจสอบความถูกต้องของ Bot Token ผ่าน <code class="inline">getMe</code> และรายงานสถานะความพร้อมแบบ Real-time</li>
+          <li><strong>💎 ศูนย์ควบคุมการแจ้งเตือนสดบนหน้า Forex Desk (<code class="inline">terminal-panels.jsx</code> &amp; <code class="inline">forex-workspace.module.css</code>):</strong>
+            <br>• ปรับปรุงกล่อง AI Alerts เป็นแท็บ 3 ช่องทาง: <strong>Telegram (0 บาท · ไม่จำกัด)</strong>, <strong>เสียงน้องนักออม</strong>, และ <strong>LINE OA</strong>
+            <br>• มีช่องกรอก Bot Token และ Chat ID/Channel พร้อมระบบบันทึกความจำอัตโนมัติในเครื่อง (<code class="inline">localStorage</code>)
+            <br>• ปุ่ม <strong>"🚀 ทดสอบส่งสัญญาณเข้า Telegram ทันที"</strong> พร้อมแสดงผลสำเร็จ/ล้มเหลวแบบเรียลไทม์
+            <br>• คู่มือย่อ 3 ขั้นตอนสอนสร้าง Telegram Bot ใน 2 นาทีผ่าน <code class="inline">@BotFather</code>
+            <br>• กล่องตัวอย่างข้อความพรีวิวเสมือนจริงที่ผู้ใช้จะได้รับใน Telegram
+          </li>
+          <li><strong>🔊 เสียงน้องนักออม (Thai Voice Synthesizer):</strong> ประสานเสียงพูดภาษาไทยอัตโนมัติเมื่อตรวจพบจุดเข้าใหม่โดยไม่ต้องเปิดเบราว์เซอร์ทิ้งไว้</li>
+        </ul>
+      </div>
+
       <div class="card">
         <div class="card-title">
           <span>⚙️ งานโครงสร้างพื้นฐานระยะยาว (Long-Term Handover Items):</span>
