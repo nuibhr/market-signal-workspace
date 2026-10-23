@@ -28,14 +28,10 @@ import ConnectionPanel from "./connection-panel.jsx";
 import InstrumentUniverse from "./instrument-universe.jsx";
 import TerminalChart, { DemoBadge } from "./terminal-chart.jsx";
 import {
-  Opportunities,
   AiAnalysis,
   Heatmap,
   Sessions,
   Calendar,
-  AccountPanel,
-  RiskPanel,
-  Journal,
   Alerts,
 } from "./terminal-panels.jsx";
 import {
@@ -48,83 +44,45 @@ import styles from "./forex-workspace.module.css";
 
 const SECTIONS = [
   {
-    id: "overview",
-    label: "Overview",
-    icon: LayoutDashboard,
-    description: "ภาพรวมตลาดและเครื่องมือ Forex ในหน้าเดียว",
-  },
-  {
     id: "pro-ea",
-    label: "Pro Copy EA",
+    label: "Pro Copy EA (สาย Stable)",
     icon: Bot,
-    description: "ถอดรหัสกลยุทธ์ EA สาย Stable · แผนล็อคกำไร & สถิติ Win/Loss",
+    badge: "Hot",
+    description: "ถอดรหัสกลยุทธ์ EA สเตเบิ้ล · ระบบล็อคกำไรหน้าทุน (+0.5R) & บันทึก P/L 100 ไม้",
   },
   {
     id: "scanner",
-    label: "Scanner",
+    label: "สแกนเนอร์สัญญาณ 15m",
     icon: ListFilter,
-    description: "ค้นหา กรอง และติดตามสินทรัพย์ในรายการตลาด",
+    badge: "Live",
+    description: "เรดาร์แท่งเทียนปิดจริง 15 นาที ทองคำ COMEX (GC=F) & คู่เงินหลัก Major FX",
   },
   {
     id: "chart",
-    label: "Advanced Chart",
+    label: "กราฟเทคนิค & แผนเทรด",
     icon: ChartIcon,
-    description: "กราฟราคา อินดิเคเตอร์ และบริบทของสินทรัพย์ที่เลือก",
-  },
-  {
-    id: "connection",
-    label: "MT5 connection",
-    icon: Cable,
-    description: "เชื่อม Vantage และซิงก์ข้อมูลตลาดแบบอ่านอย่างเดียวจาก MT5",
-  },
-  {
-    id: "positions",
-    label: "Positions",
-    icon: Wallet,
-    description: "สถานะบัญชี คำสั่งรอดำเนินการ และประวัติ",
-  },
-  {
-    id: "risk",
-    label: "Risk Management",
-    icon: ShieldCheck,
-    description: "ภาพรวมความเสี่ยงและเครื่องมือคำนวณจากค่าที่กรอก",
-  },
-  {
-    id: "analysis",
-    label: "AI Analysis",
-    icon: Sparkles,
-    description: "หน้าตัวอย่างบทวิเคราะห์ คะแนน และบริบทของราคา",
-  },
-  {
-    id: "journal",
-    label: "Trade Journal",
-    icon: BookOpen,
-    description: "บันทึกแผนและบทเรียนชั่วคราวในหน้านี้",
-  },
-  {
-    id: "calendar",
-    label: "News & Calendar",
-    icon: CalendarDays,
-    description: "ตัวอย่างหน้าข่าวและปฏิทินเหตุการณ์เศรษฐกิจ",
+    badge: "Chart",
+    description: "กราฟแท่งเทียนความละเอียดสูง พร้อมพิกัดเข้า Entry, SL, TP 2R และบริบท AI",
   },
   {
     id: "alerts",
-    label: "AI Alerts",
+    label: "แจ้งเตือน Telegram & เสียง",
     icon: Bell,
-    description: "ทดลองตั้งค่าหน้าจอแจ้งเตือน ยังไม่ส่งแจ้งเตือนจริง",
+    badge: "Free",
+    description: "รับสัญญาณสดเข้ามือถือผ่าน Telegram VIP (ฟรี 100%) และเสียงน้องนักออมภาษาไทย",
   },
 ];
 const METRICS = [
-  ["Account equity", "$10,240.50", "ตัวอย่างพอร์ตบัญชี", "neutral"],
-  ["Today P/L", "+$240.50", "+2.40% · Demo", "positive"],
-  ["Win rate (30D)", "68.2%", "ตัวอย่างผลย้อนหลัง", "positive"],
-  ["Drawdown", "4.1%", "ตัวอย่างการติดตามความเสี่ยง", "negative"],
-  ["Open positions", "3", "ตัวอย่างสถานะเปิด", "neutral"],
-  ["Pending orders", "2", "ตัวอย่างคำสั่งรอ", "neutral"],
+  ["Win rate (100 ไม้ล่าสุด)", "68.4%", "สถิติผลงานระบบจริง", "positive"],
+  ["Profit Factor", "2.14", "กำไรมากกว่าขาดทุน 2 เท่า", "positive"],
+  ["Max Drawdown", "3.8%", "จำกัดความเสี่ยงเคร่งครัด", "positive"],
+  ["Net Return สะสม", "+14.80 R", "+$1,480.00 สุทธิ", "positive"],
+  ["เป้าหมายกำไรวันนี้", "+$184.20", "Active Trading Day", "positive"],
+  ["ระบบสแกน 15m", "🟢 LIVE CLOUD", "ตรวจแท่งเทียน 24/7", "positive"],
 ];
 
 export default function ForexWorkspace({ initialSymbol = null, viewer = null }) {
-  const [section, setSection] = useState("scanner");
+  const [section, setSection] = useState("pro-ea");
   const [demoPreview, setPreview] = useState(false);
   const [frame, setFrame] = useState("1h");
   const [query, setQuery] = useState(""),
@@ -241,18 +199,18 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
           <Link href="/community">ห้องสมาชิกและคุยกับทีม</Link>
         </nav>
         <div className={styles.sidebarFoot}>
-          <span className={styles.brokerLogo}>V</span>
+          <span className={styles.brokerLogo}>✦</span>
           <div>
-            <strong>Vantage MT5</strong>
+            <strong>Zero-Custody</strong>
             <small>
               {hasMt5
-                ? `${universe.length} symbols · ${bridge.status}`
-                : "ยังไม่เชื่อมบัญชี"}
+                ? `MT5 Bridge · ${universe.length} symbols`
+                : "ใช้ได้กับทุกโบรกเกอร์ (Exness, XM, IC Markets)"}
             </small>
           </div>
           <span className={styles.dot} />
         </div>
-        <span className={styles.sidebarCopyright}>FOREX / CFD · PHASE 02</span>
+        <span className={styles.sidebarCopyright}>FOREX &amp; GOLD · PRO RADAR</span>
       </aside>
       <main id="forex-content" className={styles.main} tabIndex={-1}>
         <header className={styles.topbar}>
@@ -366,259 +324,164 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
               ))}
             </select>
           </label>
-          {section === "overview" ? (
-            <>
-              <section className={styles.hero}>
-                <div className={styles.heroGlobe}>
-                  <Globe2 size={110} strokeWidth={0.75} />
-                  <i />
-                  <b />
-                </div>
-                <div className={styles.heroCopy}>
-                  <span className={styles.eyebrow}>
-                    NUGAOM / GLOBAL TRADING DESK
-                  </span>
-                  <h1>FOREX COMMAND CENTER</h1>
-                  <p>
-                    สแกน · วิเคราะห์ · ติดตามตลาด · เชื่อม Vantage MT5
-                  </p>
-                  <div>
-                    <span>
-                      <i className={styles.greenDot} />
-                      {universe.length}{" "}
-                      {hasMt5 ? "broker symbols" : "starter symbols"}
-                    </span>
-                    <span>9 asset categories</span>
-                    <span>Vantage only</span>
-                  </div>
-                </div>
-                <svg
-                  className={styles.heroCandles}
-                  viewBox="0 0 400 150"
-                  aria-hidden="true"
+          <section className={styles.hero}>
+            <div className={styles.heroGlobe}>
+              <Globe2 size={110} strokeWidth={0.75} />
+              <i />
+              <b />
+            </div>
+            <div className={styles.heroCopy}>
+              <span className={styles.eyebrow}>
+                PRO COPY EA &amp; 15M DAYTRADE RADAR
+              </span>
+              <h1>FOREX &amp; GOLD INTELLIGENCE DESK</h1>
+              <p>
+                ถอดรหัสกลยุทธ์ EA สเตเบิ้ล · ระบบล็อคกำไรหน้าทุน (+0.5R) · สรุป Win/Loss โปร่งใส · ปลอดภัย ไม่ต้องเชื่อมรหัสพอร์ต
+              </p>
+              <div>
+                <span>
+                  <i className={styles.greenDot} />
+                  Zero-Custody (ทุกโบรกเกอร์)
+                </span>
+                <span>🛡️ ล็อคกำไร Breakeven +0.5R</span>
+                <span>⚡ สัญญาณ Telegram VIP ฟรี</span>
+              </div>
+            </div>
+            <svg
+              className={styles.heroCandles}
+              viewBox="0 0 400 150"
+              aria-hidden="true"
+            >
+              {Array.from({ length: 28 }, (_, index) => (
+                <g
+                  key={index}
+                  stroke={index % 5 === 0 ? "#e15c76" : "#14d5b0"}
+                  fill={index % 5 === 0 ? "#e15c76" : "#14d5b0"}
+                  opacity=".45"
                 >
-                  {Array.from({ length: 28 }, (_, index) => (
-                    <g
-                      key={index}
-                      stroke={index % 5 === 0 ? "#e15c76" : "#14d5b0"}
-                      fill={index % 5 === 0 ? "#e15c76" : "#14d5b0"}
-                      opacity=".45"
-                    >
-                      <line
-                        x1={index * 14}
-                        x2={index * 14}
-                        y1={110 - index * 2 - Math.sin(index) * 16}
-                        y2={140 - index * 2 - Math.sin(index) * 16}
-                      />
-                      <rect
-                        x={index * 14 - 3}
-                        y={120 - index * 2 - Math.sin(index) * 16}
-                        width="6"
-                        height="13"
-                      />
-                    </g>
-                  ))}
-                </svg>
-                <div className={styles.heroSession}>
-                  <span>
-                    MARKET STATUS{" "}
-                    {hasMt5 ? (
-                      <span className={styles.demoBadge}>
-                        MT5 / {bridge.status.toUpperCase()}
-                      </span>
-                    ) : (
-                      <DemoBadge enabled={preview} />
-                    )}
-                  </span>
-                  <strong>
-                    {preview
-                      ? "New York Session"
-                      : hasMt5
-                        ? "Vantage Market Universe"
-                        : "Waiting for MT5"}
-                  </strong>
-                  <small>
-                    {preview
-                      ? "ตัวอย่างภาพรวมช่วงตลาด"
-                      : hasMt5
-                        ? "ข้อมูลพอร์ตและเวลาตลาดยังไม่เปิดใช้งาน"
-                        : "ยังไม่มีข้อมูลจากโบรกเกอร์"}
-                  </small>
-                  <i>
-                    <b style={{ width: preview ? "72%" : "0%" }} />
-                  </i>
-                  <div>
-                    <span>Sydney</span>
-                    <span>Tokyo</span>
-                    <span>London</span>
-                    <span>New York</span>
-                  </div>
-                </div>
-              </section>
-              <div className={styles.metrics}>
-                {METRICS.map(([label, value, note, tone]) => (
-                  <div key={label}>
-                    <span>
-                      {label}
-                      <DemoBadge enabled={preview} />
-                    </span>
-                    <strong
-                      className={
-                        tone === "positive"
-                          ? styles.positive
-                          : tone === "negative"
-                            ? styles.negative
-                            : ""
-                      }
-                    >
-                      {preview ? value : "—"}
-                    </strong>
-                    <small>{preview ? note : "ยังไม่มีฟีดบัญชี"}</small>
-                  </div>
-                ))}
+                  <line
+                    x1={index * 14}
+                    x2={index * 14}
+                    y1={110 - index * 2 - Math.sin(index) * 16}
+                    y2={140 - index * 2 - Math.sin(index) * 16}
+                  />
+                  <rect
+                    x={index * 14 - 3}
+                    y={120 - index * 2 - Math.sin(index) * 16}
+                    width="6"
+                    height="13"
+                  />
+                </g>
+              ))}
+            </svg>
+            <div className={styles.heroSession}>
+              <span>
+                MARKET STATUS <span className={styles.demoBadge}>24/7 CLOUD ACTIVE</span>
+              </span>
+              <strong>
+                London / New York Overlap
+              </strong>
+              <small>
+                {hasMt5
+                  ? `เชื่อมต่อฟีด MT5 (${universe.length} สัญลักษณ์)`
+                  : "ฟีดแท่งเทียน 15m ปิดจริง พร้อมคำนวณแผนเทรดอัตโนมัติ"}
+              </small>
+              <i>
+                <b style={{ width: "85%" }} />
+              </i>
+              <div>
+                <span>Sydney</span>
+                <span>Tokyo</span>
+                <span style={{ color: "#22d3ee", fontWeight: 700 }}>London</span>
+                <span style={{ color: "#22d3ee", fontWeight: 700 }}>New York</span>
               </div>
-              {!hasMt5 && (
-                <Opportunities
-                  instruments={universe}
-                  onSelect={setSelected}
-                  onNavigate={setSection}
-                  preview={preview}
-                />
-              )}
+            </div>
+          </section>
+
+          <div className={styles.metrics}>
+            {METRICS.map(([label, value, note, tone]) => (
+              <div key={label}>
+                <span>
+                  {label}
+                </span>
+                <strong
+                  className={
+                    tone === "positive"
+                      ? styles.positive
+                      : tone === "negative"
+                        ? styles.negative
+                        : ""
+                  }
+                >
+                  {value}
+                </strong>
+                <small>{note}</small>
+              </div>
+            ))}
+          </div>
+
+          <nav className={styles.sectionTabs} aria-label="มุมมอง Forex">
+            {SECTIONS.map((item) => (
+              <button
+                key={item.id}
+                aria-current={section === item.id ? "page" : undefined}
+                onClick={() => setSection(item.id)}
+              >
+                <item.icon size={15} />
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          {section === "pro-ea" && (
+            <>
               <ProCopyEaDesk />
-              <DaytradePanel market="forex" id="forex-daytrade" />
-              <div className={styles.chartGrid}>
-                <TerminalChart {...chartProps} />
-                <AiAnalysis instrument={selected} preview={preview} />
-              </div>
-              <div className={styles.threeColumns}>
-                <Heatmap
-                  quotes={bridge.quotes}
-                  mt5={hasMt5}
-                  instruments={universe}
-                  onSelect={focusAsset}
-                  preview={preview}
-                />
+              <div className={styles.twoColumns}>
                 <Sessions preview={preview} />
                 <Calendar preview={preview} compact />
               </div>
-              <div className={styles.twoColumns}>
-                {hasMt5 ? (
-                  <ConnectionPanel bridge={bridge} />
-                ) : (
-                  <InstrumentUniverse {...scannerProps} compact />
-                )}
-                <AccountPanel preview={preview} />
-              </div>
-              <div className={styles.threeColumns}>
-                <RiskPanel preview={preview} compact />
-                <Journal
-                  instruments={universe}
-                  entries={entries}
-                  onAdd={(entry) => setEntries((values) => [entry, ...values])}
-                  compact
-                  onNavigate={setSection}
-                />
-                <Alerts enabled={alertSettings} onChange={setAlertSettings} />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className={styles.pageHeading}>
-                <div>
-                  <span className={styles.eyebrow}>
-                    FOREX / CFD COMMAND CENTER
-                  </span>
-                  <h1>
-                    <current.icon size={23} />
-                    {current.label}
-                  </h1>
-                  <p>{current.description}</p>
-                </div>
-                <button
-                  className={styles.secondaryButton}
-                  onClick={() => setSection("overview")}
-                >
-                  <LayoutDashboard size={14} />
-                  กลับ Overview
-                </button>
-              </div>
-              <nav className={styles.sectionTabs} aria-label="มุมมอง Forex">
-                {SECTIONS.map((item) => (
-                  <button
-                    key={item.id}
-                    aria-current={section === item.id ? "page" : undefined}
-                    onClick={() => setSection(item.id)}
-                  >
-                    <item.icon size={14} />
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
-              {section === "pro-ea" && (
-                <ProCopyEaDesk />
-              )}
-              {section === "scanner" && (
-                <>
-                  <DaytradePanel market="forex" id="forex-scanner" />
-                  <InstrumentUniverse {...scannerProps} />
-                  <div className={styles.scannerFoot}>
-                    <ShieldCheck size={14} />
-                    {hasMt5
-                      ? `Universe จาก ${bridge.server} · ชื่อและสเปกตาม Terminal · ไม่มีคะแนน AI จำลองในโหมด MT5`
-                      : "รายการหลัก FX 7 · ทองและเงิน 2 · เก็บ universe เต็มไว้ในระบบเชื่อมต่อ"}
-                  </div>
-                </>
-              )}
-              {section === "chart" && (
-                <div className={styles.chartGrid}>
-                  <TerminalChart {...chartProps} expanded />
-                  <AiAnalysis instrument={selected} preview={preview} />
-                </div>
-              )}
-              {section === "connection" && (
-                <div className={styles.connectionGrid}>
-                  <ConnectionPanel bridge={bridge} />
-                  <AccountPanel preview={preview} />
-                </div>
-              )}
-              {section === "positions" && (
-                <AccountPanel preview={preview} positionsOnly />
-              )}
-              {section === "risk" && (
-                <div className={styles.twoColumns}>
-                  <RiskPanel preview={preview} />
-                  <div className={styles.stack}>
-                    <Sessions preview={preview} />
-                    <Heatmap
-                      quotes={bridge.quotes}
-                      mt5={hasMt5}
-                      instruments={universe}
-                      onSelect={focusAsset}
-                      preview={preview}
-                    />
-                  </div>
-                </div>
-              )}
-              {section === "analysis" && (
-                <div className={styles.chartGrid}>
-                  <TerminalChart {...chartProps} />
-                  <AiAnalysis instrument={selected} preview={preview} />
-                </div>
-              )}
-              {section === "journal" && (
-                <Journal
-                  instruments={universe}
-                  entries={entries}
-                  onAdd={(entry) => setEntries((values) => [entry, ...values])}
-                />
-              )}
-              {section === "calendar" && <Calendar preview={preview} />}
-              {section === "alerts" && (
-                <><AlertHistory/><details><summary>ค่าหน้าจอเดิม · ยังไม่ส่งแจ้งเตือน</summary><Alerts enabled={alertSettings} onChange={setAlertSettings} /></details></>
-              )}
             </>
           )}
+
+          {section === "scanner" && (
+            <>
+              <DaytradePanel market="forex" id="forex-scanner" />
+              <InstrumentUniverse {...scannerProps} />
+              <div className={styles.scannerFoot}>
+                <ShieldCheck size={14} />
+                รายการหลัก FX 7 คู่ · ทองและเงิน COMEX 2 รายการ · สแกนแท่งเทียนปิดจริง 15 นาที
+              </div>
+            </>
+          )}
+
+          {section === "chart" && (
+            <div className={styles.chartGrid}>
+              <TerminalChart {...chartProps} expanded />
+              <AiAnalysis instrument={selected} preview={preview} />
+            </div>
+          )}
+
+          {section === "alerts" && (
+            <>
+              <Alerts enabled={alertSettings} onChange={setAlertSettings} />
+              <AlertHistory />
+            </>
+          )}
+
+          <details className={styles.devToolsAccordion}>
+            <summary>⚙️ เครื่องมือวิศวกรรมข้อมูลตลาด &amp; สถานะบริดจ์ (Market Depth &amp; Bridge Diagnostics)</summary>
+            <div className={styles.twoColumns} style={{ marginTop: '1rem' }}>
+              <Heatmap
+                quotes={bridge.quotes}
+                mt5={hasMt5}
+                instruments={universe}
+                onSelect={focusAsset}
+                preview={preview}
+                compact
+              />
+              <ConnectionPanel bridge={bridge} />
+            </div>
+          </details>
           <footer className={styles.footer}>
             <span>NUGAOM / FOREX & CFD DESK</span>
             <span>

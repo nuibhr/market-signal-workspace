@@ -2721,3 +2721,27 @@
   margin: 0;
 }
 
+.devToolsAccordion {
+  margin-top: 2rem;
+  padding: 1rem 1.25rem;
+  background: rgba(10, 20, 36, 0.4);
+  border: 1px dashed rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.devToolsAccordion summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #7dd3fc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+}
+
+.devToolsAccordion summary:hover {
+  color: #38bdf8;
+}
+
