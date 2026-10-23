@@ -2713,5 +2713,115 @@
   border-color: #f1f5f9 !important;
 }
 
+/* ── AI Stage Health Diagnostics (Light Glass) ── */
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagBar'],
+[data-theme='light'] [class*='us-stage2-desk_diagBar'] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagTitle'],
+[data-theme='light'] [class*='us-stage2-desk_diagTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagSubtitle'],
+[data-theme='light'] [class*='us-stage2-desk_diagSubtitle'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagTickerChip'],
+[data-theme='light'] [class*='us-stage2-desk_diagTickerChip'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagTickerChipActive'],
+[data-theme='light'] [class*='us-stage2-desk_diagTickerChipActive'] {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagCardTop'] h4,
+[data-theme='light'] [class*='us-stage2-desk_diagCardTop'] h4 {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagScoreBox'],
+[data-theme='light'] [class*='us-stage2-desk_diagScoreBox'] {
+  background: #f8fafc !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagActionRow'],
+[data-theme='light'] [class*='us-stage2-desk_diagActionRow'] {
+  background: #f8fafc !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagActionText'] strong,
+[data-theme='light'] [class*='us-stage2-desk_diagActionText'] strong {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_diagActionText'] p,
+[data-theme='light'] [class*='us-stage2-desk_diagActionText'] p {
+  color: #334155 !important;
+}
+
+/* ── Overnight GTC Playbook (Light Glass) ── */
+.market-workspace.theme-light-glass [class*='us-stage2-desk_gtcPlaybookCard'],
+[data-theme='light'] [class*='us-stage2-desk_gtcPlaybookCard'] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_gtcTitle'],
+[data-theme='light'] [class*='us-stage2-desk_gtcTitle'] {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_gtcSub'],
+[data-theme='light'] [class*='us-stage2-desk_gtcSub'] {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_gtcStepBox'],
+[data-theme='light'] [class*='us-stage2-desk_gtcStepBox'] {
+  background: #f8fafc !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_gtcStepBox'] strong,
+[data-theme='light'] [class*='us-stage2-desk_gtcStepBox'] strong {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_gtcStepPrice'],
+[data-theme='light'] [class*='us-stage2-desk_gtcStepPrice'] {
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_gtcStepBox'] p,
+[data-theme='light'] [class*='us-stage2-desk_gtcStepBox'] p {
+  color: #475569 !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_gtcBrokersSupported'] b,
+[data-theme='light'] [class*='us-stage2-desk_gtcBrokersSupported'] b {
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass [class*='us-stage2-desk_brokerChip'],
+[data-theme='light'] [class*='us-stage2-desk_brokerChip'],
+.market-workspace.theme-light-glass [class*='us-stage2-desk_modeBtn'],
+[data-theme='light'] [class*='us-stage2-desk_modeBtn'] {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+
 
 

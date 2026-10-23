@@ -65,7 +65,7 @@
 
 .views {
   display: grid;
-  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 8px;
   flex: 1;
 }
@@ -75,13 +75,13 @@
   flex-direction: column;
   justify-content: center;
   gap: 3px;
-  border: 1px solid #344c60;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 10px 14px;
   text-decoration: none;
   color: #a5bdcf;
-  background: #12202e;
-  transition: all 0.2s ease;
+  background: rgba(10, 19, 36, 0.7);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .views a b {

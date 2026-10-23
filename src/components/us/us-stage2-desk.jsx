@@ -797,9 +797,16 @@ export default function UsStage2Desk({
         </div>
 
         <div className={styles.marketClockBox}>
-          <div className={`${styles.clockBadge} ${!marketSession.isOpen ? styles.clockBadgeClosed : ''}`}>
-            <span className={marketSession.isOpen ? styles.livePulseDot : styles.livePulseDotBlue} />
-            <span>{marketSession.label}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <div className={`${styles.clockBadge} ${!marketSession.isOpen ? styles.clockBadgeClosed : ''}`}>
+              <span className={marketSession.isOpen ? styles.livePulseDot : styles.livePulseDotBlue} />
+              <span>{marketSession.label}</span>
+            </div>
+            <div className={styles.commandBarFxChip}>
+              <span>USD/THB:</span>
+              <b>{currentFxRate.toFixed(2)} ฿</b>
+              <span style={{ fontSize: '10px', color: '#34d399', marginLeft: '4px' }}>• Dime! Ready</span>
+            </div>
           </div>
           <span className={styles.clockHours}>{marketSession.hoursLabel}</span>
         </div>
@@ -815,95 +822,6 @@ export default function UsStage2Desk({
           </p>
         </div>
       </div>
-
-      {/* ─── 3. Segmented HUD Command Navigation Bar ─── */}
-      <nav className={styles.commandBar} aria-label="แถบเมนูคำสั่งตลาดหุ้นสหรัฐฯ">
-        <div className={styles.commandTabs}>
-          <button
-            type="button"
-            className={`${styles.commandTab} ${activeTab === 'focus' ? styles.commandTabActive : ''}`}
-            onClick={() => setActiveTab('focus')}
-          >
-            <div className={styles.commandTabHeader}>
-              <span className={styles.commandTabIcon} style={{ color: '#22d3ee' }}>🎯</span>
-              <span>US Stage 2 Focus Picks</span>
-              <span className={styles.commandTabBadge}>Top Leaders</span>
-            </div>
-            <span className={styles.commandTabSub}>คัดหุ้นเกรด A+ พร้อมแผน 2R</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.commandTab} ${activeTab === 'rotation' ? styles.commandTabActive : ''}`}
-            onClick={() => setActiveTab('rotation')}
-          >
-            <div className={styles.commandTabHeader}>
-              <span className={styles.commandTabIcon} style={{ color: '#a855f7' }}>🌐</span>
-              <span>Thematic ETF Sector Rotation</span>
-              <span className={styles.commandTabBadge}>Fund Flow</span>
-            </div>
-            <span className={styles.commandTabSub}>การหมุนเวียนกลุ่ม AI, Cloud, Energy</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.commandTab} ${activeTab === 'fx' ? styles.commandTabActive : ''}`}
-            onClick={() => setActiveTab('fx')}
-          >
-            <div className={styles.commandTabHeader}>
-              <span className={styles.commandTabIcon} style={{ color: '#10b981' }}>💵</span>
-              <span>USD/THB FX Hedge &amp; Risk</span>
-              <span className={styles.commandTabBadge}>Live Simulator</span>
-            </div>
-            <span className={styles.commandTabSub}>คำนวณผลกระทบค่าเงินบาท</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.commandTab} ${activeTab === 'sizing' ? styles.commandTabActive : ''}`}
-            onClick={() => setActiveTab('sizing')}
-          >
-            <div className={styles.commandTabHeader}>
-              <span className={styles.commandTabIcon} style={{ color: '#f59e0b' }}>📐</span>
-              <span>Dime! &amp; 2R Sizing Desk</span>
-              <span className={styles.commandTabBadge}>{sizingMode === 'fractional' ? `${calculatedFractional.shares} หุ้น` : `${calculatedSizing.shares} Shares`}</span>
-            </div>
-            <span className={styles.commandTabSub}>คำนวณเศษหุ้น &amp; งบเงินบาท</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.commandTab} ${activeTab === 'screener' ? styles.commandTabActive : ''}`}
-            onClick={() => setActiveTab('screener')}
-          >
-            <div className={styles.commandTabHeader}>
-              <span className={styles.commandTabIcon} style={{ color: '#38bdf8' }}>📊</span>
-              <span>S&amp;P 500 Universe Table</span>
-              <span className={styles.commandTabBadge}>Full Catalog</span>
-            </div>
-            <span className={styles.commandTabSub}>ค้นหาและกรองหุ้น 500 บริษัท</span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.commandTab} ${activeTab === 'chart' ? styles.commandTabActive : ''}`}
-            onClick={() => setActiveTab('chart')}
-          >
-            <div className={styles.commandTabHeader}>
-              <span className={styles.commandTabIcon} style={{ color: '#38bdf8' }}>📈</span>
-              <span>Interactive Candlestick Chart</span>
-              <span className={styles.commandTabBadge}>Full Chart</span>
-            </div>
-            <span className={styles.commandTabSub}>ดูกราฟเทคนิคแท่งจริง &amp; Indicators</span>
-          </button>
-        </div>
-
-        <div className={styles.commandBarFxChip}>
-          <span>อัตราแลกเปลี่ยนอ้างอิง:</span>
-          <b>{currentFxRate.toFixed(2)} ฿/USD</b>
-          <span style={{ fontSize: '10px', color: '#34d399', marginLeft: '6px' }}>• Dime! Mode พร้อมใช้</span>
-        </div>
-      </nav>
 
       {/* ─── TAB 1: DAILY HIGH CONVICTION STAGE 2 FOCUS PICKS ─── */}
       {activeTab === 'focus' && (

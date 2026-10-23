@@ -1,4 +1,4 @@
-/* ─── US 500 & GLOBAL ETFS STAGE 2 COMMAND DESK STYLESHEET ─── */
+/* ─── US 500 & GLOBAL ETFS STAGE 2 COMMAND DESK STYLESHEET (CLEAN MAGIC UI AESTHETIC) ─── */
 .desk {
   --us-cyan: #22d3ee;
   --us-purple: #a855f7;
@@ -6,19 +6,21 @@
   --us-amber: #f59e0b;
   --us-rose: #f43f5e;
   --us-blue: #38bdf8;
-  --us-card-bg: linear-gradient(145deg, #0e172a 0%, #131f38 100%);
-  --us-border: rgba(34, 211, 238, 0.22);
-  --us-subtle: rgba(15, 23, 42, 0.7);
+  --us-card-bg: linear-gradient(145deg, rgba(17, 28, 51, 0.8) 0%, rgba(13, 21, 38, 0.9) 100%);
+  --us-border: rgba(255, 255, 255, 0.06);
+  --us-subtle: rgba(255, 255, 255, 0.03);
 
-  background: linear-gradient(150deg, #091024 0%, #0d1733 50%, #080d1e 100%);
-  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: linear-gradient(150deg, rgba(9, 16, 36, 0.95) 0%, rgba(13, 23, 50, 0.9) 50%, rgba(8, 13, 28, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
-  padding: 22px 24px;
-  margin: 14px 0 24px;
+  padding: 24px;
+  margin: 10px 0 24px;
   color: #f1f5f9;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   scroll-margin-top: 85px;
 }
 
@@ -27,24 +29,24 @@
   position: absolute;
   top: -120px;
   right: -100px;
-  width: 340px;
-  height: 340px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
 
-/* ── Header & Market Ticker Bar ── */
+/* ── Header & Executive Status Strip (Seamless, Line-Free) ── */
 .header {
   position: relative;
   z-index: 1;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 18px;
+  align-items: center;
+  gap: 20px;
   flex-wrap: wrap;
-  padding-bottom: 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+  border-bottom: none; /* Removed harsh divider line */
 }
 
 .brand {
@@ -61,10 +63,10 @@
   letter-spacing: 1.6px;
   text-transform: uppercase;
   color: var(--us-cyan);
-  background: rgba(34, 211, 238, 0.12);
-  padding: 3px 9px;
-  border-radius: 6px;
-  border: 1px solid rgba(34, 211, 238, 0.25);
+  background: rgba(34, 211, 238, 0.1);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: none;
   margin-bottom: 8px;
 }
 
@@ -77,19 +79,20 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  letter-spacing: -0.3px;
 }
 
 .titleFlag {
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .titleBadge {
   font-size: 11px;
   font-weight: 700;
-  background: rgba(168, 85, 247, 0.18);
+  background: rgba(168, 85, 247, 0.15);
   color: #d8b4fe;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  padding: 3px 9px;
+  border: none;
+  padding: 4px 10px;
   border-radius: 20px;
 }
 
@@ -115,21 +118,22 @@
   font-weight: 700;
   background: rgba(16, 185, 129, 0.12);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 5px 11px;
-  border-radius: 8px;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.1);
 }
 
 .clockBadgeClosed {
   background: rgba(56, 189, 248, 0.12);
   color: #38bdf8;
-  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.1);
 }
 
 .clockHours {
-  font-size: 10px;
+  font-size: 11px;
   color: #64748b;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .livePulseDot {
@@ -155,19 +159,19 @@
   50% { opacity: 0.4; transform: scale(1.3); }
 }
 
-/* ── Capital Protection & Loss Aversion Guard ── */
+/* ── Capital Protection & Loss Aversion Guard (Soft Floating Surface) ── */
 .guardBanner {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
   gap: 14px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(34, 211, 238, 0.06) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.32);
-  border-radius: 12px;
-  padding: 12px 18px;
-  margin: 16px 0;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(34, 211, 238, 0.04) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin: 14px 0 20px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
 }
 
 .guardIcon {
@@ -184,13 +188,14 @@
   font-size: 13px;
   font-weight: 700;
   color: #34d399;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+  letter-spacing: 0.2px;
 }
 
 .guardContent p {
   margin: 0;
   font-size: 11px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #cbd5e1;
 }
 
@@ -199,121 +204,21 @@
   font-weight: 700;
 }
 
-/* ── Command Navigation Bar (Segmented HUD) ── */
-.commandBar {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: rgba(10, 19, 36, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  padding: 6px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.commandTabs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  flex: 1;
-}
-
-.commandTab {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 8px 14px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  color: #94a3b8;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  text-align: left;
-}
-
-.commandTab:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #e2e8f0;
-}
-
-.commandTabActive {
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%) !important;
-  border-color: rgba(34, 211, 238, 0.4) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(34, 211, 238, 0.15);
-}
-
-.commandTabHeader {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.commandTabIcon {
-  font-size: 13px;
-}
-
-.commandTabBadge {
-  font-size: 9px;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(34, 211, 238, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(34, 211, 238, 0.25);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.commandTabSub {
-  font-size: 10px;
-  color: #64748b;
-  margin-top: 2px;
-}
-
-.commandTabActive .commandTabSub {
-  color: #93c5fd;
-}
-
-.commandBarFxChip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: rgba(34, 211, 238, 0.08);
-  border: 1px solid rgba(34, 211, 238, 0.25);
-  border-radius: 10px;
-  font-size: 11px;
-}
-
-.commandBarFxChip b {
-  color: #38bdf8;
-  font-family: monospace;
-}
-
-/* ── Filter & Search Strip ── */
+/* ── Filter & Search Strip (Seamless Glass) ── */
 .filterStrip {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: none; /* No line */
 }
 
 .filterPills {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -323,37 +228,45 @@
   gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  padding: 6px 12px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 7px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
   color: #94a3b8;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .filterPill:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .filterPillActive {
-  background: rgba(34, 211, 238, 0.18) !important;
-  border-color: rgba(34, 211, 238, 0.5) !important;
+  background: rgba(34, 211, 238, 0.16) !important;
+  border-color: rgba(34, 211, 238, 0.4) !important;
   color: #38bdf8 !important;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(34, 211, 238, 0.15);
+  box-shadow: 0 4px 14px rgba(34, 211, 238, 0.15);
 }
 
 .searchBox {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 6px 12px;
-  min-width: 200px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 7px 14px;
+  min-width: 220px;
+  transition: all 0.2s ease;
+}
+
+.searchBox:focus-within {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.15);
 }
 
 .searchInput {
@@ -369,36 +282,37 @@
   color: #64748b;
 }
 
-/* ─── TAB 1: STAGE 2 FOCUS CARDS GRID ─── */
+/* ─── TAB 1: STAGE 2 FOCUS CARDS GRID (ELEGANT GLASS ELEVATION) ─── */
 .focusGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 16px;
+  gap: 18px;
   margin-bottom: 24px;
 }
 
 .stage2Card {
-  background: var(--us-card-bg);
-  border: 1px solid var(--us-border);
-  border-radius: 16px;
-  padding: 18px 20px;
+  background: linear-gradient(145deg, rgba(17, 28, 51, 0.75) 0%, rgba(13, 21, 38, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
 .stage2Card:hover {
   transform: translateY(-3px);
-  border-color: rgba(34, 211, 238, 0.45);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 18px rgba(34, 211, 238, 0.15);
+  border-color: rgba(34, 211, 238, 0.35);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35), 0 0 20px rgba(34, 211, 238, 0.12);
 }
 
 .stage2CardTopPick {
-  border-color: rgba(245, 158, 11, 0.4);
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 8px 26px rgba(245, 158, 11, 0.08);
 }
 
 .stage2CardTopPick::before {
@@ -440,11 +354,11 @@
 .cardExchange {
   font-size: 9px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   color: #94a3b8;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: none;
 }
 
 .cardName {
@@ -468,13 +382,13 @@
   font-size: 18px;
   font-weight: 800;
   color: #ffffff;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .cardChange {
   font-size: 11px;
   font-weight: 700;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .changeUp {
@@ -485,59 +399,64 @@
   color: #fb7185;
 }
 
-/* ── Stage 2 Template Badges ── */
+/* ── Stage 2 Template Badges (Soft Pills) ── */
 .templateStrip {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  border-bottom: none; /* No line */
 }
 
 .templateBadge {
   font-size: 10px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
   background: rgba(16, 185, 129, 0.12);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: none;
 }
 
 .rsBadge {
   font-size: 10px;
   font-weight: 800;
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
-  background: rgba(168, 85, 247, 0.15);
+  background: rgba(168, 85, 247, 0.14);
   color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.3);
+  border: none;
 }
 
 .rvolBadge {
   font-size: 10px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
   background: rgba(34, 211, 238, 0.12);
   color: #38bdf8;
-  border: 1px solid rgba(34, 211, 238, 0.25);
+  border: none;
 }
 
-/* ── 2R Blueprint Levels Grid ── */
+/* ── 2R Blueprint Levels Grid (Soft Micro-Tiles, Zero Cutting Lines) ── */
 .blueprintGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  background: rgba(10, 18, 34, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border: none; /* Removed outer border */
+  border-radius: 12px;
+  padding: 6px;
 }
 
 .blueprintCol {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: none; /* Removed cell borders */
 }
 
 .blueprintLabel {
@@ -552,7 +471,7 @@
   font-size: 13px;
   font-weight: 800;
   color: #f1f5f9;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .blueprintValRisk {
@@ -566,17 +485,17 @@
 .blueprintSub {
   font-size: 9px;
   color: #94a3b8;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* ── Card Footer Actions ── */
+/* ── Card Footer Actions (Natural Spacing, No Line) ── */
 .cardFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 4px;
+  border-top: none; /* Removed harsh divider line */
 }
 
 .trailingNote {
@@ -594,10 +513,10 @@
   gap: 6px;
   font-size: 11px;
   font-weight: 700;
-  padding: 7px 14px;
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18) 0%, rgba(56, 189, 248, 0.25) 100%);
-  border: 1px solid rgba(34, 211, 238, 0.45);
-  border-radius: 8px;
+  padding: 7px 15px;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.16) 0%, rgba(56, 189, 248, 0.24) 100%);
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  border-radius: 9px;
   color: #38bdf8;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -605,9 +524,11 @@
 }
 
 .cardActionBtn:hover {
-  background: linear-gradient(135deg, rgba(34, 211, 238, 0.3) 0%, rgba(56, 189, 248, 0.4) 100%);
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.28) 0%, rgba(56, 189, 248, 0.38) 100%);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.25);
+  border-color: #38bdf8;
+  box-shadow: 0 4px 14px rgba(34, 211, 238, 0.25);
+  transform: translateY(-1px);
 }
 
 /* ─── TAB 2: THEMATIC ETF SECTOR ROTATION DESK ─── */
@@ -618,10 +539,10 @@
 }
 
 .rotationExplainer {
-  background: rgba(10, 18, 34, 0.7);
-  border: 1px solid rgba(34, 211, 238, 0.25);
-  border-radius: 14px;
-  padding: 16px 20px;
+  background: rgba(14, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 18px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -654,7 +575,7 @@
 .quadrantGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: 18px;
 }
 
 @media (max-width: 800px) {
@@ -665,31 +586,28 @@
 
 .quadrantBox {
   background: var(--us-card-bg);
-  border: 1px solid var(--us-border);
-  border-radius: 14px;
-  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .quadrantLeading {
-  border-color: rgba(16, 185, 129, 0.4);
   background: linear-gradient(145deg, rgba(16, 185, 129, 0.06) 0%, rgba(14, 23, 42, 0.8) 100%);
 }
 
 .quadrantImproving {
-  border-color: rgba(34, 211, 238, 0.4);
   background: linear-gradient(145deg, rgba(34, 211, 238, 0.06) 0%, rgba(14, 23, 42, 0.8) 100%);
 }
 
 .quadrantWeakening {
-  border-color: rgba(245, 158, 11, 0.4);
   background: linear-gradient(145deg, rgba(245, 158, 11, 0.06) 0%, rgba(14, 23, 42, 0.8) 100%);
 }
 
 .quadrantLagging {
-  border-color: rgba(244, 63, 94, 0.4);
   background: linear-gradient(145deg, rgba(244, 63, 94, 0.06) 0%, rgba(14, 23, 42, 0.8) 100%);
 }
 
@@ -697,8 +615,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 6px;
+  border-bottom: none; /* No line */
 }
 
 .quadrantTitle {
@@ -741,16 +659,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  border: none; /* Removed harsh border */
   border-radius: 10px;
-  padding: 9px 12px;
+  padding: 10px 14px;
   transition: all 0.2s ease;
 }
 
 .etfItem:hover {
-  border-color: rgba(34, 211, 238, 0.35);
-  background: rgba(20, 32, 56, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
 }
 
 .etfIdentity {
@@ -795,13 +713,13 @@
 .etfRs {
   font-size: 11px;
   font-weight: 800;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .etfFlow {
   font-size: 10px;
   font-weight: 700;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .flowPositive {
@@ -813,14 +731,15 @@
 }
 
 .etfBtnMini {
-  padding: 5px 9px;
+  padding: 5px 10px;
   font-size: 10px;
   font-weight: 700;
   background: rgba(34, 211, 238, 0.12);
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: none;
   color: #38bdf8;
   border-radius: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .etfBtnMini:hover {
@@ -849,12 +768,13 @@
 
 .fxControlPanel {
   background: var(--us-card-bg);
-  border: 1px solid var(--us-border);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .fxSectionTitle {
@@ -885,7 +805,7 @@
   font-size: 13px;
   font-weight: 800;
   color: #38bdf8;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .fxRange {
@@ -903,10 +823,10 @@
 .scenarioChip {
   font-size: 10px;
   font-weight: 700;
-  padding: 6px 11px;
+  padding: 6px 12px;
   border-radius: 8px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -918,16 +838,16 @@
 }
 
 .scenarioChipActive {
-  background: rgba(34, 211, 238, 0.2) !important;
-  border-color: rgba(34, 211, 238, 0.5) !important;
+  background: rgba(34, 211, 238, 0.18) !important;
+  border-color: rgba(34, 211, 238, 0.4) !important;
   color: #38bdf8 !important;
   font-weight: 800;
 }
 
-/* ── FX Outcome Summary Box ── */
+/* ── FX Outcome Summary Box (Floating Glass Surface) ── */
 .fxOutcomeBox {
-  background: linear-gradient(145deg, #0a1324 0%, #111e3b 100%);
-  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: linear-gradient(145deg, rgba(14, 23, 42, 0.8) 0%, rgba(17, 30, 59, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -936,6 +856,7 @@
   gap: 16px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
 .fxOutcomeBox::before {
@@ -951,20 +872,15 @@
 .fxStatRows {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .fxStatRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.fxStatRow:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+  padding: 6px 0;
+  border-bottom: none; /* Removed harsh border */
 }
 
 .fxStatLabel {
@@ -979,26 +895,26 @@
 .fxStatValue {
   font-size: 16px;
   font-weight: 800;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: #ffffff;
 }
 
 .fxStatSub {
   font-size: 10px;
   color: #64748b;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .fxPrescription {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 12px;
   padding: 14px;
 }
 
 .fxPrescriptionWeak {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
 }
 
 .prescriptionTitle {
@@ -1043,12 +959,13 @@
 
 .sizingCard {
   background: var(--us-card-bg);
-  border: 1px solid var(--us-border);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .sizingHeader {
@@ -1085,14 +1002,21 @@
 }
 
 .inputField input {
-  background: rgba(10, 18, 34, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 13px;
   font-weight: 700;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.inputField input:focus {
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .quickTickerSelect {
@@ -1105,16 +1029,22 @@
 .tickerBtn {
   font-size: 10px;
   font-weight: 700;
-  padding: 4px 8px;
+  padding: 5px 10px;
   border-radius: 6px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   color: #94a3b8;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tickerBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .tickerBtnActive {
-  background: rgba(34, 211, 238, 0.15);
+  background: rgba(34, 211, 238, 0.16);
   border-color: rgba(34, 211, 238, 0.4);
   color: #38bdf8;
   font-weight: 800;
@@ -1122,8 +1052,8 @@
 
 /* ── Sizing Result Visual Card ── */
 .sizingResultCard {
-  background: linear-gradient(145deg, #0a1324 0%, #111e3b 100%);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: linear-gradient(145deg, rgba(14, 23, 42, 0.8) 0%, rgba(17, 30, 59, 0.8) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -1132,6 +1062,7 @@
   gap: 16px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .sizingResultCard::before {
@@ -1146,9 +1077,9 @@
 
 .sizingBigDisplay {
   text-align: center;
-  padding: 14px;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 16px;
+  background: rgba(16, 185, 129, 0.07);
+  border: none; /* No border */
   border-radius: 12px;
 }
 
@@ -1164,9 +1095,9 @@
   font-size: 36px;
   font-weight: 900;
   color: #ffffff;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   line-height: 1.1;
-  margin: 4px 0;
+  margin: 6px 0;
 }
 
 .sizingBigSub {
@@ -1193,11 +1124,11 @@
 
 .sizingDetailVal {
   font-weight: 800;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: #ffffff;
 }
 
-/* ─── TAB 5: UNIVERSE SCREENER TABLE ─── */
+/* ─── TAB 5: UNIVERSE SCREENER TABLE (CLEAN, NO COMPARTMENTS) ─── */
 .screenerDesk {
   display: flex;
   flex-direction: column;
@@ -1206,9 +1137,10 @@
 
 .tableContainer {
   overflow-x: auto;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  background: rgba(10, 18, 34, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: rgba(10, 18, 34, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .screenerTable {
@@ -1225,14 +1157,14 @@
   font-weight: 700;
   font-size: 10px;
   letter-spacing: 0.5px;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 14px;
+  border-bottom: none; /* No line */
   text-transform: uppercase;
 }
 
 .screenerTable td {
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03); /* Ultra soft */
   color: #cbd5e1;
 }
 
@@ -1262,14 +1194,14 @@
   color: #f59e0b;
 }
 
-/* ─── AI STAGE HEALTH DIAGNOSTIC BAR ─── */
+/* ─── AI STAGE HEALTH DIAGNOSTIC BAR (NO HARSH CUTTING LINES) ─── */
 .diagBar {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(24, 34, 54, 0.75) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 16px;
-  padding: 16px 20px;
+  padding: 18px 22px;
   margin-bottom: 22px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
 }
 
 .diagHeader {
@@ -1278,9 +1210,9 @@
   align-items: flex-start;
   gap: 14px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+  padding-bottom: 4px;
+  border-bottom: none; /* Removed harsh divider line */
 }
 
 .diagTitleGroup {
@@ -1320,8 +1252,8 @@
   font-weight: 700;
   background: rgba(16, 185, 129, 0.15);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 4px 10px;
+  border: none;
+  padding: 5px 12px;
   border-radius: 20px;
   white-space: nowrap;
 }
@@ -1331,7 +1263,7 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .diagTickerLabel {
@@ -1345,60 +1277,61 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 6px 13px;
   color: #cbd5e1;
   font-size: 11px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .diagTickerChip:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.12);
   transform: translateY(-1px);
 }
 
 .diagTickerChipActive {
-  background: rgba(56, 189, 248, 0.2) !important;
-  border-color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.18) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
   color: #ffffff !important;
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
 }
 
+/* Removed harsh 3px border-left lines that sliced the screen */
 .diagTickerChipBull {
-  border-left: 3px solid #10b981;
+  border-left: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .diagTickerChipWarn {
-  border-left: 3px solid #f59e0b;
+  border-left: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .diagTickerChipBear {
-  border-left: 3px solid #f43f5e;
+  border-left: 1px solid rgba(244, 63, 94, 0.3);
 }
 
 .diagCard {
   border-radius: 14px;
-  padding: 16px 18px;
+  padding: 18px 20px;
   transition: all 0.25s ease;
 }
 
 .diagCardBull {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 78, 59, 0.2) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.09) 0%, rgba(6, 78, 59, 0.15) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.22);
 }
 
 .diagCardWarn {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(120, 53, 15, 0.2) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.09) 0%, rgba(120, 53, 15, 0.15) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.22);
 }
 
 .diagCardBear {
-  background: linear-gradient(135deg, rgba(244, 63, 94, 0.14) 0%, rgba(136, 19, 55, 0.25) 100%);
-  border: 1px solid rgba(244, 63, 94, 0.4);
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(136, 19, 55, 0.18) 100%);
+  border: 1px solid rgba(244, 63, 94, 0.25);
 }
 
 .diagCardTop {
@@ -1440,7 +1373,7 @@
 .diagStageBadge {
   font-size: 11px;
   font-weight: 800;
-  padding: 3px 10px;
+  padding: 4px 11px;
   border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1449,24 +1382,24 @@
 .badgeBull {
   background: rgba(16, 185, 129, 0.2);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  border: none;
 }
 
 .badgeWarn {
   background: rgba(245, 158, 11, 0.2);
   color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  border: none;
 }
 
 .badgeBear {
   background: rgba(244, 63, 94, 0.25);
   color: #fda4af;
-  border: 1px solid rgba(244, 63, 94, 0.5);
+  border: none;
 }
 
 .diagSummary {
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #e2e8f0;
   margin: 4px 0 0;
 }
@@ -1475,10 +1408,10 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  background: rgba(15, 23, 42, 0.7);
-  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 12px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none; /* No border */
   min-width: 120px;
 }
 
@@ -1492,7 +1425,7 @@
 .diagScoreNum {
   font-size: 28px;
   font-weight: 900;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   line-height: 1;
   margin: 4px 0;
 }
@@ -1513,13 +1446,16 @@
   font-weight: 700;
 }
 
+/* ── AI Diagnostic Action (Floating Surface, No Line) ── */
 .diagActionRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 18px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  border-top: none; /* Removed harsh divider line */
   flex-wrap: wrap;
 }
 
@@ -1538,7 +1474,7 @@
 .diagActionText p {
   margin: 0 0 4px;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.45;
   color: #f1f5f9;
 }
 
@@ -1549,8 +1485,8 @@
   background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
   color: #ffffff;
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
+  border-radius: 9px;
+  padding: 9px 18px;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -1561,18 +1497,18 @@
 .diagChartBtn:hover {
   filter: brightness(1.15);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.4);
 }
 
 /* ─── OVERNIGHT GTC SMART ORDER PLAYBOOK ─── */
 .gtcPlaybookCard {
-  background: linear-gradient(140deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.85) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.35);
-  border-radius: 16px;
-  padding: 18px 22px;
+  background: linear-gradient(140deg, rgba(15, 23, 42, 0.85) 0%, rgba(26, 22, 58, 0.75) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 18px;
+  padding: 20px 24px;
   margin-top: 24px;
   margin-bottom: 20px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.3);
 }
 
 .gtcHeader {
@@ -1612,8 +1548,8 @@
 .gtcBadge {
   background: rgba(168, 85, 247, 0.18);
   color: #d8b4fe;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  padding: 4px 12px;
+  border: none;
+  padding: 5px 13px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
@@ -1628,10 +1564,10 @@
 }
 
 .gtcStepBox {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+  border: none; /* Removed harsh border */
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
 }
@@ -1655,7 +1591,7 @@
   font-size: 22px;
   font-weight: 900;
   color: #38bdf8;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   margin-bottom: 4px;
 }
 
@@ -1672,8 +1608,8 @@
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 10px;
+  border-top: none; /* Removed harsh divider line */
 }
 
 .gtcBrokersSupported {
@@ -1692,8 +1628,8 @@
   background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
   color: #ffffff;
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
+  border-radius: 9px;
+  padding: 9px 18px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -1703,10 +1639,10 @@
 
 .gtcCopyBtn:hover {
   filter: brightness(1.15);
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
 }
 
-/* ─── DIME! FRACTIONAL SHARES SIZING CONTROLS ─── */
+/* ─── DIME! FRACTIONAL SHARES SIZING CONTROLS (SEAMLESS PILLS) ─── */
 .brokerSelectBar {
   display: flex;
   align-items: center;
@@ -1714,9 +1650,9 @@
   flex-wrap: wrap;
   margin-bottom: 16px;
   padding: 10px 14px;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none; /* No border */
 }
 
 .brokerLabel {
@@ -1727,9 +1663,9 @@
 }
 
 .brokerChip {
-  padding: 6px 12px;
+  padding: 6px 13px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   color: #cbd5e1;
   font-size: 11px;
@@ -1758,9 +1694,9 @@
 
 .modeBtn {
   flex: 1;
-  padding: 8px 12px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   color: #94a3b8;
   font-size: 11px;
@@ -1787,9 +1723,9 @@
 }
 
 .quickBudgetBtn {
-  padding: 4px 8px;
+  padding: 5px 10px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 6px;
   color: #94a3b8;
   font-size: 10px;
@@ -1809,15 +1745,104 @@
   font-weight: 700;
 }
 
+/* ── Fallback Command Navigation Bar (if used in any context) ── */
+.commandBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.commandTabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.commandTab {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.commandTab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
+}
+
+.commandTabActive {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.16) 0%, rgba(168, 85, 247, 0.16) 100%) !important;
+  color: #ffffff !important;
+}
+
+.commandTabHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.commandTabIcon {
+  font-size: 13px;
+}
+
+.commandTabBadge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(34, 211, 238, 0.15);
+  color: #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.commandTabSub {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.commandTabActive .commandTabSub {
+  color: #93c5fd;
+}
+
+.commandBarFxChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(34, 211, 238, 0.08);
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.commandBarFxChip b {
+  color: #38bdf8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 @media (max-width: 600px) {
   .desk {
     padding: 16px 14px;
-  }
-  .commandBar {
-    padding: 4px;
-  }
-  .commandTab {
-    padding: 6px 10px;
   }
   .focusGrid {
     grid-template-columns: 1fr;
