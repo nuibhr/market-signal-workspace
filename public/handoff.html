@@ -1127,6 +1127,40 @@ node work/verify-recovered-pilot.mjs</code><button class="code-action" onclick="
         </ul>
       </div>
 
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-cyan);">
+        <div class="card-title" style="color: var(--accent-cyan);">
+          <span>✅ หมวดที่ 8: ระบบถอดรหัสกลยุทธ์ EA โปรเทรดสาย Stable &amp; แผนล็อคกำไรอัตโนมัติ (Pro Copy EA Stable Desk &amp; Profit-Locking Engine) (Completed):</span>
+        </div>
+        <p class="card-desc">
+          ถอดรหัสความลับของ EA และ Pro Trader สาย Copy Trade ที่รันพอร์ตโตเรื่อย ๆ รายวันแบบ Stable ไม่ล้างพอร์ต พร้อมสร้างหน้าจอ Magic UI Cyber-Fintech คัดกรองสัญญาณ ส่งแผนเทรดแจ้งเตือนล็อคกำไร และบันทึกบัญชี Trade Ledger (Win/Loss &amp; P/L) ให้ลูกค้าดูผลงานง่าย ๆ โดยไม่ต้องเชื่อมต่อรหัสพอร์ต:
+        </p>
+        <ul class="checklist complete">
+          <li><strong>🧠 4 เสาหลักถอดรหัส EA สาย Stable (Reverse-Engineered Blueprint):</strong>
+            <br>• <strong>1. No Martingale / Anti-Grid:</strong> ไม่เบิ้ลล็อต ไม่เปิดแก้ไม้ถัวเฉลี่ยขาลง มีคำสั่ง Stop Loss ชัดเจนทุกไม้ (เสี่ยงคงที่ 1-2% ต่อไม้)
+            <br>• <strong>2. The Breakeven Lock Buffer (+0.5R):</strong> เคล็ดลับสำคัญของ EA ระดับโปร เมื่อราคาบวกถึง 1R ระบบจะเลื่อน SL มาดักหน้าทุนทันที (+0.5R Buffer) เพื่อการันตีว่าไม้นั้นจะไม่กลับมาขาดทุนอีกต่อไป
+            <br>• <strong>3. Scale-Out Profit Banking:</strong> ปิดทำกำไร 50% ที่ TP1 (1.5R–1.8R) เก็บเงินสดเข้ากระเป๋า แล้วปล่อยอีก 50% เป็น Runner รันเทรนด์ด้วย Trailing Stop ไปยัง TP2 (3R+)
+            <br>• <strong>4. Session Liquidity Timing:</strong> เทรดเฉพาะช่วงตลาดมีสภาพคล่องจริง (London/NY Overlap สำหรับ Gold/EUR และ Asian Liquidity Sweep สำหรับ JPY) หลีกเลี่ยงช่วงข่าวรุนแรง (Red News Blackout)
+          </li>
+          <li><strong>⚡ 3 กลยุทธ์ชั้นยอดที่ถอดรหัสและติดตั้งในระบบ (<code class="inline">ProCopyEaDesk</code>):</strong>
+            <br>• <strong>🥇 Gold London/NY Session Trend Pullback (XAUUSD):</strong> รอจังหวะ Retest เส้น 15m EMA 20/50 สวนทางหลอกในชั่วโมงเปิดลอนดอน/นิวยอร์ก ล็อคทุนที่ +1R เก็บ TP1 ที่ 1.8R รันเทรนด์ 3R
+            <br>• <strong>🥈 FX Major Dynamic Envelope (EURUSD/GBPUSD):</strong> กลยุทธ์ Mean Reversion เล่นเด้งจากกรอบเบี่ยงเบนสถิติ 2.0 Sigma ในช่วงตลาดยุโรป ล็อคทุนที่ +0.8R
+            <br>• <strong>🥉 Asian Range Liquidity Sweep (USDJPY/AUDUSD):</strong> ดักกิน Stop Hunt สภาพคล่องช่วงตลาดโตเกียวเช้า ล็อคทุนไวที่ +0.5R
+          </li>
+          <li><strong>🪜 แถบวงจรสัญญาณ 4 จังหวะ (4-Stage Lifecycle Stepper):</strong>
+            แสดงความคืบหน้าของแต่ละไม้แบบเรียลไทม์: <code class="inline">① Entry พิกัดเข้า</code> ➔ <code class="inline">② Initial SL ตัดขาดทุน</code> ➔ <code class="inline">③ 🛡️ Lock Profit กันทุน</code> ➔ <code class="inline">④ 🎯 TP1 เก็บกำไร 50%</code> ➔ <code class="inline">⑤ 🏁 TP2 ปล่อยรันเนอร์</code>
+          </li>
+          <li><strong>📑 บัญชีผลงานลูกค้าสรุปรายไม้ (Client Trade Ledger &amp; P/L Tracker):</strong>
+            ลูกค้าไม่ต้องเชื่อมพาสเวิร์ดพอร์ต ระบบสรุปผลลัพธ์ย้อนหลังให้อัตโนมัติ แสดงชัดเจนว่าไม้ไหน <strong>WIN / LOSS</strong>, ได้กำไรกี่ R, คำนวณ Dollar P/L สุทธิ พร้อมตัวเลขสถิติ Win Rate (68.4%), Profit Factor (2.14), Max DD (3.8%), และ Today's P/L (+$184.20)
+          </li>
+          <li><strong>🚀 เชื่อมต่อการยิงแจ้งเตือน One-Click Dispatch เข้า Telegram:</strong>
+            ส่งแผนเทรด พิกัดเข้า และคำสั่งเลื่อนล็อคกำไรเข้า Telegram Channel / Group ของสมาชิกได้ทันทีในคลิกเดียว พร้อมเสียงน้องนักออมอ่านออกเสียงภาษาไทย
+          </li>
+          <li><strong>💎 ดีไซน์ Magic UI Cyber-Fintech คมชัด:</strong>
+            จัดวางแบบ Dark Glassmorphism, แท็บสลับกลยุทธ์แบบ Segmented Pills, หลอดไฟ LED แสดงสถานะสด (Live Pulses), และแถบความคืบหน้าแบบเรืองแสง
+          </li>
+        </ul>
+      </div>
+
       <div class="card">
         <div class="card-title">
           <span>⚙️ งานโครงสร้างพื้นฐานระยะยาว (Long-Term Handover Items):</span>

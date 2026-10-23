@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   Bell,
   BookOpen,
+  Bot,
   Cable,
   CalendarDays,
   CandlestickChart as ChartIcon,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import MarketNavigation from "../market-navigation.jsx";
 import DaytradePanel from "../daytrade/daytrade-panel.jsx";
+import ProCopyEaDesk from "./pro-copy-ea-desk.jsx";
 import { CORE_FOREX } from "../../daytrade/universe.mjs";
 import MemberAvatar from "../member-avatar.jsx";
 import useMt5Connection from "./use-mt5-connection.jsx";
@@ -50,6 +52,12 @@ const SECTIONS = [
     label: "Overview",
     icon: LayoutDashboard,
     description: "ภาพรวมตลาดและเครื่องมือ Forex ในหน้าเดียว",
+  },
+  {
+    id: "pro-ea",
+    label: "Pro Copy EA",
+    icon: Bot,
+    description: "ถอดรหัสกลยุทธ์ EA สาย Stable · แผนล็อคกำไร & สถิติ Win/Loss",
   },
   {
     id: "scanner",
@@ -477,6 +485,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
                   preview={preview}
                 />
               )}
+              <ProCopyEaDesk />
               <DaytradePanel market="forex" id="forex-daytrade" />
               <div className={styles.chartGrid}>
                 <TerminalChart {...chartProps} />
@@ -546,6 +555,9 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
                   </button>
                 ))}
               </nav>
+              {section === "pro-ea" && (
+                <ProCopyEaDesk />
+              )}
               {section === "scanner" && (
                 <>
                   <DaytradePanel market="forex" id="forex-scanner" />
