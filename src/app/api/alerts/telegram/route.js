@@ -1,5 +1,7 @@
 import {
   formatTelegramTradeMessage,
+  formatTelegramEaSignalMessage,
+  formatTelegramAdminAnnouncement,
   sendTelegramMessage,
   verifyTelegramBot
 } from '../../../../notifications/broadcaster.mjs';
@@ -28,7 +30,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { action = 'test', token = process.env.TELEGRAM_BOT_TOKEN, chatId = process.env.TELEGRAM_CHAT_ID, signal } = body;
+    const { action = 'test', token = process.env.TELEGRAM_BOT_TOKEN, chatId = process.env.TELEGRAM_CHAT_ID, signal, eaSignal } = body;
 
     if (!token || !chatId) {
       return Response.json({
@@ -45,24 +47,58 @@ export async function POST(request) {
       return Response.json({ ok: true, botName: bot.botName, username: bot.username }, { headers });
     }
 
-    // Default signal for test
-    const trade = signal || {
-      symbol: 'XAUUSD',
-      side: 'LONG',
-      signalTime: Math.floor(Date.now() / 1000),
-      atr: 8.25,
-      trigger: 2720.50,
-      plan: {
-        entry: 2720.50,
-        stop: 2704.00,
-        target: 2753.50,
-        risk: 16.50,
-      }
-    };
+    const appOrigin = process.env.APP_ORIGIN || 'https://nugaom-ai-pick.nuibhr1.workers.dev';
+    let text = '';
+    let symbolReported = null;
+    let sideReported = null;
 
-    const text = formatTelegramTradeMessage(trade, {
-      appOrigin: process.env.APP_ORIGIN || 'https://nugaom-ai-pick.nuibhr1.workers.dev'
-    });
+    if (action === 'ea-signal') {
+      const targetSignal = eaSignal || signal || {
+        symbol: 'XAUUSD',
+        side: 'BUY',
+        stage: 'ENTRY',
+        strategyName: 'Gold London/NY Trend Pullback',
+        entry: 2724.50,
+        stopLoss: 2712.00,
+        lockBuffer: 2728.50,
+        tp1: 2742.00,
+        tp2: 2758.00,
+        recommendedLot: '0.04 Lot',
+      };
+      text = formatTelegramEaSignalMessage(targetSignal, { appOrigin });
+      symbolReported = targetSignal.symbol;
+      sideReported = targetSignal.side;
+    } else if (action === 'announcement') {
+      text = formatTelegramAdminAnnouncement({
+        title: body.title || 'ประกาศจากแอดมิน Nugaom AI VIP',
+        body: body.message || body.body || 'อัปเดตระบบและแผนเทรดวันนี้เรียบร้อยครับ',
+        author: body.author || 'แอดมินน้องนักออม',
+        appOrigin,
+      });
+      symbolReported = 'ANNOUNCEMENT';
+      sideReported = 'INFO';
+    } else if (action === 'custom' && body.text) {
+      text = body.text;
+    } else {
+      // Default signal for test
+      const trade = signal || {
+        symbol: 'XAUUSD',
+        side: 'LONG',
+        signalTime: Math.floor(Date.now() / 1000),
+        atr: 8.25,
+        trigger: 2720.50,
+        plan: {
+          entry: 2720.50,
+          stop: 2704.00,
+          target: 2753.50,
+          risk: 16.50,
+        }
+      };
+
+      text = formatTelegramTradeMessage(trade, { appOrigin });
+      symbolReported = trade.symbol;
+      sideReported = trade.side;
+    }
 
     const result = await sendTelegramMessage({
       token,
@@ -75,8 +111,8 @@ export async function POST(request) {
       ok: true,
       message: 'ส่งสัญญาณเข้า Telegram สำเร็จเรียบร้อย!',
       messageId: result.messageId,
-      symbol: trade.symbol,
-      side: trade.side,
+      symbol: symbolReported,
+      side: sideReported,
     }, { headers });
 
   } catch (error) {

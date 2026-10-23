@@ -25,9 +25,73 @@ export function formatTelegramTradeMessage(signal, { appOrigin = 'https://nugaom
 🛑 <b>จุดตัดขาดทุน (SL):</b> <code>${stop}</code>
 🏁 <b>เป้าหมายทำกำไร (TP 2R):</b> <code>${target}</code>
 ⚖️ <b>Risk/Reward Ratio:</b> 1 : 2.0 (ระยะเสี่ยง: ${risk} | ATR: ${atr})
-────────────────────────
 💡 <b>วินัยคุมพอร์ต:</b> คุมความเสี่ยงไม่เกิน 1–2% ของเงินทุน ไม่ Overtrade
 🔗 <b>เปิดดูกราฟสด & สถิติย้อนหลัง:</b> <a href="${appOrigin}/forex?symbol=${encodeURIComponent(symbol)}">เปิด Nugaom Forex Terminal ↗</a>`;
+}
+
+export function formatTelegramEaSignalMessage(eaSignal, { appOrigin = 'https://nugaom-ai-pick.nuibhr1.workers.dev' } = {}) {
+  const isLong = eaSignal.side === 'LONG' || eaSignal.side === 'BUY';
+  const sideEmoji = isLong ? '🟢' : '🔴';
+  const sideTh = isLong ? 'BUY' : 'SELL';
+  const symbol = eaSignal.symbol || 'XAUUSD';
+  const strategyName = eaSignal.strategyName || 'Gold London/NY Trend Pullback';
+  const stage = eaSignal.stage || 'ENTRY';
+
+  const stageLabels = {
+    ENTRY: '⚡ เข้าไม้ใหม่ (NEW ENTRY)',
+    LOCK_PROFIT: '🛡️ ขยับ SL ล็อคกำไรหน้าทุน (LOCK PROFIT)',
+    TP1: '🎯 ถึงเป้าหมาย TP1 (เก็บเงินสด 50%)',
+    TP2: '🏁 ปิดรันเนอร์ TP2 (จบรอบเทรนด์)',
+  };
+
+  const stageHeader = stageLabels[stage] || stageLabels.ENTRY;
+  const entry = Number.isFinite(eaSignal.entry) ? eaSignal.entry.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (eaSignal.entry ?? '—');
+  const stopLoss = Number.isFinite(eaSignal.stopLoss) ? eaSignal.stopLoss.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (eaSignal.stopLoss ?? '—');
+  const lockBuffer = Number.isFinite(eaSignal.lockBuffer) ? eaSignal.lockBuffer.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (eaSignal.lockBuffer ?? '—');
+  const tp1 = Number.isFinite(eaSignal.tp1) ? eaSignal.tp1.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (eaSignal.tp1 ?? '—');
+  const tp2 = Number.isFinite(eaSignal.tp2) ? eaSignal.tp2.toLocaleString('en-US', { maximumFractionDigits: 4 }) : (eaSignal.tp2 ?? '—');
+  const lotSize = eaSignal.recommendedLot || '0.02 - 0.05 Lot';
+  const timeStr = new Date(eaSignal.time ? eaSignal.time * 1000 : Date.now()).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
+
+  const actionTip = stage === 'ENTRY'
+    ? '1. เปิดแอป MT4/MT5 กรอก Entry, SL, TP1 ตามตัวเลขด้านบน\n2. ตั้งเตือนเมื่อราคาแตะจุด Lock Profit เพื่อเลื่อน SL มากันทุน'
+    : stage === 'LOCK_PROFIT'
+    ? `⚠️ <b>กรุณาขยับ Stop Loss ในแอป MT4/MT5 มาที่ ${lockBuffer} ทันที</b> ไม้นี้จะกลายเป็น Risk-Free 100%`
+    : 'ปิดทำกำไรตามแผน ปลอดภัยและรักษาวินัย';
+
+  return `🤖 <b>NUGAOM AI · PRO COPY EA STABLE SIGNAL</b> 🤖
+────────────────────────
+📢 <b>สถานะคำสั่ง:</b> <b>${stageHeader}</b>
+🏆 <b>สินทรัพย์:</b> <code>#${symbol}</code>
+📐 <b>กลยุทธ์:</b> ${strategyName}
+📊 <b>ทิศทาง:</b> ${sideEmoji} <b>${sideTh}</b>
+⏱️ <b>เวลาส่งสัญญาณ:</b> ${timeStr} น.
+
+🎯 <b>ราคาเข้า (Entry):</b> <code>${entry}</code>
+🛑 <b>ตัดขาดทุน (Initial SL):</b> <code>${stopLoss}</code>
+🛡️ <b>จุดล็อคทุน (Lock Profit @ +1R):</b> <code>${lockBuffer}</code> (+0.5R Buffer)
+💰 <b>เป้า 1 (TP1 50%):</b> <code>${tp1}</code>
+🚀 <b>เป้า 2 (TP2 Runner):</b> <code>${tp2}</code>
+📦 <b>ขนาด Lot แนะนำ:</b> <code>${lotSize}</code> (พอร์ต $500–$1,000)
+────────────────────────
+💡 <b>วิธีปฏิบัติใน 15 วินาที:</b>
+${actionTip}
+🔗 <b>เปิดดูผลงาน Live Ledger:</b> <a href="${appOrigin}/forex">เปิดดู Pro Copy EA Terminal ↗</a>`;
+}
+
+export function formatTelegramAdminAnnouncement({ title, body, author = 'แอดมินน้องนักออม', appOrigin = 'https://nugaom-ai-pick.nuibhr1.workers.dev' } = {}) {
+  const timeStr = new Date().toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
+  const dateStr = new Date().toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium' });
+
+  return `📢 <b>NUGAOM AI · ประกาศสำคัญจากทีมงาน VIP</b> 📢
+────────────────────────
+📌 <b>หัวข้อ:</b> <b>${title}</b>
+⏱️ <b>เวลา:</b> ${dateStr} ${timeStr} น.
+👤 <b>ผู้ดูแล:</b> ${author}
+
+${body}
+────────────────────────
+🔗 <b>เข้าสู่ระบบสมาชิก VIP:</b> <a href="${appOrigin}/account">เปิด Nugaom Member Portal ↗</a>`;
 }
 
 export async function sendTelegramMessage({ token, chatId, text, parseMode = 'HTML', fetcher = fetch } = {}) {

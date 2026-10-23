@@ -2,10 +2,51 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   formatTelegramTradeMessage,
+  formatTelegramEaSignalMessage,
+  formatTelegramAdminAnnouncement,
   sendTelegramMessage,
   verifyTelegramBot,
   sendLineBroadcast
 } from './broadcaster.mjs';
+
+test('formatTelegramEaSignalMessage formats Pro Copy EA signal with lock profit and lot size', () => {
+  const eaSignal = {
+    symbol: 'XAUUSD',
+    side: 'BUY',
+    stage: 'LOCK_PROFIT',
+    strategyName: 'Gold London/NY Trend Pullback',
+    entry: 2724.50,
+    stopLoss: 2712.00,
+    lockBuffer: 2728.50,
+    tp1: 2742.00,
+    tp2: 2758.00,
+    recommendedLot: '0.04 Lot',
+  };
+
+  const message = formatTelegramEaSignalMessage(eaSignal, { appOrigin: 'https://nugaom.ai' });
+  assert.ok(message.includes('#XAUUSD'));
+  assert.ok(message.includes('LOCK PROFIT'));
+  assert.ok(message.includes('2,724.5'));
+  assert.ok(message.includes('2,728.5'));
+  assert.ok(message.includes('0.04 Lot'));
+  assert.ok(message.includes('Risk-Free 100%'));
+  assert.ok(message.includes('https://nugaom.ai/forex'));
+});
+
+test('formatTelegramAdminAnnouncement formats executive announcement with author and link', () => {
+  const msg = formatTelegramAdminAnnouncement({
+    title: 'ประกาศผลการสแกนปิดสัปดาห์',
+    body: 'พอร์ต EA สัปดาห์นี้ Win Rate 72% ปิดกำไรสุทธิ +18.4R ขอบคุณสมาชิก VIP ทุกท่านครับ',
+    author: 'แอดมินบอย',
+    appOrigin: 'https://nugaom.ai'
+  });
+
+  assert.ok(msg.includes('ประกาศสำคัญจากทีมงาน VIP'));
+  assert.ok(msg.includes('ประกาศผลการสแกนปิดสัปดาห์'));
+  assert.ok(msg.includes('แอดมินบอย'));
+  assert.ok(msg.includes('Win Rate 72%'));
+  assert.ok(msg.includes('https://nugaom.ai/account'));
+});
 
 test('formatTelegramTradeMessage generates correct HTML formatting with Entry, SL, TP 2R', () => {
   const signal = {

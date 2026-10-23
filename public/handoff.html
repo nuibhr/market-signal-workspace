@@ -1161,6 +1161,33 @@ node work/verify-recovered-pilot.mjs</code><button class="code-action" onclick="
         </ul>
       </div>
 
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-cyan);">
+        <div class="card-title" style="color: var(--accent-cyan);">
+          <span>✅ หมวดที่ 9: ศูนย์บัญชาการหลังบ้าน /admin &amp; ระบบยิงสัญญาณอัตโนมัติเข้า Telegram VIP (Admin VIP Broadcast &amp; Membership Ops) (Completed):</span>
+        </div>
+        <p class="card-desc">
+          สร้างศูนย์ควบคุมหลังบ้านสำหรับแอดมิน <code class="inline">AdminTelegramVip</code> บนหน้า <code class="inline">/admin</code> พร้อมระบบตรวจสอบการชำระเงิน ตรวจสลิป อนุมัติสิทธิสมาชิก VIP 30 วัน และแท่นยิงสัญญาณแผนเทรดด่วนเข้าห้อง Telegram VIP ได้ใน 1 คลิก:
+        </p>
+        <ul class="checklist complete">
+          <li><strong>📡 ศูนย์ยิงสัญญาณ Telegram VIP 1 คลิก (<code class="inline">admin-telegram-vip.jsx</code>):</strong>
+            <br>• <strong>Live Bot HUD:</strong> ตรวจสถานะการเชื่อมต่อ Bot Token และ Channel ID ปลายทาง พร้อมหลอดไฟ LED แสดงความพร้อมแบบเรียลไทม์ และโควตาฟรีไม่จำกัดจำนวนครั้ง
+            <br>• <strong>Pro Copy EA Signal Dispatch:</strong> พรีเซ็ตสัญญาณสดทั้ง 3 คู่ (XAUUSD Gold London/NY Pullback, EURUSD Envelope, USDJPY Asian Sweep) พร้อมตัวเลือกสถานะ 4 สเต็ป (<code class="inline">① Entry</code>, <code class="inline">② Lock Profit +0.5R</code>, <code class="inline">③ TP1 50%</code>, <code class="inline">④ TP2 Runner</code>) และขนาด Lot แนะนำตามงบพอร์ต
+            <br>• <strong>Admin VIP Announcement Broadcast:</strong> บรอดแคสต์ประกาศด่วนเข้าห้อง VIP เช่น ข่าวกล่องแดง Red News Blackout (งดเข้าเทรดช่วง US CPI), สรุปตลาดรอบเช้า Morning Brief, แจ้งเตือนขยับ SL ล็อคกำไร, และรายงานผลงานรอบสัปดาห์
+            <br>• <strong>Telegram Live Preview Box:</strong> จำลองหน้าจอข้อความที่จะแสดงผลบนแอป Telegram ของสมาชิกก่อนกดส่งจริง
+            <br>• <strong>Delivery History Log:</strong> บันทึกประวัติการส่งสัญญาณและประกาศ พร้อมรหัส Message ID และสถานะสำเร็จ
+          </li>
+          <li><strong>💳 ระบบตรวจสลิปและอนุมัติต่ออายุสมาชิก (Membership Renewals &amp; Slip Verification):</strong>
+            <br>• ตรวจสอบรายการขอต่ออายุ แสดงชื่อ LINE, โบรกเกอร์, และเลขพอร์ต 4 หลักท้าย
+            <br>• กล่องยืนยันการรับชำระเงิน (Payment Confirmation Dialog) ระบุเลขอ้างอิงสลิป/หมายเหตุ
+            <br>• คลิกเดียว <strong>"ตรวจยอดและเปิดสิทธิ"</strong> ระบบต่ออายุให้ 30 วันอัตโนมัติ สิทธิเดิมที่เหลืออยู่จะทบต่อเนื่อง
+            <br>• ระบบบันทึก <strong>Audit Trail</strong> ทุกการเปิดสิทธิ เพื่อความโปร่งใสและตรวจสอบย้อนหลังได้ 100%
+          </li>
+          <li><strong>🧪 การทดสอบและความสมบูรณ์:</strong>
+            Unit Tests ครอบคลุม 10/10 รายการ (<code class="inline">broadcaster.test.mjs</code>, <code class="inline">admin-telegram-vip.test.mjs</code>, <code class="inline">pro-copy-ea-desk.test.mjs</code>) ผ่านฉลุย 100%
+          </li>
+        </ul>
+      </div>
+
       <div class="card">
         <div class="card-title">
           <span>⚙️ งานโครงสร้างพื้นฐานระยะยาว (Long-Term Handover Items):</span>
