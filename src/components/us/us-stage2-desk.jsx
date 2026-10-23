@@ -791,9 +791,13 @@ export default function UsStage2Desk({
             <span>ตลาดหุ้นสหรัฐฯ &amp; กองทุน ETF เมกะเทรนด์โลก</span>
             <span className={styles.titleBadge}>EOD SCREENER &amp; 2R RISK LAB</span>
           </h2>
-          <p className={styles.subtitle}>
-            คัดกรองเฉพาะหุ้นผู้นำ Stage 2 ตามตำรา Mark Minervini · สำรวจ Fund Flow การหมุนเวียนกลุ่ม ETF โลก · จำลองผลกระทบค่าเงิน USD/THB ป้องกันกำไรหดหาย
-          </p>
+          <div className={styles.headerMetricsRow}>
+            <span className={styles.metricPill}>48 Stage 2 Leaders</span>
+            <span className={styles.metricPill}>312 Filtered Out</span>
+            <span className={styles.metricPill}>Risk ≤ 8%</span>
+            <span className={styles.metricPill}>Dime! 0.0001 Shares</span>
+            <span className={styles.metricPill}>Overnight GTC Ready</span>
+          </div>
         </div>
 
         <div className={styles.marketClockBox}>
@@ -816,9 +820,13 @@ export default function UsStage2Desk({
       <div className={styles.guardBanner}>
         <div className={styles.guardIcon}>🛡️</div>
         <div className={styles.guardContent}>
-          <strong>ระบบเกราะคุ้มครองเงินต้น (Wall Street Capital Protection Guard):</strong>
+          <div className={styles.guardHeaderRow}>
+            <strong>ระบบเกราะคุ้มครองเงินต้น (Wall Street Capital Protection Guard)</strong>
+            <span className={styles.guardPillBadge}>คัดทิ้งขาลง Stage 4 แล้ว 312 ตัว</span>
+            <span className={styles.guardPillBadgeGreen}>ล็อกความเสี่ยง ≤ 8%</span>
+          </div>
           <p>
-            ระบบสแกนหุ้นสหรัฐฯ 500 ตัวและ 100 ETFs อย่างละเอียด <b>คัดทิ้งหุ้นขาลง Stage 4 และกราฟเสียทรงไปแล้ว 312 ตัว</b> (เช่น INTC, NKE, BA, DIS) เพื่อป้องกันไม่ให้คุณติดดอยเรื้อรัง เหลือเพียง <b>ผู้นำ Stage 2 ที่มีโมเมนตัมและ Relative Strength สูงสุด 48 ตัว</b> พร้อมจุดตัดขาดทุน Stop Loss ล็อกไว้ไม่เกิน 8% เสมอ!
+            กรองเฉพาะ <b>ผู้นำ Stage 2 เกรด A+ (48 ตัว)</b> ที่มี Relative Strength &gt; 85 พร้อมจุดตัดขาดทุน Stop Loss ล็อกไว้ไม่เกิน 8% เสมอ
           </p>
         </div>
       </div>
@@ -833,15 +841,15 @@ export default function UsStage2Desk({
                 <span className={styles.diagIcon}>🔍</span>
                 <div>
                   <h3 className={styles.diagTitle}>
-                    AI Stage Health Diagnostic (ตรวจเช็กสุขภาพ Stage หุ้น US รายตัว)
+                    AI Stage Health Diagnostic (เช็กสุขภาพ Stage หุ้น US รายตัว)
                   </h3>
                   <p className={styles.diagSubtitle}>
-                    เช็กทันทีว่าหุ้นที่คุณเล็งอยู่จัดเป็น <b>Stage 2 ขาขึ้นสมบูรณ์แบบ</b> หรือเป็นกับดัก <b>Stage 4 ขาลงรุนแรง (Value Trap)</b>
+                    คัดแยก <b>Stage 2 ผู้นำขาขึ้น</b> vs <b>Stage 4 กับดักมูลค่า (Value Trap)</b> แบบเรียลไทม์
                   </p>
                 </div>
               </div>
               <div className={styles.diagStatusPill}>
-                <span>✓ Minervini Trend Template Engine: Active</span>
+                <span>✓ Minervini Engine: Active</span>
               </div>
             </div>
 
@@ -891,7 +899,7 @@ export default function UsStage2Desk({
 
                 <div className={styles.diagActionRow}>
                   <div className={styles.diagActionText}>
-                    <strong>คำแนะนำเชิงกลยุทธ์ (AI Action Prescription):</strong>
+                    <strong>คำแนะนำกลยุทธ์ AI:</strong>
                     <p>{currentDiagnostic.actionPlan}</p>
                     <small style={{ color: currentDiagnostic.stage === 4 ? '#fda4af' : '#cbd5e1' }}>
                       ⚠️ {currentDiagnostic.caution}
@@ -1056,14 +1064,14 @@ export default function UsStage2Desk({
               <div className={styles.gtcTitleGroup}>
                 <span className={styles.gtcIcon}>🌙</span>
                 <div>
-                  <h4 className={styles.gtcTitle}>Overnight GTC Smart Order Playbook (ตั้งคำสั่งก่อนนอน 20:30 - 03:00 น.)</h4>
+                  <h4 className={styles.gtcTitle}>Overnight GTC Smart Order Playbook (ตั้งคำสั่งล่วงหน้า 19:30 - 20:15 น.)</h4>
                   <p className={styles.gtcSub}>
-                    แก้ปัญหาเวลาตลาดสหรัฐฯ ต่างจากไทย 12 ชม. ไม่ต้องอดนอนเฝ้าจอ เพียงคัดลอก 3 คำสั่งล่วงหน้า (Good-Til-Canceled) ตั้งไว้ช่วง 19:30 - 20:15 น. ระบบจะทำงานให้อัตโนมัติ
+                    ตั้ง 3 คำสั่ง GTC ล่วงหน้าก่อนตลาดเปิด แล้วเข้านอนได้ทันที ระบบทำงานให้อัตโนมัติ ไม่ต้องเฝ้าจอดึก
                   </p>
                 </div>
               </div>
               <div className={styles.gtcBadge}>
-                <span>⏰ แนะนำตั้งคำสั่ง: 19:30 - 20:15 น.</span>
+                <span>⏰ แนะนำ: 19:30 - 20:15 น.</span>
               </div>
             </div>
 
@@ -1072,21 +1080,21 @@ export default function UsStage2Desk({
                 <div className={styles.gtcStepNum}>คำสั่งที่ 1 (เข้าซื้อ)</div>
                 <strong>BUY LIMIT (GTC)</strong>
                 <span className={styles.gtcStepPrice}>${focusedPick.entry.toFixed(2)}</span>
-                <p>ซื้ออัตโนมัติเมื่อราคาแตะจุด Breakout ที่กำหนด ไม่ไล่ราคาสูงเกินไป</p>
+                <p>ซื้ออัตโนมัติเมื่อราคาแตะ Breakout Pivot ที่กำหนด</p>
               </div>
 
               <div className={styles.gtcStepBox}>
                 <div className={styles.gtcStepNum} style={{ color: '#fb7185' }}>คำสั่งที่ 2 (กันขาดทุน)</div>
                 <strong style={{ color: '#fb7185' }}>STOP LOSS (GTC)</strong>
                 <span className={styles.gtcStepPrice} style={{ color: '#fb7185' }}>${focusedPick.stopLoss.toFixed(2)}</span>
-                <p>ล็อกขาดทุนสูงสุดไม่เกิน -{focusedPick.riskPercent.toFixed(1)}% (≤8%) ป้องกันพอร์ตแตกยามค่ำคืน</p>
+                <p>ตัดขาดทุนอัตโนมัติ -{focusedPick.riskPercent.toFixed(1)}% (ล็อกความเสี่ยง ≤ 8%)</p>
               </div>
 
               <div className={styles.gtcStepBox}>
                 <div className={styles.gtcStepNum} style={{ color: '#34d399' }}>คำสั่งที่ 3 (ล็อกกำไร 2R)</div>
                 <strong style={{ color: '#34d399' }}>TAKE PROFIT (GTC LIMIT)</strong>
                 <span className={styles.gtcStepPrice} style={{ color: '#34d399' }}>${focusedPick.tp1.toFixed(2)}</span>
-                <p>ล็อกกำไรเป้าหมาย 2R (+${focusedPick.tp1Reward.toFixed(1)}) แบ่งขาย 50% เข้ากระเป๋า</p>
+                <p>เป้าหมาย 2R (+${focusedPick.tp1Reward.toFixed(1)}) แบ่งขาย 50% ล็อกกำไร</p>
               </div>
             </div>
 
@@ -1114,11 +1122,17 @@ export default function UsStage2Desk({
             <div className={styles.rotationExplainerLeft}>
               <h3>
                 <span>🌐</span>
-                <span>Thematic ETF Sector Rotation Matrix (Wall Street Institutional Money Flow)</span>
+                <span>Thematic ETF Sector Rotation Matrix (Institutional Money Flow)</span>
               </h3>
               <p>
-                ติดตามการไหลของเงินทุนระดับโลก (Fund Flow) ผ่านกองทุน ETF หมวดอุตสาหกรรมหลัก ชี้ชัดว่าเงินสถาบันกำลังไหลเข้ากลุ่มใด (Leading) หรือกำลังหนีออกจากกลุ่มใด (Lagging) เพื่อให้คุณเทรดไปในทิศทางเดียวกับเจ้ามือตลาด
+                Fund Flow สถาบันวอลล์สตรีท: ชี้ชัดกลุ่ม Leading (เงินไหลเข้า) vs Lagging (เงินไหลออก) เกาะเทรนด์ไปกับเจ้ามือ
               </p>
+            </div>
+            <div className={styles.headerMetricsRow} style={{ marginTop: 0 }}>
+              <span className={styles.guardPillBadgeGreen}>🚀 Leading (เข้า)</span>
+              <span className={styles.metricPill} style={{ color: '#38bdf8' }}>🔄 Improving (สะสม)</span>
+              <span className={styles.metricPill} style={{ color: '#fbbf24' }}>⚡ Weakening (ระวัง)</span>
+              <span className={styles.guardPillBadge}>❄️ Lagging (ออก)</span>
             </div>
           </div>
 
@@ -1424,10 +1438,10 @@ export default function UsStage2Desk({
                 </div>
                 <p className={styles.prescriptionDesc}>
                   {fxChangePercent < -3
-                    ? `เงินบาทแข็งค่าขึ้นอย่างมีนัยสำคัญ (-${Math.abs(fxChangePercent).toFixed(1)}%) ส่งผลให้กำไรในรูปเงินบาทหดหายไป ${Math.abs(fxDragThb).toLocaleString('th-TH', { maximumFractionDigits: 0 })} บาท แนะนำพิจารณาใช้สัญญา TFEX USD Futures (USDZ26) เพื่อ Short ป้องกันความเสี่ยง หรือสลับไปลงทุนผ่าน DR80 บนกระดาน SET ที่มีสภาพคล่อง`
+                    ? `⚠️ บาทแข็ง (-${Math.abs(fxChangePercent).toFixed(1)}%): กำไรลดลง ${Math.abs(fxDragThb).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿ · แนะนำ Short TFEX USD Futures (USDZ26) เพื่อ Hedge หรือซื้อผ่าน DR80 บนกระดาน SET`
                     : fxChangePercent > 3
-                    ? `เงินบาทอ่อนค่า (+${fxChangePercent.toFixed(1)}%) หนุนผลตอบแทนในรูปเงินบาทเพิ่มขึ้นเป็น 2 ต่อ (+${fxDragThb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} บาท) ไม่จำเป็นต้องทำ FX Hedge ในช่วงนี้`
-                    : `ค่าเงินบาทอยู่ในกรอบสมดุล ไม่ส่งผลกระทบอย่างมีนัยสำคัญต่อพอร์ต สามารถโฟกัสที่การรันเทรนด์ตามราคาหุ้นสหรัฐฯ ได้อย่างเต็มที่`}
+                    ? `🚀 บาทอ่อน (+${fxChangePercent.toFixed(1)}%): หนุนกำไรเงินบาทเพิ่ม (+${fxDragThb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿) · ไม่จำเป็นต้องทำ FX Hedge ในช่วงนี้`
+                    : `✓ ค่าเงินบาทสมดุล: ไม่กระทบพอร์ตอย่างมีนัยสำคัญ · สามารถรันเทรนด์ราคาหุ้นสหรัฐฯ ตามแผน 2R ได้เต็มที่`}
                 </p>
               </div>
             </div>
@@ -1798,14 +1812,14 @@ export default function UsStage2Desk({
               <div className={styles.gtcTitleGroup}>
                 <span className={styles.gtcIcon}>🌙</span>
                 <div>
-                  <h4 className={styles.gtcTitle}>Overnight GTC Smart Order Playbook (ตั้งคำสั่งล่วงหน้าสำหรับ {sizingSelectedTicker})</h4>
+                  <h4 className={styles.gtcTitle}>Overnight GTC Smart Order Playbook (ตั้งคำสั่งล่วงหน้า {sizingSelectedTicker})</h4>
                   <p className={styles.gtcSub}>
-                    แนะนำตั้งคำสั่งล่วงหน้าช่วง 19:30 - 20:15 น. ก่อนตลาดเปิด เพื่อให้คุณไม่ต้องเฝ้าจอดึกถึงตี 3
+                    ตั้งคำสั่ง GTC ล่วงหน้าช่วง 19:30 - 20:15 น. ก่อนตลาดเปิด แล้วเข้านอนได้ทันที ไม่ต้องเฝ้าจอดึก
                   </p>
                 </div>
               </div>
               <div className={styles.gtcBadge}>
-                <span>⏰ แนะนำตั้งคำสั่งก่อนนอน</span>
+                <span>⏰ แนะนำ: 19:30 - 20:15 น.</span>
               </div>
             </div>
 

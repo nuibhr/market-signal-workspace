@@ -1,30 +1,35 @@
 'use client';
-import styles from '../thai/thai-workspace.module.css';
+import styles from './us-workspace-nav.module.css';
 
 export const US_VIEWS = [
-  { id: 'focus', hash: '#section-focus', label: '🎯 Stage 2 Focus Picks', note: 'ผู้นำ Minervini เกรด A+' },
-  { id: 'rotation', hash: '#section-rotation', label: '🌐 Thematic ETF Rotation', note: 'Fund Flow สถาบันวอลล์สตรีท' },
-  { id: 'fx', hash: '#section-fx', label: '💵 USD/THB Hedge & Risk', note: 'จำลองผลกระทบค่าเงินบาท' },
-  { id: 'sizing', hash: '#section-sizing', label: '📐 Dime! & 2R Sizing Desk', note: 'คำนวณเศษหุ้น & งบเงินบาท' },
-  { id: 'screener', hash: '#section-screener', label: '📊 S&P 500 Screener', note: 'สแกนคัดทิ้งหุ้นขาลง 500 ตัว' },
-  { id: 'chart', hash: '#chart-panel', label: '📈 Interactive Chart', note: 'ดูกราฟเทคนิค & แท่งราคา' },
+  { id: 'focus', hash: '#section-focus', label: '🎯 Stage 2 Picks' },
+  { id: 'rotation', hash: '#section-rotation', label: '🌐 ETF Rotation' },
+  { id: 'fx', hash: '#section-fx', label: '💵 USD/THB Hedge' },
+  { id: 'sizing', hash: '#section-sizing', label: '📐 Dime! & 2R Lab' },
+  { id: 'screener', hash: '#section-screener', label: '📊 S&P 500' },
+  { id: 'chart', hash: '#chart-panel', label: '📈 Interactive Chart' },
 ];
 
 export default function UsWorkspaceNav({ activeTab = 'focus', symbol, onTabChange, onScrollToChart }) {
   return (
     <section id="us-workspace-navigation" className={styles.toolbar} aria-label="พื้นที่ทำงานหุ้นสหรัฐฯ และ Thematic ETFs">
       <div className={styles.heading}>
-        <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div className={styles.titleGroup}>
+          <h1>
             <span>🇺🇸 หุ้นสหรัฐฯ &amp; Global ETFs</span>
-            <small style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-              S&amp;P 500 + NASDAQ 100
-            </small>
+            <span className={styles.scopeBadge}>S&amp;P 500 + NASDAQ 100</span>
           </h1>
-          <p>คัดกรองหุ้นผู้นำ Stage 2, สำรวจเมกะเทรนด์ Thematic ETFs, และคำนวณความเสี่ยงค่าเงิน USD/THB</p>
+          <div className={styles.headerMetricsRow}>
+            <span className={styles.headerMetricPill}>48 Stage 2 Leaders</span>
+            <span className={styles.headerMetricPill}>312 Filtered Out</span>
+            <span className={styles.headerMetricPill}>Risk ≤ 8%</span>
+            <span className={styles.headerMetricPill}>Dime! 0.0001</span>
+          </div>
         </div>
         <span className={styles.symbol}>
-          กำลังวิเคราะห์ <b>{symbol}</b>
+          <span className={styles.liveDot} />
+          <span>วิเคราะห์</span>
+          <b>{symbol}</b>
         </span>
       </div>
       <div className={styles.row}>
@@ -47,8 +52,7 @@ export default function UsWorkspaceNav({ activeTab = 'focus', symbol, onTabChang
                 }
               }}
             >
-              <b>{v.label}</b>
-              <small>{v.note}</small>
+              <span>{v.label}</span>
             </a>
           ))}
         </nav>

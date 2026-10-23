@@ -304,15 +304,19 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
         <div className={styles.brand}>
           <div className={styles.eyebrow}>
             <span className={styles.eyebrowDot} />
-            TFEX & SET50 OPTIONS PRO TERMINAL
+            TFEX &amp; SET50 OPTIONS PRO TERMINAL
           </div>
           <h2 className={styles.title}>
-            ศูนย์บัญชาการอนุพันธ์และออปชัน
-            <small>TFEX Open API Real Feed</small>
+            <span>⚡ ศูนย์บัญชาการอนุพันธ์และออปชัน</span>
+            <span className={styles.titleBadge}>Real API Feed</span>
           </h2>
-          <p className={styles.subtitle}>
-            เทอร์มินัลครบวงจรสำหรับเทรดเดอร์ TFEX: ตาราง Options Chain, ค่า PCR, จุด Max Pain, เกราะคุ้มครอง Margin Call & แผน 2R Directional Bias
-          </p>
+          <div className={styles.headerMetricsRow}>
+            <span className={styles.headerMetricPill}>Options Chain</span>
+            <span className={styles.headerMetricPill}>PCR 1.14</span>
+            <span className={styles.headerMetricPill}>Max Pain 900</span>
+            <span className={styles.headerMetricPill}>Margin Shield</span>
+            <span className={styles.headerMetricPill}>2R Sizing</span>
+          </div>
         </div>
 
         {/* Contract Ticker Strip */}
@@ -348,10 +352,9 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
           >
             <div className={styles.commandTabHeader}>
               <span className={styles.commandTabIcon}>◈</span>
-              <span className={styles.commandTabTitle}>Options Chain & Greeks</span>
+              <span className={styles.commandTabTitle}>Options Chain</span>
               <span className={styles.commandTabBadge}>PCR 1.14</span>
             </div>
-            <span className={styles.commandTabSub}>Max Pain 900 · 4 Playbooks</span>
           </button>
 
           <button
@@ -361,13 +364,12 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
           >
             <div className={styles.commandTabHeader}>
               <span className={styles.commandTabIcon} style={{ color: '#22d3ee' }}>⚡</span>
-              <span className={styles.commandTabTitle}>What-If Simulator & Risk</span>
+              <span className={styles.commandTabTitle}>What-If Simulator</span>
               <span className={styles.commandTabBadge}>
                 <span className={styles.livePulseDot} />
-                LIVE LAB
+                Live Lab
               </span>
             </div>
-            <span className={styles.commandTabSub}>Cross-Asset Stress & De-Risk</span>
           </button>
 
           <button
@@ -377,10 +379,9 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
           >
             <div className={styles.commandTabHeader}>
               <span className={styles.commandTabIcon} style={{ color: '#38bdf8' }}>▲</span>
-              <span className={styles.commandTabTitle}>Futures Matrix & Basis</span>
+              <span className={styles.commandTabTitle}>Futures Matrix</span>
               <span className={styles.commandTabBadge}>Basis +1.40</span>
             </div>
-            <span className={styles.commandTabSub}>S50 Contango · 2R Bias Desk</span>
           </button>
 
           <button
@@ -390,10 +391,9 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
           >
             <div className={styles.commandTabHeader}>
               <span className={styles.commandTabIcon} style={{ color: '#10b981' }}>⌖</span>
-              <span className={styles.commandTabTitle}>2R Position Sizing Desk</span>
+              <span className={styles.commandTabTitle}>2R Sizing Desk</span>
               <span className={styles.commandTabBadge}>{calculatedContracts} สัญญา</span>
             </div>
-            <span className={styles.commandTabSub}>Risk Budget · Money Guard</span>
           </button>
         </div>
 
@@ -422,7 +422,6 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
         </div>
       </nav>
 
-
       {/* ─── TAB 1: SET50 OPTIONS CHAIN & VOLATILITY DESK ─── */}
       {activeTab === 'options' && (
         <div className={styles.optionsDesk}>
@@ -439,7 +438,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 <div className={styles.pcrSegmentPut} style={{ width: '54%' }} title="Put OI (54%)" />
               </div>
               <p className={styles.barometerDesc}>
-                Put OI {totalPutOi.toLocaleString()} / Call OI {totalCallOi.toLocaleString()} · ตลาดสถาบันซื้อ Put ป้องกันความเสี่ยง มีแรงรองรับแนวรับ
+                Put {totalPutOi.toLocaleString()} / Call {totalCallOi.toLocaleString()} · สถาบันตั้งรับแนวรับ
               </p>
             </div>
 
@@ -450,7 +449,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
               </div>
               <div className={styles.barometerValue}>{maxPainStrike.toFixed(1)} <small style={{ fontSize: '13px', color: '#94a3b8' }}>จุด</small></div>
               <p className={styles.barometerDesc}>
-                ระดับราคาที่ทำให้ Option Sellers เสียหายต่ำสุด · ระยะห่างจากดัชนีปัจจุบัน <b>+{spotDistanceToMaxPain} จุด</b> (มีแรงดึงดูดเข้าหารอบสัปดาห์นี้)
+                จุดดึงดูดฝั่ง Option Sellers (ห่างจากดัชนีปัจจุบัน +{spotDistanceToMaxPain} จุด)
               </p>
             </div>
 
@@ -461,7 +460,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
               </div>
               <div className={styles.barometerValue}>+1.40 <small style={{ fontSize: '13px', color: '#94a3b8' }}>จุด</small></div>
               <p className={styles.barometerDesc}>
-                S50Z26 (894.20) เทียบกับ SET50 Cash Spot (892.80) · Premium เล็กน้อยสะท้อนต้นทุนดอกเบี้ยปกติ ไม่มีแรง Panic Sell
+                S50Z26 vs Cash (892.80) · สภาพคล่อง Contango ปกติ
               </p>
             </div>
           </div>
@@ -606,8 +605,8 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
           {/* Options Strategy Playbook */}
           <div className={styles.playbookSection}>
             <div className={styles.playbookHeader}>
-              <h3>💡 Options Strategy Playbook · กลยุทธ์ยอดนิยมสำหรับเทรดเดอร์ SET50</h3>
-              <small style={{ color: '#94a3b8' }}>ตัวคูณ 200 บาท/จุดต่อสัญญา</small>
+              <h3>💡 Options Playbook · กลยุทธ์ยอดนิยม</h3>
+              <small style={{ color: '#94a3b8' }}>200 บาท/จุด</small>
             </div>
 
             <div className={styles.playbookGrid}>
@@ -615,12 +614,12 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 <div>
                   <h4 className={styles.playbookCardTitle}>🐂 Bull Call Spread</h4>
                   <p className={styles.playbookCardDesc}>
-                    ซื้อ Call 890 + ขาย Call 910 · ลดต้นทุนพรีเมียมลง 40% กำไรเมื่อตลาดทะลุ 900 จุด
+                    ซื้อ Call 890 + ขาย Call 910 · ดักทะลุ 900 จุด
                   </p>
                 </div>
                 <div className={styles.playbookRiskProfile}>
-                  <span className={styles.riskLimited}>ขาดทุนจำกัด: 1,880 ฿</span>
-                  <span className={styles.riskDefined}>กำไรเป้าหมาย: 2,120 ฿</span>
+                  <span className={styles.riskLimited}>จำกัด: 1,880 ฿</span>
+                  <span className={styles.riskDefined}>เป้าหมาย: 2,120 ฿</span>
                 </div>
               </div>
 
@@ -628,24 +627,24 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 <div>
                   <h4 className={styles.playbookCardTitle}>🐻 Bear Put Spread</h4>
                   <p className={styles.playbookCardDesc}>
-                    ซื้อ Put 890 + ขาย Put 870 · ใช้ป้องกันพอร์ตหุ้นไทย หรือดักทำกำไรทางลงเมื่อหลุดแนวรับ
+                    ซื้อ Put 890 + ขาย Put 870 · ดักหลุดแนวรับ
                   </p>
                 </div>
                 <div className={styles.playbookRiskProfile}>
-                  <span className={styles.riskLimited}>ขาดทุนจำกัด: 1,560 ฿</span>
-                  <span className={styles.riskDefined}>กำไรเป้าหมาย: 2,440 ฿</span>
+                  <span className={styles.riskLimited}>จำกัด: 1,560 ฿</span>
+                  <span className={styles.riskDefined}>เป้าหมาย: 2,440 ฿</span>
                 </div>
               </div>
 
               <div className={styles.playbookCard}>
                 <div>
-                  <h4 className={styles.playbookCardTitle}>⚡ Long Straddle / Strangle</h4>
+                  <h4 className={styles.playbookCardTitle}>⚡ Long Straddle</h4>
                   <p className={styles.playbookCardDesc}>
-                    ซื้อ Call 900 + Put 880 · ดักรับคลื่นระเบิดความผันผวน (เช่น ประกาศนโยบาย กนง. หรือตัวเลขเงินเฟ้อ)
+                    ซื้อ Call 900 + Put 880 · ดักรับคลื่นผันผวน
                   </p>
                 </div>
                 <div className={styles.playbookRiskProfile}>
-                  <span className={styles.riskLimited}>ต้นทุนรวม: 2,860 ฿</span>
+                  <span className={styles.riskLimited}>ต้นทุน: 2,860 ฿</span>
                   <span className={styles.riskDefined}>กำไร: ไม่จำกัด</span>
                 </div>
               </div>
@@ -654,11 +653,11 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 <div>
                   <h4 className={styles.playbookCardTitle}>🛡️ Iron Condor</h4>
                   <p className={styles.playbookCardDesc}>
-                    ขาย Call/Put OTM + ซื้อปีกป้องกัน · กินค่าพรีเมียมช่วงตลาด Sideway ในกรอบ 870 - 920
+                    ขาย Call/Put OTM + ซื้อปีก · กินพรีเมียม 870-920
                   </p>
                 </div>
                 <div className={styles.playbookRiskProfile}>
-                  <span className={styles.riskLimited}>กรอบกำไร: 870 - 920</span>
+                  <span className={styles.riskLimited}>กรอบ: 870-920</span>
                   <span className={styles.riskDefined}>รับพรีเมียม: 1,040 ฿</span>
                 </div>
               </div>
@@ -725,12 +724,12 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                     <h4 className={styles.byokHudTitle}>
                       {settradeConnected
                         ? `${settradeAccount?.brokerName} · บัญชี ${settradeAccount?.accountNo}`
-                        : 'Bring Your Own Key (BYOK) · เชื่อมโยงพอร์ตทรีนีตี้ (022) หรือโบรคเกอร์ของคุณ'}
+                        : 'Bring Your Own Key (BYOK) · เชื่อมพอร์ตผ่าน Settrade Open API'}
                     </h4>
                     <p className={styles.byokHudDesc}>
                       {settradeConnected
-                        ? `ซิงค์สถานะสัญญาจริงและระดับ Margin จากตลาด TFEX เข้า What-If Simulator เรียบร้อยแล้ว`
-                        : 'ดึงสัญญา S50 / GO และเงินประกันจริงมาคำนวณความเสี่ยง ปลอดภัยระดับสูงสุด ไม่มีการบันทึก Key ลงฐานข้อมูลส่วนกลาง'}
+                        ? `ซิงค์สัญญาจริงและระดับ Margin เข้า What-If Simulator เรียบร้อยแล้ว`
+                        : 'ซิงค์สถานะพอร์ตและเงินประกันจริง คำนวณความเสี่ยงอัตโนมัติ (Zero-Custody ไร้การบันทึก Key)'}
                     </p>
 
                     {settradeConnected && settradeAccount && (
@@ -832,10 +831,9 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
               <div className={styles.whatIfHero}>
                 <div className={styles.whatIfHeroInfo}>
                   <span className={styles.whatIfHeroTag}>PORTFOLIO STRESS TESTING</span>
-                  <h3>TFEX What-If Simulator · ผลกระทบต่อพอร์ตภายใต้สภาวะวิกฤต</h3>
+                  <h3>⚡ What-If Simulator · Stress Testing</h3>
                   <p>
-                    จำลองผลกระทบเมื่อตลาดผันผวนพร้อมกัน: ถือ S50 {whatIfS50Contracts} สัญญา ({whatIfS50Side}) และ Gold Online {whatIfGoContracts} สัญญา ({whatIfGoSide})
-                    เมื่อ SET50 เปลี่ยน {whatIfS50Shock >= 0 ? `+${whatIfS50Shock}` : whatIfS50Shock} จุด และทองคำเปลี่ยน {whatIfGoShock >= 0 ? `+${whatIfGoShock}` : whatIfGoShock}$
+                    S50 ({whatIfS50Contracts} สัญญา) + Gold ({whatIfGoContracts} สัญญา) · จำลอง SET50 {whatIfS50Shock >= 0 ? `+${whatIfS50Shock}` : whatIfS50Shock} จุด, ทอง {whatIfGoShock >= 0 ? `+${whatIfGoShock}` : whatIfGoShock}$
                   </p>
                 </div>
                 <div className={styles.whatIfPlTotal}>
@@ -1151,7 +1149,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                         : 'พอร์ตมีกันชนปลอดภัยสูง: ทนต่อความผันผวนและการเปิดกระโดด Gap ได้ดี'}
                   </strong>
                   <p>
-                    ระบบจำลองเงินประกันตามเกณฑ์ TFEX จริง: Initial Margin (IM), Maintenance Margin (MM 70%), และ Force Close Margin (FM 30%)
+                    เกณฑ์ TFEX: Initial (IM) · Maintenance (MM 70%) · Force Close (FM 30%)
                   </p>
                 </div>
               </div>

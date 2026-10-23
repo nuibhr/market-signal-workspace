@@ -1063,6 +1063,23 @@ node work/verify-recovered-pilot.mjs</code><button class="code-action" onclick="
           <li><strong>📐 US 2R Position Sizing Desk:</strong> คำนวณจำนวนหุ้นที่ปลอดภัย (Max Allowed Shares) และงบลงทุนทั้ง USD และ THB ตาม Risk Budget (1-2% ของพอร์ต) ช่วยให้เทรดเดอร์ไม่ Overleverage ในหุ้นราคาแพง</li>
           <li><strong>📊 S&amp;P 500 Universe Screener Table:</strong> ตารางสแกนและค้นหาทั้ง 500 หุ้น พร้อมกรองกลุ่มอุตสาหกรรม (Semiconductors, Cloud, Consumer, Pharma) และปุ่มกดดูกราฟและอินดิเคเตอร์เชื่อมโยงสู่ Candlestick Chart ในคลิกเดียว</li>
           <li><strong>✨ Cyber-Fintech UI/UX &amp; 100% Dual-Theme:</strong> ดีไซน์พรีเมียมด้วย HUD Command Bar, Animated Pulse LED, Market Session Badge (ตรวจจับเวลาทำการ Pre-Market 15:00-20:30 น. และ Regular 20:30-03:00 น. อัตโนมัติ), รองรับทั้ง <strong>Magic Dark</strong> และ <strong>Liquid Glass Light Theme</strong> คมชัดทุกมิติ</li>
+          <li><strong>🧹 กำจัดเส้นขอบและเส้นคั่นรบกวนสายตา (Zero Clutter &amp; Line-Free Magic UI):</strong> ปรับแก้ตามคำแนะนำผู้ใช้เพื่อความสวยงามระดับพรีเมียม โดยลบเส้นคั่นตัดขวางทุกจุด (<code class="inline">border-top</code>, <code class="inline">border-bottom</code>, <code class="inline">border-left: 3px</code>) เปลี่ยนกรอบกล่องย่อยเป็นพื้นผิวแก้วโปร่งแสงนุ่มนวล (<code class="inline">rgba(255, 255, 255, 0.035)</code>), จัดระเบียบแถบนำทางเป็นชิ้นเดียวไม่ซ้อนทับกัน (ลบ Double-Navbar), และใช้ Micro-Pills ในตาราง 2R Blueprint และ GTC Playbook ทำให้หน้าจอดูโปร่ง สบายตา ทันสมัยแบบแอพ Fintech ระดับสากล (Revolut/Robinhood)</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent-cyan);">
+        <div class="card-title" style="color: var(--accent-cyan);">
+          <span>✅ หมวดที่ 5: ปรับปรุง UI กระชับคำอธิบาย &amp; กรอบเมนูหัวข้อ Cyber-Fintech (TFEX &amp; US Markets Streamlined) (Completed):</span>
+        </div>
+        <p class="card-desc">
+          ปฏิรูปหน้าตาและข้อความของระบบทั้งตลาด TFEX และ US ตามข้อเสนอแนะของผู้ใช้ ("คำอธิบายยาวๆ ลูกค้าคงไม่อ่าน ui ตอนนี้ไม่สวยเลยจริงๆ tfex us ลดคำอธิบาย ทำกรอบเมนูหัวข้อให้ดูสวย") ให้เป็นหน้าจอมือโปรที่กระชับ สวยงาม ทันสมัยแบบ Linear / Raycast:
+        </p>
+        <ul class="checklist complete">
+          <li><strong>✂️ กำจัดกำแพงตัวหนังสือและคำอธิบายยาวๆ (Zero Text Wall):</strong> ตัดข้อความบรรยายเชิงทฤษฎีและย่อหน้ายาวๆ ออกจากทุกจุด ทั้งใน Header Subtitles, การ์ด Options Barometer (PCR / Max Pain), การ์ดกลยุทธ์ Options Playbook (Bull Call, Bear Put, Straddle, Condor), การจำลอง What-If Simulator, และกล่อง Single Margin Shield</li>
+          <li><strong>🏷️ แถบข้อมูลสรุปผู้บริหาร (Executive Metric Strips):</strong> แทนที่คำบรรยาย 3-5 บรรทัดด้วย Metric Pills กะทัดรัด คมชัด เช่น ใน TFEX (<code class="inline">Options Chain</code>, <code class="inline">PCR 1.14</code>, <code class="inline">Max Pain 900</code>, <code class="inline">Margin Shield</code>, <code class="inline">2R Sizing</code>) และใน US (<code class="inline">48 Stage 2 Leaders</code>, <code class="inline">312 Filtered Out</code>, <code class="inline">Risk ≤ 8%</code>, <code class="inline">Dime! 0.0001 Shares</code>)</li>
+          <li><strong>💎 กรอบเมนู Linear Segmented Pill Nav:</strong> ออกแบบกรอบเมนูนำทางและ Command Bar ใหม่หมดจดด้วย Glassmorphism (<code class="inline">backdrop-filter: blur(20px)</code>, ขอบเรืองแสงนุ่มนวล <code class="inline">rgba(56, 189, 248, 0.22)</code>) เปลี่ยนแท็บบวม 2 บรรทัดให้กลายเป็น Single-Line Pills พร้อม Micro-Badges และไอคอนคมชัด</li>
+          <li><strong>🛡️ เกราะเงินทุนแบบกระชับ (Cyber Capital Guard):</strong> ย่อข้อความจาก 5 บรรทัดเป็นแถบสถานะพร้อม Badge ป้องกันความเสี่ยงสีสด (<code class="inline">คัดทิ้งขาลง Stage 4 แล้ว 312 ตัว</code> และ <code class="inline">ล็อกความเสี่ยง ≤ 8%</code>)</li>
+          <li><strong>🌙 Overnight GTC, ETF Rotation &amp; FX Prescription แบบคมชัด:</strong> ย่อสรุปขั้นตอนตั้งคำสั่งก่อนนอน 3 ข้อเป็น One-liner สั้นกระชับ, เสริมชิปสถานะ 4 จตุภาคใน Thematic ETF, และย่อคำแนะนำอัตราแลกเปลี่ยน USD/THB เป็นข้อแนะนำเชิงปฏิบัติการ (Actionable Prescriptions) ทันที</li>
         </ul>
       </div>
 

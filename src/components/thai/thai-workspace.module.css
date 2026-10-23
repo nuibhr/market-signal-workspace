@@ -1,12 +1,21 @@
 .toolbar {
   position: relative;
-  background: #142331;
-  border: 1px solid #30475b;
-  border-radius: 14px;
-  padding: 16px 18px;
+  background: linear-gradient(180deg, rgba(16, 26, 48, 0.88) 0%, rgba(10, 18, 36, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 16px;
+  padding: 16px 20px;
   margin: 6px 0 16px;
   color: #dce8f0;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   scroll-margin-top: 80px;
+  transition: all 0.3s ease;
+}
+
+.toolbar:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 14px 36px -8px rgba(0, 0, 0, 0.6), 0 0 16px rgba(56, 189, 248, 0.12);
 }
 
 .heading {
