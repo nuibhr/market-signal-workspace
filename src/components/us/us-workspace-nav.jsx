@@ -2,12 +2,12 @@
 import styles from '../thai/thai-workspace.module.css';
 
 export const US_VIEWS = [
-  { id: 'focus', hash: '#section-focus', label: '🎯 Stage 2 Focus Picks', note: 'Minervini Leaders & 2R Plan' },
+  { id: 'focus', hash: '#section-focus', label: '🎯 Stage 2 Focus Picks', note: 'ผู้นำ Minervini เกรด A+' },
   { id: 'rotation', hash: '#section-rotation', label: '🌐 Thematic ETF Rotation', note: 'Fund Flow สถาบันวอลล์สตรีท' },
   { id: 'fx', hash: '#section-fx', label: '💵 USD/THB Hedge & Risk', note: 'จำลองผลกระทบค่าเงินบาท' },
-  { id: 'sizing', hash: '#section-sizing', label: '📐 2R Position Sizing', note: 'คำนวณจำนวนหุ้น & งบลงทุน' },
-  { id: 'screener', hash: '#section-screener', label: '📊 S&P 500 Screener', note: 'ค้นหาและกรอง 500 บริษัท' },
-  { id: 'chart', hash: '#chart-panel', label: '📈 Interactive Chart', note: 'กราฟเทคนิค & แท่งราคา' },
+  { id: 'sizing', hash: '#section-sizing', label: '📐 Dime! & 2R Sizing Desk', note: 'คำนวณเศษหุ้น & งบเงินบาท' },
+  { id: 'screener', hash: '#section-screener', label: '📊 S&P 500 Screener', note: 'สแกนคัดทิ้งหุ้นขาลง 500 ตัว' },
+  { id: 'chart', hash: '#chart-panel', label: '📈 Interactive Chart', note: 'ดูกราฟเทคนิค & แท่งราคา' },
 ];
 
 export default function UsWorkspaceNav({ activeTab = 'focus', symbol, onTabChange, onScrollToChart }) {
@@ -38,6 +38,7 @@ export default function UsWorkspaceNav({ activeTab = 'focus', symbol, onTabChang
                 if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                 event.preventDefault();
                 if (v.id === 'chart') {
+                  if (onTabChange) onTabChange('chart');
                   if (onScrollToChart) onScrollToChart();
                 } else {
                   if (onTabChange) onTabChange(v.id);

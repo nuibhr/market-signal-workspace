@@ -356,6 +356,127 @@ export const THEMATIC_ETF_DATA = [
   },
 ];
 
+// ─── THAI BROKERS FOR US EQUITIES ───
+export const THAI_US_BROKERS = [
+  { id: 'dime', name: 'Dime! by KKP', feature: 'เศษหุ้น Fractional เริ่ม 50 บาท · แลก USD ในแอป · ฟรีค่าคอมไม้แรก' },
+  { id: 'innovestx', name: 'InnovestX (SCB)', feature: 'หุ้นรายตัว & Fractional Shares · เชื่อม SCB Easy · ซื้อขาย 20:30-03:00' },
+  { id: 'liberator', name: 'Liberator Global', feature: 'เทรดหุ้นสหรัฐฯ ค่าคอมประหยัด · ส่งคำสั่งผ่าน Streaming Global' },
+  { id: 'pi', name: 'Pi Financial (Pi Global)', feature: 'แพลตฟอร์ม MT5 Global · ข้อมูลแบบเรียลไทม์ · ขยายพอร์ตต่างประเทศ' },
+  { id: 'ibkr', name: 'Interactive Brokers (IBKR)', feature: 'สภาพคล่องวอลล์สตรีทสูงสุด · เศษหุ้น & Options ครบวงจร' },
+];
+
+// ─── AI STAGE HEALTH DIAGNOSTICS MASTER DATA ───
+export const US_AI_STAGE_DIAGNOSTICS = {
+  NVDA: {
+    symbol: 'NVDA',
+    name: 'NVIDIA Corporation',
+    stage: 2,
+    stageLabel: 'Stage 2 ขาขึ้นสมบูรณ์แบบ (Mark Minervini Trend Template)',
+    healthScore: 98,
+    status: 'bullish',
+    rsRating: 98,
+    trendSummary: 'ราคายืนเหนือ EMA20 > EMA50 > EMA200 เส้นค่าเฉลี่ยเรียงตัวขึ้นสมบูรณ์ สถาบันสะสมสม่ำเสมอ แข็งแกร่งกว่าตลาด 98%',
+    actionPlan: '✅ ซื้อตามรอบ Breakout Pivot $138.50 วาง Stop Loss $128.00 (เสี่ยง 7.5%) ล็อกเป้า 2R ที่ $159.50',
+    caution: 'ไม่มีสัญญาณอันตราย เกาะเส้น EMA20 รันเทรนด์',
+  },
+  PLTR: {
+    symbol: 'PLTR',
+    name: 'Palantir Technologies Inc.',
+    stage: 2,
+    stageLabel: 'Stage 2 ขาขึ้นสมบูรณ์แบบ (Cup & Handle Breakout)',
+    healthScore: 96,
+    status: 'bullish',
+    rsRating: 96,
+    trendSummary: 'โมเมนตัม AIP หนุนกำไรโตระเบิด สถาบันเข้าซื้อต่อเนื่องหลังเข้า S&P 500 ทำ New High แข็งแกร่ง',
+    actionPlan: '✅ ถือรันเทรนด์ หรือแบ่งล็อกกำไร 50% ที่เป้า 2R ($51.00) ส่วนที่เหลือเกาะเส้น EMA10 วางจุดตัดขาดทุนที่ $40.80',
+    caution: 'RSI เริ่มตึงตัว ให้ขยับ Stop Loss บังทุนเมื่อทะลุ $48',
+  },
+  AAPL: {
+    symbol: 'AAPL',
+    name: 'Apple Inc.',
+    stage: 2,
+    stageLabel: 'Stage 2 สะสมพลังบนฐานราคา (Flat Base Reclaim)',
+    healthScore: 89,
+    status: 'bullish',
+    rsRating: 89,
+    trendSummary: 'ยืนเหนือ EMA50 รอรับแรงหนุนจากรอบเปลี่ยนเครื่อง iPhone 16 และ Apple Intelligence',
+    actionPlan: '✅ ทยอยสะสมเมื่อราคาย่อทดสอบ EMA20 หรือเบรก $235 วาง Stop ใต้ฐาน $219 เป้าหมายแรก $267 (+2R)',
+    caution: 'หลุดต่ำกว่า $219 ให้ตัดขาดทุนทันที',
+  },
+  TSLA: {
+    symbol: 'TSLA',
+    name: 'Tesla, Inc.',
+    stage: 1,
+    stageLabel: 'Stage 1 สร้างฐานสะสมกำลัง (Testing $260 Resistance)',
+    healthScore: 78,
+    status: 'neutral',
+    rsRating: 85,
+    trendSummary: 'ฟื้นตัวขึ้นจากจุดต่ำสุด พยายามฝ่าแนวต้าน $260 สเปรดราคากว้างและอ่อนไหวต่อข่าว FSD / Robotaxi',
+    actionPlan: '🟡 รอสัญญาณแท่งเทียนปิดเหนือ $260 พร้อม Volume เพิ่ม 1.5 เท่า หรือใช้ Dime! ซื้อเศษหุ้นไม้เล็กคุมความเสี่ยง 1%',
+    caution: 'ยังไม่หลุดกรอบสะสมชัดเจน อย่าเพิ่ง All-in ก้อนใหญ่',
+  },
+  INTC: {
+    symbol: 'INTC',
+    name: 'Intel Corporation',
+    stage: 4,
+    stageLabel: 'Stage 4 ขาลงรุนแรง (Severe Downtrend / Value Trap)',
+    healthScore: 28,
+    status: 'bearish',
+    rsRating: 28,
+    trendSummary: '❌ ราคาอยู่ใต้เส้น EMA200 ยาวนานกว่า 1 ปี ทำ New Low ต่อเนื่อง เสียส่วนแบ่งตลาดให้ชิป AI ขาดทุนหนัก',
+    actionPlan: '⛔ คำเตือน: ห้ามช้อนซื้อเด็ดขาด! แม้ราคาจะดู "ถูก" ลงกว่า 50% นี่คือกับดักมูลค่า (Value Trap) กฎ Minervini: ห้ามซื้อหุ้นใต้เส้น EMA200 วัน',
+    caution: 'อย่ารับมีดที่กำลังร่วง เสี่ยงเงินจมติดดอยข้ามปี',
+  },
+  NKE: {
+    symbol: 'NKE',
+    name: 'NIKE, Inc.',
+    stage: 4,
+    stageLabel: 'Stage 4 ขาลงเรื้อรัง (Downtrend / Loss of Market Share)',
+    healthScore: 32,
+    status: 'bearish',
+    rsRating: 32,
+    trendSummary: '❌ ยอดขายทั่วโลกหดตัว คู่แข่งใหม่แย่งส่วนแบ่งรองเท้าวิ่ง เส้น EMA เรียงตัวกดลงทุกมิติ',
+    actionPlan: '⛔ คำเตือน: หลีกเลี่ยงการเข้าซื้อ ต้องรอให้กราฟสร้างฐาน Stage 1 นานอย่างน้อย 6-12 เดือนก่อนจึงจะพิจารณาใหม่',
+    caution: 'การเด้งสั้นในขาลงคือโอกาสหนีตาย ไม่ใช่โอกาสซื้อ',
+  },
+  BA: {
+    symbol: 'BA',
+    name: 'The Boeing Company',
+    stage: 4,
+    stageLabel: 'Stage 4 กราฟเสียทรงเรื้อรัง (Structural Downtrend)',
+    healthScore: 35,
+    status: 'bearish',
+    rsRating: 35,
+    trendSummary: '❌ ปัญหาความปลอดภัยสายการผลิตและการประท้วงหยุดงาน หนี้สินระดับสูงกดดันกระแสเงินสด',
+    actionPlan: '⛔ คำเตือน: กราฟหลุดทุกแนวรับสำคัญ ไม่ผ่านเกณฑ์ Trend Template ใดๆ ทั้งสิ้น',
+    caution: 'ความเสี่ยงเพิ่มทุนกดดันราคาหุ้นต่อเนื่อง',
+  },
+  BABA: {
+    symbol: 'BABA',
+    name: 'Alibaba Group Holding Limited',
+    stage: 4,
+    stageLabel: 'Stage 4 Rebound หลอก (Dead Cat Bounce in Long Downtrend)',
+    healthScore: 44,
+    status: 'bearish',
+    rsRating: 44,
+    trendSummary: '⚠️ เด้งสั้นตามมาตรการกระตุ้นเศรษฐกิจจีน แต่ภาพใหญ่ยังติดแนวต้านสำคัญและแรงขายสถาบันยังคงมีอยู่',
+    actionPlan: '⚠️ เหมาะเฉพาะสายเก็งกำไรระยะสั้นเท่านั้น สายรันเทรนด์ควรมองข้ามไปหาผู้นำ Stage 2 ในตลาดสหรัฐฯ ตัวจริง',
+    caution: 'ความเสี่ยงภูมิรัฐศาสตร์และนโยบายจีนยังไม่นิ่ง',
+  },
+  SMCI: {
+    symbol: 'SMCI',
+    name: 'Super Micro Computer, Inc.',
+    stage: 4,
+    stageLabel: 'Stage 3 กระจายของสู่ Stage 4 ขาลง (Distribution Collapse)',
+    healthScore: 38,
+    status: 'bearish',
+    rsRating: 48,
+    trendSummary: '❌ ร่วงลงมาจากจุดสูงสุดกว่า 60% เผชิญข้อกล่าวหาด้านการตรวจสอบบัญชี สถาบันเทขายทิ้ง Volume มหาศาล',
+    actionPlan: '⛔ คำเตือน: กราฟหลุดทุกเส้นค่าเฉลี่ย ความเสี่ยงปรับโครงสร้างสูง ห้ามรับมีดเด็ดขาด',
+    caution: 'ความผันผวนสูงเกินกว่าจะควบคุมความเสี่ยงตามหลัก 2R ได้',
+  },
+};
+
 export default function UsStage2Desk({
   selectedSymbol,
   onSelect,
@@ -373,6 +494,9 @@ export default function UsStage2Desk({
   const [focusFilter, setFocusFilter] = useState('top3'); // top3, mag7, rs, volume, favorites
   const [searchQuery, setSearchQuery] = useState('');
   const [sectorFilter, setSectorFilter] = useState('all');
+
+  // ── AI Stage Health Diagnostic State ──
+  const [selectedDiagTicker, setSelectedDiagTicker] = useState('NVDA');
 
   // ── Market Hours Clock Logic (Pre, Regular, Post) ──
   const [marketSession, setMarketSession] = useState({
@@ -479,7 +603,16 @@ export default function UsStage2Desk({
     return unhedgedProfitThb - hedgedProfitThb;
   }, [unhedgedProfitThb, hedgedProfitThb]);
 
-  // ── 2R US Position Sizing State ──
+  // ── Dime! & Thai Broker Sizing Lab State ──
+  const [selectedBroker, setSelectedBroker] = useState('dime');
+  const [sizingMode, setSizingMode] = useState('fractional'); // fractional (Dime/InnovestX) or whole (USD)
+  const [budgetThb, setBudgetThb] = useState(10000);
+  const [riskBudgetPercent, setRiskBudgetPercent] = useState(2.0);
+  const [fractionalAllocType, setFractionalAllocType] = useState('full_allocation'); // full_allocation or risk_budgeted
+  const [copiedOrder, setCopiedOrder] = useState(false);
+  const [copiedGtc, setCopiedGtc] = useState(false);
+
+  // ── Standard Whole Shares 2R US Position Sizing State ──
   const [portfolioSizeUsd, setPortfolioSizeUsd] = useState(10000);
   const [riskPerTradePercent, setRiskPerTradePercent] = useState(1.0);
   const [sizingSelectedTicker, setSizingSelectedTicker] = useState('NVDA');
@@ -492,6 +625,64 @@ export default function UsStage2Desk({
     setSizingStop(ticker.stopLoss);
   };
 
+  // Fractional Calculation for Dime! / InnovestX
+  const calculatedFractional = useMemo(() => {
+    const budgetUsd = budgetThb / currentFxRate;
+    const riskPerShare = Math.max(0.01, sizingEntry - sizingStop);
+    const riskPercent = (riskPerShare / sizingEntry) * 100;
+
+    if (fractionalAllocType === 'risk_budgeted') {
+      const maxLossAllowedThb = budgetThb * (riskBudgetPercent / 100);
+      const maxLossAllowedUsd = maxLossAllowedThb / currentFxRate;
+      const shares = Number((maxLossAllowedUsd / riskPerShare).toFixed(4));
+      const capitalRequiredUsd = shares * sizingEntry;
+      const capitalRequiredThb = capitalRequiredUsd * currentFxRate;
+      const lossAtStopUsd = shares * riskPerShare;
+      const lossAtStopThb = lossAtStopUsd * currentFxRate;
+      const rewardTp1Usd = shares * (riskPerShare * 2);
+      const rewardTp1Thb = rewardTp1Usd * currentFxRate;
+      const rewardTp2Usd = shares * (riskPerShare * 3);
+      const rewardTp2Thb = rewardTp2Usd * currentFxRate;
+      return {
+        shares,
+        capitalRequiredUsd,
+        capitalRequiredThb,
+        lossAtStopUsd,
+        lossAtStopThb,
+        rewardTp1Usd,
+        rewardTp1Thb,
+        rewardTp2Usd,
+        rewardTp2Thb,
+        riskPercent,
+        riskPerShare,
+      };
+    } else {
+      const shares = Number((budgetUsd / sizingEntry).toFixed(4));
+      const capitalRequiredUsd = budgetUsd;
+      const capitalRequiredThb = budgetThb;
+      const lossAtStopUsd = shares * riskPerShare;
+      const lossAtStopThb = lossAtStopUsd * currentFxRate;
+      const rewardTp1Usd = shares * (riskPerShare * 2);
+      const rewardTp1Thb = rewardTp1Usd * currentFxRate;
+      const rewardTp2Usd = shares * (riskPerShare * 3);
+      const rewardTp2Thb = rewardTp2Usd * currentFxRate;
+      return {
+        shares,
+        capitalRequiredUsd,
+        capitalRequiredThb,
+        lossAtStopUsd,
+        lossAtStopThb,
+        rewardTp1Usd,
+        rewardTp1Thb,
+        rewardTp2Usd,
+        rewardTp2Thb,
+        riskPercent,
+        riskPerShare,
+      };
+    }
+  }, [budgetThb, currentFxRate, sizingEntry, sizingStop, fractionalAllocType, riskBudgetPercent]);
+
+  // Standard Whole Shares Calculation
   const calculatedSizing = useMemo(() => {
     const maxDollarRisk = (portfolioSizeUsd * riskPerTradePercent) / 100;
     const riskPerShare = Math.max(0.01, sizingEntry - sizingStop);
@@ -537,7 +728,7 @@ export default function UsStage2Desk({
     });
   }, [searchQuery, sectorFilter]);
 
-  // Scroll to chart trigger
+  // Scroll to chart trigger & switch tab
   const handleSelectAsset = (item) => {
     if (onSelect) {
       onSelect({
@@ -547,13 +738,45 @@ export default function UsStage2Desk({
         kind: 'stock',
       });
     }
+    if (onTabChange) {
+      onTabChange('chart');
+    }
     setTimeout(() => {
       const el = document.getElementById('chart-panel') || document.querySelector('.chart-panel');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 100);
+    }, 120);
   };
+
+  // Copy order text
+  const handleCopyOrderSpecs = (ticker, shares, entry, stop, tp1) => {
+    const brokerName = THAI_US_BROKERS.find(b => b.id === selectedBroker)?.name || 'Dime! by KKP';
+    const text = `[คำสั่งเทรดหุ้นสหรัฐฯ ${ticker} ผ่าน ${brokerName}]\n` +
+      `• หุ้น: ${ticker}\n` +
+      `• จำนวน: ${shares} หุ้น\n` +
+      `• จุดเข้าซื้อ: $${Number(entry).toFixed(2)}\n` +
+      `• จุดตัดขาดทุน (Stop Loss GTC): $${Number(stop).toFixed(2)}\n` +
+      `• จุดขายทำกำไร (TP1 2R Limit): $${Number(tp1).toFixed(2)}`;
+    navigator.clipboard?.writeText(text);
+    setCopiedOrder(true);
+    setTimeout(() => setCopiedOrder(false), 2500);
+  };
+
+  // Copy GTC playbook
+  const handleCopyGtcPlaybook = (ticker, entry, stop, tp1) => {
+    const text = `[🌙 OVERNIGHT GTC SMART ORDER PLAYBOOK - ${ticker}]\n` +
+      `1. BUY LIMIT (GTC): $${Number(entry).toFixed(2)}\n` +
+      `2. STOP LOSS (GTC): $${Number(stop).toFixed(2)} (ล็อกขาดทุนไม่เกิน 8%)\n` +
+      `3. TAKE PROFIT (GTC LIMIT): $${Number(tp1).toFixed(2)} (เป้า 2R แบ่งขาย 50%)\n` +
+      `*ตั้งคำสั่งช่วง 19:30 - 20:15 น. ก่อนตลาดเปิด แล้วเข้านอนได้ทันที*`;
+    navigator.clipboard?.writeText(text);
+    setCopiedGtc(true);
+    setTimeout(() => setCopiedGtc(false), 2500);
+  };
+
+  const currentDiagnostic = US_AI_STAGE_DIAGNOSTICS[selectedDiagTicker] || US_AI_STAGE_DIAGNOSTICS.NVDA;
+  const focusedPick = US_STAGE2_FOCUS_PICKS.find(p => p.symbol === sizingSelectedTicker) || US_STAGE2_FOCUS_PICKS[0];
 
   return (
     <section id="us-stage2-command-desk" className={styles.desk} aria-label="US 500 Equities and Thematic ETFs Stage 2 Command Desk">
@@ -642,10 +865,10 @@ export default function UsStage2Desk({
           >
             <div className={styles.commandTabHeader}>
               <span className={styles.commandTabIcon} style={{ color: '#f59e0b' }}>📐</span>
-              <span>US 2R Position Sizing Desk</span>
-              <span className={styles.commandTabBadge}>{calculatedSizing.shares} Shares</span>
+              <span>Dime! &amp; 2R Sizing Desk</span>
+              <span className={styles.commandTabBadge}>{sizingMode === 'fractional' ? `${calculatedFractional.shares} หุ้น` : `${calculatedSizing.shares} Shares`}</span>
             </div>
-            <span className={styles.commandTabSub}>คำนวณจำนวนหุ้น &amp; งบลงทุน</span>
+            <span className={styles.commandTabSub}>คำนวณเศษหุ้น &amp; งบเงินบาท</span>
           </button>
 
           <button
@@ -660,17 +883,114 @@ export default function UsStage2Desk({
             </div>
             <span className={styles.commandTabSub}>ค้นหาและกรองหุ้น 500 บริษัท</span>
           </button>
+
+          <button
+            type="button"
+            className={`${styles.commandTab} ${activeTab === 'chart' ? styles.commandTabActive : ''}`}
+            onClick={() => setActiveTab('chart')}
+          >
+            <div className={styles.commandTabHeader}>
+              <span className={styles.commandTabIcon} style={{ color: '#38bdf8' }}>📈</span>
+              <span>Interactive Candlestick Chart</span>
+              <span className={styles.commandTabBadge}>Full Chart</span>
+            </div>
+            <span className={styles.commandTabSub}>ดูกราฟเทคนิคแท่งจริง &amp; Indicators</span>
+          </button>
         </div>
 
         <div className={styles.commandBarFxChip}>
           <span>อัตราแลกเปลี่ยนอ้างอิง:</span>
           <b>{currentFxRate.toFixed(2)} ฿/USD</b>
+          <span style={{ fontSize: '10px', color: '#34d399', marginLeft: '6px' }}>• Dime! Mode พร้อมใช้</span>
         </div>
       </nav>
 
       {/* ─── TAB 1: DAILY HIGH CONVICTION STAGE 2 FOCUS PICKS ─── */}
       {activeTab === 'focus' && (
         <div>
+          {/* AI Stage Health Diagnostic Bar */}
+          <div className={styles.diagBar}>
+            <div className={styles.diagHeader}>
+              <div className={styles.diagTitleGroup}>
+                <span className={styles.diagIcon}>🔍</span>
+                <div>
+                  <h3 className={styles.diagTitle}>
+                    AI Stage Health Diagnostic (ตรวจเช็กสุขภาพ Stage หุ้น US รายตัว)
+                  </h3>
+                  <p className={styles.diagSubtitle}>
+                    เช็กทันทีว่าหุ้นที่คุณเล็งอยู่จัดเป็น <b>Stage 2 ขาขึ้นสมบูรณ์แบบ</b> หรือเป็นกับดัก <b>Stage 4 ขาลงรุนแรง (Value Trap)</b>
+                  </p>
+                </div>
+              </div>
+              <div className={styles.diagStatusPill}>
+                <span>✓ Minervini Trend Template Engine: Active</span>
+              </div>
+            </div>
+
+            <div className={styles.diagTickerPills}>
+              <span className={styles.diagTickerLabel}>หุ้นยอดนิยมของนักลงทุนไทย:</span>
+              {['NVDA', 'PLTR', 'AAPL', 'TSLA', 'INTC', 'NKE', 'BA', 'BABA', 'SMCI'].map(sym => {
+                const diag = US_AI_STAGE_DIAGNOSTICS[sym];
+                const isSelected = selectedDiagTicker === sym;
+                return (
+                  <button
+                    key={sym}
+                    type="button"
+                    className={`${styles.diagTickerChip} ${isSelected ? styles.diagTickerChipActive : ''} ${diag.stage === 4 ? styles.diagTickerChipBear : diag.stage === 2 ? styles.diagTickerChipBull : styles.diagTickerChipWarn}`}
+                    onClick={() => setSelectedDiagTicker(sym)}
+                  >
+                    <span>{diag.stage === 4 ? '❌' : diag.stage === 2 ? '🟢' : '🟡'}</span>
+                    <b>{sym}</b>
+                    <small>Stage {diag.stage} ({diag.healthScore})</small>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Diagnostic Result Card */}
+            {currentDiagnostic && (
+              <div className={`${styles.diagCard} ${currentDiagnostic.stage === 4 ? styles.diagCardBear : currentDiagnostic.stage === 2 ? styles.diagCardBull : styles.diagCardWarn}`}>
+                <div className={styles.diagCardTop}>
+                  <div className={styles.diagCardMeta}>
+                    <div className={styles.diagCardSymbolRow}>
+                      <h4>{currentDiagnostic.symbol}</h4>
+                      <span className={styles.diagCardName}>{currentDiagnostic.name}</span>
+                      <span className={`${styles.diagStageBadge} ${currentDiagnostic.stage === 4 ? styles.badgeBear : currentDiagnostic.stage === 2 ? styles.badgeBull : styles.badgeWarn}`}>
+                        {currentDiagnostic.stageLabel}
+                      </span>
+                    </div>
+                    <p className={styles.diagSummary}>{currentDiagnostic.trendSummary}</p>
+                  </div>
+
+                  <div className={styles.diagScoreBox}>
+                    <span className={styles.diagScoreTitle}>HEALTH SCORE</span>
+                    <div className={`${styles.diagScoreNum} ${currentDiagnostic.stage === 4 ? styles.scoreBear : currentDiagnostic.stage === 2 ? styles.scoreBull : styles.scoreWarn}`}>
+                      {currentDiagnostic.healthScore}<span>/100</span>
+                    </div>
+                    <span className={styles.diagRsTag}>RS {currentDiagnostic.rsRating} vs SPY</span>
+                  </div>
+                </div>
+
+                <div className={styles.diagActionRow}>
+                  <div className={styles.diagActionText}>
+                    <strong>คำแนะนำเชิงกลยุทธ์ (AI Action Prescription):</strong>
+                    <p>{currentDiagnostic.actionPlan}</p>
+                    <small style={{ color: currentDiagnostic.stage === 4 ? '#fda4af' : '#cbd5e1' }}>
+                      ⚠️ {currentDiagnostic.caution}
+                    </small>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.diagChartBtn}
+                    onClick={() => handleSelectAsset({ symbol: currentDiagnostic.symbol, name: currentDiagnostic.name, id: 'us' })}
+                  >
+                    เปิดดูกราฟ {currentDiagnostic.symbol} →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Sub-Filter Pills */}
           <div className={styles.filterStrip}>
             <div className={styles.filterPills}>
@@ -810,6 +1130,61 @@ export default function UsStage2Desk({
                 </div>
               </article>
             ))}
+          </div>
+
+          {/* Overnight GTC Smart Order Playbook Card */}
+          <div className={styles.gtcPlaybookCard}>
+            <div className={styles.gtcHeader}>
+              <div className={styles.gtcTitleGroup}>
+                <span className={styles.gtcIcon}>🌙</span>
+                <div>
+                  <h4 className={styles.gtcTitle}>Overnight GTC Smart Order Playbook (ตั้งคำสั่งก่อนนอน 20:30 - 03:00 น.)</h4>
+                  <p className={styles.gtcSub}>
+                    แก้ปัญหาเวลาตลาดสหรัฐฯ ต่างจากไทย 12 ชม. ไม่ต้องอดนอนเฝ้าจอ เพียงคัดลอก 3 คำสั่งล่วงหน้า (Good-Til-Canceled) ตั้งไว้ช่วง 19:30 - 20:15 น. ระบบจะทำงานให้อัตโนมัติ
+                  </p>
+                </div>
+              </div>
+              <div className={styles.gtcBadge}>
+                <span>⏰ แนะนำตั้งคำสั่ง: 19:30 - 20:15 น.</span>
+              </div>
+            </div>
+
+            <div className={styles.gtcStepsGrid}>
+              <div className={styles.gtcStepBox}>
+                <div className={styles.gtcStepNum}>คำสั่งที่ 1 (เข้าซื้อ)</div>
+                <strong>BUY LIMIT (GTC)</strong>
+                <span className={styles.gtcStepPrice}>${focusedPick.entry.toFixed(2)}</span>
+                <p>ซื้ออัตโนมัติเมื่อราคาแตะจุด Breakout ที่กำหนด ไม่ไล่ราคาสูงเกินไป</p>
+              </div>
+
+              <div className={styles.gtcStepBox}>
+                <div className={styles.gtcStepNum} style={{ color: '#fb7185' }}>คำสั่งที่ 2 (กันขาดทุน)</div>
+                <strong style={{ color: '#fb7185' }}>STOP LOSS (GTC)</strong>
+                <span className={styles.gtcStepPrice} style={{ color: '#fb7185' }}>${focusedPick.stopLoss.toFixed(2)}</span>
+                <p>ล็อกขาดทุนสูงสุดไม่เกิน -{focusedPick.riskPercent.toFixed(1)}% (≤8%) ป้องกันพอร์ตแตกยามค่ำคืน</p>
+              </div>
+
+              <div className={styles.gtcStepBox}>
+                <div className={styles.gtcStepNum} style={{ color: '#34d399' }}>คำสั่งที่ 3 (ล็อกกำไร 2R)</div>
+                <strong style={{ color: '#34d399' }}>TAKE PROFIT (GTC LIMIT)</strong>
+                <span className={styles.gtcStepPrice} style={{ color: '#34d399' }}>${focusedPick.tp1.toFixed(2)}</span>
+                <p>ล็อกกำไรเป้าหมาย 2R (+${focusedPick.tp1Reward.toFixed(1)}) แบ่งขาย 50% เข้ากระเป๋า</p>
+              </div>
+            </div>
+
+            <div className={styles.gtcFooter}>
+              <div className={styles.gtcBrokersSupported}>
+                <span>โบรเกอร์ที่รองรับ:</span>
+                <b>Dime! by KKP</b> · <b>InnovestX</b> · <b>Liberator (Streaming Global)</b> · <b>IBKR</b>
+              </div>
+              <button
+                type="button"
+                className={styles.gtcCopyBtn}
+                onClick={() => handleCopyGtcPlaybook(focusedPick.symbol, focusedPick.entry, focusedPick.stopLoss, focusedPick.tp1)}
+              >
+                {copiedGtc ? '✓ คัดลอกสเปก GTC สำเร็จ!' : '📋 คัดลอกพารามิเตอร์คำสั่ง GTC'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1142,16 +1517,53 @@ export default function UsStage2Desk({
         </div>
       )}
 
-      {/* ─── TAB 4: US 2R POSITION SIZING DESK ─── */}
+      {/* ─── TAB 4: US 2R POSITION SIZING & DIME! FRACTIONAL LAB ─── */}
       {activeTab === 'sizing' && (
         <div className={styles.sizingDesk}>
+          {/* Thai Broker Selector Bar */}
+          <div className={styles.brokerSelectBar}>
+            <span className={styles.brokerLabel}>เลือกโบรเกอร์ของคุณ:</span>
+            {THAI_US_BROKERS.map(b => (
+              <button
+                key={b.id}
+                type="button"
+                className={`${styles.brokerChip} ${selectedBroker === b.id ? styles.brokerChipActive : ''}`}
+                onClick={() => {
+                  setSelectedBroker(b.id);
+                  if (b.id === 'dime' || b.id === 'innovestx') setSizingMode('fractional');
+                  else setSizingMode('whole');
+                }}
+              >
+                {b.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Mode Switcher */}
+          <div className={styles.modeToggleGroup}>
+            <button
+              type="button"
+              className={`${styles.modeBtn} ${sizingMode === 'fractional' ? styles.modeBtnActive : ''}`}
+              onClick={() => setSizingMode('fractional')}
+            >
+              💰 โหมดเศษหุ้น Dime! / InnovestX (คำนวณงบเงินบาท Fractional Shares)
+            </button>
+            <button
+              type="button"
+              className={`${styles.modeBtn} ${sizingMode === 'whole' ? styles.modeBtnActive : ''}`}
+              onClick={() => setSizingMode('whole')}
+            >
+              💵 โหมดซื้อเต็มจำนวนหุ้น (Whole Shares USD Mode)
+            </button>
+          </div>
+
           <div className={styles.sizingGrid}>
             {/* Input Desk */}
             <div className={styles.sizingCard}>
               <div className={styles.sizingHeader}>
                 <h3 className={styles.sizingTitle}>
                   <span>📐</span>
-                  <span>ตั้งค่างบประมาณและการควบคุมความเสี่ยง (Risk Budgeting)</span>
+                  <span>{sizingMode === 'fractional' ? 'Dime! & InnovestX Fractional Sizing Lab' : 'ตั้งค่างบประมาณและการควบคุมความเสี่ยง (Risk Budgeting)'}</span>
                 </h3>
               </div>
 
@@ -1174,59 +1586,165 @@ export default function UsStage2Desk({
                 </div>
               </div>
 
-              <div className={styles.inputsGroup}>
-                <div className={styles.inputField}>
-                  <label>ขนาดพอร์ตโฟลิโอ (Total Account USD):</label>
-                  <input
-                    type="number"
-                    min={500}
-                    step={500}
-                    value={portfolioSizeUsd}
-                    onChange={e => setPortfolioSizeUsd(Math.max(100, parseFloat(e.target.value) || 0))}
-                  />
-                </div>
+              {sizingMode === 'fractional' ? (
+                /* Fractional Inputs */
+                <div className={styles.inputsGroup}>
+                  <div className={styles.inputField}>
+                    <label>งบประมาณเงินบาทที่ต้องการลงทุน (THB Budget):</label>
+                    <input
+                      type="number"
+                      min={500}
+                      step={1000}
+                      value={budgetThb}
+                      onChange={e => setBudgetThb(Math.max(100, parseFloat(e.target.value) || 0))}
+                    />
+                    <div className={styles.quickBudgets}>
+                      {[5000, 10000, 20000, 50000, 100000].map(amt => (
+                        <button
+                          key={amt}
+                          type="button"
+                          className={`${styles.quickBudgetBtn} ${budgetThb === amt ? styles.quickBudgetBtnActive : ''}`}
+                          onClick={() => setBudgetThb(amt)}
+                        >
+                          {amt >= 10000 ? `${amt / 1000}k ฿` : `${amt.toLocaleString()} ฿`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-                <div className={styles.inputField}>
-                  <label>ความเสี่ยงต่อไม้ (% Risk Per Trade):</label>
-                  <input
-                    type="number"
-                    min={0.5}
-                    max={5.0}
-                    step={0.5}
-                    value={riskPerTradePercent}
-                    onChange={e => setRiskPerTradePercent(Math.max(0.1, parseFloat(e.target.value) || 0))}
-                  />
-                </div>
+                  <div className={styles.inputField}>
+                    <label>รูปแบบการจัดสรรเงินลงทุน:</label>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                      <button
+                        type="button"
+                        style={{
+                          flex: 1,
+                          padding: '6px 8px',
+                          fontSize: '11px',
+                          borderRadius: '6px',
+                          border: '1px solid',
+                          borderColor: fractionalAllocType === 'full_allocation' ? '#38bdf8' : 'rgba(255,255,255,0.1)',
+                          background: fractionalAllocType === 'full_allocation' ? 'rgba(56,189,248,0.2)' : 'rgba(15,23,42,0.6)',
+                          color: fractionalAllocType === 'full_allocation' ? '#ffffff' : '#94a3b8',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => setFractionalAllocType('full_allocation')}
+                      >
+                        จัดสรรเต็มงบเงินบาท
+                      </button>
+                      <button
+                        type="button"
+                        style={{
+                          flex: 1,
+                          padding: '6px 8px',
+                          fontSize: '11px',
+                          borderRadius: '6px',
+                          border: '1px solid',
+                          borderColor: fractionalAllocType === 'risk_budgeted' ? '#34d399' : 'rgba(255,255,255,0.1)',
+                          background: fractionalAllocType === 'risk_budgeted' ? 'rgba(52,211,153,0.2)' : 'rgba(15,23,42,0.6)',
+                          color: fractionalAllocType === 'risk_budgeted' ? '#ffffff' : '#94a3b8',
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => setFractionalAllocType('risk_budgeted')}
+                      >
+                        คุมขาดทุนตามงบเสี่ยง (1-2%)
+                      </button>
+                    </div>
+                  </div>
 
-                <div className={styles.inputField}>
-                  <label>ราคาเข้าซื้อเป้าหมาย (Entry USD):</label>
-                  <input
-                    type="number"
-                    min={1}
-                    step={0.5}
-                    value={sizingEntry}
-                    onChange={e => setSizingEntry(Math.max(0.1, parseFloat(e.target.value) || 0))}
-                  />
-                </div>
+                  {fractionalAllocType === 'risk_budgeted' && (
+                    <div className={styles.inputField}>
+                      <label>ยอมรับความเสี่ยง (% Risk of Budget):</label>
+                      <input
+                        type="number"
+                        min={0.5}
+                        max={5.0}
+                        step={0.5}
+                        value={riskBudgetPercent}
+                        onChange={e => setRiskBudgetPercent(Math.max(0.1, parseFloat(e.target.value) || 0))}
+                      />
+                    </div>
+                  )}
 
-                <div className={styles.inputField}>
-                  <label>จุดตัดขาดทุน (Stop Loss USD):</label>
-                  <input
-                    type="number"
-                    min={0.5}
-                    step={0.5}
-                    value={sizingStop}
-                    onChange={e => setSizingStop(Math.max(0.1, parseFloat(e.target.value) || 0))}
-                  />
+                  <div className={styles.inputField}>
+                    <label>ราคาเข้าซื้อเป้าหมาย (Entry USD):</label>
+                    <input
+                      type="number"
+                      min={1}
+                      step={0.5}
+                      value={sizingEntry}
+                      onChange={e => setSizingEntry(Math.max(0.1, parseFloat(e.target.value) || 0))}
+                    />
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label>จุดตัดขาดทุน (Stop Loss USD):</label>
+                    <input
+                      type="number"
+                      min={0.5}
+                      step={0.5}
+                      value={sizingStop}
+                      onChange={e => setSizingStop(Math.max(0.1, parseFloat(e.target.value) || 0))}
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* Standard Whole Shares Inputs */
+                <div className={styles.inputsGroup}>
+                  <div className={styles.inputField}>
+                    <label>ขนาดพอร์ตโฟลิโอ (Total Account USD):</label>
+                    <input
+                      type="number"
+                      min={500}
+                      step={500}
+                      value={portfolioSizeUsd}
+                      onChange={e => setPortfolioSizeUsd(Math.max(100, parseFloat(e.target.value) || 0))}
+                    />
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label>ความเสี่ยงต่อไม้ (% Risk Per Trade):</label>
+                    <input
+                      type="number"
+                      min={0.5}
+                      max={5.0}
+                      step={0.5}
+                      value={riskPerTradePercent}
+                      onChange={e => setRiskPerTradePercent(Math.max(0.1, parseFloat(e.target.value) || 0))}
+                    />
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label>ราคาเข้าซื้อเป้าหมาย (Entry USD):</label>
+                    <input
+                      type="number"
+                      min={1}
+                      step={0.5}
+                      value={sizingEntry}
+                      onChange={e => setSizingEntry(Math.max(0.1, parseFloat(e.target.value) || 0))}
+                    />
+                  </div>
+
+                  <div className={styles.inputField}>
+                    <label>จุดตัดขาดทุน (Stop Loss USD):</label>
+                    <input
+                      type="number"
+                      min={0.5}
+                      step={0.5}
+                      value={sizingStop}
+                      onChange={e => setSizingStop(Math.max(0.1, parseFloat(e.target.value) || 0))}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '12px', borderRadius: '10px' }}>
                 <span style={{ fontSize: '11px', color: '#94a3b8' }}>
                   🛡️ <b>กฎเหล็ก 2R Management:</b> คำนวณจำนวนหุ้นอัตโนมัติเพื่อให้คุณเสียเงินไม่เกิน{' '}
                   <b style={{ color: '#fb7185' }}>
-                    ${((portfolioSizeUsd * riskPerTradePercent) / 100).toFixed(2)} (
-                    {(((portfolioSizeUsd * riskPerTradePercent) / 100) * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} บาท)
+                    {sizingMode === 'fractional'
+                      ? `-${calculatedFractional.lossAtStopThb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} บาท (-$${calculatedFractional.lossAtStopUsd.toFixed(2)})`
+                      : `-${(calculatedSizing.actualLossAtStop * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} บาท (-$${calculatedSizing.actualLossAtStop.toFixed(2)})`}
                   </b>{' '}
                   หากผิดทางชน Stop Loss
                 </span>
@@ -1235,51 +1753,192 @@ export default function UsStage2Desk({
 
             {/* Results Display */}
             <div className={styles.sizingResultCard}>
-              <div className={styles.sizingBigDisplay}>
-                <span className={styles.sizingBigTitle}>จำนวนหุ้นที่ซื้อได้ตามงบความเสี่ยง (MAX ALLOWED SHARES)</span>
-                <div className={styles.sizingBigNum}>{calculatedSizing.shares} หุ้น</div>
-                <span className={styles.sizingBigSub}>
-                  {sizingSelectedTicker} · วงเงินลงทุน ${(calculatedSizing.capitalRequiredUsd).toLocaleString('en-US', { minimumFractionDigits: 2 })} ({calculatedSizing.capitalRequiredThb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} บาท)
+              {sizingMode === 'fractional' ? (
+                /* Fractional Result */
+                <>
+                  <div className={styles.sizingBigDisplay}>
+                    <span className={styles.sizingBigTitle}>จำนวนเศษหุ้นที่แนะนำ (DIME! FRACTIONAL SHARES)</span>
+                    <div className={styles.sizingBigNum}>{calculatedFractional.shares} หุ้น</div>
+                    <span className={styles.sizingBigSub}>
+                      {sizingSelectedTicker} · วงเงินลงทุน ${calculatedFractional.capitalRequiredUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({calculatedFractional.capitalRequiredThb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} บาท)
+                    </span>
+                  </div>
+
+                  <div className={styles.sizingDetailsList}>
+                    <div className={styles.sizingDetailRow}>
+                      <span className={styles.sizingDetailLabel}>อัตราแลกเปลี่ยนที่ใช้คำนวณ:</span>
+                      <span className={styles.sizingDetailVal} style={{ color: '#38bdf8' }}>
+                        {currentFxRate.toFixed(2)} บาท/USD
+                      </span>
+                    </div>
+
+                    <div className={styles.sizingDetailRow}>
+                      <span className={styles.sizingDetailLabel}>ระยะตัดขาดทุน (Stop Loss %):</span>
+                      <span className={styles.sizingDetailVal} style={{ color: '#fb7185' }}>
+                        -{calculatedFractional.riskPercent.toFixed(2)}% (≤ 8% ตามตำรา)
+                      </span>
+                    </div>
+
+                    <div className={styles.sizingDetailRow}>
+                      <span className={styles.sizingDetailLabel}>ความเสี่ยงสูงสุดเมื่อชน Stop Loss (1R Risk):</span>
+                      <span className={styles.sizingDetailVal} style={{ color: '#fb7185' }}>
+                        -${calculatedFractional.lossAtStopUsd.toFixed(2)} (-{calculatedFractional.lossAtStopThb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿)
+                      </span>
+                    </div>
+
+                    <div className={styles.sizingDetailRow}>
+                      <span className={styles.sizingDetailLabel}>กำไรเป้าหมาย TP1 (2R Reward):</span>
+                      <span className={styles.sizingDetailVal} style={{ color: '#34d399' }}>
+                        +${calculatedFractional.rewardTp1Usd.toFixed(2)} (+{calculatedFractional.rewardTp1Thb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿)
+                      </span>
+                    </div>
+
+                    <div className={styles.sizingDetailRow}>
+                      <span className={styles.sizingDetailLabel}>กำไรเป้าหมาย TP2 (3R Trend Runner):</span>
+                      <span className={styles.sizingDetailVal} style={{ color: '#38bdf8' }}>
+                        +${calculatedFractional.rewardTp2Usd.toFixed(2)} (+{calculatedFractional.rewardTp2Thb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '16px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className={styles.gtcCopyBtn}
+                      style={{ flex: 1, justifyContent: 'center' }}
+                      onClick={() => handleCopyOrderSpecs(sizingSelectedTicker, calculatedFractional.shares, sizingEntry, sizingStop, sizingEntry + (sizingEntry - sizingStop) * 2)}
+                    >
+                      {copiedOrder ? '✓ คัดลอกคำสั่งเรียบร้อย!' : `📋 คัดลอกคำสั่งไปเปิดในแอป ${THAI_US_BROKERS.find(b => b.id === selectedBroker)?.name || 'Dime!'}`}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.cardActionBtn}
+                      style={{ flex: 1, justifyContent: 'center' }}
+                      onClick={() => handleSelectAsset({ symbol: sizingSelectedTicker, name: sizingSelectedTicker, id: 'us' })}
+                    >
+                      เปิดดูกราฟ {sizingSelectedTicker} →
+                    </button>
+                  </div>
+                </>
+              ) : (
+                /* Standard Whole Shares Result */
+                <>
+                  <div className={styles.sizingBigDisplay}>
+                    <span className={styles.sizingBigTitle}>จำนวนหุ้นที่ซื้อได้ตามงบความเสี่ยง (MAX ALLOWED SHARES)</span>
+                    <div className={styles.sizingBigNum}>{calculatedSizing.shares} หุ้น</div>
+                    <span className={styles.sizingBigSub}>
+                      {sizingSelectedTicker} · วงเงินลงทุน ${(calculatedSizing.capitalRequiredUsd).toLocaleString('en-US', { minimumFractionDigits: 2 })} ({calculatedSizing.capitalRequiredThb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} บาท)
+                    </span>
+                  </div>
+
+                  <div className={styles.sizingDetailsList}>
+                    <div className={styles.sizingDetailRow}>
+                      <span className={styles.sizingDetailLabel}>สัดส่วนของพอร์ตที่ใช้ (Portfolio Allocation):</span>
+                      <span className={styles.sizingDetailVal} style={{ color: calculatedSizing.portfolioAllocationPercent > 25 ? '#fbbf24' : '#34d399' }}>
+                        {calculatedSizing.portfolioAllocationPercent.toFixed(1)}% {calculatedSizing.portfolioAllocationPercent > 25 ? '(ค่อนข้างกระจุกตัว)' : '(ปลอดภัย)'}
+                      </span>
+                    </div>
+
+                    <div className={styles.sizingDetailRow}>
+                      <span className={styles.sizingDetailLabel}>ความเสี่ยงสูงสุดเมื่อชน Stop Loss (1R Risk):</span>
+                      <span className={styles.sizingDetailVal} style={{ color: '#fb7185' }}>
+                        -${calculatedSizing.actualLossAtStop.toFixed(2)} (-{(calculatedSizing.actualLossAtStop * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿)
+                      </span>
+                    </div>
+
+                    <div className={styles.sizingDetailRow}>
+                      <span className={styles.sizingDetailLabel}>กำไรเป้าหมาย TP1 (2R Reward):</span>
+                      <span className={styles.sizingDetailVal} style={{ color: '#34d399' }}>
+                        +${calculatedSizing.rewardAtTp1.toFixed(2)} (+{(calculatedSizing.rewardAtTp1 * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿)
+                      </span>
+                    </div>
+
+                    <div className={styles.sizingDetailRow}>
+                      <span className={styles.sizingDetailLabel}>กำไรเป้าหมาย TP2 (3R Trend Runner):</span>
+                      <span className={styles.sizingDetailVal} style={{ color: '#38bdf8' }}>
+                        +${calculatedSizing.rewardAtTp2.toFixed(2)} (+{(calculatedSizing.rewardAtTp2 * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿)
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={styles.cardActionBtn}
+                    style={{ width: '100%', justifyContent: 'center', marginTop: '16px' }}
+                    onClick={() => handleSelectAsset({ symbol: sizingSelectedTicker, name: sizingSelectedTicker, id: 'us' })}
+                  >
+                    เปิดดูกราฟ {sizingSelectedTicker} พร้อมเลเวลราคานี้ →
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Overnight GTC Smart Order Playbook Card in Sizing */}
+          <div className={styles.gtcPlaybookCard}>
+            <div className={styles.gtcHeader}>
+              <div className={styles.gtcTitleGroup}>
+                <span className={styles.gtcIcon}>🌙</span>
+                <div>
+                  <h4 className={styles.gtcTitle}>Overnight GTC Smart Order Playbook (ตั้งคำสั่งล่วงหน้าสำหรับ {sizingSelectedTicker})</h4>
+                  <p className={styles.gtcSub}>
+                    แนะนำตั้งคำสั่งล่วงหน้าช่วง 19:30 - 20:15 น. ก่อนตลาดเปิด เพื่อให้คุณไม่ต้องเฝ้าจอดึกถึงตี 3
+                  </p>
+                </div>
+              </div>
+              <div className={styles.gtcBadge}>
+                <span>⏰ แนะนำตั้งคำสั่งก่อนนอน</span>
+              </div>
+            </div>
+
+            <div className={styles.gtcStepsGrid}>
+              <div className={styles.gtcStepBox}>
+                <div className={styles.gtcStepNum}>คำสั่งที่ 1 (เข้าซื้อ)</div>
+                <strong>BUY LIMIT (GTC)</strong>
+                <span className={styles.gtcStepPrice}>${sizingEntry.toFixed(2)}</span>
+                <p>จำนวน {sizingMode === 'fractional' ? `${calculatedFractional.shares} หุ้น` : `${calculatedSizing.shares} หุ้น`}</p>
+              </div>
+
+              <div className={styles.gtcStepBox}>
+                <div className={styles.gtcStepNum} style={{ color: '#fb7185' }}>คำสั่งที่ 2 (กันขาดทุน)</div>
+                <strong style={{ color: '#fb7185' }}>STOP LOSS (GTC)</strong>
+                <span className={styles.gtcStepPrice} style={{ color: '#fb7185' }}>${sizingStop.toFixed(2)}</span>
+                <p>
+                  ตัดขาดทุนอัตโนมัติ (
+                  {sizingMode === 'fractional'
+                    ? `-${calculatedFractional.lossAtStopThb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿`
+                    : `-${(calculatedSizing.actualLossAtStop * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿`}
+                  )
+                </p>
+              </div>
+
+              <div className={styles.gtcStepBox}>
+                <div className={styles.gtcStepNum} style={{ color: '#34d399' }}>คำสั่งที่ 3 (ล็อกกำไร 2R)</div>
+                <strong style={{ color: '#34d399' }}>TAKE PROFIT (GTC LIMIT)</strong>
+                <span className={styles.gtcStepPrice} style={{ color: '#34d399' }}>
+                  ${(sizingEntry + (sizingEntry - sizingStop) * 2).toFixed(2)}
                 </span>
+                <p>
+                  เป้า 2R แบ่งขาย 50% (
+                  {sizingMode === 'fractional'
+                    ? `+${calculatedFractional.rewardTp1Thb.toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿`
+                    : `+${(calculatedSizing.rewardAtTp1 * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿`}
+                  )
+                </p>
               </div>
+            </div>
 
-              <div className={styles.sizingDetailsList}>
-                <div className={styles.sizingDetailRow}>
-                  <span className={styles.sizingDetailLabel}>สัดส่วนของพอร์ตที่ใช้ (Portfolio Allocation):</span>
-                  <span className={styles.sizingDetailVal} style={{ color: calculatedSizing.portfolioAllocationPercent > 25 ? '#fbbf24' : '#34d399' }}>
-                    {calculatedSizing.portfolioAllocationPercent.toFixed(1)}% {calculatedSizing.portfolioAllocationPercent > 25 ? '(ค่อนข้างกระจุกตัว)' : '(ปลอดภัย)'}
-                  </span>
-                </div>
-
-                <div className={styles.sizingDetailRow}>
-                  <span className={styles.sizingDetailLabel}>ความเสี่ยงสูงสุดเมื่อชน Stop Loss (1R Risk):</span>
-                  <span className={styles.sizingDetailVal} style={{ color: '#fb7185' }}>
-                    -${calculatedSizing.actualLossAtStop.toFixed(2)} (-{(calculatedSizing.actualLossAtStop * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿)
-                  </span>
-                </div>
-
-                <div className={styles.sizingDetailRow}>
-                  <span className={styles.sizingDetailLabel}>กำไรเป้าหมาย TP1 (2R Reward):</span>
-                  <span className={styles.sizingDetailVal} style={{ color: '#34d399' }}>
-                    +${calculatedSizing.rewardAtTp1.toFixed(2)} (+{(calculatedSizing.rewardAtTp1 * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿)
-                  </span>
-                </div>
-
-                <div className={styles.sizingDetailRow}>
-                  <span className={styles.sizingDetailLabel}>กำไรเป้าหมาย TP2 (3R Trend Runner):</span>
-                  <span className={styles.sizingDetailVal} style={{ color: '#38bdf8' }}>
-                    +${calculatedSizing.rewardAtTp2.toFixed(2)} (+{(calculatedSizing.rewardAtTp2 * currentFxRate).toLocaleString('th-TH', { maximumFractionDigits: 0 })} ฿)
-                  </span>
-                </div>
+            <div className={styles.gtcFooter}>
+              <div className={styles.gtcBrokersSupported}>
+                <span>โบรเกอร์ที่แนะนำ:</span>
+                <b>Dime! by KKP</b> · <b>InnovestX</b> · <b>Liberator</b> · <b>IBKR</b>
               </div>
-
               <button
                 type="button"
-                className={styles.cardActionBtn}
-                style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => handleSelectAsset({ symbol: sizingSelectedTicker, name: sizingSelectedTicker, id: 'us' })}
+                className={styles.gtcCopyBtn}
+                onClick={() => handleCopyGtcPlaybook(sizingSelectedTicker, sizingEntry, sizingStop, sizingEntry + (sizingEntry - sizingStop) * 2)}
               >
-                เปิดดูกราฟ {sizingSelectedTicker} พร้อมเลเวลราคานี้ →
+                {copiedGtc ? '✓ คัดลอกสเปก GTC สำเร็จ!' : '📋 คัดลอกพารามิเตอร์คำสั่ง GTC'}
               </button>
             </div>
           </div>
