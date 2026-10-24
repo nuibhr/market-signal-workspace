@@ -12,15 +12,15 @@ Demo assistant requests use real Bigdata research and the selected plan’s serv
 
 ## Stripe and LINE
 
-Headless Chrome clicked the actual plan buttons and reached the Stripe-hosted payment forms for Starter (THB 99/month), Pro (THB 299/month) and Ultimate (THB 599/month). The deployed catalog and credentials use Stripe test/sandbox mode. No subscription payment was submitted. Signed webhook entitlement, idempotency and daily quota behavior are covered by fixture tests; a completed payment and real LINE consent are separate acceptance steps.
+Headless Chrome clicked the actual plan buttons and reached the Stripe-hosted payment forms for Starter (THB 99/month), Pro (THB 299/month) and Ultimate (THB 599/month). The deployed catalog and credentials use Stripe test/sandbox mode. No subscription payment was submitted. A final public Demo call also reached Bigdata successfully with four real sources and one question charged against the selected 150-question daily limit. Signed webhook entitlement, idempotency and daily quota behavior are covered by fixture tests; a completed payment and real LINE consent are separate acceptance steps.
 
-The real LINE page currently returns **400 Invalid redirect_uri** for channel `2011817257`. The application sends the canonical callback correctly. The channel owner must add this exact URL under LINE Login → Callback URL in LINE Developers:
+The first real LINE check returned **400 Invalid redirect_uri** for channel `2011817257`. A later browser check reached the normal LINE login form without that error. The application sends the canonical callback correctly. If registration needs to be repeated, add this exact URL under LINE Login → Callback URL in LINE Developers:
 
 ```text
 https://nugaom-ai-pick.nuibhr1.workers.dev/api/auth/line/callback
 ```
 
-After saving, repeat real LINE login and verify that the session reaches `/account`. The automated LINE tests cover PKCE, ID token issuer/audience/nonce verification, OAuth state and one-time flow consumption. They cannot certify the external channel's callback registration or consent screen.
+Human LINE login/consent and the final session return to `/account` still require acceptance. A visible login form alone does not certify that final step. The automated LINE tests cover PKCE, ID token issuer/audience/nonce verification, OAuth state and one-time flow consumption. They cannot certify the external channel's callback registration or consent screen.
 
 ## Two AI services
 
