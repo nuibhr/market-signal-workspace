@@ -1,3 +1,5 @@
+> Scanner update: the CPU-limited Cloudflare scanner has been replaced by the portable Hostinger VPS scanner. See [current deployment and acceptance](vps-scanner-acceptance-2026-10-24.md). Earlier CPU/Paid findings below describe the previous architecture.
+
 # Cloudflare flow checks — 24 October 2026
 
 Application: https://nugaom-ai-pick.nuibhr1.workers.dev/account
