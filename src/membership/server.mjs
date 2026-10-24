@@ -1,20 +1,26 @@
 import {billingSummary} from '../billing/store.mjs';
-import { cookies } from 'next/headers';
+import { cookies } from 'next/headers.js';
 import { accountSummary, aiQuota, isConfigured, sessionMember } from './store.mjs';
 import { membershipFor } from './rights.mjs';
+import {DEMO_COOKIE,DEMO_ROLES,demoEnabled} from './demo-policy.mjs';
 
 export const SESSION_COOKIE = 'nugaom_session';
 export const OAUTH_COOKIE = 'nugaom_line_flow';
 export const privateHeaders = { 'Cache-Control': 'private, no-store' };
 
 export async function currentMember() {
-  const value = (await cookies()).get(SESSION_COOKIE)?.value;
+  const jar=await cookies();
+  if(demoEnabled()){
+    const demo=await sessionMember(jar.get(DEMO_COOKIE)?.value);
+    if(demo?.demo)return demo;
+  }
+  const value = jar.get(SESSION_COOKIE)?.value;
   if (!value) return null;
   return sessionMember(value);
 }
 export async function currentAccount() {
   const member = await currentMember();
-  return { configured: isConfigured(), account: (await accountSummary(member)), rights: membershipFor(member), aiQuota: (await aiQuota(member)), aiConfigured: Boolean(process.env.BIGDATA_API_KEY), billing:await billingSummary(member) };
+  return { configured: isConfigured(), demoEnabled:demoEnabled(), demoRoles:demoEnabled()?DEMO_ROLES:[], account: (await accountSummary(member)), rights: membershipFor(member), aiQuota: (await aiQuota(member)), aiConfigured: Boolean(process.env.BIGDATA_API_KEY?.trim()), billing:await billingSummary(member) };
 }
 export function sameOrigin(request) {
   const origin = request.headers.get('origin');

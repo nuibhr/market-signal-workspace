@@ -2,7 +2,7 @@ import {currentMember,privateHeaders,sameOrigin} from '../membership/server.mjs'
 import {readJsonBody,RequestError,requestErrorResponse,rateLimit} from '../security/request-guard.mjs';
 import {pendingPlans,stripeMode} from './plans.mjs';
 import {checkout,listPlans,portal} from './store.mjs';
-const STATUS={LOGIN_REQUIRED:401,INVALID_PLAN:400,INVALID_BILLING_CONFIG:503,INVALID_STRIPE_PRICE:503,STRIPE_NOT_CONFIGURED:503,SUBSCRIPTION_EXISTS:409,CHECKOUT_ALREADY_OPEN:409,CHECKOUT_PENDING:409,BILLING_CUSTOMER_REQUIRED:400};
+const STATUS={LOGIN_REQUIRED:401,DEMO_BILLING_TEST_ONLY:403,INVALID_PLAN:400,INVALID_BILLING_CONFIG:503,INVALID_STRIPE_PRICE:503,STRIPE_NOT_CONFIGURED:503,SUBSCRIPTION_EXISTS:409,CHECKOUT_ALREADY_OPEN:409,CHECKOUT_PENDING:409,BILLING_CUSTOMER_REQUIRED:400};
 function failed(error){const code=STATUS[error?.message]?error.message:'STRIPE_UNAVAILABLE';return Response.json({error:code},{status:STATUS[code]??503,headers:privateHeaders});}
 let catalogCache,catalogUntil=0,catalogPending;
 export async function plansHandler(){

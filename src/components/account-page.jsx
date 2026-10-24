@@ -8,6 +8,7 @@ import MemberAvatar from './member-avatar.jsx';
 import { AiCreditsPanel } from './ai-credits-panel.jsx';
 
 const NAV = [['overview', 'ภาพรวม', LayoutDashboard], ['portfolio', 'บัญชีหุ้น', Wallet], ['ai-credits', 'โควตา AI / เครดิต', Sparkles], ['renewal', 'แพ็กเกจ / ต่ออายุ', CalendarClock], ['profile', 'โปรไฟล์', UserRound]];
+const DEMO_LABELS={onboarding:'สมาชิกใหม่',trial:'ทดลองใช้ฟรี',starter:'Starter',pro:'Pro',ultimate:'Ultimate',expired:'หมดอายุ'};
 const MESSAGES = {
   INVALID_PORTFOLIO: 'เลขพอร์ตต้องมีอักษรหรือตัวเลข 5–24 ตัว', INVALID_BROKER: 'กรุณาระบุชื่อโบรกเกอร์',
   PORTFOLIO_ALREADY_USED: 'เลขพอร์ตนี้ถูกผูกกับบัญชีอื่นแล้ว', PORTFOLIO_CHANGE_REQUIRES_ADMIN: 'เปลี่ยนเลขพอร์ตที่แจ้งแล้วต้องให้แอดมินดำเนินการ',
@@ -16,6 +17,7 @@ const MESSAGES = {
   REQUEST_UNAVAILABLE: 'รายการนี้ถูกจัดการไปแล้ว กรุณารีเฟรชข้อมูล',
   INVALID_CREDIT_AMOUNT: 'จำนวนเครดิตต้องเป็นจำนวนเต็ม 1–1,000',
   LOGIN_REQUIRED: 'กรุณาเข้าสู่ระบบ LINE อีกครั้ง', FORBIDDEN: 'บัญชีนี้ไม่มีสิทธิแอดมิน',
+  DEMO_READ_ONLY:'โหมด Demo ใช้ดูสิทธิสมาชิก กรุณาเข้าสู่ระบบ LINE เพื่อจัดการบัญชีจริง',
 };
 function date(value) { return value ? new Date(value).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }) : '—'; }
 function daysLeft(value) { return value ? Math.max(0, Math.ceil((Date.parse(value) - Date.now()) / 86_400_000)) : 0; }
@@ -61,11 +63,20 @@ export default function AccountPage({initialData=null}) {
   async function logout() {
     setBusy(true); setError('');
     try {
-      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      const response=await fetch(data?.account?.demo?'/api/auth/demo':'/api/auth/logout', { method:data?.account?.demo?'DELETE':'POST' });
+      if(!response.ok)throw Error('LOGOUT_FAILED');
       window.location.href = '/account';
     } catch { setError('ออกจากระบบไม่สำเร็จ กรุณาลองใหม่'); setBusy(false); }
   }
   const account = data?.account;
+  async function changeDemo(role){
+    setBusy(true);setError('');
+    try{
+      const response=await fetch('/api/auth/demo',{method:role?'POST':'DELETE',headers:{'Content-Type':'application/json'},...(role?{body:JSON.stringify({role})}:{})});
+      if(!response.ok)throw Error('DEMO_UNAVAILABLE');
+      window.location.assign('/account');
+    }catch{setError('เปิด Demo ไม่สำเร็จ กรุณาลองใหม่');setBusy(false);}
+  }
   const rights = data?.rights;
   const active = rights?.tier === 'trial' || rights?.tier === 'subscriber';
   const nav = NAV;
@@ -77,6 +88,7 @@ export default function AccountPage({initialData=null}) {
       {loading ? <div className="account-card account-skeleton"><span /><span /><span /></div> : <>
         {error && <div className="account-alert error" role="alert"><CircleAlert size={17} />{error}</div>}
         {message && <div className="account-alert success" role="status"><Check size={17} />{message}</div>}
+        {data?.demoEnabled&&<section className="account-card account-demo"><span className="account-kicker">DEMO LOGIN</span><h2>ทดลองสิทธิสมาชิกทุกระดับ</h2><p>เลือกแล้วเข้าใช้งานได้ทันที · session สาธิตมีอายุ 2 ชั่วโมง · แชต AI ใช้ Bigdata จริงตามโควตาระดับที่เลือก</p><div className="account-demo-options">{data.demoRoles.map(role=><button key={role} className={account?.demo?.role===role?'account-primary':'account-secondary'} disabled={busy} aria-pressed={account?.demo?.role===role} onClick={()=>changeDemo(role)}>{DEMO_LABELS[role]}</button>)}</div>{account?.demo&&<><p role="status">กำลังดู Demo {DEMO_LABELS[account.demo.role]} · ใช้ Stripe Test mode ได้ ไม่มีการเรียกเก็บเงินจริง</p><div className="account-actions"><button className="account-secondary" disabled={busy} onClick={()=>changeDemo(null)}>ออกจาก Demo</button>{data.configured&&<a className="account-secondary" href="/api/auth/line/start">เข้าสู่ระบบ LINE จริง</a>}</div></>}</section>}
         {!data?.configured && !account && <div className="account-alert">ยังไม่ได้ตั้งค่า LINE Login สำหรับสภาพแวดล้อมนี้</div>}
         {!account ? <>
           {/* Standard LINE Login Section */}
@@ -86,7 +98,7 @@ export default function AccountPage({initialData=null}) {
             <div className="account-status-header">
               <div>
                 <span className="account-kicker">สถานะบัญชี</span>
-                <h2>{rights.planName??rights.label}</h2>
+                <h2>{account.demo?'Demo · ':''}{rights.planName??rights.label}</h2>
                 <p>{rights.tier === 'trial' ? `เหลือเวลาทดลองอีก ${daysLeft(rights.expiresAt)} วัน` : rights.tier === 'subscriber' ? `${rights.billingSource==='stripe'?'สิทธิ์ที่ชำระแล้วถึง':'ต่ออายุภายใน'} ${date(rights.expiresAt)}` : rights.tier === 'expired' ? 'หมดระยะทดลองใช้ฟรีแล้ว ต่ออายุเพื่อใช้เครื่องมือสแกนสมาชิก' : rights.tier === 'portfolio-fix' ? 'เลขพอร์ตไม่ผ่านการตรวจ กรุณาแจ้งใหม่ · ระยะทดลองยังนับจากวันเริ่มเดิม' : 'แจ้งเลขพอร์ตเพื่อเริ่มทดลองใช้ฟรี 14 วัน'}</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>

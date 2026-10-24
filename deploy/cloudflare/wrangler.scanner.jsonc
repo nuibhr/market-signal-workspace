@@ -16,7 +16,7 @@
   "vars": {
     "STORAGE_PROVIDER": "d1",
     "NODE_ENV": "production",
-    "SCANNER_ENABLED": "false",
+    "SCANNER_ENABLED": "true",
     "AUTO_PICK_RUNTIME": "cloudflare",
     "AUTO_PICK_SCHEDULE_MINUTES": "5",
     "SETTRADE_DISPLAY_RIGHTS_CONFIRMED": "true",

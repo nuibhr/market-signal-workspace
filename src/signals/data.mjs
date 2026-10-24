@@ -55,7 +55,8 @@ export async function loadSignalFrame(asset, frame, { now = Date.now(), fresh = 
   if (!signalProviderAllowed(asset.id)) throw fail('DISPLAY_RIGHTS_NOT_CONFIRMED');
   const key = `${asset.instrumentId}:${frame}`, hit = cache.get(key);
   if (!fresh && hit?.until > now) return hit.series;
-  if (pending.has(key)) return pending.get(key);
+  const sharePending=process.env.STORAGE_PROVIDER!=='d1';
+  if (sharePending&&pending.has(key)) return pending.get(key);
   const job = (async () => {
     let series;
     const nativeAllowed = process.env.NODE_ENV !== 'production' || process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED === 'true';
@@ -80,5 +81,5 @@ export async function loadSignalFrame(asset, frame, { now = Date.now(), fresh = 
     if (cache.size > 150) cache.delete(cache.keys().next().value);
     return result;
   })().finally(()=>pending.delete(key));
-  pending.set(key,job); return job;
+  if(sharePending)pending.set(key,job); return job;
 }
