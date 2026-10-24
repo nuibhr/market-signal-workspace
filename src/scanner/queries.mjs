@@ -1,6 +1,8 @@
 // Wire protocol contains IDs and bound parameters only; no client-supplied SQL.
 export const normalizeSql=sql=>sql.replace(/\s+/g,' ').trim();
 export const SCANNER_QUERIES=Object.freeze({
+  'request.claim': `UPDATE scanner_jobs SET state='running',attempts=attempts+1,lease_token=?,lease_until=? WHERE id=(SELECT id FROM scanner_jobs WHERE market=? AND json_extract(payload_json,'$.kind')='swing-manual' AND attempts<5 AND created_at>=? AND ((state IN ('pending','retry') AND available_at<=?) OR (state='running' AND lease_until<?)) ORDER BY created_at,id LIMIT 1) RETURNING *`,
+  'request.finish': `UPDATE scanner_jobs SET state=?,error_code=?,available_at=?,payload_json=?,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=? AND lease_token=? AND json_extract(payload_json,'$.kind')='swing-manual'`,
   'profiles': `SELECT DISTINCT p.id,p.costs_json FROM signal_desk_profiles p JOIN signal_desk_preferences s ON s.us_profile=p.id`,
   'market.claim': `INSERT INTO signal_desk_leases VALUES(?,?,?,?) ON CONFLICT(market) DO UPDATE SET token=excluded.token,until_ms=excluded.until_ms,heartbeat_ms=excluded.heartbeat_ms WHERE signal_desk_leases.until_ms<=? RETURNING token`,
   'market.release': `UPDATE signal_desk_leases SET until_ms=0,heartbeat_ms=? WHERE market=? AND token=?`,

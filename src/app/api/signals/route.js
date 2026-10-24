@@ -7,6 +7,7 @@ import { runSignalScan } from '../../../signals/runner.mjs';
 import { loadSignalReplay } from '../../../signals/replay.mjs';
 import { signalMarketOverview } from '../../../signals/overview.mjs';
 import { signalProviderAllowed } from '../../../signals/data.mjs';
+import { enqueueScannerRequest } from '../../../scanner/requests.mjs';
 export const runtime='nodejs'; export const dynamic='force-dynamic';
 async function member(){const m=await currentMember();return membershipFor(m).capabilities.autoPickFeed?m:null;}
 const denied=()=>Response.json({code:'MEMBERSHIP_REQUIRED'},{status:403,headers:privateHeaders});
@@ -36,8 +37,9 @@ export async function POST(request){
     }
     if(body.action==='scan'&&['thai','dr','us'].includes(body.market)&&Array.isArray(body.symbols)&&body.symbols.length>0&&body.symbols.length<=6){
       const globalLimit=await rateLimit('signal-scan','provider-global',6);if(globalLimit)return globalLimit;
+      if(process.env.SCANNER_RUNTIME==='vps')return Response.json(await enqueueScannerRequest(body.market,body.symbols),{status:202,headers:privateHeaders});
       return Response.json(await runSignalScan(body.market,{symbols:body.symbols,maxSymbols:6,budgetMs:25000}),{headers:privateHeaders});
     }
     return Response.json({code:'INVALID_SIGNAL_REQUEST'},{status:400,headers:privateHeaders});
-  }catch(e){const invalid=['COSTS_REQUIRED','INVALID_COSTS'].includes(e.message);return Response.json({code:invalid?e.message:'SIGNAL_SOURCE_UNAVAILABLE'},{status:invalid?400:503,headers:privateHeaders});}
+  }catch(e){const invalid=['COSTS_REQUIRED','INVALID_COSTS','INVALID_SYMBOLS'].includes(e.message);return Response.json({code:invalid?e.message:'SIGNAL_SOURCE_UNAVAILABLE'},{status:invalid?400:503,headers:privateHeaders});}
 }

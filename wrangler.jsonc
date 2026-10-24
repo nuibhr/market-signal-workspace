@@ -13,6 +13,7 @@
   "d1_databases": [{"binding": "DB", "database_name": "nugaom-prod-db", "database_id": "8d1f669c-a3b6-4231-9f00-bc97c2a0b817", "migrations_dir": "deploy/cloudflare/migrations"}],
   "vars": {
     "STORAGE_PROVIDER": "d1",
+    "SCANNER_RUNTIME": "vps",
     "LAUNCH_MAINTENANCE": "false",
     "DEMO_LOGIN_ENABLED": "true",
     "AI_ANALYSIS_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",

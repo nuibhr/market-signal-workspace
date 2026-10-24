@@ -32,7 +32,7 @@ test('native D1 bridge keeps one VPS owner, rolls back stale writes, and runs th
   const fetcher=(url,options)=>scannerBridge(new Request(url,options),env,{clock:()=>now});
   const old=createScannerClient({url,secret,instance:'old-vps',fetcher});
   const next=createScannerClient({url,secret,instance:'new-vps',fetcher});
-  const {withScannerDatabase}=await import('../storage/database.mjs');
+  const {withScannerDatabase,withD1Database}=await import('../storage/database.mjs');
   const store=await import('../signals/store.mjs');
   try{
     assert.equal((await scannerBridge(new Request(url,{method:'POST'}),env)).status,401);
@@ -61,6 +61,21 @@ test('native D1 bridge keeps one VPS owner, rolls back stale writes, and runs th
     const {createSignalRunner}=await import('../signals/runner.mjs');
     const result=await withScannerDatabase(old.storage,()=>createSignalRunner({clock:()=>now,allowed:()=>true,load:async()=>{throw Error('fixture-source-unavailable');}})('dr',{maxSymbols:1}));
     assert.equal(result.status,'partial');assert.equal(result.scanned,1);
+    const {enqueueScannerRequest,runVpsMarket}=await import('./requests.mjs');
+    await assert.rejects(withD1Database(proxy.env.DB,()=>enqueueScannerRequest('thai',['NOT-A-KNOWN-SYMBOL'],now)),/INVALID_SYMBOLS/);
+    const manual=await withD1Database(proxy.env.DB,()=>enqueueScannerRequest('thai',['PTT','BANPU'],now));
+    assert.equal(manual.status,'queued');
+    assert.equal((await withD1Database(proxy.env.DB,()=>enqueueScannerRequest('thai',['BANPU','PTT','PTT'],now))).requestId,manual.requestId,'Same selection in one window is coalesced');
+    const jobState=()=>proxy.env.DB.prepare('SELECT state,payload_json FROM scanner_jobs WHERE id=?').bind(manual.requestId).first();
+    await withScannerDatabase(old.storage,()=>runVpsMarket('thai',async()=>({status:'busy',scanned:0}),now));
+    assert.equal((await jobState()).state,'retry');
+    now+=30001;await old.heartbeat();
+    await withScannerDatabase(old.storage,()=>runVpsMarket('thai',async(m,task)=>{assert.equal(m,'thai');assert.equal(task.force,true);assert.deepEqual(task.symbols,['BANPU','PTT']);return {status:'complete',scanned:1};},now));
+    assert.equal((await jobState()).state,'retry','A bounded run retains unscanned selections');
+    assert.deepEqual(JSON.parse((await jobState()).payload_json).symbols,['PTT']);
+    now+=30001;await old.heartbeat();
+    await withScannerDatabase(old.storage,()=>runVpsMarket('thai',async(_m,task)=>{assert.deepEqual(task.symbols,['PTT']);return {status:'complete',scanned:1};},now));
+    assert.equal((await jobState()).state,'done');
     // Invalid queries are rejected before touching the ownership lease.
     assert.equal((await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${secret}`},body:JSON.stringify({action:'query',holder:randomUUID(),instance:'attacker',queries:[{id:'members',params:[]}]})})).status,400);
     // After expiry a different VPS takes over. Old writes must fail in the

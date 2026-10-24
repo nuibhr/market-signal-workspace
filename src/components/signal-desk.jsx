@@ -21,6 +21,7 @@ async function jsonRequest(url,options={},timeout=60000){
 function LegacySignalDesk({marketId,memberId,rights,favorites=[],onToggleFavorite,onSelect,loginHref}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[page,setPage]=useState(1),[query,setQuery]=useState(''),[mode,setMode]=useState('all'),[favoritesOnly,setFavoritesOnly]=useState(false),[revision,setRevision]=useState(0),[replay,setReplay]=useState(null),[costs,setCosts]=useState(Object.fromEntries(COST_FIELDS.map(([key])=>[key,'']))),[clock,setClock]=useState(null);
  const monitor=useMonitor();
+ const [notice,setNotice]=useState('');
  const inflight=useRef(false),selection=useRef(''),costLoaded=useRef(null);
  const enabled=Boolean(rights?.capabilities?.autoPickFeed),marketAssets=ALL_ASSETS.filter(a=>a.id===marketId);
  selection.current=`${marketId}:${enabled}:${memberId||'guest'}`;
@@ -48,11 +49,12 @@ function LegacySignalDesk({marketId,memberId,rights,favorites=[],onToggleFavorit
   load();return()=>{stopped=true;controller?.abort();clearTimeout(timer);};
  },[enabled,memberId,marketId,page,query,mode,favoritesOnly,favorites.join(','),revision]);
  async function act(body){
-  if(inflight.current)return;inflight.current=true;setBusy(true);setError('');const scope=selection.current;
+  if(inflight.current)return;inflight.current=true;setBusy(true);setError('');setNotice('');const scope=selection.current;
   try{const d=await jsonRequest('/api/signals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
    if(selection.current!==scope)return;
    if(body.action==='replay')setReplay(d);else setRevision(v=>v+1);
    if(d.status==='busy')setError('worker กำลังสแกนตลาดนี้อยู่ ระบบจะโหลดผลให้อัตโนมัติ');
+   if(d.status==='queued')setNotice('รับคำขอสแกนแล้ว ผลจะอัปเดตอัตโนมัติ');
   }catch(e){if(selection.current===scope)setError(e.message==='COSTS_REQUIRED'?'กรอกต้นทุนครบทั้ง 4 ช่องก่อนทดสอบ':'ทำรายการไม่สำเร็จ กรุณารอสักครู่แล้วลองใหม่');}
   finally{inflight.current=false;setBusy(false);}
  }
@@ -61,6 +63,7 @@ function LegacySignalDesk({marketId,memberId,rights,favorites=[],onToggleFavorit
  return <section className="panel signal-desk" id="section-swing-scanner" aria-labelledby="signal-desk-title">
   <header className="signal-desk-heading"><div><span className="eyebrow">SWING STANDARD · D1 / 4H</span><h2 id="signal-desk-title">สแกนและติดตามสัญญาณ</h2><p>ผลของแผนระบบ แยก Breakout / Pullback · Stop ตามโครงสร้าง − ATR · TP1 2R สุทธิ 50% แล้ว BE / trail</p></div><div><time>{clock||'เวลาไทย'}</time><small>ข้อมูลแท่งปิดดีเลย์ ≥15 นาที · ดูเวลาอ้างอิงของแต่ละตัว</small></div></header>
   {!enabled?<div className="feature-empty"><p>เข้าสู่ระบบสมาชิกเพื่อดูสัญญาณและผลบันทึก รายการหุ้นโปรดยังใช้งานได้ตามเดิม</p><a href={loginHref}>เปิดบัญชีสมาชิก LINE</a></div>:<>
+   {notice&&<p className="signal-note" role="status">{notice}</p>}
    <div className="signal-toolbar"><label>ค้นหา<input value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}} placeholder="Symbol หรือชื่อหุ้น"/></label><label>กลยุทธ์<select value={mode} onChange={e=>{setMode(e.target.value);setPage(1);}}><option value="all">ทั้งสองแบบ</option><option value="breakout">Breakout</option><option value="pullback">Pullback</option></select></label><label className="signal-check"><input type="checkbox" checked={favoritesOnly} onChange={e=>{setFavoritesOnly(e.target.checked);setPage(1);}}/>เฉพาะหุ้นโปรดและการแจ้งเตือน</label><button disabled={busy||!scanSymbols.length} onClick={()=>act({action:'scan',market:marketId,symbols:scanSymbols})}>{busy?'กำลังทำงาน…':'สแกน 6 ตัวในหน้านี้'}</button><button onClick={()=>setRevision(v=>v+1)}>โหลดผลล่าสุด</button></div>
    <p className="signal-note">ป๊อปอัปและเสียงทำงานขณะเปิดหน้านี้ · {['blocked','failed'].includes(monitor?.audio)?'อุปกรณ์ยังเล่นเสียงไม่ได้ กดเปิดเสียงที่แถบบนอีกครั้ง':''} ป้าย “ผ่านเกณฑ์” คือแผนรอยืนยัน สถานะ “เข้าเงื่อนไขแล้ว” ต้องมี ENTRY จากแท่ง 15m หลังเผยแพร่: ปิดเขียวเหนือราคาแผนและไม่ไล่เกิน 0.5 ATR</p>
    {marketId==='us'&&<details className="signal-costs" open={!data?.usCosts}><summary>ต้นทุนสัญญาณ US / ETF {data?.usCosts?'· ตั้งแล้ว':'· ต้องกรอกก่อนสร้างแผน'}</summary><form onSubmit={e=>{e.preventDefault();act({action:'costs',costs:Object.fromEntries(COST_FIELDS.map(([key])=>[key,Number(costs[key])]))});}}>{COST_FIELDS.map(([key,label])=><label key={key}>{label}<input type="number" min="0" max={key==='commissionVatPercent'?100:5} step="any" required value={costs[key]} onChange={e=>setCosts(v=>({...v,[key]:e.target.value}))}/></label>)}<button disabled={busy}>บันทึกต้นทุนสัญญาณ</button></form><p>คิดต่อข้าง รองรับค่าธรรมเนียมแบบเปอร์เซ็นต์เท่านั้น · ไม่รองรับค่าขั้นต่ำ/ค่าคงที่/FX cash flow · เปลี่ยนต้นทุนแล้วใช้กับแผนใหม่ ผลเดิมเก็บตามต้นทุนเดิม ไม่อ่านข้อมูลพอร์ต</p></details>}

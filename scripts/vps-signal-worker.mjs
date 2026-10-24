@@ -4,6 +4,7 @@ import {withScannerDatabase} from '../src/storage/database.mjs';
 import {runSignalScan} from '../src/signals/runner.mjs';
 import {signalProviderAllowed} from '../src/signals/data.mjs';
 import {createLocalScanScheduler} from '../src/auto-pick/local-scheduler.mjs';
+import {runVpsMarket} from '../src/scanner/requests.mjs';
 
 const log=data=>console.log(JSON.stringify({at:new Date().toISOString(),...data}));
 let stopping=false,wake;
@@ -19,7 +20,7 @@ try{
     const status=await client.status();
     log({event:'scanner.preflight',...status,markets});
   }else{
-    const scheduler=createLocalScanScheduler({runners:Object.fromEntries(markets.map(m=>[m,()=>withScannerDatabase(client.storage,()=>runSignalScan(m))])),
+    const scheduler=createLocalScanScheduler({runners:Object.fromEntries(markets.map(m=>[m,()=>withScannerDatabase(client.storage,()=>runVpsMarket(m,runSignalScan))])),
       onResult(m,result){log({event:'scanner.scan',market:m,...result});},
       onError(m,error){log({event:'scanner.error',market:m,code:error.code??'SCANNER_RUN_FAILED'});}});
     log({event:'scanner.started',instance:process.env.SCANNER_INSTANCE_ID||hostname(),markets});

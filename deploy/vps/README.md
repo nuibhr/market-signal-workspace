@@ -5,6 +5,13 @@ stay on Cloudflare. Only the Swing scanner moves to the VPS. No SQLite copy,
 new public VPS port, customer session key or Cloudflare account token is needed.
 This setup works on Hostinger KVM and other Linux VPS providers.
 
+Set the web Worker's `SCANNER_RUNTIME=vps`: the manual six-symbol scan returns
+HTTP 202 and queues its selection in D1. The VPS prioritizes these requests,
+retains unscanned selections between bounded runs and then resumes discovery.
+The browser refreshes results automatically. Existing session/origin checks and
+rate limits still protect this action. No market calculation runs in that HTTP
+request. Local development keeps the existing direct scan path.
+
 ## Prepare Cloudflare once
 
 1. Run all source tests, including the native D1 bridge tests.
