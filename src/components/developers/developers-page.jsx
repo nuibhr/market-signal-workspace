@@ -22,6 +22,7 @@ import { analyzeMarketStructure } from '../../developers/structure.mjs';
 import MobileDock from '../mobile-dock.jsx';
 import SoundMonitorPill from '../monitor/sound-monitor-pill.jsx';
 import ProToolsNav from '../pro-tools-nav.jsx';
+import MarketNavigation from '../market-navigation.jsx';
 import '../../app/landing.css';
 import '../../app/market-pages.css';
 
@@ -109,11 +110,12 @@ if (res == 200) {
       <header className="ng-market-header">
         <div className="ng-market-header-inner">
           <div className="ng-brand-area">
-            <Link href="/#pro-analysis-suite" className="ng-back-link" title="กลับสู่หน้ารวมเครื่องมือสถาบัน">
+            <Link href="/thai" className="ng-back-link" title="กลับสู่กระดานเทรดหลัก">
               <ArrowLeft size={18} />
+              <span className="ng-back-text">← กลับหน้ากระดาน</span>
             </Link>
             <div>
-              <span className="ng-page-badge">DEVELOPER API PLAYGROUND</span>
+              <span className="ng-page-badge">PRO ANALYSIS SUITE · DEVELOPER API PLAYGROUND</span>
               <h1 className="ng-page-title">SMC Structure API สำหรับบอท &amp; EA</h1>
             </div>
           </div>
@@ -124,12 +126,109 @@ if (res == 200) {
             </Link>
           </div>
         </div>
+
+        {/* Universal Top Navigation across all markets and tools */}
+        <div className="ng-header-nav-strip" style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+          <MarketNavigation current="developers" />
+        </div>
       </header>
 
       {/* Pro Suite Quick Switcher Bar */}
       <ProToolsNav current="developers" />
 
       <main className="ng-market-content">
+        {/* Quick Market Gateway */}
+        <div
+          className="ng-market-bridge-card"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '12px 18px',
+            marginBottom: '16px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%)',
+            border: '1px solid rgba(124, 58, 237, 0.25)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: '800',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                background: '#7c3aed',
+                color: '#ffffff',
+              }}
+            >
+              ทดสอบกับกราฟจริง
+            </span>
+            <div style={{ fontSize: '12px', color: '#cbd5e1' }}>
+              สามารถนำอัลกอริทึม SMC ไปทดสอบและดูกราฟราคาจริงในตลาดต่างๆ ได้ทันที:
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <Link
+              href="/forex"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                background: 'rgba(168, 85, 247, 0.15)',
+                color: '#c084fc',
+                fontSize: '11px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                border: '1px solid rgba(168, 85, 247, 0.3)',
+              }}
+            >
+              🌍 กราฟ Forex Desk
+            </Link>
+            <Link
+              href="/thai#chart-panel"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#34d399',
+                fontSize: '11px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+              }}
+            >
+              🇹🇭 กราฟหุ้นไทย (SET)
+            </Link>
+            <Link
+              href="/risk"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                background: 'rgba(13, 148, 136, 0.15)',
+                color: '#2dd4bf',
+                fontSize: '11px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                border: '1px solid rgba(13, 148, 136, 0.3)',
+              }}
+            >
+              🛡️ คำนวณขนาดไม้ 2R
+            </Link>
+          </div>
+        </div>
         {/* Banner */}
         <div className="ng-dev-banner">
           <div className="ng-dev-banner-left">
@@ -310,9 +409,21 @@ if (res == 200) {
               <span className="ng-calc-note">
                 * Endpoint: <code>POST /api/developers/structure</code> รองรับการเรียกจากบอทหรือ EA ภายนอกได้ทันที
               </span>
-              <Link href="/calendar" className="ng-action-link">
-                ไปยังปฏิทินเศรษฐกิจ <ArrowUpRight size={14} />
-              </Link>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <Link
+                  href="/forex"
+                  className="ng-action-link"
+                  style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#c084fc', borderColor: 'rgba(124, 58, 237, 0.3)' }}
+                >
+                  🚀 ดูกราฟ SMC ใน Forex Desk <ArrowUpRight size={14} />
+                </Link>
+                <Link href="/risk" className="ng-action-link">
+                  คำนวณขนาดไม้ 2R <ArrowUpRight size={14} />
+                </Link>
+                <Link href="/calendar" className="ng-action-link">
+                  ปฏิทินเศรษฐกิจ <ArrowUpRight size={14} />
+                </Link>
+              </div>
             </div>
           </section>
         </div>

@@ -1,5 +1,5 @@
-export async function requestStrategyFeed({refresh=false,fetcher=globalThis.fetch,signal}={}) {
-  const response=await fetcher('/api/dr-strategy/feed',{method:refresh?'POST':'GET',cache:'no-store',signal});
+export async function requestStrategyFeed({refresh=false,market='dr',fetcher=globalThis.fetch,signal}={}) {
+  const response=await fetcher('/api/dr-strategy/feed'+(market==='thai'?'?market=thai':''),{method:refresh?'POST':'GET',cache:'no-store',signal});
   const data=await response.json();
   if(response.status===403&&data?.code==='MEMBERSHIP_REQUIRED')throw Error('กรุณาเข้าสู่ระบบและเปิดสิทธิ์สมาชิกเพื่อสแกนหุ้น / DR');
   if(!response.ok||!['available','partial'].includes(data?.status))throw Error('ยังสแกนไม่ได้ กรุณาลองใหม่เมื่อแหล่งข้อมูลพร้อม');

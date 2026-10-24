@@ -20,8 +20,8 @@ export default function UsWorkspaceNav({ activeTab = 'focus', symbol, onTabChang
             <span className={styles.scopeBadge}>S&amp;P 500 + NASDAQ 100</span>
           </h1>
           <div className={styles.headerMetricsRow}>
-            <span className={styles.headerMetricPill}>48 Stage 2 Leaders</span>
-            <span className={styles.headerMetricPill}>312 Filtered Out</span>
+            <span className={styles.headerMetricPill}>Stage 2 · ผลจากข้อมูลที่โหลด</span>
+            <span className={styles.headerMetricPill}>ข้อมูลราคา EOD</span>
             <span className={styles.headerMetricPill}>Risk ≤ 8%</span>
             <span className={styles.headerMetricPill}>Dime! 0.0001</span>
           </div>

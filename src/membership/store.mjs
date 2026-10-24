@@ -1,3 +1,4 @@
+import { extendThirtyDays } from './expiry.mjs';
 import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { storage, operation as op } from '../storage/database.mjs';
 import {withBilling} from '../billing/store.mjs';
@@ -127,12 +128,7 @@ export async function rejectPortfolio(admin,memberId) {
     return {set:"broker=NULL,portfolio_hash=NULL,portfolio_last4=NULL,portfolio_status='missing',portfolio_submitted_at=NULL",params:[]};
   });
 }
-function monthEnd(member) {
-  const start=member.subscription_ends_at&&Date.parse(member.subscription_ends_at)>Date.now()?new Date(member.subscription_ends_at):new Date();
-  const lastDay=new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+2,0)).getUTCDate();
-  return new Date(Date.UTC(start.getUTCFullYear(),start.getUTCMonth()+1,Math.min(start.getUTCDate(),lastDay),
-    start.getUTCHours(),start.getUTCMinutes(),start.getUTCSeconds(),start.getUTCMilliseconds())).toISOString();
-}
+function monthEnd(member) { return extendThirtyDays(member.subscription_ends_at); }
 function adminRequestId(value) {
   const id=value??token();
   if(typeof id!=='string'||!/^[-_a-zA-Z0-9]{16,100}$/.test(id))throw new Error('INVALID_REQUEST_ID');

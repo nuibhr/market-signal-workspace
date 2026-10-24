@@ -125,12 +125,12 @@ export default function ProToolsNav({ current = 'risk' }) {
         <div className="ng-pro-suite-inner">
           <div className="ng-pro-suite-left">
             <Link
-              href="/#pro-analysis-suite"
+              href="/thai"
               className="ng-suite-back-pill"
-              title="กลับสู่หมวดชุดเครื่องมือวิเคราะห์เชิงลึกระดับสถาบันบนหน้าหลัก"
+              title="กลับสู่กระดานเทรดหลัก (Trading Terminal)"
             >
               <ArrowLeft size={14} />
-              <span>รวมเครื่องมือสถาบัน</span>
+              <span>← กลับกระดานเทรด</span>
             </Link>
             <div className="ng-suite-title-group">
               <span className="ng-suite-badge">
@@ -196,7 +196,7 @@ export default function ProToolsNav({ current = 'risk' }) {
                     <Sparkles size={13} /> QUICK SUITE SWITCHER
                   </span>
                   <h3 id="pro-drawer-title">ชุดเครื่องมือวิเคราะห์เชิงลึกระดับสถาบัน</h3>
-                  <p>คลิกสลับเครื่องมือได้ทันที ไม่ต้องย้อนกลับหน้าแรก</p>
+                  <p>คลิกสลับเครื่องมือได้ทันที หรือกระโดดไปหน้ากระดานเทรด</p>
                 </div>
                 <button
                   type="button"
@@ -206,6 +206,28 @@ export default function ProToolsNav({ current = 'risk' }) {
                 >
                   <X size={18} />
                 </button>
+              </div>
+
+              {/* Quick Markets Gateway */}
+              <div className="ng-drawer-markets-strip" style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(2,132,199,0.04)' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', marginRight: '4px' }}>
+                  กระดานเทรด:
+                </span>
+                <Link href="/thai" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(16,185,129,0.15)', color: '#34d399', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(16,185,129,0.3)' }}>
+                  🇹🇭 หุ้นไทย
+                </Link>
+                <Link href="/tfex" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(234,88,12,0.15)', color: '#fb923c', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(234,88,12,0.3)' }}>
+                  ⚡ TFEX
+                </Link>
+                <Link href="/us" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(56,189,248,0.3)' }}>
+                  🇺🇸 US 500
+                </Link>
+                <Link href="/forex" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(168,85,247,0.15)', color: '#c084fc', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(168,85,247,0.3)' }}>
+                  🌍 Forex
+                </Link>
+                <Link href="/dr" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(245,158,11,0.15)', color: '#fbbf24', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(245,158,11,0.3)' }}>
+                  🪙 DR
+                </Link>
               </div>
 
               {/* Tools List */}

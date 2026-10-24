@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useDeskResource } from '../use-desk-resource.jsx';
+import { buildTfexContracts } from '../../markets/tfex-contracts.mjs';
+const valueText=(v,d=2)=>Number.isFinite(v)?v.toLocaleString('th-TH',{maximumFractionDigits:d}):'—';
 import styles from './tfex-terminal.module.css';
 
 // ─── TFEX PRODUCT MASTER DATA ───
@@ -106,7 +109,21 @@ export const BROKER_OPTIONS = [
   { id: '098', name: 'Settrade Sandbox', thaiName: 'ระบบทดสอบ Sandbox', popular: false, tag: 'TESTNET' },
 ];
 
+const PRODUCT_DEFAULTS=TFEX_SPECS;
 export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
+  const contracts=useMemo(()=>buildTfexContracts(),[]);
+  const quoteSymbols=Object.keys(PRODUCT_DEFAULTS).map(root=>contracts.find(c=>c.root===root&&c.symbol===selectedSymbol)?.symbol||contracts.find(c=>c.root===root)?.symbol).filter(Boolean);
+  const quoteFeed=useDeskResource('/api/tfex/quotes?symbols='+quoteSymbols.join(','),{interval:45000});
+  const optionSeries=contracts.find(c=>c.root==='S50'&&c.symbol===selectedSymbol)?.symbol||contracts.find(c=>c.root==='S50')?.symbol;
+  const chainFeed=useDeskResource('/api/tfex/options?series='+optionSeries);
+  const TFEX_SPECS=Object.fromEntries(Object.entries(PRODUCT_DEFAULTS).map(([root,spec])=>{
+    const symbol=quoteSymbols.find(symbol=>symbol.startsWith(root)),quote=quoteFeed.data?.quotes?.find(q=>q.symbol===symbol);
+    return [root,{...spec,symbol:symbol||spec.symbol,futuresPrice:quote?.price??NaN,spotPrice:root==='S50'?(quoteFeed.data?.underlying?.price??NaN):NaN,basis:root==='S50'&&quote?.price>0&&quoteFeed.data?.underlying?.price>0?quote.price-quoteFeed.data.underlying.price:NaN,volume:quote?.volume??null,openInterest:quote?.openInterest??null,
+      change:quote?.change===null||!quote? '—':(quote.change>=0?'+':'')+valueText(quote.change),
+      changePercent:quote?.changePercent===null||!quote?'—':valueText(quote.changePercent)+'%',isUp:quote?.change>=0}];
+  }));
+  const OPTIONS_STRIKES_DATA=chainFeed.data?.rows||[];
+
   const [activeTab, setActiveTab] = useState('options'); // 'options' | 'futures' | 'margin' | 'sizing'
   const [optionsFilter, setOptionsFilter] = useState('atm'); // 'atm' | 'all' | 'highOi'
   const [selectedStrategy, setSelectedStrategy] = useState(null);
@@ -139,6 +156,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
   const [settradeAppId, setSettradeAppId] = useState('');
   const [settradeAppSecret, setSettradeAppSecret] = useState('');
   const [settradeAppCode, setSettradeAppCode] = useState('');
+  const [settradeAccountNo,setSettradeAccountNo]=useState('');
   const [settradeIsSandbox, setSettradeIsSandbox] = useState(false);
   const [settradeConnected, setSettradeConnected] = useState(false);
   const [settradeLoading, setSettradeLoading] = useState(false);
@@ -161,6 +179,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
             appId: settradeAppId,
             appSecret: settradeAppSecret,
             appCode: settradeAppCode,
+            accountNo: settradeAccountNo,
             isSandbox: settradeIsSandbox,
           };
 
@@ -282,23 +301,28 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
   // Filtered options strikes
   const filteredStrikes = useMemo(() => {
     if (optionsFilter === 'atm') {
-      return OPTIONS_STRIKES_DATA.filter(s => s.strike >= 870 && s.strike <= 910);
+      return OPTIONS_STRIKES_DATA.filter(s => Math.abs(s.strike-(chainFeed.data?.underlyingPrice??NaN))<=25);
     }
     if (optionsFilter === 'highOi') {
       return OPTIONS_STRIKES_DATA.filter(s => s.callOi >= 6000 || s.putOi >= 6000);
     }
     return OPTIONS_STRIKES_DATA;
-  }, [optionsFilter]);
+  }, [optionsFilter, chainFeed.data]);
 
   // Options sentiment metrics
-  const totalCallOi = 58920;
-  const totalPutOi = 67240;
-  const pcrRatio = (totalPutOi / totalCallOi).toFixed(2); // 1.14
-  const maxPainStrike = 900.0;
-  const spotDistanceToMaxPain = (maxPainStrike - TFEX_SPECS.S50.spotPrice).toFixed(1);
+  const totalCallOi = chainFeed.data?.summary?.totalCallOi??NaN;
+  const totalPutOi = chainFeed.data?.summary?.totalPutOi??NaN;
+  const pcrRatio = valueText(chainFeed.data?.summary?.pcr);
+  const maxPainStrike = chainFeed.data?.summary?.maxPain??NaN;
+  const spotDistanceToMaxPain = valueText(maxPainStrike-(chainFeed.data?.underlyingPrice??NaN),1);
 
   return (
     <section className={styles.terminal} aria-label="TFEX and SET50 Options Terminal">
+      <div role="status" className={styles.optionsToolbar}>
+        <span>{quoteFeed.busy?'กำลังโหลดราคา TFEX…':quoteFeed.error?'โหลดราคาไม่ได้: '+quoteFeed.error:'TFEX Open API · ได้รับ '+(quoteFeed.data?.receivedAt||'รอข้อมูล')+' · ดูเวลาอ้างอิงจากผู้ให้บริการ'}</span>
+        <button type="button" onClick={()=>{quoteFeed.reload();chainFeed.reload();}}>โหลดราคาล่าสุด</button>
+      </div>
+      {chainFeed.error&&<p role="alert">Options Chain: {chainFeed.error}</p>}
       {/* ─── Header & Contract Selector ─── */}
       <div className={styles.header}>
         <div className={styles.brand}>
@@ -312,8 +336,8 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
           </h2>
           <div className={styles.headerMetricsRow}>
             <span className={styles.headerMetricPill}>Options Chain</span>
-            <span className={styles.headerMetricPill}>PCR 1.14</span>
-            <span className={styles.headerMetricPill}>Max Pain 900</span>
+            <span className={styles.headerMetricPill}>PCR {pcrRatio}</span>
+            <span className={styles.headerMetricPill}>Max Pain {valueText(maxPainStrike,0)} · {chainFeed.data?.summary?.covered??0} strikes</span>
             <span className={styles.headerMetricPill}>Margin Shield</span>
             <span className={styles.headerMetricPill}>2R Sizing</span>
           </div>
@@ -332,7 +356,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 title={`เปิดดูกราฟและข้อมูลสัญญา ${item.symbol}`}
               >
                 <span className={styles.chipSymbol}>{item.symbol}</span>
-                <span className={styles.chipPrice}>{item.futuresPrice.toLocaleString()}</span>
+                <span className={styles.chipPrice}>{valueText(item.futuresPrice)}</span>
                 <span className={item.isUp ? styles.chipChangeUp : styles.chipChangeDown}>
                   {item.changePercent}
                 </span>
@@ -353,7 +377,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
             <div className={styles.commandTabHeader}>
               <span className={styles.commandTabIcon}>◈</span>
               <span className={styles.commandTabTitle}>Options Chain</span>
-              <span className={styles.commandTabBadge}>PCR 1.14</span>
+              <span className={styles.commandTabBadge}>PCR {pcrRatio}</span>
             </div>
           </button>
 
@@ -380,7 +404,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
             <div className={styles.commandTabHeader}>
               <span className={styles.commandTabIcon} style={{ color: '#38bdf8' }}>▲</span>
               <span className={styles.commandTabTitle}>Futures Matrix</span>
-              <span className={styles.commandTabBadge}>Basis +1.40</span>
+              <span className={styles.commandTabBadge}>ราคาจาก TFEX</span>
             </div>
           </button>
 
@@ -438,7 +462,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 <div className={styles.pcrSegmentPut} style={{ width: '54%' }} title="Put OI (54%)" />
               </div>
               <p className={styles.barometerDesc}>
-                Put {totalPutOi.toLocaleString()} / Call {totalCallOi.toLocaleString()} · สถาบันตั้งรับแนวรับ
+                Put {valueText(totalPutOi)} / Call {valueText(totalCallOi)} · สถาบันตั้งรับแนวรับ
               </p>
             </div>
 
@@ -447,7 +471,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 <span className={styles.barometerTitle}>Max Pain Strike</span>
                 <span className={`${styles.barometerTag} ${styles.barometerTagNeutral}`}>Pin Magnet</span>
               </div>
-              <div className={styles.barometerValue}>{maxPainStrike.toFixed(1)} <small style={{ fontSize: '13px', color: '#94a3b8' }}>จุด</small></div>
+              <div className={styles.barometerValue}>{valueText(maxPainStrike,1)} <small style={{ fontSize: '13px', color: '#94a3b8' }}>จุด</small></div>
               <p className={styles.barometerDesc}>
                 จุดดึงดูดฝั่ง Option Sellers (ห่างจากดัชนีปัจจุบัน +{spotDistanceToMaxPain} จุด)
               </p>
@@ -488,14 +512,14 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 className={`${styles.filterPillBtn} ${optionsFilter === 'all' ? styles.filterPillBtnActive : ''}`}
                 onClick={() => setOptionsFilter('all')}
               >
-                แสดงทุก Strike (840 - 940)
+                แสดง Strike ที่โหลด
               </button>
             </div>
 
             <div className={styles.underlyingSpot}>
-              <span>ดัชนีอ้างอิง SET50 Spot:</span>
-              <span className={styles.spotPill}>892.80 จุด</span>
-              <span>ซีรีส์: <b>S50Z26 (Dec 26)</b></span>
+              <span>ราคา Futures อ้างอิง:</span>
+              <span className={styles.spotPill}>{valueText(chainFeed.data?.underlyingPrice)} จุด</span>
+              <span>ซีรีส์: <b>{optionSeries}</b></span>
             </div>
           </div>
 
@@ -526,17 +550,17 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
               </thead>
               <tbody>
                 {filteredStrikes.map(row => {
-                  const isCallItm = row.strike < TFEX_SPECS.S50.spotPrice;
-                  const isPutItm = row.strike > TFEX_SPECS.S50.spotPrice;
+                  const isCallItm = row.strike < (chainFeed.data?.underlyingPrice??NaN);
+                  const isPutItm = row.strike > (chainFeed.data?.underlyingPrice??NaN);
                   return (
                     <tr key={row.strike} className={row.isAtm ? styles.atmRow : ''}>
                       {/* CALL SIDE */}
-                      <td className={isCallItm ? styles.callItm : ''}>{row.callIv}%</td>
-                      <td className={isCallItm ? styles.callItm : ''}>{row.callOi.toLocaleString()}</td>
-                      <td className={isCallItm ? styles.callItm : ''}>{row.callVol.toLocaleString()}</td>
-                      <td className={isCallItm ? styles.callItm : ''}>{row.callBid} / {row.callAsk}</td>
+                      <td className={isCallItm ? styles.callItm : ''}>{valueText(row.callIv)}%</td>
+                      <td className={isCallItm ? styles.callItm : ''}>{valueText(row.callOi)}</td>
+                      <td className={isCallItm ? styles.callItm : ''}>{valueText(row.callVol)}</td>
+                      <td className={isCallItm ? styles.callItm : ''}>{valueText(row.callBid)} / {valueText(row.callAsk)}</td>
                       <td className={isCallItm ? styles.callItm : ''}>
-                        <strong style={{ color: '#34d399' }}>{row.callPrice.toFixed(1)}</strong>
+                        <strong style={{ color: '#34d399' }}>{valueText(row.callPrice,1)}</strong>
                       </td>
                       <td className={isCallItm ? styles.callItm : ''}>
                         <button
@@ -566,12 +590,12 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                         </button>
                       </td>
                       <td className={isPutItm ? styles.putItm : ''}>
-                        <strong style={{ color: '#fb7185' }}>{row.putPrice.toFixed(1)}</strong>
+                        <strong style={{ color: '#fb7185' }}>{valueText(row.putPrice,1)}</strong>
                       </td>
-                      <td className={isPutItm ? styles.putItm : ''}>{row.putBid} / {row.putAsk}</td>
-                      <td className={isPutItm ? styles.putItm : ''}>{row.putVol.toLocaleString()}</td>
-                      <td className={isPutItm ? styles.putItm : ''}>{row.putOi.toLocaleString()}</td>
-                      <td className={isPutItm ? styles.putItm : ''}>{row.putIv}%</td>
+                      <td className={isPutItm ? styles.putItm : ''}>{valueText(row.putBid)} / {valueText(row.putAsk)}</td>
+                      <td className={isPutItm ? styles.putItm : ''}>{valueText(row.putVol)}</td>
+                      <td className={isPutItm ? styles.putItm : ''}>{valueText(row.putOi)}</td>
+                      <td className={isPutItm ? styles.putItm : ''}>{valueText(row.putIv)}%</td>
                     </tr>
                   );
                 })}
@@ -1192,7 +1216,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                       onChange={e => {
                         const prod = e.target.value;
                         setMarginProduct(prod);
-                        setMarginEntry(TFEX_SPECS[prod].futuresPrice);
+                        if(Number.isFinite(TFEX_SPECS[prod].futuresPrice))setMarginEntry(TFEX_SPECS[prod].futuresPrice);
                       }}
                     >
                       <option value="S50">S50 Index Futures (IM 10,850 ฿ · 200 ฿/จุด)</option>
@@ -1329,22 +1353,22 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
           <div className={styles.basisHero}>
             <div className={styles.basisInfo}>
               <div className={styles.basisTag}>S50 BASIS TRACKER</div>
-              <h3>Basis ดัชนี SET50: +1.40 จุด (Contango)</h3>
+              <h3>Basis ดัชนี SET50: {valueText(TFEX_SPECS.S50.basis)} จุด</h3>
               <p>
-                สัญญา S50Z26 ซื้อขายสูงกว่าดัชนีเงินสด SET50 Cash Spot อยู่ 1.40 จุด ซึ่งสะท้อนต้นทุนการถือครองปกติ (Cost of Carry) ไม่มีแรงขายผิดปกติจากกองทุน
+                Futures − SET50 Spot จากข้อมูลที่โหลด · ระดับ Entry/SL/2R/3R ด้านล่างเป็นเครื่องวางแผนตามระยะเดิมของโปรเจกต์
               </p>
             </div>
             <div className={styles.basisStatGrid}>
               <div className={styles.basisStatItem}>
                 <span className={styles.basisStatLabel}>SET50 CASH SPOT</span>
-                <span className={styles.basisStatValue}>892.80</span>
+                <span className={styles.basisStatValue}>{valueText(TFEX_SPECS.S50.spotPrice)}</span>
               </div>
               <div className={styles.basisStatItem}>
-                <span className={styles.basisStatLabel}>S50Z26 FUTURES</span>
-                <span className={styles.basisStatValue} style={{ color: '#22d3ee' }}>894.20</span>
+                <span className={styles.basisStatLabel}>{TFEX_SPECS.S50.symbol} FUTURES</span>
+                <span className={styles.basisStatValue} style={{ color: '#22d3ee' }}>{valueText(TFEX_SPECS.S50.futuresPrice)}</span>
               </div>
               <div className={styles.basisStatItem}>
-                <span className={styles.basisStatLabel}>FAIR BASIS TARGET</span>
+                <span className={styles.basisStatLabel}>FAIR BASIS TARGET (สมมติ)</span>
                 <span className={styles.basisStatValue} style={{ color: '#34d399' }}>+1.20</span>
               </div>
             </div>
@@ -1356,7 +1380,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
             <div className={styles.futuresCard}>
               <div className={styles.futuresCardHeader}>
                 <div className={styles.futuresTitleGroup}>
-                  <strong>S50Z26 · SET50 Index Futures</strong>
+                  <strong>{TFEX_SPECS.S50.symbol} · SET50 Index Futures</strong>
                   <small>ตัวคูณ 200 บาท/จุด · Tick 0.1 จุด (20 บาท)</small>
                 </div>
                 <span className={`${styles.biasPill} ${styles.biasPillBull}`}>🟢 BUY DIP (2R BIAS)</span>
@@ -1365,33 +1389,33 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
               <div className={styles.planLevelsGrid}>
                 <div className={styles.planCol}>
                   <span className={styles.planLabel}>ENTRY ZONE</span>
-                  <span className={styles.planPrice}>892.0</span>
+                  <span className={styles.planPrice}>{valueText(TFEX_SPECS.S50.futuresPrice)}</span>
                   <span className={styles.planBaht}>จุดเข้าดักย่อ</span>
                 </div>
                 <div className={styles.planCol}>
                   <span className={styles.planLabel}>STOP LOSS</span>
-                  <span className={`${styles.planPrice} ${styles.planRisk}`}>887.0</span>
+                  <span className={`${styles.planPrice} ${styles.planRisk}`}>{valueText(TFEX_SPECS.S50.futuresPrice-5)}</span>
                   <span className={styles.planBaht}>-5.0 pt (-1,000฿)</span>
                 </div>
                 <div className={styles.planCol}>
                   <span className={styles.planLabel}>TARGET 1 (2R)</span>
-                  <span className={`${styles.planPrice} ${styles.planReward}`}>902.0</span>
+                  <span className={`${styles.planPrice} ${styles.planReward}`}>{valueText(TFEX_SPECS.S50.futuresPrice+10)}</span>
                   <span className={styles.planBaht}>+10.0 pt (+2,000฿)</span>
                 </div>
                 <div className={styles.planCol}>
                   <span className={styles.planLabel}>TARGET 2 (3R)</span>
-                  <span className={`${styles.planPrice} ${styles.planReward}`}>907.0</span>
+                  <span className={`${styles.planPrice} ${styles.planReward}`}>{valueText(TFEX_SPECS.S50.futuresPrice+15)}</span>
                   <span className={styles.planBaht}>+15.0 pt (+3,000฿)</span>
                 </div>
               </div>
 
               <div className={styles.futuresCardFooter}>
-                <span>Volume: <b>142,500 สัญญา</b></span>
-                <span>Open Interest: <b>385,200 สัญญา</b></span>
+                <span>Volume: <b>{valueText(TFEX_SPECS.S50.volume,0)} สัญญา</b></span>
+                <span>Open Interest: <b>{valueText(TFEX_SPECS.S50.openInterest,0)} สัญญา</b></span>
                 <button
                   type="button"
                   className={styles.filterPillBtn}
-                  onClick={() => onSelect && onSelect({ symbol: 'S50Z26', name: 'SET50 Index Futures', id: 'tfex' })}
+                  onClick={() => onSelect && onSelect({ symbol: TFEX_SPECS.S50.symbol, name: 'SET50 Index Futures', id: 'tfex' })}
                 >
                   เปิดกราฟสัญญา →
                 </button>
@@ -1402,7 +1426,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
             <div className={styles.futuresCard}>
               <div className={styles.futuresCardHeader}>
                 <div className={styles.futuresTitleGroup}>
-                  <strong>GOZ26 · Gold Online Futures</strong>
+                  <strong>{TFEX_SPECS.GO.symbol} · Gold Online Futures</strong>
                   <small>ตัวคูณ 300 บาท/USD · ไร้ความเสี่ยงค่าเงินบาท</small>
                 </div>
                 <span className={`${styles.biasPill} ${styles.biasPillBull}`}>🟢 BULLISH MOMENTUM</span>
@@ -1411,33 +1435,33 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
               <div className={styles.planLevelsGrid}>
                 <div className={styles.planCol}>
                   <span className={styles.planLabel}>ENTRY ZONE</span>
-                  <span className={styles.planPrice}>2,650.0</span>
+                  <span className={styles.planPrice}>{valueText(TFEX_SPECS.GO.futuresPrice)}</span>
                   <span className={styles.planBaht}>USD / oz</span>
                 </div>
                 <div className={styles.planCol}>
                   <span className={styles.planLabel}>STOP LOSS</span>
-                  <span className={`${styles.planPrice} ${styles.planRisk}`}>2,642.0</span>
+                  <span className={`${styles.planPrice} ${styles.planRisk}`}>{valueText(TFEX_SPECS.GO.futuresPrice-8)}</span>
                   <span className={styles.planBaht}>-8.0$ (-2,400฿)</span>
                 </div>
                 <div className={styles.planCol}>
                   <span className={styles.planLabel}>TARGET 1 (2R)</span>
-                  <span className={`${styles.planPrice} ${styles.planReward}`}>2,666.0</span>
+                  <span className={`${styles.planPrice} ${styles.planReward}`}>{valueText(TFEX_SPECS.GO.futuresPrice+16)}</span>
                   <span className={styles.planBaht}>+16.0$ (+4,800฿)</span>
                 </div>
                 <div className={styles.planCol}>
                   <span className={styles.planLabel}>TARGET 2 (3R)</span>
-                  <span className={`${styles.planPrice} ${styles.planReward}`}>2,674.0</span>
+                  <span className={`${styles.planPrice} ${styles.planReward}`}>{valueText(TFEX_SPECS.GO.futuresPrice+24)}</span>
                   <span className={styles.planBaht}>+24.0$ (+7,200฿)</span>
                 </div>
               </div>
 
               <div className={styles.futuresCardFooter}>
-                <span>Volume: <b>48,900 สัญญา</b></span>
-                <span>Open Interest: <b>78,400 สัญญา</b></span>
+                <span>Volume: <b>{valueText(TFEX_SPECS.GO.volume,0)} สัญญา</b></span>
+                <span>Open Interest: <b>{valueText(TFEX_SPECS.GO.openInterest,0)} สัญญา</b></span>
                 <button
                   type="button"
                   className={styles.filterPillBtn}
-                  onClick={() => onSelect && onSelect({ symbol: 'GOZ26', name: 'Gold Online Futures', id: 'tfex' })}
+                  onClick={() => onSelect && onSelect({ symbol: TFEX_SPECS.GO.symbol, name: 'Gold Online Futures', id: 'tfex' })}
                 >
                   เปิดกราฟสัญญา →
                 </button>
@@ -1448,7 +1472,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
             <div className={styles.futuresCard}>
               <div className={styles.futuresCardHeader}>
                 <div className={styles.futuresTitleGroup}>
-                  <strong>SVFZ26 · Silver Online Futures</strong>
+                  <strong>{TFEX_SPECS.SVF.symbol} · Silver Online Futures</strong>
                   <small>ตัวคูณ 3,000 บาท/USD · สินค้า High-Beta</small>
                 </div>
                 <span className={`${styles.biasPill} ${styles.biasPillBear}`}>🔴 CONSOLIDATION</span>
@@ -1757,6 +1781,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
 
 
             <div className={styles.formGroup}>
+              <label className={styles.formLabel}>เลขบัญชีซื้อขาย TFEX</label><input type="text" autoComplete="off" className={styles.formInput} value={settradeAccountNo} onChange={e=>setSettradeAccountNo(e.target.value)} placeholder="ส่งเพื่ออ่านพอร์ตครั้งนี้ ไม่บันทึกบนเซิร์ฟเวอร์"/>
               <label className={styles.formLabel}>App ID</label>
               <input
                 type="text"
@@ -1779,11 +1804,11 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.formLabel}>App Code (รหัสบัญชีอนุพันธ์ TFEX)</label>
+              <label className={styles.formLabel}>App Code (รหัสแอปที่โบรกเกอร์ออกให้)</label>
               <input
                 type="text"
                 className={styles.formInput}
-                placeholder="เช่น 123456-T"
+                placeholder="รหัส App Code ของโบรกเกอร์"
                 value={settradeAppCode}
                 onChange={(e) => setSettradeAppCode(e.target.value)}
               />

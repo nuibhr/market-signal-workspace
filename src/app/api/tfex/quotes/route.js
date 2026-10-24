@@ -1,4 +1,4 @@
-import { createTfexClient } from '../../../../market-data/settrade.mjs';
+import { createTfexClient, createSettradeClient } from '../../../../market-data/settrade.mjs';
 import { ALL_ASSETS } from '../../../../markets/catalog.mjs';
 import { buildTfexContracts } from '../../../../markets/tfex-contracts.mjs';
 
@@ -65,11 +65,13 @@ export async function GET(request) {
   }
 
   const quotes = await Promise.all(symbols.map(quoteFor));
+  const underlying = symbols.some(s=>s.startsWith('S50')) ? await createSettradeClient().getQuote('SET50').catch(()=>null) : null;
   return Response.json({
     status: quotes.some(quote => quote.status === 'available') ? 'available' : 'unavailable',
     source: 'TFEX Open API',
     receivedAt: new Date().toISOString(),
     sourceTimeKnown: quotes.some(quote => quote.sourceTimeKnown),
     quotes,
+    underlying: underlying?.price>0 ? underlying : null,
   }, { headers: NO_STORE });
 }

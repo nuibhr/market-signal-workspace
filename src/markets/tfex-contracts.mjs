@@ -6,6 +6,7 @@ const VERIFIED_LAST_TRADING_DAY = Object.freeze({
 });
 
 export const TFEX_PRODUCTS = Object.freeze([
+  { root:'USD',product:'USD Futures',priceUnit:'THB / USD',quoteCurrency:'THB',multiplier:1000,tickSize:0.01,tickValueTHB:10,schedule:'near-months-plus-quarters' },
   {
     root: 'S50',
     product: 'SET50 Index Futures',

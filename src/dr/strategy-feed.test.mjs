@@ -72,3 +72,15 @@ test('native series with future placeholders and an old last closed bar fall bac
  const value=await loadScanSeries(asset,{now,env:{},client:{configuration:{configured:true},getCandles:async()=>native},backup:async()=>{used++;return {...series(asset),source:'labelled historical backup'};}});
  assert.equal(used,1);assert.equal(value.source,'labelled historical backup');
 });
+
+test('Thai Radar loads only Thai candles and makes no underlying/FX requests',async()=>{
+ const loaded=[];const data=await generateStrategyFeed({now,markets:['thai'],quotes:async()=>{throw Error('Thai view must not request overseas quotes');},loadSeries:async asset=>{assert.equal(asset.id,'thai');loaded.push(asset.symbol);return series(asset);}});
+ assert.equal(loaded.length,8);assert.equal(data.scoredThaiStocks.length,8);assert.deepEqual(data.scoredDRs,[]);assert.equal(data.liveUsdThb,null);
+ await requestStrategyFeed({market:'thai',fetcher:async(url)=>{assert.equal(url,'/api/dr-strategy/feed?market=thai');return Response.json({status:'available',scoredDRs:[],scoredThaiStocks:[]});}});
+});
+
+// Isolated entitlement fixture; does not certify a real vendor license.
+test('production DR does not fetch or expose Yahoo quotes without confirmed display rights',async()=>{
+ let calls=0;const data=await generateStrategyFeed({now,markets:['dr'],env:{NODE_ENV:'production'},quotes:async()=>{calls++;return [{symbol:'USDTHB=X',regularMarketPrice:32}];},loadSeries:async a=>series(a)});
+ assert.equal(calls,0);assert.equal(data.liveUsdThb,null);assert.equal(data.liveHkdThb,null);assert.equal(data.quoteStatus,'DISPLAY_RIGHTS_NOT_CONFIRMED');assert.ok(data.scoredDRs.every(r=>r.bridge===null));
+});

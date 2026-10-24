@@ -1,5 +1,8 @@
 // Curated watchlist supplied by the user on 2026-09-26. Membership and quote availability are separate.
 export const US_WATCHLIST = [
+  {symbol:'CIBR',kind:'etf',name:'First Trust Nasdaq Cybersecurity ETF',sector:'Cybersecurity',exchange:'NASDAQ'},
+  {symbol:'WCLD',kind:'etf',name:'WisdomTree Cloud Computing Fund',sector:'Cloud',exchange:'NASDAQ'},
+  {symbol:'ICLN',kind:'etf',name:'iShares Global Clean Energy ETF',sector:'Clean energy',exchange:'NASDAQ'},
   {
     "kind": "stock",
     "symbol": "ADBE",

@@ -10,6 +10,10 @@ test('quote distinguishes provider observation time from receipt time', () => {
   assert.equal(quote.latency, 'unknown');
 });
 
+test('provider quote for a different symbol is rejected rather than relabeled', () => {
+  assert.throws(() => normalizeSettradeQuote({symbol:'AOT',last:60},'PTT','2026-10-24T01:00:00Z'), e => e.code === 'INSTRUMENT_MISMATCH');
+});
+
 test('daily bars reject invalid dates, missing OHLCV and ambiguous duplicates', () => {
   const series = normalizeSettradeDailyCandles({
     time: ['2026-09-21', 'bad', '2026-09-23', '2026-09-23', '2026-09-24'],

@@ -1237,3 +1237,24 @@ html:not([data-theme='light']) [class*='daytrade_tableWrap'] td {
   color: #F1F5F9 !important;
 }
 
+/* ─── 24. Pro Analysis Suite Navigation & Bridge Cards (Dark Mode) ─── */
+html:not([data-theme='light']) .ng-back-link {
+  background: #111C33 !important;
+  border-color: #243550 !important;
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) .ng-back-link:hover {
+  background: #163A63 !important;
+  border-color: #22D3EE !important;
+  color: #22D3EE !important;
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.25) !important;
+}
+
+html:not([data-theme='light']) .ng-market-bridge-card {
+  background: linear-gradient(135deg, rgba(22, 58, 99, 0.35) 0%, rgba(11, 19, 38, 0.85) 100%) !important;
+  border-color: rgba(34, 211, 238, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+

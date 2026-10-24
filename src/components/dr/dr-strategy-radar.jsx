@@ -317,7 +317,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     let mounted=true;
     const loadFeed=async()=>{
       try {
-        const data=await requestStrategyFeed({signal:controller.signal});
+        const data=await requestStrategyFeed({market:currentMarket,signal:controller.signal});
         if(mounted){setLiveData(data);setFeedError('');}
       } catch(error){if(mounted)setFeedError(error.message);}
     };
@@ -388,7 +388,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     if (currentMarket !== 'dr' || !scoredDRs.length) return null;
     const premiumCount = scoredDRs.filter((d) => d.bridge?.status === 'PREMIUM' || ((d.bridge?.diffPct ?? 0) > 1.5)).length;
     const discountCount = scoredDRs.filter((d) => d.bridge?.status === 'DISCOUNT' || ((d.bridge?.diffPct ?? 0) < -1.5)).length;
-    const fairCount = scoredDRs.filter((d) => d.bridge?.status === 'FAIR' || (Math.abs(d.bridge?.diffPct ?? 0) <= 1.5)).length;
+    const fairCount = scoredDRs.filter((d) => d.bridge?.status === 'FAIR' || (Math.abs(d.bridge?.diffPct ?? Infinity) <= 1.5)).length;
     return { premiumCount, discountCount, fairCount, total: scoredDRs.length };
   }, [currentMarket, scoredDRs]);
 
@@ -578,7 +578,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     setIsScanning(true);setScanType(targetType);setScanProgress(20);
     setScanStep('กำลังอ่านผล Radar ล่าสุดจากเซิร์ฟเวอร์ · อัปเดตรอบละ 10 นาที…');
     try {
-      const fresh=await requestStrategyFeed({refresh:true,signal:AbortSignal.timeout(60000)});
+      const fresh=await requestStrategyFeed({market:currentMarket,refresh:true,signal:AbortSignal.timeout(60000)});
       setLiveData(fresh);setFeedError('');
       const coverage=fresh.coverage[targetType];
       if(!coverage.available)throw Error('ยังไม่มีแท่งปิดสำหรับตลาดนี้ กรุณาลองใหม่เมื่อแหล่งข้อมูลพร้อม');
@@ -1338,7 +1338,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     แท่งปิดรายวัน
                   </span>
-                  <span className={styles.statusPillTg}>Voice Alert: Ready</span>
+                  <span className={styles.statusPillTg}>Voice Alert: {voiceEnabled ? ({idle:'รอทดสอบเสียง',starting:'กำลังเริ่ม',speaking:'กำลังพูด',unsupported:'ไม่รองรับ',blocked:'ถูกบล็อก',failed:'เล่นไม่สำเร็จ'}[speechState] ?? 'รอตรวจสอบ') : 'ปิดเสียง'}</span>
                 </div>
                 <div className={styles.sampleQuoteText}>
                   {liveData?.thaiSampleText ? (

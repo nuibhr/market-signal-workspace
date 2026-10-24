@@ -3,6 +3,7 @@ import { createSettradeClient } from '../market-data/settrade.mjs';
 import { getYahooHistory } from '../market-data/yahoo-history.mjs';
 import { newYorkParts } from '../market-data/fmp-us.mjs';
 import { candleClosedAt } from '../market-data/delayed-candles.mjs';
+import {expectedThaiDailySession} from '../market-data/thai-feed-meta.mjs';
 const fail = code => Object.assign(new Error(code), { code });
 let nextRequest = 0;
 const native = createSettradeClient({ fetcher: async (url, options) => {
@@ -68,6 +69,11 @@ export async function loadSignalFrame(asset, frame, { now = Date.now(), fresh = 
     }
     const bars = series.bars.filter(bar => candleClosedAt(bar, frame, asset.id) + 900000 <= now);
     if (!bars.length) throw fail('NO_AVAILABLE_CLOSED_BARS');
+    if(asset.id==='thai'&&frame==='1d'){
+      const expectedDay=expectedThaiDailySession(now-900000);
+      if(!expectedDay)throw fail('CALENDAR_NOT_VERIFIED');
+      if(bars.at(-1).time!==expectedDay)throw fail('STALE_DAILY_BARS');
+    }
     const result = { ...series, bars, source:series.source, quote:null, minimumDelayMinutes:15,
       use:'forward-reference-signals', dataAsOf:new Date(candleClosedAt(bars.at(-1),frame,asset.id)).toISOString() };
     cache.set(key, { until:now+(frame==='1d'?3600000:frame==='4h'?180000:45000), series:result });

@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useDeskResource } from '../use-desk-resource.jsx';
+const money=(value,digits=2)=>Number.isFinite(value)?value.toFixed(digits):'—';
 import styles from './us-stage2-desk.module.css';
 import { US_STOCKS, US_ETFS } from '../../markets/catalog.mjs';
 
@@ -497,6 +499,18 @@ export default function UsStage2Desk({
 
   // ── AI Stage Health Diagnostic State ──
   const [selectedDiagTicker, setSelectedDiagTicker] = useState('NVDA');
+  const [feedPage,setFeedPage]=useState(1);
+  const feedView=['focus','rotation','screener'].includes(activeTab)?activeTab:'focus';
+  const feed=useDeskResource('/api/us/desk?'+new URLSearchParams({view:feedView,q:searchQuery,page:String(feedPage)}));
+  const diagnostic=useDeskResource('/api/us/desk?'+new URLSearchParams({view:'diagnostic',symbol:selectedDiagTicker}),{enabled:activeTab==='focus'});
+  const fxFeed=useDeskResource('/api/us/desk?view=fx',{interval:300000});
+  const US_STAGE2_FOCUS_PICKS=(feed.data?.rows||[]).filter(row=>Number.isFinite(row.price)).map(row=>({...row,stage:row.stageLabel,rvol:row.rvol??'—',rsRating:row.rsRating??'—'}));
+  const THEMATIC_ETF_DATA=(feed.data?.rows||[]).filter(row=>Number.isFinite(row.price));
+  const emptyDiag=symbol=>({symbol,name:symbol,stage:null,healthScore:'—',stageLabel:'รอข้อมูล',trendSummary:'กำลังอ่านข้อมูลจากผู้ให้บริการ',actionPlan:'รอแท่งราคาครบก่อนประเมิน',caution:'ยังไม่มีผลประเมิน',rsRating:'—'});
+  const US_AI_STAGE_DIAGNOSTICS=Object.fromEntries(['NVDA','PLTR','AAPL','TSLA','INTC','NKE','BA','BABA','SMCI'].map(s=>[s,diagnostic.data?.rows?.find(r=>r.symbol===s)||emptyDiag(s)]));
+  const sizingLoaded=useRef(null);
+  useEffect(()=>setFeedPage(1),[searchQuery]);
+
 
   // ── Market Hours Clock Logic (Pre, Regular, Post) ──
   const [marketSession, setMarketSession] = useState({
@@ -618,6 +632,14 @@ export default function UsStage2Desk({
   const [sizingSelectedTicker, setSizingSelectedTicker] = useState('NVDA');
   const [sizingEntry, setSizingEntry] = useState(138.50);
   const [sizingStop, setSizingStop] = useState(128.00);
+  useEffect(()=>{
+    const pick=feed.data?.rows?.find(p=>p.symbol===sizingSelectedTicker);
+    if(pick?.entry>0&&pick.stopLoss>0&&sizingLoaded.current!==sizingSelectedTicker){
+      sizingLoaded.current=sizingSelectedTicker;setSizingEntry(pick.entry);setSizingStop(pick.stopLoss);
+    }
+  },[sizingSelectedTicker,feed.data]);
+  useEffect(()=>{if(fxFeed.data?.price>0)setCurrentFxRate(fxFeed.data.price);},[fxFeed.data]);
+
 
   const handleSelectSizingTicker = (ticker) => {
     setSizingSelectedTicker(ticker.symbol);
@@ -711,12 +733,12 @@ export default function UsStage2Desk({
     return US_STAGE2_FOCUS_PICKS.filter(pick => {
       if (focusFilter === 'top3') return pick.topPick;
       if (focusFilter === 'mag7') return ['NVDA', 'MSFT', 'AAPL', 'META', 'AMZN', 'GOOGL', 'TSLA'].includes(pick.symbol);
-      if (focusFilter === 'rs') return pick.rsRating >= 90;
+      if (focusFilter === 'rs') return Number(pick.rsRating) > 0;
       if (focusFilter === 'volume') return pick.rvol >= 1.5;
       if (focusFilter === 'favorites') return favorites.includes(pick.symbol);
       return true;
     });
-  }, [focusFilter, favorites]);
+  }, [focusFilter, favorites, feed.data]);
 
   // ── Screener Table Filtered ──
   const filteredUniverse = useMemo(() => {
@@ -726,7 +748,7 @@ export default function UsStage2Desk({
       const matchSector = sectorFilter === 'all' || item.sector.toLowerCase().includes(sectorFilter.toLowerCase());
       return matchQuery && matchSector;
     });
-  }, [searchQuery, sectorFilter]);
+  }, [searchQuery, sectorFilter, feed.data]);
 
   // Scroll to chart trigger & switch tab
   const handleSelectAsset = (item) => {
@@ -776,10 +798,15 @@ export default function UsStage2Desk({
   };
 
   const currentDiagnostic = US_AI_STAGE_DIAGNOSTICS[selectedDiagTicker] || US_AI_STAGE_DIAGNOSTICS.NVDA;
-  const focusedPick = US_STAGE2_FOCUS_PICKS.find(p => p.symbol === sizingSelectedTicker) || US_STAGE2_FOCUS_PICKS[0];
+  const focusedPick = US_STAGE2_FOCUS_PICKS.find(p => p.symbol === sizingSelectedTicker) || {symbol:sizingSelectedTicker,entry:null,stopLoss:null,tp1:null,tp1Reward:null,riskPercent:null};
 
   return (
     <section id="us-stage2-command-desk" className={styles.desk} aria-label="US 500 Equities and Thematic ETFs Stage 2 Command Desk">
+      <div className={styles.filterStrip} role="status">
+        <span>{feed.busy?'กำลังโหลดราคาและผลคำนวณ…':feed.error?'โหลดข้อมูลไม่ได้: '+feed.error:'ข้อมูลแท่งปิด D1 · '+(feed.data?.rows?.find(r=>r.observedAt)?.observedAt||'รอข้อมูล')}
+        </span><button type="button" onClick={()=>{feed.reload();diagnostic.reload();fxFeed.reload();}}>โหลดข้อมูลล่าสุด</button>
+      </div>
+      {activeTab==='screener'&&<div className={styles.filterStrip}><button type="button" disabled={feedPage<=1||feed.busy} onClick={()=>setFeedPage(v=>v-1)}>ก่อนหน้า</button><span>หน้า {feedPage}/{feed.data?.pages||1} · รายชื่อทั้งหมด {feed.data?.universe||US_STOCKS.length}</span><button type="button" disabled={feed.busy||feedPage>=(feed.data?.pages||1)} onClick={()=>setFeedPage(v=>v+1)}>ถัดไป</button></div>}
       {/* ─── 1. Header Bar with Market Session Badge ─── */}
       <div className={styles.header}>
         <div className={styles.brand}>
@@ -792,8 +819,8 @@ export default function UsStage2Desk({
             <span className={styles.titleBadge}>EOD SCREENER &amp; 2R RISK LAB</span>
           </h2>
           <div className={styles.headerMetricsRow}>
-            <span className={styles.metricPill}>48 Stage 2 Leaders</span>
-            <span className={styles.metricPill}>312 Filtered Out</span>
+            <span className={styles.metricPill}>ผ่านเกณฑ์ {feed.data?.rows?.filter(r=>r.topPick).length??0} / {feed.data?.rows?.length??0} ที่โหลด</span>
+            <span className={styles.metricPill}>Universe {feed.data?.universe??US_STOCKS.length}</span>
             <span className={styles.metricPill}>Risk ≤ 8%</span>
             <span className={styles.metricPill}>Dime! 0.0001 Shares</span>
             <span className={styles.metricPill}>Overnight GTC Ready</span>
@@ -808,7 +835,7 @@ export default function UsStage2Desk({
             </div>
             <div className={styles.commandBarFxChip}>
               <span>USD/THB:</span>
-              <b>{currentFxRate.toFixed(2)} ฿</b>
+              <b>{fxFeed.data?.price>0?money(fxFeed.data.price)+' ฿':'รอราคา'}</b>
               <span style={{ fontSize: '10px', color: '#34d399', marginLeft: '4px' }}>• Dime! Ready</span>
             </div>
           </div>
@@ -822,11 +849,11 @@ export default function UsStage2Desk({
         <div className={styles.guardContent}>
           <div className={styles.guardHeaderRow}>
             <strong>ระบบเกราะคุ้มครองเงินต้น (Wall Street Capital Protection Guard)</strong>
-            <span className={styles.guardPillBadge}>คัดทิ้งขาลง Stage 4 แล้ว 312 ตัว</span>
+            <span className={styles.guardPillBadge}>Stage 4 จากข้อมูลที่โหลด: {feed.data?.rows?.filter(r=>r.stage===4).length??0} ตัว</span>
             <span className={styles.guardPillBadgeGreen}>ล็อกความเสี่ยง ≤ 8%</span>
           </div>
           <p>
-            กรองเฉพาะ <b>ผู้นำ Stage 2 เกรด A+ (48 ตัว)</b> ที่มี Relative Strength &gt; 85 พร้อมจุดตัดขาดทุน Stop Loss ล็อกไว้ไม่เกิน 8% เสมอ
+            กรองเฉพาะ <b>ผู้นำ Stage 2 จากข้อมูลจริง</b> ที่มี Relative Strength &gt; 85 พร้อมจุดตัดขาดทุน Stop Loss ล็อกไว้ไม่เกิน 8% เสมอ
           </p>
         </div>
       </div>
@@ -939,7 +966,7 @@ export default function UsStage2Desk({
                 className={`${styles.filterPill} ${focusFilter === 'rs' ? styles.filterPillActive : ''}`}
                 onClick={() => setFocusFilter('rs')}
               >
-                💎 High Relative Strength (RS &gt; 90)
+                💎 High Relative Strength (RS เทียบ SPY &gt; 0%)
               </button>
               <button
                 type="button"
@@ -997,9 +1024,9 @@ export default function UsStage2Desk({
                   </div>
 
                   <div className={styles.cardPriceGroup}>
-                    <span className={styles.cardPrice}>${item.price.toFixed(2)}</span>
+                    <span className={styles.cardPrice}>${money(item.price,2)}</span>
                     <span className={`${styles.cardChange} ${item.isUp ? styles.changeUp : styles.changeDown}`}>
-                      {item.isUp ? '+' : ''}{item.changePercent.toFixed(2)}%
+                      {item.isUp ? '+' : ''}{money(item.changePercent,2)}%
                     </span>
                   </div>
                 </div>
@@ -1015,27 +1042,27 @@ export default function UsStage2Desk({
                 <div className={styles.blueprintGrid}>
                   <div className={styles.blueprintCol}>
                     <span className={styles.blueprintLabel}>ENTRY</span>
-                    <span className={styles.blueprintVal}>${item.entry.toFixed(2)}</span>
+                    <span className={styles.blueprintVal}>${money(item.entry,2)}</span>
                     <span className={styles.blueprintSub}>จุดเข้าเกณฑ์</span>
                   </div>
                   <div className={styles.blueprintCol}>
                     <span className={styles.blueprintLabel}>STOP LOSS</span>
                     <span className={`${styles.blueprintVal} ${styles.blueprintValRisk}`}>
-                      ${item.stopLoss.toFixed(2)}
+                      ${money(item.stopLoss,2)}
                     </span>
-                    <span className={styles.blueprintSub}>-{item.riskPercent.toFixed(1)}% (≤8%)</span>
+                    <span className={styles.blueprintSub}>-{money(item.riskPercent,1)}% (≤8%)</span>
                   </div>
                   <div className={styles.blueprintCol}>
                     <span className={styles.blueprintLabel}>TARGET 1 (2R)</span>
                     <span className={`${styles.blueprintVal} ${styles.blueprintValReward}`}>
-                      ${item.tp1.toFixed(2)}
+                      ${money(item.tp1,2)}
                     </span>
-                    <span className={styles.blueprintSub}>+${item.tp1Reward.toFixed(1)} (+2R)</span>
+                    <span className={styles.blueprintSub}>+${money(item.tp1Reward,1)} (+2R)</span>
                   </div>
                   <div className={styles.blueprintCol}>
                     <span className={styles.blueprintLabel}>TARGET 2 (3R+)</span>
                     <span className={`${styles.blueprintVal} ${styles.blueprintValReward}`}>
-                      ${item.tp2.toFixed(2)}
+                      ${money(item.tp2,2)}
                     </span>
                     <span className={styles.blueprintSub}>Runner Target</span>
                   </div>
@@ -1079,22 +1106,22 @@ export default function UsStage2Desk({
               <div className={styles.gtcStepBox}>
                 <div className={styles.gtcStepNum}>คำสั่งที่ 1 (เข้าซื้อ)</div>
                 <strong>BUY LIMIT (GTC)</strong>
-                <span className={styles.gtcStepPrice}>${focusedPick.entry.toFixed(2)}</span>
+                <span className={styles.gtcStepPrice}>${money(focusedPick.entry,2)}</span>
                 <p>ซื้ออัตโนมัติเมื่อราคาแตะ Breakout Pivot ที่กำหนด</p>
               </div>
 
               <div className={styles.gtcStepBox}>
                 <div className={styles.gtcStepNum} style={{ color: '#fb7185' }}>คำสั่งที่ 2 (กันขาดทุน)</div>
                 <strong style={{ color: '#fb7185' }}>STOP LOSS (GTC)</strong>
-                <span className={styles.gtcStepPrice} style={{ color: '#fb7185' }}>${focusedPick.stopLoss.toFixed(2)}</span>
-                <p>ตัดขาดทุนอัตโนมัติ -{focusedPick.riskPercent.toFixed(1)}% (ล็อกความเสี่ยง ≤ 8%)</p>
+                <span className={styles.gtcStepPrice} style={{ color: '#fb7185' }}>${money(focusedPick.stopLoss,2)}</span>
+                <p>ตัดขาดทุนอัตโนมัติ -{money(focusedPick.riskPercent,1)}% (ล็อกความเสี่ยง ≤ 8%)</p>
               </div>
 
               <div className={styles.gtcStepBox}>
                 <div className={styles.gtcStepNum} style={{ color: '#34d399' }}>คำสั่งที่ 3 (ล็อกกำไร 2R)</div>
                 <strong style={{ color: '#34d399' }}>TAKE PROFIT (GTC LIMIT)</strong>
-                <span className={styles.gtcStepPrice} style={{ color: '#34d399' }}>${focusedPick.tp1.toFixed(2)}</span>
-                <p>เป้าหมาย 2R (+${focusedPick.tp1Reward.toFixed(1)}) แบ่งขาย 50% ล็อกกำไร</p>
+                <span className={styles.gtcStepPrice} style={{ color: '#34d399' }}>${money(focusedPick.tp1,2)}</span>
+                <p>เป้าหมาย 2R (+${money(focusedPick.tp1Reward,1)}) แบ่งขาย 50% ล็อกกำไร</p>
               </div>
             </div>
 
@@ -1106,6 +1133,7 @@ export default function UsStage2Desk({
               <button
                 type="button"
                 className={styles.gtcCopyBtn}
+                disabled={!focusedPick.entry||!focusedPick.stopLoss||!focusedPick.tp1}
                 onClick={() => handleCopyGtcPlaybook(focusedPick.symbol, focusedPick.entry, focusedPick.stopLoss, focusedPick.tp1)}
               >
                 {copiedGtc ? '✓ คัดลอกสเปก GTC สำเร็จ!' : '📋 คัดลอกพารามิเตอร์คำสั่ง GTC'}
@@ -1122,10 +1150,10 @@ export default function UsStage2Desk({
             <div className={styles.rotationExplainerLeft}>
               <h3>
                 <span>🌐</span>
-                <span>Thematic ETF Sector Rotation Matrix (Institutional Money Flow)</span>
+                <span>Thematic ETF Sector Rotation Matrix</span>
               </h3>
               <p>
-                Fund Flow สถาบันวอลล์สตรีท: ชี้ชัดกลุ่ม Leading (เงินไหลเข้า) vs Lagging (เงินไหลออก) เกาะเทรนด์ไปกับเจ้ามือ
+                แสดง Stage และราคา ETF จากแท่ง D1 จริง · Fund Flow จะแสดงเมื่อผู้ให้บริการมีข้อมูล
               </p>
             </div>
             <div className={styles.headerMetricsRow} style={{ marginTop: 0 }}>
@@ -1293,7 +1321,7 @@ export default function UsStage2Desk({
               {/* Slider 1: Current FX Rate */}
               <div className={styles.fxInputRow}>
                 <div className={styles.fxInputLabel}>
-                  <span>อัตราแลกเปลี่ยนปัจจุบัน (Current Spot USD/THB):</span>
+                  <span>{fxFeed.data?.price>0 && currentFxRate===fxFeed.data.price ? 'อัตราแลกเปลี่ยนจากฟีด (USD/THB):' : 'สมมติฐานค่าเงินที่ปรับได้ (USD/THB):'}</span>
                   <span className={styles.fxInputValue}>{currentFxRate.toFixed(2)} บาท</span>
                 </div>
                 <input
@@ -1498,6 +1526,8 @@ export default function UsStage2Desk({
                   <span>{sizingMode === 'fractional' ? 'Dime! & InnovestX Fractional Sizing Lab' : 'ตั้งค่างบประมาณและการควบคุมความเสี่ยง (Risk Budgeting)'}</span>
                 </h3>
               </div>
+
+              <p style={{ color: '#94a3b8', fontSize: '12px' }}>คำนวณจากค่าที่กรอก · ราคาเริ่มต้นเป็นตัวอย่างจนกว่าจะโหลดแผนที่มีสิทธิได้</p>
 
               {/* Ticker Presets */}
               <div>
@@ -1970,10 +2000,10 @@ export default function UsStage2Desk({
                     </td>
                     <td>{row.sector}</td>
                     <td className={styles.tdRight}>
-                      <b>${row.price.toFixed(2)}</b>
+                      <b>${money(row.price,2)}</b>
                     </td>
                     <td className={`${styles.tdRight} ${row.isUp ? styles.changeUp : styles.changeDown}`}>
-                      {row.isUp ? '+' : ''}{row.changePercent.toFixed(2)}%
+                      {row.isUp ? '+' : ''}{money(row.changePercent,2)}%
                     </td>
                     <td className={styles.tdCenter}>
                       <span className={styles.templateBadge}>✓ {row.pattern}</span>
@@ -1982,9 +2012,9 @@ export default function UsStage2Desk({
                       <span className={styles.rsBadge}>RS {row.rsRating}</span>
                     </td>
                     <td className={styles.tdRight}>{row.rvol}x</td>
-                    <td className={styles.tdRight}>${row.entry.toFixed(2)}</td>
-                    <td className={`${styles.tdRight} ${styles.changeDown}`}>${row.stopLoss.toFixed(2)}</td>
-                    <td className={`${styles.tdRight} ${styles.changeUp}`}>${row.tp1.toFixed(2)}</td>
+                    <td className={styles.tdRight}>${money(row.entry,2)}</td>
+                    <td className={`${styles.tdRight} ${styles.changeDown}`}>${money(row.stopLoss,2)}</td>
+                    <td className={`${styles.tdRight} ${styles.changeUp}`}>${money(row.tp1,2)}</td>
                     <td className={styles.tdCenter}>
                       <button
                         type="button"

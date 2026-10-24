@@ -4,9 +4,12 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  ArrowRight,
   ArrowUpRight,
   Calculator,
+  CandlestickChart,
   CheckCircle2,
+  Compass,
   DollarSign,
   HelpCircle,
   Percent,
@@ -23,6 +26,7 @@ import { calculatePositionSize } from '../../risk/calculator.mjs';
 import MobileDock from '../mobile-dock.jsx';
 import SoundMonitorPill from '../monitor/sound-monitor-pill.jsx';
 import ProToolsNav from '../pro-tools-nav.jsx';
+import MarketNavigation from '../market-navigation.jsx';
 import '../../app/landing.css';
 import '../../app/market-pages.css';
 
@@ -33,6 +37,14 @@ const PRESET_MARKETS = [
   { id: 'gold', label: 'Gold (XAU/USD)', currency: 'USD', defaultEntry: 2650.0, defaultSl: 2642.0, step: 1.0 },
   { id: 'forex', label: 'Forex (EUR/USD)', currency: 'USD', defaultEntry: 1.085, defaultSl: 1.082, step: 0.0005 },
 ];
+
+const MARKET_TERMINAL_MAP = {
+  thai: { href: '/thai', name: 'หุ้นไทย (SET)', chartHref: '/thai#chart-panel', scannerHref: '/thai#section-auto-pick' },
+  tfex: { href: '/tfex', name: 'TFEX S50 Series', chartHref: '/tfex#chart-panel', scannerHref: '/tfex' },
+  us: { href: '/us', name: 'หุ้นสหรัฐฯ (US 500)', chartHref: '/us#chart-panel', scannerHref: '/us' },
+  gold: { href: '/forex', name: 'ทองคำ XAU/USD (Forex Desk)', chartHref: '/forex#forex-content', scannerHref: '/forex' },
+  forex: { href: '/forex', name: 'Forex MT5 Desk', chartHref: '/forex#forex-content', scannerHref: '/forex' },
+};
 
 export default function RiskPage() {
   const [market, setMarket] = useState('thai');
@@ -72,16 +84,23 @@ export default function RiskPage() {
     });
   }, [market, capital, riskPercent, side, entryPrice, stopLossPrice, targetMultiple]);
 
+  const terminalInfo = MARKET_TERMINAL_MAP[market] || MARKET_TERMINAL_MAP.thai;
+
   return (
     <div className="ng-market-page">
       <header className="ng-market-header">
         <div className="ng-market-header-inner">
           <div className="ng-brand-area">
-            <Link href="/#pro-analysis-suite" className="ng-back-link" title="กลับสู่หน้ารวมเครื่องมือสถาบัน">
+            <Link
+              href={terminalInfo.href}
+              className="ng-back-link"
+              title={`กลับสู่หน้ากระดานเทรด ${terminalInfo.name}`}
+            >
               <ArrowLeft size={18} />
+              <span className="ng-back-text">← กลับหน้ากระดาน</span>
             </Link>
             <div>
-              <span className="ng-page-badge">RISK &amp; POSITION SUITE</span>
+              <span className="ng-page-badge">PRO ANALYSIS SUITE · RISK &amp; POSITION</span>
               <h1 className="ng-page-title">เครื่องมือบริหารความเสี่ยง &amp; คำนวณขนาดไม้</h1>
             </div>
           </div>
@@ -92,12 +111,99 @@ export default function RiskPage() {
             </Link>
           </div>
         </div>
+
+        {/* Universal Top Navigation across all markets and tools */}
+        <div className="ng-header-nav-strip" style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+          <MarketNavigation current="risk" />
+        </div>
       </header>
 
       {/* Pro Suite Quick Switcher Bar */}
       <ProToolsNav current="risk" />
 
       <main className="ng-market-content">
+        {/* Market Link Bridge Card */}
+        <div
+          className="ng-market-bridge-card"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '12px 18px',
+            marginBottom: '16px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%)',
+            border: '1px solid rgba(2, 132, 199, 0.25)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: '800',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                background: '#0284c7',
+                color: '#ffffff',
+              }}
+            >
+              เชื่อมโยงตลาด
+            </span>
+            <div>
+              <strong style={{ fontSize: '13px', color: '#f8fafc' }}>
+                กำลังวางแผนความเสี่ยงสำหรับ {currentPreset.label}
+              </strong>
+              <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                คำนวณขนาดไม้เสร็จแล้ว สามารถกดสลับไปดูกราฟแท่งเทียนหรือสแกนเนอร์ในหน้าตลาดนี้ได้ทันที
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Link
+              href={terminalInfo.chartHref}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 12px',
+                borderRadius: '8px',
+                background: 'rgba(2, 132, 199, 0.18)',
+                color: '#38bdf8',
+                border: '1px solid rgba(2, 132, 199, 0.4)',
+                fontSize: '12px',
+                fontWeight: '700',
+                textDecoration: 'none',
+              }}
+            >
+              <CandlestickChart size={14} />
+              <span>เปิดดูกราฟ {terminalInfo.name}</span>
+            </Link>
+            <Link
+              href={terminalInfo.scannerHref}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 12px',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#e2e8f0',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                fontSize: '12px',
+                fontWeight: '600',
+                textDecoration: 'none',
+              }}
+            >
+              <Compass size={14} />
+              <span>สแกนเนอร์ {terminalInfo.name}</span>
+            </Link>
+          </div>
+        </div>
+
         {/* Market Selector Tabs */}
         <div className="ng-market-tabs" role="tablist" aria-label="เลือกตลาด">
           {PRESET_MARKETS.map((m) => (
@@ -335,9 +441,18 @@ export default function RiskPage() {
               <span className="ng-calc-note">
                 * เครื่องมือช่วยคำนวณเชิงคณิตศาสตร์ ไม่มีการส่งคำสั่งซื้อขายจริง โปรดตรวจสภาพคล่องในตลาดจริงก่อนส่งออเดอร์
               </span>
-              <Link href="/daytrade" className="ng-action-link">
-                ไปยังหน้า Daytrade Scanner <ArrowUpRight size={14} />
-              </Link>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <Link
+                  href={terminalInfo.chartHref}
+                  className="ng-action-link"
+                  style={{ background: 'rgba(2, 132, 199, 0.15)', color: '#38bdf8', borderColor: 'rgba(2, 132, 199, 0.3)' }}
+                >
+                  🚀 ดูกราฟจริง {terminalInfo.name} <ArrowUpRight size={14} />
+                </Link>
+                <Link href="/daytrade" className="ng-action-link">
+                  Daytrade Desk <ArrowUpRight size={14} />
+                </Link>
+              </div>
             </div>
           </section>
         </div>

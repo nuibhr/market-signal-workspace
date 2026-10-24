@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import {readTelegramSettings} from '../forex/telegram-settings.mjs';
 import {
   Send,
   Bot,
@@ -88,9 +89,11 @@ const ANNOUNCEMENT_TEMPLATES = [
 ];
 
 export default function AdminTelegramVip() {
+  const [telegramConfig,setTelegramConfig]=useState(null);
   const [activeTab, setActiveTab] = useState('signals'); // 'signals' | 'announcements' | 'logs'
   const [botStatus, setBotStatus] = useState({ configured: false, loading: true });
   const [selectedSignal, setSelectedSignal] = useState(PRESET_SIGNALS[0]);
+  const [pricesReviewed,setPricesReviewed]=useState(false);
   const [stage, setStage] = useState('ENTRY'); // 'ENTRY' | 'LOCK_PROFIT' | 'TP1' | 'TP2'
   
   // Custom Announcement State
@@ -100,39 +103,28 @@ export default function AdminTelegramVip() {
   // Dispatching state
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState(null);
-  const [historyLogs, setHistoryLogs] = useState([
-    {
-      id: 1,
-      time: '14:30 น.',
-      type: 'EA Signal',
-      target: 'XAUUSD BUY (ENTRY)',
-      status: 'SENT',
-      recipient: 'Telegram VIP Channel',
-    },
-    {
-      id: 2,
-      time: '11:00 น.',
-      type: 'Announcement',
-      target: 'Morning Market Briefing',
-      status: 'SENT',
-      recipient: 'Telegram VIP Channel',
-    },
-  ]);
+  const [historyLogs, setHistoryLogs] = useState([]);
 
   useEffect(() => {
-    fetchBotStatus();
+    const cfg=readTelegramSettings(window.localStorage);setTelegramConfig(cfg);fetchBotStatus(cfg);
   }, []);
 
-  async function fetchBotStatus() {
+  async function fetchBotStatus(override=null) {
     try {
       setBotStatus(prev => ({ ...prev, loading: true }));
       const res = await fetch('/api/alerts/telegram');
       const data = await res.json();
+      if (!res.ok) throw Error(data.error || 'BOT_STATUS_UNAVAILABLE');
+      setHistoryLogs((data.history||[]).map(log=>({id:log.id,time:new Date(log.created_at).toLocaleTimeString('th-TH'),type:'Telegram',target:log.summary,status:log.status,recipient:'VIP · Message '+(log.message_id||'—')})));
+      const cfg=override?.token&&override?.chatId?override:telegramConfig;
+      let ownValid=false;
+      if(!data.configured&&cfg){const checked=await fetch('/api/alerts/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'verify',...cfg})});const verification=await checked.json();ownValid=checked.ok&&verification.ok;}
       setBotStatus({
-        configured: data.configured,
+        configured: data.configured||ownValid,
+        serverConfigured: data.configured,
         hasToken: data.hasToken,
         hasChatId: data.hasChatId,
-        chatIdMasked: data.chatIdMasked,
+        chatIdMasked: ownValid?cfg.chatId.slice(0,4)+'***':data.chatIdMasked,
         loading: false,
       });
     } catch {
@@ -147,12 +139,15 @@ export default function AdminTelegramVip() {
 
   async function handleDispatchSignal() {
     if (sending) return;
+    if(!pricesReviewed){setToast({type:'err',msg:'กรุณาปรับระดับราคาตามข้อมูลจริงและยืนยันก่อนส่ง'});return;}
     setSending(true);
     setToast(null);
 
     try {
       const payload = {
+        ...(!botStatus.serverConfigured&&telegramConfig?telegramConfig:{}),
         action: 'ea-signal',
+        operationId: crypto.randomUUID(),
         eaSignal: {
           ...selectedSignal,
           stage,
@@ -170,17 +165,7 @@ export default function AdminTelegramVip() {
 
       if (result.ok) {
         setToast({ type: 'ok', msg: `🚀 ยิงสัญญาณ ${selectedSignal.symbol} (${stage}) เข้า Telegram VIP สำเร็จเรียบร้อย!` });
-        setHistoryLogs(prev => [
-          {
-            id: Date.now(),
-            time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
-            type: 'EA Signal',
-            target: `${selectedSignal.symbol} ${selectedSignal.side} (${stage})`,
-            status: 'SENT',
-            recipient: 'Telegram VIP Channel',
-          },
-          ...prev,
-        ]);
+        await fetchBotStatus();
       } else {
         setToast({ type: 'err', msg: result.error || 'เกิดข้อผิดพลาดในการส่ง' });
       }
@@ -198,7 +183,9 @@ export default function AdminTelegramVip() {
 
     try {
       const payload = {
+        ...(!botStatus.serverConfigured&&telegramConfig?telegramConfig:{}),
         action: 'announcement',
+        operationId: crypto.randomUUID(),
         title: announcementTitle,
         message: announcementBody,
         author: 'ทีมงาน Nugaom AI VIP',
@@ -214,17 +201,7 @@ export default function AdminTelegramVip() {
 
       if (result.ok) {
         setToast({ type: 'ok', msg: '📢 บรอดแคสต์ประกาศเข้า Telegram VIP สำเร็จเรียบร้อย!' });
-        setHistoryLogs(prev => [
-          {
-            id: Date.now(),
-            time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.',
-            type: 'Announcement',
-            target: announcementTitle,
-            status: 'SENT',
-            recipient: 'Telegram VIP Channel',
-          },
-          ...prev,
-        ]);
+        await fetchBotStatus();
       } else {
         setToast({ type: 'err', msg: result.error || 'เกิดข้อผิดพลาดในการส่ง' });
       }
@@ -250,7 +227,7 @@ export default function AdminTelegramVip() {
             <span>Nugaom Signal Bot</span>
           </div>
           <span className={styles.hudDesc}>
-            {botStatus.configured ? `เชื่อมต่อสำเร็จ · ปลายทาง ${botStatus.chatIdMasked || 'VIP Channel'}` : 'พร้อมใช้งาน (Env Defaults Active)'}
+            {botStatus.configured ? `เชื่อมต่อสำเร็จ · ปลายทาง ${botStatus.chatIdMasked || 'VIP Channel'}` : 'ยังไม่พร้อม · ตรวจ Bot Token / สิทธิ์ปลายทาง'}
           </span>
         </div>
 
@@ -261,10 +238,10 @@ export default function AdminTelegramVip() {
             </span>
           </div>
           <div className={styles.hudValue}>
-            <span>0 บาท · ฟรีไม่จำกัด</span>
+            <span>Telegram Bot API</span>
           </div>
           <span className={styles.hudDesc}>
-            Telegram ไม่คิดค่าธรรมเนียมรายเดือน ส่งสมาชิกได้หลักหมื่นคน
+            ตรวจผลส่งจริงจาก Message ID · มีข้อจำกัดอัตราการส่ง
           </span>
         </div>
 
@@ -275,7 +252,7 @@ export default function AdminTelegramVip() {
             </span>
           </div>
           <div className={styles.hudValue}>
-            <span>Active &amp; Ready</span>
+            <span>{botStatus.configured?'Active & Ready':'รอการตั้งค่า'}</span>
           </div>
           <span className={styles.hudDesc}>
             ก๊อปปี้เทรดใน 15 วินาที พร้อมแผนตัดขาดทุน &amp; ล็อคกำไร (+0.5R)
@@ -305,6 +282,11 @@ export default function AdminTelegramVip() {
         </button>
       </div>
 
+      {activeTab==='signals'&&<div className={styles.hudCard}>
+        <strong>ระดับราคาสำหรับส่งจริง</strong><p>พรีเซ็ตเป็นค่าตั้งต้น ปรับ Entry / SL / เป้าหมายตามข้อมูลปัจจุบันก่อนส่ง</p>
+        <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>{[['entry','Entry'],['stopLoss','Stop Loss'],['lockBuffer','Lock Profit'],['tp1','TP1'],['tp2','TP2']].map(([key,label])=><label key={key}>{label}<input type="number" min="0" step="any" value={selectedSignal[key]} onChange={e=>{setPricesReviewed(false);setSelectedSignal(v=>({...v,[key]:Number(e.target.value)}));}}/></label>)}</div>
+        <label><input type="checkbox" checked={pricesReviewed} onChange={e=>setPricesReviewed(e.target.checked)}/>ตรวจระดับราคาจากข้อมูลจริงแล้ว</label>
+      </div>}
       {/* Toast Alert */}
       {toast && (
         <div className={`${styles.statusToast} ${toast.type === 'ok' ? styles.statusToastOk : styles.statusToastErr}`}>
@@ -333,7 +315,7 @@ export default function AdminTelegramVip() {
               <div
                 key={sig.id}
                 className={`${styles.presetItem} ${selectedSignal.id === sig.id ? styles.presetItemSelected : ''}`}
-                onClick={() => setSelectedSignal(sig)}
+                onClick={() => {setSelectedSignal(sig);setPricesReviewed(false);}}
               >
                 <div className={styles.presetTop}>
                   <span className={styles.symbolBadge}>{sig.symbol}</span>

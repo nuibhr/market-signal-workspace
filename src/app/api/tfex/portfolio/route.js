@@ -1,3 +1,6 @@
+import {readBrokerPortfolio} from '../../../../market-data/broker-portfolio.mjs';
+import {currentMember,sameOrigin} from '../../../../membership/server.mjs';
+import {rateLimit,readJsonBody,requestErrorResponse} from '../../../../security/request-guard.mjs';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -31,20 +34,11 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  try {
-    let body = {};
-    try {
-      body = await request.json();
-    } catch {
-      body = {};
-    }
-    return handlePortfolioRequest(body);
-  } catch (error) {
-    return Response.json(
-      { success: false, error: 'SERVER_ERROR', message: error.message },
-      { status: 500, headers: NO_STORE }
-    );
-  }
+  if(!sameOrigin(request))return Response.json({success:false,error:'INVALID_ORIGIN'},{status:403,headers:NO_STORE});
+  const member=await currentMember();if(!member)return Response.json({success:false,error:'SIGN_IN_REQUIRED'},{status:401,headers:NO_STORE});
+  const limited=await rateLimit('broker-portfolio',member.id,10);if(limited)return limited;
+  let body;try{body=await readJsonBody(request,12288);}catch(e){return requestErrorResponse(e);}
+  return handlePortfolioRequest(body);
 }
 
 async function handlePortfolioRequest(body = {}) {
@@ -61,7 +55,7 @@ async function handlePortfolioRequest(body = {}) {
     const brokerName = BROKER_NAMES[brokerId] || `Broker Code ${brokerId}`;
 
     // ─── DEMO / SANDBOX / TESTNET MODE ───
-    if (isDemo || isSandbox || !appId || appId === 'DEMO_SANDBOX_KEY') {
+    if (isDemo || isSandbox) {
       const demoPositions = [
         {
           symbol: 'S50Z26',
@@ -124,72 +118,11 @@ async function handlePortfolioRequest(body = {}) {
       );
     }
 
-    // ─── LIVE SETTRADE OPEN API MODE ───
-    if (!appSecret || !appCode) {
-      return Response.json(
-        {
-          success: false,
-          error: 'MISSING_CREDENTIALS',
-          message: 'กรุณากรอก Broker ID, App ID, App Secret และ App Code ให้ครบถ้วน',
-        },
-        { status: 400, headers: NO_STORE }
-      );
-    }
-
-    // Return parsed live portfolio response
-    return Response.json(
-      {
-        success: true,
-        mode: 'LIVE',
-        accountNo: `TFEX-${appId.slice(0, 4)}***`,
-        brokerId,
-        brokerName,
-        asOf: new Date().toISOString(),
-        equity: 350000,
-        cashBalance: 350000,
-        excessEquity: 232750,
-        totalIm: 117250,
-        totalMm: 82075,
-        totalFm: 35175,
-        totalUnrealizedPl: 0,
-        marginUsagePct: '33.5',
-        positions: [
-          {
-            symbol: 'S50Z26',
-            product: 'S50',
-            productName: 'SET50 Index Futures',
-            side: 'LONG',
-            contracts: 5,
-            entryPrice: 894.20,
-            marketPrice: 894.20,
-            unrealizedPl: 0,
-            im: SPEC_DATA.S50.im * 5,
-            mm: SPEC_DATA.S50.mm * 5,
-            fm: SPEC_DATA.S50.fm * 5,
-            multiplier: SPEC_DATA.S50.multiplier,
-          },
-          {
-            symbol: 'GOM26',
-            product: 'GO',
-            productName: 'Gold Online Futures',
-            side: 'LONG',
-            contracts: 2,
-            entryPrice: 2650.0,
-            marketPrice: 2650.0,
-            unrealizedPl: 0,
-            im: SPEC_DATA.GO.im * 2,
-            mm: SPEC_DATA.GO.mm * 2,
-            fm: SPEC_DATA.GO.fm * 2,
-            multiplier: SPEC_DATA.GO.multiplier,
-          },
-        ],
-        notice: `ดึงข้อมูลพอร์ตจริงสำเร็จจาก ${brokerName} (Zero-Custody Stateless Stream)`,
-      },
-      { status: 200, headers: NO_STORE }
-    );
+    const live = await readBrokerPortfolio('TFEX', body);
+    return Response.json({...live,brokerName},{headers:NO_STORE});
   } catch (error) {
     return Response.json(
-      { success: false, error: 'SERVER_ERROR', message: error.message },
+      { success: false, error: 'SERVER_ERROR', message: 'อ่านพอร์ตไม่สำเร็จ ตรวจเลขบัญชีและสิทธิ API ของโบรกเกอร์' },
       { status: 500, headers: NO_STORE }
     );
   }

@@ -120,6 +120,7 @@ function quoteValue(raw, keys) {
 
 export function normalizeSettradeQuote(payload, symbol, receivedAt, market = 'SET') {
   const raw = unwrapQuote(payload);
+  if (raw.symbol != null && raw.symbol !== symbol) throw new SettradeDataError('INSTRUMENT_MISMATCH');
   const receivedPrice = numericValue(quoteValue(raw, ['last', 'lastPrice', 'last_price', 'lastPaid']));
   const price = receivedPrice !== null && receivedPrice > 0 ? receivedPrice : null;
   const observedAt = parseTimestamp(quoteValue(raw, ['time', 'timestamp', 'quoteTime', 'updatedAt', 'lastUpdateTime']));
@@ -135,6 +136,9 @@ export function normalizeSettradeQuote(payload, symbol, receivedAt, market = 'SE
     low: numericValue(quoteValue(raw, ['low', 'lowPrice', 'low_price'])),
     volume: numericValue(quoteValue(raw, ['totalVolume', 'volume', 'tradeVolume', 'total_volume'])),
     openInterest: numericValue(quoteValue(raw, ['openInterest', 'oi', 'open_interest'])),
+    bid: numericValue(quoteValue(raw, ['bid', 'bidPrice', 'bidPrice1', 'bid_price'])),
+    ask: numericValue(quoteValue(raw, ['ask', 'askPrice', 'offerPrice1', 'ask_price'])),
+    impliedVolatility: numericValue(quoteValue(raw, ['impliedVolatility', 'iv'])),
     marketStatus: typeof quoteValue(raw, ['marketStatus', 'market_status', 'tradingStatus']) === 'string'
       ? quoteValue(raw, ['marketStatus', 'market_status', 'tradingStatus']) : null,
     observedAt,

@@ -23,8 +23,18 @@ import { MACRO_EVENTS, filterMacroEvents } from '../../calendar/events.mjs';
 import MobileDock from '../mobile-dock.jsx';
 import SoundMonitorPill from '../monitor/sound-monitor-pill.jsx';
 import ProToolsNav from '../pro-tools-nav.jsx';
+import MarketNavigation from '../market-navigation.jsx';
 import '../../app/landing.css';
 import '../../app/market-pages.css';
+
+function getMarketLinkForTag(tag) {
+  const t = String(tag).toLowerCase();
+  if (t.includes('set') || t.includes('บาท') || t.includes('thb') || t.includes('หุ้นไทย')) return '/thai';
+  if (t.includes('tfex') || t.includes('s50')) return '/tfex';
+  if (t.includes('s&p') || t.includes('nasdaq') || t.includes('us') || t.includes('ดอลลาร์') || t.includes('หุ้นสหรัฐ')) return '/us';
+  if (t.includes('ทอง') || t.includes('xau') || t.includes('forex') || t.includes('eur')) return '/forex';
+  return '/thai';
+}
 
 export default function CalendarPage() {
   const [impactFilter, setImpactFilter] = useState('all');
@@ -40,11 +50,12 @@ export default function CalendarPage() {
       <header className="ng-market-header">
         <div className="ng-market-header-inner">
           <div className="ng-brand-area">
-            <Link href="/#pro-analysis-suite" className="ng-back-link" title="กลับสู่หน้ารวมเครื่องมือสถาบัน">
+            <Link href="/thai" className="ng-back-link" title="กลับสู่กระดานเทรดหลัก">
               <ArrowLeft size={18} />
+              <span className="ng-back-text">← กลับหน้ากระดาน</span>
             </Link>
             <div>
-              <span className="ng-page-badge">ECONOMIC INTELLIGENCE</span>
+              <span className="ng-page-badge">PRO ANALYSIS SUITE · ECONOMIC INTELLIGENCE</span>
               <h1 className="ng-page-title">ปฏิทินเศรษฐกิจ &amp; ผลกระทบรายตลาด</h1>
             </div>
           </div>
@@ -55,12 +66,127 @@ export default function CalendarPage() {
             </Link>
           </div>
         </div>
+
+        {/* Universal Top Navigation across all markets and tools */}
+        <div className="ng-header-nav-strip" style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+          <MarketNavigation current="calendar" />
+        </div>
       </header>
 
       {/* Pro Suite Quick Switcher Bar */}
       <ProToolsNav current="calendar" />
 
       <main className="ng-market-content">
+        {/* Quick Market Gateway */}
+        <div
+          className="ng-market-bridge-card"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '12px 18px',
+            marginBottom: '16px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%)',
+            border: '1px solid rgba(217, 119, 6, 0.25)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: '800',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                background: '#d97706',
+                color: '#ffffff',
+              }}
+            >
+              กระดานเทรดที่รับข่าว
+            </span>
+            <div style={{ fontSize: '12px', color: '#cbd5e1' }}>
+              คลิกสลับไปดูกระดานและสัญญาณตามตลาดที่สนใจ:
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <Link
+              href="/forex"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                background: 'rgba(168, 85, 247, 0.15)',
+                color: '#c084fc',
+                fontSize: '11px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                border: '1px solid rgba(168, 85, 247, 0.3)',
+              }}
+            >
+              🌍 Forex &amp; ทองคำ
+            </Link>
+            <Link
+              href="/thai"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#34d399',
+                fontSize: '11px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+              }}
+            >
+              🇹🇭 หุ้นไทย (SET)
+            </Link>
+            <Link
+              href="/tfex"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                background: 'rgba(234, 88, 12, 0.15)',
+                color: '#fb923c',
+                fontSize: '11px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                border: '1px solid rgba(234, 88, 12, 0.3)',
+              }}
+            >
+              ⚡ TFEX S50
+            </Link>
+            <Link
+              href="/us"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                background: 'rgba(56, 189, 248, 0.15)',
+                color: '#38bdf8',
+                fontSize: '11px',
+                fontWeight: '700',
+                textDecoration: 'none',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+              }}
+            >
+              🇺🇸 หุ้นสหรัฐฯ
+            </Link>
+          </div>
+        </div>
         {/* Top Intelligence Banner */}
         <div className="ng-cal-banner">
           <div className="ng-cal-banner-left">
@@ -215,14 +341,61 @@ export default function CalendarPage() {
                       </div>
 
                       <div className="ng-affected-strip">
-                        <span className="ng-affected-label">สินทรัพย์ที่ได้รับผลกระทบ:</span>
+                        <span className="ng-affected-label">สินทรัพย์และกระดานที่ได้รับผลกระทบ:</span>
                         <div className="ng-affected-tags">
                           {evt.affectedLabels.map((tag, idx) => (
-                            <span key={idx} className="ng-affected-tag">
-                              {tag}
-                            </span>
+                            <Link
+                              key={idx}
+                              href={getMarketLinkForTag(tag)}
+                              className="ng-affected-tag"
+                              style={{ textDecoration: 'none', cursor: 'pointer', transition: 'all 0.15s ease' }}
+                              title={`เปิดดูกระดานที่เกี่ยวข้องกับ ${tag}`}
+                            >
+                              <span>{tag}</span>
+                              <span style={{ fontSize: '10px', opacity: 0.7 }}>↗</span>
+                            </Link>
                           ))}
                         </div>
+                      </div>
+
+                      {/* Action Links into Trading Terminal */}
+                      <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <Link
+                          href={evt.market === 'thai' ? '/thai' : evt.market === 'tfex' ? '/tfex' : evt.market === 'us' ? '/us' : '/forex'}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 14px',
+                            borderRadius: '8px',
+                            background: 'rgba(217, 119, 6, 0.18)',
+                            color: '#fbbf24',
+                            border: '1px solid rgba(217, 119, 6, 0.4)',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            textDecoration: 'none',
+                          }}
+                        >
+                          <span>🚀 เปิดดูกระดาน {evt.market === 'thai' ? 'หุ้นไทย' : evt.market === 'tfex' ? 'TFEX S50' : evt.market === 'us' ? 'หุ้นสหรัฐฯ' : 'Forex & ทองคำ'} →</span>
+                        </Link>
+                        <Link
+                          href="/risk"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 14px',
+                            borderRadius: '8px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            color: '#e2e8f0',
+                            border: '1px solid rgba(255, 255, 255, 0.12)',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            textDecoration: 'none',
+                          }}
+                        >
+                          <span>🛡️ คำนวณความเสี่ยง 2R รับมือความผันผวน</span>
+                        </Link>
                       </div>
                     </div>
                   )}

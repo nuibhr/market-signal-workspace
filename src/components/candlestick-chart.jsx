@@ -19,6 +19,8 @@ export default function CandlestickChart({ symbol, timeframe = '1d', bars = null
       if (cancelled || !containerRef.current) return;
 
       const container = containerRef.current;
+      delete container.dataset.seriesSha256;
+      delete container.dataset.seriesCount;
       const thaiIntraday = Boolean(bars && timeframe !== '1d');
       const clock = new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hour12: false });
       const day = new Intl.DateTimeFormat('en-GB', { timeZone, day: '2-digit', month: 'short' });
@@ -48,6 +50,15 @@ export default function CandlestickChart({ symbol, timeframe = '1d', bars = null
           priceFormat,
         });
       series.setData(chartStyle === 'line' ? candles.map(bar => ({ time: bar.time, value: bar.close })) : candles);
+      const encoded = new TextEncoder().encode(JSON.stringify(candles.map(({time,open,high,low,close,volume}) => [time,open,high,low,close,volume])));
+      if (globalThis.crypto?.subtle) {
+        const digest = await crypto.subtle.digest('SHA-256', encoded);
+        if (cancelled || !containerRef.current) return;
+        container.dataset.seriesSha256 = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+      }
+      container.dataset.seriesCount = String(candles.length);
+      container.dataset.seriesSymbol = symbol;
+      container.dataset.seriesTimeframe = timeframe;
       if (indicators.volume) {
         const volume = chart.addSeries(HistogramSeries, {
           priceFormat: { type: 'volume' },

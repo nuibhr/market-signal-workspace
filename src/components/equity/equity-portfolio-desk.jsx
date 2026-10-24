@@ -25,39 +25,61 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
 
   // BYOK form states
   const [brokerId, setBrokerId] = useState('022');
+  const [accountNo, setAccountNo] = useState('');
   const [appId, setAppId] = useState('');
   const [appSecret, setAppSecret] = useState('');
   const [appCode, setAppCode] = useState('ALGO_EQ');
+  const [latency, setLatency] = useState(35);
 
-  const syncPortfolio = useCallback(async (isDemo = true, overrideBrokerId = null) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const bId = overrideBrokerId || brokerId;
-      const res = await fetch('/api/equity/portfolio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          brokerId: bId,
-          appId: isDemo ? 'DEMO_SANDBOX_KEY' : appId,
-          appSecret: isDemo ? 'DEMO_SANDBOX_SECRET' : appSecret,
-          appCode: 'ALGO_EQ',
-          isDemo,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok || !result.success) {
-        throw new Error(result.message || 'เชื่อมต่อ Settrade Open API ไม่สำเร็จ');
+  const syncPortfolio = useCallback(
+    async (isDemo = true, overrideBrokerId = null) => {
+      setLoading(true);
+      setError(null);
+      const start = performance.now();
+      try {
+        const bId = overrideBrokerId || brokerId;
+        const payload = isDemo
+          ? {
+              brokerId: bId,
+              appId: 'DEMO_SANDBOX_KEY',
+              appSecret: 'DEMO_SANDBOX_SECRET',
+              appCode: 'ALGO_EQ',
+              accountNo: `EQ-${bId}-78891-B`,
+              isDemo: true,
+            }
+          : {
+              brokerId: bId,
+              accountNo: accountNo.trim(),
+              appId: appId.trim(),
+              appSecret: appSecret.trim(),
+              appCode: appCode.trim() || 'ALGO_EQ',
+              isDemo: false,
+            };
+
+        const res = await fetch('/api/equity/portfolio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await res.json();
+        setLatency(Math.max(12, Math.round(performance.now() - start)));
+
+        if (!res.ok || !result.success) {
+          throw new Error(result.message || result.error || 'เชื่อมต่อ Settrade Open API ไม่สำเร็จ');
+        }
+
+        setData(result);
+        if (overrideBrokerId) setBrokerId(overrideBrokerId);
+        setShowModal(false);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-      setData(result);
-      if (overrideBrokerId) setBrokerId(overrideBrokerId);
-      setShowModal(false);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [brokerId, appId, appSecret]);
+    },
+    [brokerId, accountNo, appId, appSecret, appCode]
+  );
 
   useEffect(() => {
     // Initial load: fetch Trinity 022 Demo Sandbox
@@ -91,14 +113,27 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               <span className={styles.byokEnclaveBadge}>
                 🛡️ ZERO-CUSTODY CLIENT ENCLAVE (ALGO_EQ)
               </span>
-              <span className={styles.byokPingBadge}>⚡ 35ms</span>
+              <span className={styles.byokPingBadge}>⚡ {latency}ms</span>
+              <span
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  padding: '2px 8px',
+                  borderRadius: '5px',
+                  background: data?.mode === 'LIVE' ? 'rgba(16,185,129,0.2)' : 'rgba(56,189,248,0.2)',
+                  color: data?.mode === 'LIVE' ? '#34d399' : '#38bdf8',
+                  border: `1px solid ${data?.mode === 'LIVE' ? '#10b981' : '#0284c7'}`,
+                }}
+              >
+                {data?.mode === 'LIVE' ? '🟢 LIVE REAL MARKET' : '🧪 DEMO SANDBOX'}
+              </span>
             </div>
             <h2 className={styles.byokTitle}>
               ศูนย์บัญชาการพอร์ตหุ้นไทย &amp; DR อัจฉริยะ (Smart Equity Command Desk)
             </h2>
             <p className={styles.byokDesc}>
               วิเคราะห์เทรนด์ Stage 2 อัตโนมัติ, เฝ้าระวังจุด Trailing Stop / Cut Loss, และตรวจสอบความคุ้มค่า DR
-              ผ่าน API โบรกเกอร์ชั้นนำ
+              ผ่าน API โบรกเกอร์ชั้นนำ (Pi, Trinity, InnovestX, Maybank ฯลฯ)
             </p>
           </div>
 
@@ -117,7 +152,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               onClick={() => syncPortfolio(true, '022')}
               disabled={loading}
             >
-              🌟 ทดลองด่วนด้วย Trinity 022
+              🌟 ทดลอง Trinity 022
             </button>
             <button
               type="button"
@@ -125,7 +160,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               onClick={() => syncPortfolio(true, '003')}
               disabled={loading}
             >
-              🥧 ทดลองด้วย Pi 003
+              🥧 ทดลอง Pi 003
             </button>
             <button
               type="button"
@@ -140,10 +175,45 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               className={styles.byokBtnSecondary}
               onClick={() => setShowModal(true)}
             >
-              ⚙️ ตั้งค่า API Key
+              ⚙️ ตั้งค่า API พอร์ตจริง
             </button>
           </div>
         </div>
+
+        {error && (
+          <div
+            style={{
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              color: '#f87171',
+              fontSize: '12px',
+              marginBottom: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+            }}
+          >
+            <span>⚠️ {error}</span>
+            <button
+              type="button"
+              onClick={() => syncPortfolio(true, '022')}
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: 'none',
+                color: '#fff',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px',
+              }}
+            >
+              สลับกลับโหมด Sandbox
+            </button>
+          </div>
+        )}
 
         {/* ─── HUD STATS ROW ─── */}
         <div className={styles.hudStatsGrid}>
@@ -186,7 +256,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               <span>🌟</span>
             </span>
             <span className={`${styles.hudCardVal} ${styles.positiveText}`}>
-              {data?.health?.score || 83} / 100
+              {data?.health?.score ?? 83} / 100
             </span>
             <span className={styles.hudCardSub}>
               {data?.health?.grade || 'เกรด A ขาขึ้นแข็งแกร่ง'}
@@ -199,9 +269,9 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               <span>🛡️</span>
             </span>
             <span className={styles.hudCardVal} style={{ fontSize: '15px' }}>
-              <span className={styles.positiveText}>Stage 2: {data?.health?.stage2RatioPct || 69.4}%</span>
+              <span className={styles.positiveText}>Stage 2: {data?.health?.stage2RatioPct ?? 69.4}%</span>
               {' | '}
-              <span className={styles.negativeText}>Stage 4: {data?.health?.stage4DangerRatioPct || 10.7}%</span>
+              <span className={styles.negativeText}>Stage 4: {data?.health?.stage4DangerRatioPct ?? 10.7}%</span>
             </span>
             <span className={styles.hudCardSub}>
               ระบบกรองและแจ้งเตือนหุ้นหลุดแนวรับเรียลไทม์
@@ -238,16 +308,16 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
           <span>
             <span className={styles.legendDot} style={{ background: '#06b6d4' }} />
             🇹🇭 หุ้นไทย SET100: {data?.allocation?.thaiStockPct || 62}% (
-            {data?.allocation?.thaiStockValue?.toLocaleString('th-TH')} ฿)
+            {data?.allocation?.thaiStockValue?.toLocaleString('th-TH') || '0'} ฿)
           </span>
           <span>
             <span className={styles.legendDot} style={{ background: '#a855f7' }} />
             🌐 DR หุ้นโลก: {data?.allocation?.drStockPct || 38}% (
-            {data?.allocation?.drStockValue?.toLocaleString('th-TH')} ฿)
+            {data?.allocation?.drStockValue?.toLocaleString('th-TH') || '0'} ฿)
           </span>
           <span>
             <span className={styles.legendDot} style={{ background: '#10b981' }} />
-            💵 เงินสดคงเหลือ: {data?.allocation?.cashBalance?.toLocaleString('th-TH')} ฿ (
+            💵 เงินสดคงเหลือ: {data?.allocation?.cashBalance?.toLocaleString('th-TH') || '0'} ฿ (
             {data?.allocation?.cashPct || 12}%)
           </span>
         </div>
@@ -298,40 +368,41 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
         <table className={styles.portfolioTable}>
           <thead>
             <tr>
-              <th>ตราสาร / หุ้นในพอร์ต</th>
+              <th>สินทรัพย์ / สัญลักษณ์</th>
               <th>จำนวนหุ้น</th>
-              <th>ทุนเฉลี่ย / ราคาตลาด</th>
-              <th>มูลค่าตลาด</th>
-              <th>กำไร/ขาดทุน (P/L)</th>
-              <th>สเตจเทรนด์ (Stage)</th>
-              <th>จุดคุ้มครอง 2R (Stop Loss)</th>
-              <th>ใบสั่งยา AI (Doctor Action)</th>
-              <th>กราฟ</th>
+              <th>ราคาตลาด / ทุนเฉลี่ย</th>
+              <th>มูลค่าพอร์ต</th>
+              <th>กำไร / ขาดทุน (P/L)</th>
+              <th>วินิจฉัย Stage (1-4)</th>
+              <th>แนว Cut Loss / Trailing</th>
+              <th>ใบสั่งยา AI (Prescription)</th>
+              <th>การกระทำ</th>
             </tr>
           </thead>
           <tbody>
             {filteredHoldings.map((item) => {
               const isProfit = (item.unrealizedPl || 0) >= 0;
               return (
-                <tr key={item.symbol} className={styles.tableRow}>
+                <tr key={item.symbol}>
                   <td>
                     <div className={styles.symbolCell}>
                       <InstrumentLogo
                         asset={{
-                          market: item.market === 'THAI' ? 'thai' : 'dr',
                           symbol: item.symbol,
+                          market: item.market === 'DR' ? 'dr' : 'thai',
+                          name: item.symbol,
                         }}
                       />
                       <div className={styles.symbolInfo}>
-                        <span className={styles.symbolText}>
-                          {item.symbol}
+                        <span className={styles.symbolName}>
+                          <b>{item.symbol}</b>
                           {item.market === 'THAI' ? (
-                            <span className={styles.tagThai}>SET100</span>
+                            <span className={styles.tagThai}>{item.section || 'SET100'}</span>
                           ) : (
                             <span className={styles.tagDr}>DR-US</span>
                           )}
                         </span>
-                        <span className={styles.symbolSub}>{item.sector}</span>
+                        <span className={styles.symbolSub}>{item.sector || '—'}</span>
                       </div>
                     </div>
                   </td>
@@ -339,23 +410,27 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                     {item.quantity?.toLocaleString('th-TH')} หุ้น
                   </td>
                   <td style={{ fontFamily: 'ui-monospace, monospace' }}>
-                    <div>{item.marketPrice?.toFixed(2)} ฿</div>
-                    <small style={{ color: '#94a3b8' }}>ทุน {item.avgCost?.toFixed(2)} ฿</small>
+                    <div>{item.marketPrice ? `${item.marketPrice.toFixed(2)} ฿` : '—'}</div>
+                    <small style={{ color: '#94a3b8' }}>
+                      ทุน {item.avgCost ? `${item.avgCost.toFixed(2)} ฿` : '—'}
+                    </small>
                   </td>
                   <td style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 700 }}>
-                    {item.marketValue?.toLocaleString('th-TH')} ฿
+                    {item.marketValue ? `${item.marketValue.toLocaleString('th-TH')} ฿` : '—'}
                   </td>
                   <td>
                     <div
                       className={isProfit ? styles.positiveText : styles.negativeText}
                       style={{ fontFamily: 'ui-monospace, monospace' }}
                     >
-                      {isProfit ? '+' : ''}
-                      {item.unrealizedPl?.toLocaleString('th-TH')} ฿
+                      {item.unrealizedPl !== null
+                        ? `${isProfit ? '+' : ''}${item.unrealizedPl.toLocaleString('th-TH')} ฿`
+                        : '—'}
                     </div>
                     <small className={isProfit ? styles.positiveText : styles.negativeText}>
-                      {isProfit ? '+' : ''}
-                      {item.unrealizedPlPct?.toFixed(2)}%
+                      {item.unrealizedPlPct !== null
+                        ? `${isProfit ? '+' : ''}${item.unrealizedPlPct.toFixed(2)}%`
+                        : ''}
                     </small>
                   </td>
                   <td>
@@ -374,43 +449,57 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                         🚨 Stage 4 ขาลงหลุด EMA50
                       </span>
                     )}
+                    {!item.stage && (
+                      <span className={`${styles.stageBadge} ${styles.stage1Badge}`}>
+                        {item.stageName || 'รอประเมิน'}
+                      </span>
+                    )}
                   </td>
                   <td style={{ fontFamily: 'ui-monospace, monospace' }}>
                     {item.trailingStop ? (
                       <div>
                         <span style={{ color: '#38bdf8', fontWeight: 700 }}>
-                          {item.trailingStop?.toFixed(2)} ฿
+                          {item.trailingStop.toFixed(2)} ฿
                         </span>
                         <br />
                         <small style={{ color: '#94a3b8' }}>Trailing Stop</small>
                       </div>
-                    ) : (
+                    ) : item.cutLossPrice ? (
                       <div>
                         <span style={{ color: '#fb7185', fontWeight: 700 }}>
-                          {item.cutLossPrice?.toFixed(2)} ฿
+                          {item.cutLossPrice.toFixed(2)} ฿
                         </span>
                         <br />
                         <small style={{ color: '#fb7185' }}>Cut Loss ด่วน</small>
                       </div>
+                    ) : (
+                      <span style={{ color: '#94a3b8' }}>—</span>
                     )}
                   </td>
                   <td>
                     <div className={styles.actionChip}>
-                      {item.action.includes('HOLD') && (
+                      {item.action?.includes('HOLD') && (
                         <span className={`${styles.actionBadge} ${styles.actionHold}`}>
                           💎 {item.action}
                         </span>
                       )}
-                      {item.action.includes('TAKE PROFIT') && (
+                      {item.action?.includes('TAKE PROFIT') && (
                         <span className={`${styles.actionBadge} ${styles.actionTakeProfit}`}>
                           🎯 {item.action}
                         </span>
                       )}
-                      {item.action.includes('CUT') && (
+                      {item.action?.includes('CUT') && (
                         <span className={`${styles.actionBadge} ${styles.actionCutLoss}`}>
                           🚨 {item.action}
                         </span>
                       )}
+                      {!item.action?.includes('HOLD') &&
+                        !item.action?.includes('TAKE PROFIT') &&
+                        !item.action?.includes('CUT') && (
+                          <span className={`${styles.actionBadge} ${styles.actionHold}`}>
+                            {item.action || 'ตรวจแผนจากกราฟ'}
+                          </span>
+                        )}
                       <span className={styles.actionNote}>{item.actionNote}</span>
                     </div>
                   </td>
@@ -448,30 +537,34 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               <div key={dr.symbol} className={styles.drCard}>
                 <div className={styles.drCardTop}>
                   <div className={styles.drCardSymbol}>
-                    {dr.symbol} ({dr.drMeta?.underlying})
+                    {dr.symbol} ({dr.drMeta?.underlying || 'Global Stock'})
                   </div>
-                  <span className={styles.drFairBadge}>{dr.drMeta?.fairStatus}</span>
+                  <span className={styles.drFairBadge}>{dr.drMeta?.fairStatus || 'FAIR VALUE'}</span>
                 </div>
 
                 <div className={styles.drMetricsRow}>
                   <div className={styles.drMetricItem}>
                     <span className={styles.drMetricLabel}>หุ้นแม่สหรัฐฯ</span>
-                    <span className={styles.drMetricVal}>${dr.drMeta?.usPrice?.toFixed(2)}</span>
+                    <span className={styles.drMetricVal}>
+                      {dr.drMeta?.usPrice ? `$${dr.drMeta.usPrice.toFixed(2)}` : 'Realtime'}
+                    </span>
                   </div>
                   <div className={styles.drMetricItem}>
                     <span className={styles.drMetricLabel}>ราคาเหมาะสม (Fair)</span>
-                    <span className={styles.drMetricVal}>{dr.drMeta?.fairPrice?.toFixed(2)} ฿</span>
+                    <span className={styles.drMetricVal}>
+                      {dr.drMeta?.fairPrice ? `${dr.drMeta.fairPrice.toFixed(2)} ฿` : '—'}
+                    </span>
                   </div>
                   <div className={styles.drMetricItem}>
                     <span className={styles.drMetricLabel}>สเปรดส่วนต่าง</span>
                     <span className={styles.drMetricVal} style={{ color: '#34d399' }}>
-                      +{dr.drMeta?.spreadPct}%
+                      {dr.drMeta?.spreadPct ? `+${dr.drMeta.spreadPct}%` : 'Fair'}
                     </span>
                   </div>
                 </div>
 
                 <div className={styles.drFxLine}>
-                  <span>💡 {dr.drMeta?.fxImpact}</span>
+                  <span>💡 {dr.drMeta?.fxImpact || 'อัตราแลกเปลี่ยน USD/THB ทรงตัว'}</span>
                 </div>
               </div>
             ))}
@@ -479,7 +572,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
         </section>
       )}
 
-      {/* ─── MODAL FOR API KEY SETTINGS ─── */}
+      {/* ─── MODAL FOR API KEY SETTINGS (BYOK LIVE + SANDBOX) ─── */}
       {showModal && (
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
@@ -551,9 +644,22 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
             </div>
 
             <div className={styles.formGroup}>
+              <label className={styles.formLabel}>เลขบัญชีซื้อขายหุ้น (Account Number)</label>
+              <input
+                type="text"
+                autoComplete="off"
+                className={styles.formInput}
+                placeholder="เช่น 1234567 หรือ EQ-022-XXXXX (ส่งตรงไปยัง Settrade ไม่บันทึกลง Server)"
+                value={accountNo}
+                onChange={(e) => setAccountNo(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
               <label className={styles.formLabel}>App ID</label>
               <input
                 type="text"
+                autoComplete="off"
                 className={styles.formInput}
                 placeholder="กรอก App ID ที่ได้จากโบรคเกอร์"
                 value={appId}
@@ -562,11 +668,12 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.formLabel}>App Secret</label>
+              <label className={styles.formLabel}>API Secret</label>
               <input
                 type="password"
+                autoComplete="off"
                 className={styles.formInput}
-                placeholder="กรอก App Secret (เก็บในเครื่องเท่านั้น ไม่บันทึกลง Server)"
+                placeholder="กรอก API Secret (ส่งตรงไปยัง Settrade Enclave เท่านั้น ไม่บันทึกลงฐานข้อมูล)"
                 value={appSecret}
                 onChange={(e) => setAppSecret(e.target.value)}
               />
@@ -578,11 +685,10 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 type="text"
                 className={styles.formInput}
                 value={appCode}
-                readOnly
-                style={{ opacity: 0.8 }}
+                onChange={(e) => setAppCode(e.target.value)}
               />
               <small style={{ color: '#94a3b8', fontSize: '10px' }}>
-                * หุ้นไทยและ DR ใช้ Service Code เดียวกันคือ ALGO_EQ
+                * หุ้นไทยและ DR ใช้ Service Code เริ่มต้นคือ ALGO_EQ หรือรหัสที่โบรกเกอร์ออกให้
               </small>
             </div>
 
@@ -592,9 +698,9 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 className={styles.byokBtnPrimary}
                 style={{ flex: 1 }}
                 onClick={() => syncPortfolio(false)}
-                disabled={loading}
+                disabled={loading || !accountNo || !appId || !appSecret}
               >
-                {loading ? 'กำลังเชื่อมต่อ...' : 'บันทึก & ซิงค์พอร์ตจริง'}
+                {loading ? 'กำลังเชื่อมต่อ...' : '🚀 เชื่อมต่อ & ซิงค์พอร์ตจริง'}
               </button>
               <button
                 type="button"

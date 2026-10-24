@@ -6,6 +6,10 @@ import {emaSeries} from '../analysis/minervini-stage2.mjs';
 export async function thaiScreenerFeed(now=Date.now()){
  const observations=await storage.all('SELECT symbol,payload_json,checked_ms,next_scan_ms FROM signal_desk_observations WHERE market=?','thai');
  const bySymbol=new Map(observations.map(r=>[r.symbol,r]));
+ const desk=await storage.all("SELECT payload_json FROM provider_cache WHERE id LIKE 'thai-desk-observation:%' AND expires_at>?",now);
+ for(const row of desk){const snapshot=JSON.parse(row.payload_json),checked=Date.parse(snapshot.checkedAt),existing=bySymbol.get(snapshot.symbol);
+  if(Number.isFinite(checked)&&(!existing||now-existing.checked_ms>20*60000||!JSON.parse(existing.payload_json).stage2))bySymbol.set(snapshot.symbol,{symbol:snapshot.symbol,payload_json:row.payload_json,checked_ms:checked,next_scan_ms:checked+600000});
+ }
  const profileAllowed=process.env.NODE_ENV!=='production'||process.env.YAHOO_DISPLAY_RIGHTS_CONFIRMED==='true';
  const profiles=new Map((profileAllowed?await storage.all("SELECT payload_json FROM provider_cache WHERE id LIKE 'thai-stage2-profile:%' AND expires_at>?",now):[]).map(r=>{const p=JSON.parse(r.payload_json);return [p.symbol,p];}));
  const benchmarkRow=await storage.first('SELECT payload_json FROM provider_cache WHERE id=? AND expires_at>?','thai-stage2-benchmark-v2',now);
@@ -18,13 +22,13 @@ export async function thaiScreenerFeed(now=Date.now()){
   const plans=snapshot&&fresh?candidateViews(snapshot,defaultSignalCosts(asset)):[];
   const plan=plans.find(r=>r.plan?.signalEligible)?.plan??assessment?.plan??null;
   return {symbol:asset.symbol,name:profile?.name??asset.name,section:asset.sectionId,market:'thai',
-   status:fresh?assessment?.status??'unavailable':'unavailable',code:fresh?assessment?.code??'WAIT_STAGE2_SCAN':'SCAN_STALE',
+   status:fresh?assessment?.status??'unavailable':'unavailable',code:fresh?assessment?.code??snapshot?.code??'WAIT_STAGE2_SCAN':'SCAN_STALE',
    price:assessment?.price??null,changePercent:assessment?.changePercent??null,priceDay:assessment?.priceDay??null,
    stage:assessment?.stage??null,score:assessment?.score??null,criteria:assessment?.criteria??[],templatePass:assessment?.templatePass??false,
    rsi:technical.rsi??null,macdHistogram:technical.macdHistogram??null,volumeBreakout:assessment?.volumeBreakout??false,pullback:assessment?.pullback??false,
    rs:assessment?.rs??null,rvol:assessment?.rvol??null,plan,planFrame:plans.some(r=>r.plan===plan)?'4H':'D1',
    pe:profile?.pe??null,dividendPercent:profile?.dividendPercent??null,sector:profile?.sectorCode??null,sectorLabel:profile?.sector??null,
-   profileAt:profile?.checkedAt??null,checkedAt:snapshot?.checkedAt??null,nextScanAt:stored?new Date(stored.next_scan_ms).toISOString():null};
+   source:snapshot?.source??snapshot?.signalSource??null,profileSource:profile?.source??null,profileAt:profile?.checkedAt??null,checkedAt:snapshot?.checkedAt??null,nextScanAt:stored?new Date(stored.next_scan_ms).toISOString():null};
  });
  const available=rows.filter(r=>r.price!==null&&r.status!=='unavailable'&&r.status!=='stale');
  const rsLeaders=available.filter(r=>r.rs?.status==='available'&&r.rs.outperforming).sort((a,b)=>b.rs.excessReturnPercent-a.rs.excessReturnPercent).slice(0,3).map(r=>({symbol:r.symbol,excessReturnPercent:r.rs.excessReturnPercent}));

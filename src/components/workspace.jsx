@@ -105,6 +105,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [chartRange, setChartRange] = useState('recent');
   const [liveSeries, setLiveSeries] = useState(null);
   const [liveState, setLiveState] = useState('idle');
+  const [liveError, setLiveError] = useState('');
   const [chartLoadMs, setChartLoadMs] = useState(null);
   const [pivotContext, setPivotContext] = useState(null);
   const [planContext, setPlanContext] = useState(null);
@@ -291,6 +292,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     setSelectedAsset(fullAsset);
     setTimeframe(fullAsset.id === 'us' ? '1d' : frame);
     setPopup(null);
+    const selectionUrl=new URL(window.location.href);
+    selectionUrl.searchParams.set('symbol',fullAsset.symbol);
+    window.history.replaceState(null,'',selectionUrl);
     if(marketId==='thai')chooseThaiView('chart');else scrollToChart();
   }
 
@@ -318,14 +322,15 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     const controller = new AbortController();
     setLiveSeries(null);
     setLiveState('loading');
+    setLiveError('');
     setChartLoadMs(null);
     async function loadCandles() {
       const startedAt = performance.now();
       try {
         const payload = await loadChartCandles(asset, timeframe, { signal: controller.signal });
         if (!controller.signal.aborted) { setLiveSeries(payload); setLiveState('available'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
-      } catch {
-        if (!controller.signal.aborted) { setLiveSeries(null); setLiveState('unavailable'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
+      } catch (error) {
+        if (!controller.signal.aborted) { setLiveSeries(null); setLiveState('unavailable'); setLiveError(error.code || error.message || 'SOURCE_UNAVAILABLE'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
       }
     }
     loadCandles();
@@ -478,7 +483,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
       <main className="main-area">
         <header className="topbar">
           <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
-          <div className="topbar-search-area">{marketId==='thai'?<a className="monitor-account" href="#section-auto-pick" onClick={event=>{event.preventDefault();chooseThaiView('stage2');}}>ค้นหา / กรองในตาราง ↓</a>:<SymbolSearch marketId={marketId} onSelect={selectAsset} />}</div>
+          <div className="topbar-search-area"><SymbolSearch marketId={marketId} onSelect={selectAsset} /></div>
           <div className="topbar-actions">
             <button
               type="button"
@@ -620,6 +625,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               <div className="chart-meta-row"><span>◉ {sourceLabel}</span><span>{displaySection(asset.sectionId)}</span><span>{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} ล่าสุด ${latestBarLabel}` : 'ยังไม่ใช้ตัดสินสัญญาณ'}</span>{hasRealBars && <span>ประวัติ {liveSeries.bars.length.toLocaleString('th-TH')} แท่ง · ตั้งแต่ {formatHistoryStart(liveSeries.bars[0], timeframe)}</span>}{asset.id === 'thai' && <a href={`https://finance.yahoo.com/quote/${encodeURIComponent(`${asset.symbol}.BK`)}/history/`} target="_blank" rel="noopener noreferrer" title="เปิด Yahoo เพื่อดูย้อนหลังแยกต่างหาก แผนและเสียงแจ้งเตือนในแอปใช้ข้อมูล Settrade">ดูย้อนหลังใน Yahoo ↗</a>}</div>
               <div className="timeframe-bar"><span>{hasTfexConnection ? 'TFEX OHLC' : 'TIMEFRAME'}</span><div className="timeframe-switch">{[['15m','15m'],['1h','1H'],['4h','4H'],['1d','1D']].map(([id,label]) => <button key={id} className={timeframe === id ? 'selected' : ''} disabled={['us','forex'].includes(asset.id)&&id==='4h'} onClick={() => setTimeframe(id)}>{label}</button>)}</div><div className="chart-tools-end"><button aria-label={chartRange === 'recent' ? 'ดูประวัติกราฟทั้งหมด' : 'กลับไปดูแท่งล่าสุด'} aria-pressed={chartRange === 'all'} disabled={!hasRealBars} onClick={() => setChartRange(value => value === 'recent' ? 'all' : 'recent')}>{chartRange === 'recent' ? 'ดูทั้งหมด' : 'ดูล่าสุด'}</button><button aria-label="เปิดกราฟขนาดใหญ่" onClick={() => setPopup('chart')}>⤢</button><button aria-label={hasTfexConnection ? 'รีเฟรชกราฟ TFEX' : 'รีเฟรชแท่งราคา'} disabled={!hasCandleConnection && !hasTfexConnection} onClick={() => setReloadNonce(value => value + 1)}>↻</button></div></div>
               <div className="indicator-strip"><span>CHART</span><button className={chartStyle === 'candles' ? 'selected' : ''} aria-pressed={chartStyle === 'candles'} onClick={() => setChartStyle('candles')}>Candles</button><button className={chartStyle === 'line' ? 'selected' : ''} aria-pressed={chartStyle === 'line'} onClick={() => setChartStyle('line')}>Line</button><span>OVERLAYS</span>{[['ema20', 'EMA 20'], ['ema50', 'EMA 50'], ['sma20', 'SMA 20'], ['bollinger', 'Bollinger'], ['donchian', 'Donchian 20'], ['vwap', 'VWAP*'], ['volume', 'Volume'], ['levels', 'แนวรับ / ต้าน']].map(([key, label]) => <button key={key} className={chartIndicators[key] ? 'selected' : ''} disabled={!analysis || key === 'volume' && asset.id==='forex' || key === 'vwap' && !analysis?.vwapSeries?.length} aria-pressed={Boolean(chartIndicators[key])} title={key === 'vwap' ? 'VWAP สะสมเฉพาะแท่งที่โหลดและมี Volume' : undefined} onClick={() => toggleIndicator(key)}>{label}</button>)}<button onClick={() => setIndicators(Object.fromEntries(Object.keys(DEFAULT_INDICATORS).map(key => [key, false])))}>ล้าง</button><button onClick={() => { setIndicators(DEFAULT_INDICATORS); setChartStyle('candles'); }}>ค่าเริ่มต้น</button></div>
+              {liveState === 'unavailable' && <p role="alert" className="chart-data-note">DATA UNAVAILABLE · {liveError || 'SOURCE_UNAVAILABLE'}{liveError === 'DISPLAY_RIGHTS_NOT_CONFIRMED' ? ' · ยังไม่ยืนยันสิทธิแสดงข้อมูลใน environment นี้' : ''}</p>}
+              {hasRealBars && liveSeries.session && <p role="status" className="chart-data-note">SET / mai · {liveSeries.quote?.marketStatus ? `สถานะจากผู้ให้บริการ ${liveSeries.quote.marketStatus}` : `ตามปฏิทิน ${liveSeries.session.scheduledSession}`} · Asia/Bangkok{!liveSeries.quote?.observedAt ? ' · ไม่ทราบความหน่วง quote (ผู้ให้บริการไม่ส่ง timestamp)' : ''}</p>}
               <CandlestickChart symbol={asset.symbol} timeframe={timeframe} bars={displayBars} analysis={analysis} indicators={chartIndicators} chartStyle={chartStyle} chartRange={chartRange} loading={hasCandleConnection && liveState === 'loading'} unavailable={hasCandleConnection && liveState === 'unavailable'} source={sourceLabel} />
               {hasTfexConnection && <div className="tfex-quote-note">กราฟใช้แท่ง OHLCV ที่มีเวลาแท่งจาก TFEX Open API · เวลา quote ล่าสุดอาจไม่ระบุ · AutoPick ยังรอยืนยันสัญญานำ วันหมดอายุ และความเสี่ยงต่อสัญญา</div>}
               <div className="ohlc-strip"><span>O <b>{latestBar ? formatQuotePrice(latestBar.open,asset) : '—'}</b></span><span>H <b>{latestBar ? formatQuotePrice(latestBar.high,asset) : '—'}</b></span><span>L <b>{latestBar ? formatQuotePrice(latestBar.low,asset) : '—'}</b></span><span>C <b>{latestBar ? formatQuotePrice(latestBar.close,asset) : '—'}</b></span><span>V <b>{latestBar && asset.id!=='forex' ? displayNumber(latestBar.volume, 0) : '—'}</b></span><span className="source-time">{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} · ${latestBarLabel}` : hasTfexConnection ? 'กำลังรอ TFEX OHLC' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>

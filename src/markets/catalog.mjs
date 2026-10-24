@@ -59,6 +59,7 @@ export const INTERNATIONAL_SYMBOLS = US_WATCHLIST.map(item => item.symbol);
 export const CRYPTO_SYMBOLS = ['BTCUSDT', 'ETHUSDT'];
 
 const DISPLAY_NAMES = {
+  PTTEP: 'PTT Exploration and Production Public Company Limited', KBANK: 'Kasikornbank Public Company Limited', AU: 'After You Public Company Limited',
   PTT: 'ปตท.', AOT: 'ท่าอากาศยานไทย', DELTA: 'เดลต้า อีเลคโทรนิคส์',
   AAPL80: 'Apple DR', NVDA80: 'NVIDIA DR',
   NVDA: 'NVIDIA', AAPL: 'Apple', SPY: 'SPDR S&P 500 ETF',

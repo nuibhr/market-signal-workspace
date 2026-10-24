@@ -1,3 +1,5 @@
+import {assessThaiDailyFeed,closedThaiChartBars} from '../../../market-data/thai-feed-meta.mjs';
+import {ALL_ASSETS} from '../../../markets/catalog.mjs';
 import { rateLimit } from '../../../security/request-guard.mjs';
 import { storage } from '../../../storage/database.mjs';
 import { customerSummary } from '../../../analysis/customer-summary.mjs';
@@ -53,8 +55,9 @@ export async function GET(request) {
   for (const symbol of symbols) {
     try {
       const series = await client.getCandles(symbol, '1d', 250);
-      const bars = series.bars.filter(bar => bar.time < today);
-      const assessment = assessDailySeries({ ...series, bars });
+      const asset=ALL_ASSETS.find(a=>a.symbol===symbol);
+      const bars = closedThaiChartBars(series.bars,'1d',Date.now(),asset.id);
+      const assessment = asset.id==='thai' ? assessThaiDailyFeed({ ...series, bars }) : assessDailySeries({ ...series, bars });
       const analysis = analyzeCandles(bars, null, 'รายวัน');
       results.push({
         symbol,

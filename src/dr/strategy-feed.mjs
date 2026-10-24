@@ -69,10 +69,11 @@ const morning = items => [...items].filter(i=>i.scored.totalScore>=8).sort((a,b)
   symbol:i.symbol,name:i.name,market:i.market,currentPrice:i.currentDrPrice,entry:i.scored.entry,tp1:i.scored.tp1,tp2:i.scored.tp2,
   sl:i.scored.sl,riskReward:i.scored.riskReward,changePct:i.changePct,status:'Waiting',statusThai:'แผนเฝ้าดูจากแท่งปิด',source:i.source,dataAsOf:i.dataAsOf}));
 
-export async function generateStrategyFeed({loadSeries=loadScanSeries,quotes=symbols=>yf.quote(symbols),now=Date.now()}={}) {
+export async function generateStrategyFeed({loadSeries=loadScanSeries,quotes=symbols=>yf.quote(symbols),now=Date.now(),markets=['thai','dr'],env=process.env}={}) {
   const quoteSymbols=[...new Set(['USDTHB=X','HKDTHB=X',...DR_SPECS.map(s=>s.underlying),])];
   let rawQuotes=[];
-  try { rawQuotes=await quotes(quoteSymbols); } catch { /* Quotes and candles fail independently. */ }
+  const quoteDisplayAllowed=env.NODE_ENV!=='production'||env.YAHOO_DISPLAY_RIGHTS_CONFIRMED==='true';
+  try { if(markets.includes('dr')&&quoteDisplayAllowed)rawQuotes=await quotes(quoteSymbols); } catch { /* Quotes and candles fail independently. */ }
   const quoteMap=new Map((Array.isArray(rawQuotes)?rawQuotes:[]).map(q=>[q.symbol,q]));
   const price=symbol=>{const n=quoteMap.get(symbol)?.regularMarketPrice;return positive(n)?n:null;};
   const liveUsdThb=price('USDTHB=X'),liveHkdThb=price('HKDTHB=X');
@@ -108,7 +109,7 @@ export async function generateStrategyFeed({loadSeries=loadScanSeries,quotes=sym
   }
   // Bounded requests share the provider clients' cache and concurrency controls.
   const rows=[];
-  const jobs=[...THAI_SPECS.map(s=>[s,'thai']),...DR_SPECS.map(s=>[s,'dr'])];
+  const jobs=[...THAI_SPECS.map(s=>[s,'thai']),...DR_SPECS.map(s=>[s,'dr'])].filter(([,market])=>markets.includes(market));
   for(let i=0;i<jobs.length;i+=4)rows.push(...await Promise.all(jobs.slice(i,i+4).map(([s,m])=>scan(s,m))));
   const scoredThaiStocks=rows.filter(i=>i?.market==='SET'),scoredDRs=rows.filter(i=>i?.market==='DR80');
   const topMorningThai=morning(scoredThaiStocks),topMorningDr=morning(scoredDRs);
@@ -117,6 +118,7 @@ export async function generateStrategyFeed({loadSeries=loadScanSeries,quotes=sym
   const quoteText=items=>items.slice(0,2).map(i=>`${i.symbol}: ${i.currentDrPrice.toFixed(2)} THB · แท่งปิด ${i.dataAsOf}`).join(' · ')||'ยังไม่มีแท่งปิดสำหรับคำนวณ';
   return {status:rows.some(Boolean)?unavailable.length?'partial':'available':'unavailable',isLiveFeed:false,
     feedSource:[...new Set(rows.filter(Boolean).map(i=>i.source))].join(' / ')||'ยังเชื่อมแหล่งข้อมูลไม่ได้',
+    quoteStatus:quoteDisplayAllowed?'provider-response':'DISPLAY_RIGHTS_NOT_CONFIRMED',
     timeframe:'1d',updatedAt:new Date(now).toISOString(),liveUsdThb,liveHkdThb,scoredDRs,scoredThaiStocks,unavailable,
     coverage:{thai:{total:THAI_SPECS.length,available:scoredThaiStocks.length},dr:{total:DR_SPECS.length,available:scoredDRs.length}},
     dividendStatus:'unavailable',dividendCode:'VERIFIED_DIVIDEND_SOURCE_REQUIRED',liveDividendStocks,dividendModel:THAI_DIVIDEND_PORTFOLIO_MODEL,

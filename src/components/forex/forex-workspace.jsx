@@ -21,6 +21,7 @@ import {
 import MarketNavigation from "../market-navigation.jsx";
 import DaytradePanel from "../daytrade/daytrade-panel.jsx";
 import ProCopyEaDesk from "./pro-copy-ea-desk.jsx";
+import {useDeskResource} from "../use-desk-resource.jsx";
 import { CORE_FOREX } from "../../daytrade/universe.mjs";
 import MemberAvatar from "../member-avatar.jsx";
 import useMt5Connection from "./use-mt5-connection.jsx";
@@ -54,8 +55,8 @@ const SECTIONS = [
     id: "scanner",
     label: "สแกนเนอร์สัญญาณ 15m",
     icon: ListFilter,
-    badge: "Live",
-    description: "เรดาร์แท่งเทียนปิดจริง 15 นาที ทองคำ COMEX (GC=F) & คู่เงินหลัก Major FX",
+    badge: "MT5",
+    description: "เรดาร์แท่งเทียนปิด 15 นาทีจาก MT5 · ทองคำและคู่เงินตามสัญลักษณ์ของโบรกเกอร์",
   },
   {
     id: "chart",
@@ -72,16 +73,17 @@ const SECTIONS = [
     description: "รับสัญญาณสดเข้ามือถือผ่าน Telegram VIP (ฟรี 100%) และเสียงน้องนักออมภาษาไทย",
   },
 ];
-const METRICS = [
-  ["Win rate (100 ไม้ล่าสุด)", "68.4%", "สถิติผลงานระบบจริง", "positive"],
-  ["Profit Factor", "2.14", "กำไรมากกว่าขาดทุน 2 เท่า", "positive"],
-  ["Max Drawdown", "3.8%", "จำกัดความเสี่ยงเคร่งครัด", "positive"],
-  ["Net Return สะสม", "+14.80 R", "+$1,480.00 สุทธิ", "positive"],
-  ["เป้าหมายกำไรวันนี้", "+$184.20", "Active Trading Day", "positive"],
-  ["ระบบสแกน 15m", "🟢 LIVE CLOUD", "ตรวจแท่งเทียน 24/7", "positive"],
-];
-
 export default function ForexWorkspace({ initialSymbol = null, viewer = null }) {
+  const performance=useDeskResource('/api/daytrade?market=forex&compact=1',{interval:30000});
+  const fmt=v=>Number.isFinite(v)?v.toFixed(2):'—';
+  const METRICS=[
+    ['Win rate',fmt(performance.data?.summary?.winRate)+'%',String(performance.data?.summary?.closed??0)+' ไม้ปิด','positive'],
+    ['Profit Factor',fmt(performance.data?.summary?.profitFactor),'จากบันทึกสัญญาณ','positive'],
+    ['Max Drawdown',fmt(performance.data?.summary?.maxDrawdownR)+' R','จากบันทึกสัญญาณ',''],
+    ['Net Return',fmt(performance.data?.summary?.netR)+' R','ผลสัญญาณอ้างอิง','positive'],
+    ['สินทรัพย์พร้อม',String(performance.data?.coverage?.ready??0),'จาก MT5',''],
+    ['ระบบสแกน 15m',performance.data?.connection||'รอเชื่อม',performance.data?.generatedAt||performance.error||'กำลังโหลด','']
+  ];
   const [section, setSection] = useState("pro-ea");
   const [demoPreview, setPreview] = useState(false);
   const [frame, setFrame] = useState("1h");
@@ -103,7 +105,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
         item.canonical_symbol === selection.canonical_symbol,
     ) ??
     universe[0] ?? selection;
-  const preview = demoPreview && !hasMt5;
+  const preview = process.env.NODE_ENV === "development" && demoPreview && !hasMt5;
   useEffect(() => {
     if (hasMt5 && selection.id !== selected.id) setSelected(selected);
   }, [hasMt5, selection.id, selected]);
@@ -297,7 +299,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
             </span>
             <button
               aria-pressed={preview}
-              disabled={hasMt5}
+              disabled={hasMt5 || process.env.NODE_ENV !== "development"}
               onClick={() => setPreview((value) => !value)}
             >
               {hasMt5
@@ -376,18 +378,18 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
             </svg>
             <div className={styles.heroSession}>
               <span>
-                MARKET STATUS <span className={styles.demoBadge}>24/7 CLOUD ACTIVE</span>
+                CONNECTION STATUS <span className={styles.demoBadge}>{bridge.status === "ready" ? "MT5 CONNECTED" : "DATA UNAVAILABLE"}</span>
               </span>
               <strong>
-                London / New York Overlap
+                {bridge.status === "ready" ? "ฟีดจาก MT5 ของคุณ" : "รอข้อมูลจาก MT5"}
               </strong>
               <small>
                 {hasMt5
                   ? `เชื่อมต่อฟีด MT5 (${universe.length} สัญลักษณ์)`
-                  : "ฟีดแท่งเทียน 15m ปิดจริง พร้อมคำนวณแผนเทรดอัตโนมัติ"}
+                  : "ยังไม่มีแท่งราคาจริงสำหรับสร้างสัญญาณ"}
               </small>
               <i>
-                <b style={{ width: "85%" }} />
+                <b style={{ width: bridge.status === "ready" ? "100%" : "0%" }} />
               </i>
               <div>
                 <span>Sydney</span>
@@ -435,7 +437,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
 
           {section === "pro-ea" && (
             <>
-              <ProCopyEaDesk />
+              <ProCopyEaDesk bridge={bridge} viewer={viewer} />
               <div className={styles.twoColumns}>
                 <Sessions preview={preview} />
                 <Calendar preview={preview} compact />

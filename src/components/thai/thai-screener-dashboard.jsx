@@ -19,7 +19,7 @@ export function filterThaiRows(rows,{preset='all',query='',savedOnly=false,favor
 export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onToggleFavorite,showMetrics=true}){
  return <div className={styles.tableScroll}><table className={`${styles.table} table-zebra table-pin-rows`} data-detailed={showMetrics}><thead><tr><th>หุ้น / กลุ่ม</th><th>ราคาปิด D1 / %Chg</th><th>EMA Template</th><th>Stage</th>{showMetrics&&<><th>RSI14</th><th>P/E / Div%</th><th>RVOL / RS vs SET</th></>}<th>แผน 2R · Entry / SL / TP1</th><th>กราฟ</th></tr></thead><tbody>{rows.map(r=><tr key={r.symbol} data-selected={r.symbol===selectedSymbol}>
   <th><div className={styles.identity}><button type="button" className={styles.star} aria-label={`${favorites.includes(r.symbol)?'เลิกติดตาม':'ติดตาม'} ${r.symbol}`} aria-pressed={favorites.includes(r.symbol)} onClick={()=>onToggleFavorite?.(r.symbol,'thai')}>{favorites.includes(r.symbol)?'★':'☆'}</button><InstrumentLogo asset={{market:'thai',symbol:r.symbol}}/><span><b>{r.symbol}</b><small title={r.sectorLabel??'ยังไม่มีข้อมูลกลุ่ม'}>{r.sector??'—'} · {r.section==='SET100'?'SET100':'mai'}</small></span></div></th>
-  <td><b>{n(r.price)}</b><small data-tone={r.changePercent>0?'up':r.changePercent<0?'down':'neutral'}>{r.changePercent>0?'+':''}{n(r.changePercent)}% · {r.priceDay??'รอข้อมูล'}</small></td>
+  <td><b>{n(r.price)}</b><small data-tone={r.changePercent>0?'up':r.changePercent<0?'down':'neutral'}>{r.changePercent>0?'+':''}{n(r.changePercent)}% · {r.priceDay??'รอข้อมูล'}</small><small>{r.source??'ยังไม่มีแหล่งข้อมูล'}</small></td>
   <td><details className={styles.criteria}><summary><span className={styles.badge} data-tone={r.templatePass?'up':'neutral'}>{r.score===null?'—':`${r.score}/8`}</span></summary><ul>{r.criteria.map(c=><li key={c.id} data-tone={c.passed===true?'up':c.passed===false?'down':'neutral'}>{c.passed===true?'✓':c.passed===false?'×':'—'} {c.label}</li>)}</ul>{!r.criteria.length&&<p>รอประวัติ D1 อย่างน้อย 220 วัน</p>}</details></td>
   <td><span className={styles.badge} data-tone={r.stage===2?'up':r.stage===4?'down':'neutral'}>{stageNames[r.stage]??'ประวัติไม่ครบ'}</span><small>{r.status==='stale'?'ข้อมูลเก่า':r.status==='partial'?'รอ RS / ประวัติ 52 สัปดาห์':r.status==='unavailable'?'รอตรวจข้อมูล':r.templatePass?'ผ่านคัดกรอง · ยังไม่ใช่ Entry':'แผนเฝ้า · รอเงื่อนไข'}</small></td>
   {showMetrics&&<><td>{n(r.rsi,1)}</td><td>{n(r.pe)}<small>Div {n(r.dividendPercent)}%</small></td>
@@ -29,7 +29,7 @@ export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onT
  </tr>)}</tbody></table></div>;
 }
 export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],onToggleFavorite,onSelect,selectedSymbol,favoritesRequest=0,onOpenStyleScanner,onResults,compact=false,visible=true}){
- const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
+ const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[fetchCycle,setFetchCycle]=useState(0);
  const [preset,setPreset]=useState('all'),[query,setQuery]=useState(''),[savedOnly,setSavedOnly]=useState(false),[sector,setSector]=useState('all'),[peMax,setPeMax]=useState(80),[rsiMin,setRsiMin]=useState(0),[rsiMax,setRsiMax]=useState(100),[sort,setSort]=useState('quality'),[page,setPage]=useState(1);
  const [showMetrics,setShowMetrics]=useState(!compact);
  const [capital,setCapital]=useState('20000'),[risk,setRisk]=useState('500');
@@ -39,7 +39,7 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
   if(!visible){setBusy(false);return;}
   setData(null);setError('');
   const controller=new AbortController();
-  const stop=pollAfterCompletion(async()=>{setBusy(true);try{const r=await fetch('/api/thai-screener',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])}),value=await r.json();if(!r.ok)throw Error(r.status===403?'MEMBERSHIP_REQUIRED':'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setError('');}}catch(e){if(!controller.signal.aborted){setData(null);setError(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}},{intervalMs:DISCOVERY_INTERVAL_MS});
+  const stop=pollAfterCompletion(async()=>{setBusy(true);try{const r=await fetch('/api/thai-screener',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])}),value=await r.json();if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setFetchCycle(v=>v+1);setError('');}}catch(e){if(!controller.signal.aborted){setData(null);setError(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}},{intervalMs:DISCOVERY_INTERVAL_MS});
   return()=>{stop();controller.abort();};
  },[signalAccess,revision,visible]);
  const rows=data?.rows??[],stats=data?.stats;
@@ -49,19 +49,28 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
  const sectors=[...new Set(rows.map(r=>r.sector).filter(Boolean))].sort(),hasPe=rows.some(r=>Number.isFinite(r.pe));
  const regime=stats?.index&&stats.index.trend!=='unknown'&&stats.observed>=stats.expected*.8?(stats.index.trend==='up'&&stats.advance>stats.decline?'ตลาดเอื้อ':stats.index.trend==='down'?'ระวังขาลง':'ตลาดผสม'):'รอข้อมูลตลาด';
  const reset=()=>{setPreset('all');setQuery('');setSavedOnly(false);setSector('all');setPeMax(80);setRsiMin(0);setRsiMax(100);};
+ const refreshKey=data?[...new Set([selectedSymbol,...filtered.slice((current-1)*7,current*7).map(r=>r.symbol)])].filter(Boolean).slice(0,8).join(','):'';
+ useEffect(()=>{
+  if(signalAccess!==true||!visible||!refreshKey)return;
+  const controller=new AbortController();setBusy(true);
+  fetch('/api/thai-screener',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbols:refreshKey.split(',')}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(60000)])})
+   .then(async r=>{const value=await r.json();if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setError('');}})
+   .catch(e=>{if(!controller.signal.aborted)setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});
+  return()=>controller.abort();
+ },[signalAccess,visible,refreshKey,revision,fetchCycle]);
  const topFocus=useMemo(()=>{
-  const candidates=rows.filter(r=>(r.templatePass||r.stage===2)&&r.plan&&r.status!=='unavailable');
+  const candidates=rows.filter(r=>(r.templatePass||r.stage===2)&&r.plan&&!['unavailable','stale'].includes(r.status));
   return candidates.sort((a,b)=>((b.score??0)-(a.score??0))||((b.rs?.excessReturnPercent??-999)-(a.rs?.excessReturnPercent??-999))||((b.rvol??0)-(a.rvol??0))).slice(0,3);
  },[rows]);
  const avoidedCount=useMemo(()=>{
   const weak=rows.filter(r=>r.stage===4||(r.stage===3&&!r.templatePass)).length;
-  return weak>0?weak:(stats?.decline ?? (rows.length>0 ? Math.floor(rows.length*0.72) : 0));
+  return rows.some(r=>r.stage!==null)?weak:null;
  },[rows,stats]);
  return <section id="section-auto-pick" className={`${styles.dashboard} ${compact?styles.compact:''}`} aria-label="Thai Stock Screener">
   {compact?<header className={styles.compactHeader}><div><h2>Stage 2 Superperformance Screener</h2><p>คัดกรอง Trend Template ขาขึ้น &amp; RS ผู้นำตลาดตามหลักการ Minervini</p></div><button type="button" disabled={busy||signalAccess!==true} onClick={()=>setRevision(v=>v+1)}>{busy?'กำลังโหลด…':'↻ โหลดข้อมูลล่าสุด'}</button></header>:<>  <header className={styles.header}><div><span className={styles.eyebrow}>THAI EQUITIES / SET100 + mai</span><h1>ตลาดหุ้นไทย <span>Decision Terminal</span></h1><p>คัดหุ้น · เก็บไว้เฝ้า · เปิดกราฟ · ติดตามผล ในหน้าเดียว</p></div><div className={styles.actions}><button type="button" onClick={onOpenStyleScanner}>สแกนตามสไตล์ (Multi-Strategy) ↗</button><a href="#section-radar">Strategy Radar ↓</a><a href="#chart-panel">กราฟ {selectedSymbol} ↓</a><a href="#section-results" onClick={event=>{if(onResults){event.preventDefault();onResults();}}}>Trade Ledger (100 ไม้)</a><button type="button" disabled={busy||signalAccess!==true} onClick={()=>setRevision(v=>v+1)}>{busy?'กำลังโหลด…':'↻ โหลดผลล่าสุด'}</button></div></header></>}
 
   <div className={`${styles.stats} stats shadow`}>
-   <article className={styles.stat}><small>Market Regime · SET</small><strong>{regime}</strong><p>{stats?.index?`${n(stats.index.price)} · D1 ${stats.index.day}`:'ดัชนียังไม่พร้อม'}</p><small>ขึ้น {stats?.advance??'—'} / ลง {stats?.decline??'—'} / คงที่ {stats?.flat??'—'} · ชุดสแกน {stats?.observed??'—'}/{stats?.expected??150}</small></article>
+   <article className={styles.stat}><small>Market Regime · SET</small><strong>{regime}</strong><p>{stats?.index?`${n(stats.index.price)} · D1 ${stats.index.day}`:'ดัชนียังไม่พร้อม'}</p><small>ขึ้น {stats?.advance??'—'} / ลง {stats?.decline??'—'} / คงที่ {stats?.flat??'—'} · ชุดที่มีข้อมูล {stats?.observed??'—'}/{stats?.expected??'—'}</small></article>
    <article className={styles.stat}><small>Stage 2 Superperformance</small><strong>{stats?stats.stage2:'—'} <em>ตัว</em></strong><p>ผ่าน 7–8/8 และ RS &gt; SET</p><small>คะแนนคัดกรอง ไม่ใช่โอกาสชนะ</small></article>
    <article className={styles.stat}><small>Volume Surge</small><strong>{stats?stats.surge:'—'} <em>ตัว</em></strong><p>RVOL &gt; 1.5×</p><small>เทียบ 20 วันก่อนหน้า ไม่รวมวันปัจจุบัน</small></article>
    <article className={styles.stat}><small>RS Momentum Leaders · 63 วัน</small><div className={styles.leaders}>{stats?.rsLeaders?.length?stats.rsLeaders.map(r=><button key={r.symbol} type="button" onClick={()=>onSelect?.(r.symbol)}>{r.symbol}<span>+{n(r.excessReturnPercent)}%</span></button>):<p>รอข้อมูลหุ้นและ SET ที่ตรงวันกัน</p>}</div></article>
@@ -71,7 +80,7 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
    <div className={styles.guardIcon} aria-hidden="true">🛡️</div>
    <div className={styles.guardContent}>
     <strong>ระบบเกราะคุ้มครองเงินต้น (Capital Protection Guard)</strong>
-    <p>ระบบทำการคัดทิ้งหุ้นขาลง Stage 4 และกราฟเสียทรงไปแล้ว <b>{avoidedCount||'—'} ตัว</b> (จากจักรวาลสแกน {(stats?.observed ?? rows.length) || 150} ตัว) เพื่อปกป้องพอร์ตของคุณจากการติดดอยเรื้อรัง โฟกัสเฉพาะหุ้นผู้นำที่มีโครงสร้างพร้อมวิ่ง</p>
+    <p>พบหุ้น Stage 4 หรือ Stage 3 ที่ไม่ผ่าน Template จากข้อมูลที่โหลด <b>{avoidedCount??'—'} ตัว</b> (จากจักรวาลสแกน {stats?.observed??'—'} ตัวที่มีข้อมูล) เพื่อปกป้องพอร์ตของคุณจากการติดดอยเรื้อรัง โฟกัสเฉพาะหุ้นผู้นำที่มีโครงสร้างพร้อมวิ่ง</p>
    </div>
   </aside>
 
@@ -114,8 +123,8 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
    <div className={styles.filters}><label className={styles.search}>ค้นหาหุ้น<input aria-label="ค้นหาหุ้นไทยในตาราง" value={query} placeholder="ชื่อย่อ / บริษัท เช่น PTT" onChange={e=>setQuery(e.target.value)}/></label><details className={styles.advancedFilters}><summary>ตัวกรองเพิ่ม{[sector!=='all',peMax!==80,rsiMin!==0||rsiMax!==100,sort!=='quality'].filter(Boolean).length>0?' · ใช้อยู่ '+[sector!=='all',peMax!==80,rsiMin!==0||rsiMax!==100,sort!=='quality'].filter(Boolean).length:''}</summary><div className={styles.advancedControls}><label>Sector · provider<select aria-label="กรองกลุ่มหุ้น" value={sector} onChange={e=>setSector(e.target.value)}><option value="all">ทุกกลุ่ม</option>{sectors.map(s=><option key={s}>{s}</option>)}<option value="unknown">ข้อมูลกลุ่มไม่พร้อม</option></select></label><label>P/E ≤ {peMax===80?'ทั้งหมด':peMax}<input type="range" aria-label="P/E สูงสุด" min="1" max="80" value={peMax} disabled={!hasPe} onChange={e=>setPeMax(Number(e.target.value))}/>{!hasPe&&<small>กำลังรอข้อมูล P/E</small>}</label><label>RSI {rsiMin}–{rsiMax}<div className={styles.ranges}><input type="range" aria-label="RSI ต่ำสุด" min="0" max="100" value={rsiMin} onChange={e=>setRsiMin(Math.min(Number(e.target.value),rsiMax))}/><input type="range" aria-label="RSI สูงสุด" min="0" max="100" value={rsiMax} onChange={e=>setRsiMax(Math.max(Number(e.target.value),rsiMin))}/></div></label><label>เรียงตาม<select aria-label="เรียงหุ้นไทย" value={sort} onChange={e=>setSort(e.target.value)}><option value="quality">EMA Score</option><option value="rvol">RVOL</option><option value="rs">RS vs SET</option><option value="change">% เปลี่ยนแปลง</option><option value="symbol">ชื่อย่อ</option></select></label></div></details><button type="button" aria-pressed={savedOnly} onClick={()=>setSavedOnly(v=>!v)}>★ หุ้นโปรด {favorites.length}</button><button type="button" aria-pressed={showMetrics} onClick={()=>setShowMetrics(v=>!v)}>{showMetrics?'ซ่อน RSI / P/E / RVOL':'แสดง RSI / P/E / RVOL'}</button><button type="button" onClick={reset}>ล้างตัวกรอง</button></div>
    {preset==='orb'&&<p className={styles.notice}>ORB 15m · พักสัญญาณใหม่ระหว่างวิจัย ฟีดหน่วงอย่างน้อย 15 นาที · <a href="#section-results" onClick={event=>{if(onResults){event.preventDefault();onResults();}}}>เปิดประวัติ Trade Ledger ↓</a></p>}
    {preset==='dividend'&&<p className={styles.notice}>เกณฑ์นี้ใช้ Dividend ≥3% และ P/E ≤15 จากข้อมูล provider ไม่ใช่การยืนยันสมาชิกดัชนี SETHD ข้อมูลที่ขาดจะไม่ผ่านตัวกรอง</p>}
-   {error&&<p role="alert" className={styles.notice}>ยังอ่านข้อมูลไม่ได้ กรุณาลองโหลดผลล่าสุด · {error==='SOURCE_UNAVAILABLE'?'แหล่งข้อมูลไม่พร้อม':'ตรวจสิทธิสมาชิกและการเชื่อมต่อ'}</p>}
-   {!data?<p role="status" className={styles.message}>{busy||signalAccess===null?'กำลังอ่านผลสแกนที่บันทึกไว้…':'รอข้อมูลจาก worker'}</p>:<><ThaiScreenerTable showMetrics={showMetrics} rows={filtered.slice((current-1)*7,current*7)} favorites={favorites} selectedSymbol={selectedSymbol} onSelect={onSelect} onToggleFavorite={onToggleFavorite}/>{!filtered.length&&<p role="status" className={styles.message}>{preset==='orb'?'ไม่มีสัญญาณ ORB ใหม่ในโหมดที่พักวิจัย':'ยังไม่มีหุ้นผ่านตัวกรองนี้ ลองล้างตัวกรองหรือรอข้อมูลครบ'}</p>}<footer className={styles.pagination}><span>{filtered.length}/{rows.length} ตัว · หน้าละ 7 · คัดใหม่รายตัวทุก 10 นาทีตามคิว</span><div><button disabled={current===1} onClick={()=>setPage(current-1)}>ก่อนหน้า</button><span>{current}/{pages}</span><button disabled={current===pages} onClick={()=>setPage(current+1)}>ถัดไป</button></div></footer></>}
+   {error&&<p role="alert" className={styles.notice}>ยังอ่านข้อมูลไม่ได้ กรุณาลองโหลดผลล่าสุด · {error}</p>}
+   {!data?<p role="status" className={styles.message}>{busy||signalAccess===null?'กำลังอ่านผลและโหลดราคาจริง…':'รอข้อมูลจากผู้ให้บริการ'}</p>:<><ThaiScreenerTable showMetrics={showMetrics} rows={filtered.slice((current-1)*7,current*7)} favorites={favorites} selectedSymbol={selectedSymbol} onSelect={onSelect} onToggleFavorite={onToggleFavorite}/>{!filtered.length&&<p role="status" className={styles.message}>{preset==='orb'?'ไม่มีสัญญาณ ORB ใหม่ในโหมดที่พักวิจัย':'ยังไม่มีหุ้นผ่านตัวกรองนี้ ลองล้างตัวกรองหรือรอข้อมูลครบ'}</p>}<footer className={styles.pagination}><span>{filtered.length}/{rows.length} ตัว · หน้าละ 7 · คัดใหม่รายตัวทุก 10 นาทีตามคิว</span><div><button disabled={current===1} onClick={()=>setPage(current-1)}>ก่อนหน้า</button><span>{current}/{pages}</span><button disabled={current===pages} onClick={()=>setPage(current+1)}>ถัดไป</button></div></footer></>}
    
    <div className={styles.elevatedSizing} aria-label="โต๊ะคำนวณขนาดไม้ 2R Position Sizing">
     <div className={styles.sizingHead}>
