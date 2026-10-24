@@ -49,6 +49,7 @@ async function load(asset,instrument,timeframe,{now=Date.now(),chartFetcher=yaho
  const today=dayIn(now,instrument.zone),usClock=newYorkParts(now);
  const dailyClosed=asset.id==='us'&&!['Sat','Sun'].includes(usClock.weekday)&&usClock.minutes>=990;
  const byTime=new Map(),duplicates=new Set();
+ const scale=instrument.scale||1;
  for(const q of result.quotes??[]){
   const ms=new Date(q.date).getTime(),time=timeframe==='1d'?dayIn(ms,instrument.zone):Math.floor(ms/1000);
   // Yahoo may append a live quote timestamp to chart data. A seconds-level
@@ -56,10 +57,10 @@ async function load(asset,instrument,timeframe,{now=Date.now(),chartFetcher=yaho
   if(timeframe!=='1d'&&!isYahooCandleStart(ms,timeframe,asset.id))continue;
   if(!Number.isFinite(ms)||ms>now||timeframe==='1d'&&(time>today||time===today&&!dailyClosed)||timeframe!=='1d'&&(time+durations[timeframe])*1000>now)continue;
   if(![q.open,q.high,q.low,q.close].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>0)||q.high<Math.max(q.open,q.close,q.low)||q.low>Math.min(q.open,q.close))continue;
-  const volume=asset.id==='forex'?(q.volume||1):q.volume;
+  const volume=asset.id==='forex'||asset.id==='tfex'?(q.volume||1):q.volume;
   if(!Number.isFinite(volume)||volume<0)continue;
   if(byTime.has(time)){byTime.delete(time);duplicates.add(time);continue;}if(duplicates.has(time))continue;
-  byTime.set(time,{time,open:q.open,high:q.high,low:q.low,close:q.close,volume});
+  byTime.set(time,{time,open:Number((q.open*scale).toFixed(2)),high:Number((q.high*scale).toFixed(2)),low:Number((q.low*scale).toFixed(2)),close:Number((q.close*scale).toFixed(2)),volume});
  }
  const bars=[...byTime.values()].sort((a,b)=>a.time<b.time?-1:1).slice(-5000);
  if(!bars.length)throw error('BARS_UNAVAILABLE');

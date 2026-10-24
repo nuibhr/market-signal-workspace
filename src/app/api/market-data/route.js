@@ -1,6 +1,7 @@
 import { assessDailySeries, assessIntradaySeries, createSettradeClient, MAX_CANDLE_BARS, SettradeDataError } from '../../../market-data/settrade.mjs';
 import { ALL_ASSETS, SETTRADE_SYMBOLS } from '../../../markets/catalog.mjs';
 import { rememberChartSnapshot } from '../../../market-data/delayed-candles.mjs';
+import { loadChartBackup } from '../../../market-data/chart-backup.mjs';
 import {closedThaiChartBars,thaiSession,thaiQuoteMetadata,assessThaiDailyFeed} from '../../../market-data/thai-feed-meta.mjs';
 
 export const runtime = 'nodejs';
@@ -27,6 +28,12 @@ export async function GET(request) {
   }
 
   if (!client.configuration.configured) {
+    if (instrument) {
+      try {
+        const backup = await loadChartBackup(instrument, timeframe);
+        if (backup?.status === 'available') return Response.json(backup, { headers: NO_STORE });
+      } catch {}
+    }
     return Response.json({ status: 'unavailable', code: 'SOURCE_NOT_CONFIGURED' }, { status: 503, headers: NO_STORE });
   }
 
@@ -61,6 +68,12 @@ export async function GET(request) {
     if (payload.status === 'available') await rememberChartSnapshot(payload, instrument, timeframe);
     return Response.json(payload, { headers: NO_STORE });
   } catch (error) {
+    if (instrument) {
+      try {
+        const backup = await loadChartBackup(instrument, timeframe);
+        if (backup?.status === 'available') return Response.json(backup, { headers: NO_STORE });
+      } catch {}
+    }
     const code = error instanceof SettradeDataError ? error.code : 'SOURCE_UNAVAILABLE';
     return Response.json({ status: 'unavailable', code }, { status: 503, headers: NO_STORE });
   }

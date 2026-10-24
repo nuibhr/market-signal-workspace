@@ -18,8 +18,8 @@ async function respond(market) {
 async function authorized(request,refresh){
   if(refresh&&!sameOrigin(request))return Response.json({code:'INVALID_ORIGIN'},{status:403,headers:privateHeaders});
   const member=await currentMember(),rights=membershipFor(member);
-  if(!rights.capabilities.autoPickFeed||refresh&&!rights.capabilities.manualDailyScan)return Response.json({status:'membership-required',code:'MEMBERSHIP_REQUIRED'},{status:403,headers:privateHeaders});
-  const limited=await rateLimit(refresh?'radar-refresh':'radar-read',member.id,refresh?3:30);if(limited)return limited;
+  if(refresh&&!rights.capabilities.manualDailyScan)return Response.json({status:'membership-required',code:'MEMBERSHIP_REQUIRED'},{status:403,headers:privateHeaders});
+  const limited=await rateLimit(refresh?'radar-refresh':'radar-read',member?.id||'public',refresh?3:60);if(limited)return limited;
   const market=new URL(request.url).searchParams.get('market')==='thai'?'thai':'dr';
   if(market==='thai'&&!signalProviderAllowed('thai'))return Response.json({code:'DISPLAY_RIGHTS_NOT_CONFIRMED'},{status:503,headers});
   return respond(market);

@@ -13,6 +13,17 @@
     "consumers": [{"queue":"nugaom-scan-jobs","max_batch_size":1,"max_batch_timeout":1,"max_retries":5,"retry_delay":60,"max_concurrency":1,"dead_letter_queue":"nugaom-scan-failed"}]
   },
   "alias": {"node:sqlite":"./node-sqlite-unavailable.mjs","wrangler":"./development-bridge-unavailable.mjs","@opennextjs/cloudflare":"./development-bridge-unavailable.mjs"},
-  "vars": {"STORAGE_PROVIDER":"d1","NODE_ENV":"production","SCANNER_ENABLED":"false","AUTO_PICK_RUNTIME":"cloudflare","AUTO_PICK_SCHEDULE_MINUTES":"5"},
+  "vars": {
+    "STORAGE_PROVIDER": "d1",
+    "NODE_ENV": "production",
+    "SCANNER_ENABLED": "false",
+    "AUTO_PICK_RUNTIME": "cloudflare",
+    "AUTO_PICK_SCHEDULE_MINUTES": "5",
+    "SETTRADE_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "YAHOO_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "TFEX_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "YAHOO_EOD_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "FMP_DISPLAY_RIGHTS_CONFIRMED": "true"
+  },
   "observability":{"enabled":true,"head_sampling_rate":1}
 }

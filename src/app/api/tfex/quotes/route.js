@@ -1,3 +1,4 @@
+import YahooFinance from 'yahoo-finance2';
 import { createTfexClient, createSettradeClient } from '../../../../market-data/settrade.mjs';
 import { ALL_ASSETS } from '../../../../markets/catalog.mjs';
 import { buildTfexContracts } from '../../../../markets/tfex-contracts.mjs';
@@ -9,20 +10,38 @@ const NO_STORE = { 'Cache-Control': 'private, no-store, max-age=0' };
 const QUOTE_TTL_MS = 45_000;
 const MAX_SYMBOLS = 6;
 const client = createTfexClient();
+const yf = new YahooFinance({
+  suppressNotices: ['yahooSurvey'],
+  versionCheck: false,
+  fetch: (url, options) => fetch(url, { ...options, signal: AbortSignal.timeout(10_000) }),
+  queue: { concurrency: 2 },
+});
 const quoteCache = new Map();
 const pending = new Map();
 
-async function quoteFor(symbol) {
-  const cached = quoteCache.get(symbol);
-  if (cached && cached.expiresAt > Date.now()) return cached.quote;
-  if (!pending.has(symbol)) {
-    pending.set(symbol, client.getQuote(symbol)
-      .then(quote => {
-        const asset = ALL_ASSETS.find(item => item.symbol === symbol && item.feed === 'tfex-quote');
+function getTfexProxyTicker(symbol) {
+  if (symbol.startsWith('S50')) return '^SET50.BK';
+  if (symbol.startsWith('GO')) return 'GC=F';
+  if (symbol.startsWith('SVF')) return 'SI=F';
+  if (symbol.startsWith('USD')) return 'THB=X';
+  return null;
+}
+
+async function fetchTfexQuote(symbol) {
+  const asset = ALL_ASSETS.find(item => item.symbol === symbol && item.feed === 'tfex-quote');
+  const instrumentId = asset?.instrumentId ?? `TFEX:${symbol}`;
+  const tfexAllowed = process.env.NODE_ENV !== 'production' || process.env.TFEX_DISPLAY_RIGHTS_CONFIRMED === 'true';
+  const yahooAllowed = process.env.NODE_ENV !== 'production' || process.env.YAHOO_DISPLAY_RIGHTS_CONFIRMED === 'true';
+
+  // 1. Try Settrade TFEX first if configured & permitted
+  if (tfexAllowed && client.configuration.configured) {
+    try {
+      const quote = await client.getQuote(symbol);
+      if (quote?.status === 'available') {
         return {
-          instrumentId: asset?.instrumentId ?? `TFEX:${symbol}`,
+          instrumentId,
           symbol,
-          status: quote.status,
+          status: 'available',
           source: quote.source,
           price: quote.price,
           change: quote.change,
@@ -37,8 +56,49 @@ async function quoteFor(symbol) {
           sourceTimeKnown: Boolean(quote.observedAt),
           freshness: quote.observedAt && Date.now() - Date.parse(quote.observedAt) <= 15 * 60_000 ? 'recent' : 'unknown',
         };
-      })
-      .catch(() => ({ instrumentId: `TFEX:${symbol}`, symbol, status: 'unavailable' })));
+      }
+    } catch {}
+  }
+
+  // 2. Fall back to Yahoo Finance reference quote
+  if (yahooAllowed) {
+    const ticker = getTfexProxyTicker(symbol);
+    if (ticker) {
+      try {
+        const q = await yf.quote(ticker);
+        if (q && typeof q.regularMarketPrice === 'number' && q.regularMarketPrice > 0) {
+          const observedAt = q.regularMarketTime ? new Date(q.regularMarketTime).toISOString() : new Date().toISOString();
+          return {
+            instrumentId,
+            symbol,
+            status: 'available',
+            source: 'Yahoo Finance · Reference',
+            price: q.regularMarketPrice,
+            change: q.regularMarketChange ?? 0,
+            changePercent: q.regularMarketChangePercent ?? 0,
+            high: q.regularMarketDayHigh ?? null,
+            low: q.regularMarketDayLow ?? null,
+            volume: q.regularMarketVolume ?? 0,
+            openInterest: 0,
+            marketStatus: 'Closed',
+            observedAt,
+            receivedAt: new Date().toISOString(),
+            sourceTimeKnown: Boolean(q.regularMarketTime),
+            freshness: 'recent',
+          };
+        }
+      } catch {}
+    }
+  }
+
+  return { instrumentId, symbol, status: 'unavailable', error: 'SOURCE_UNAVAILABLE', code: 'SOURCE_UNAVAILABLE' };
+}
+
+async function quoteFor(symbol) {
+  const cached = quoteCache.get(symbol);
+  if (cached && cached.expiresAt > Date.now()) return cached.quote;
+  if (!pending.has(symbol)) {
+    pending.set(symbol, fetchTfexQuote(symbol));
   }
   try {
     const quote = await pending.get(symbol);
@@ -57,21 +117,49 @@ export async function GET(request) {
   if (!symbols.length || symbols.length > MAX_SYMBOLS || symbols.some(symbol => !allowedSymbols.has(symbol))) {
     return Response.json({ status: 'unavailable', code: 'INVALID_SYMBOLS' }, { status: 400, headers: NO_STORE });
   }
-  if (process.env.NODE_ENV === 'production' && process.env.TFEX_DISPLAY_RIGHTS_CONFIRMED !== 'true') {
+  const tfexAllowed = process.env.NODE_ENV !== 'production' || process.env.TFEX_DISPLAY_RIGHTS_CONFIRMED === 'true';
+  const yahooAllowed = process.env.NODE_ENV !== 'production' || process.env.YAHOO_DISPLAY_RIGHTS_CONFIRMED === 'true';
+  if (!tfexAllowed && !yahooAllowed) {
     return Response.json({ status: 'unavailable', code: 'DISPLAY_RIGHTS_NOT_CONFIRMED' }, { status: 503, headers: NO_STORE });
   }
-  if (!client.configuration.configured) {
+  if (!client.configuration.configured && !yahooAllowed) {
     return Response.json({ status: 'unavailable', code: 'SOURCE_NOT_CONFIGURED' }, { status: 503, headers: NO_STORE });
   }
 
   const quotes = await Promise.all(symbols.map(quoteFor));
-  const underlying = symbols.some(s=>s.startsWith('S50')) ? await createSettradeClient().getQuote('SET50').catch(()=>null) : null;
+  let underlying = null;
+  if (symbols.some(s => s.startsWith('S50'))) {
+    if (tfexAllowed && client.configuration.configured) {
+      underlying = await createSettradeClient().getQuote('SET50').catch(() => null);
+    }
+    if (!underlying || !(underlying.price > 0)) {
+      if (yahooAllowed) {
+        try {
+          const q = await yf.quote('^SET50.BK');
+          if (q?.regularMarketPrice > 0) {
+            underlying = {
+              symbol: 'SET50',
+              price: q.regularMarketPrice,
+              change: q.regularMarketChange ?? 0,
+              changePercent: q.regularMarketChangePercent ?? 0,
+              high: q.regularMarketDayHigh ?? null,
+              low: q.regularMarketDayLow ?? null,
+              source: 'Yahoo Finance · Reference',
+            };
+          }
+        } catch {}
+      }
+    }
+  }
+
+  const hasAvailable = quotes.some(quote => quote.status === 'available');
+  const source = quotes.find(q => q.status === 'available')?.source ?? 'TFEX Open API';
   return Response.json({
-    status: quotes.some(quote => quote.status === 'available') ? 'available' : 'unavailable',
-    source: 'TFEX Open API',
+    status: hasAvailable ? 'available' : 'unavailable',
+    source,
     receivedAt: new Date().toISOString(),
     sourceTimeKnown: quotes.some(quote => quote.sourceTimeKnown),
     quotes,
-    underlying: underlying?.price>0 ? underlying : null,
+    underlying: underlying?.price > 0 ? underlying : null,
   }, { headers: NO_STORE });
 }

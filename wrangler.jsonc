@@ -10,6 +10,21 @@
   "assets": {"directory": ".open-next/assets", "binding": "ASSETS"},
   "services": [{"binding": "WORKER_SELF_REFERENCE", "service": "nugaom-ai-pick"}],
   "d1_databases": [{"binding": "DB", "database_name": "nugaom-prod-db", "database_id": "8d1f669c-a3b6-4231-9f00-bc97c2a0b817", "migrations_dir": "deploy/cloudflare/migrations"}],
-  "vars": {"STORAGE_PROVIDER": "d1", "LAUNCH_MAINTENANCE": "false", "NODE_ENV": "production", "AUTO_PICK_RUNTIME": "cloudflare", "AUTO_PICK_SCHEDULE_MINUTES": "5", "APP_ORIGIN": "https://nugaom-ai-pick.nuibhr1.workers.dev", "LINE_REDIRECT_URI": "https://nugaom-ai-pick.nuibhr1.workers.dev/api/auth/line/callback"},
+  "vars": {
+    "STORAGE_PROVIDER": "d1",
+    "LAUNCH_MAINTENANCE": "false",
+    "NODE_ENV": "production",
+    "AUTO_PICK_RUNTIME": "cloudflare",
+    "AUTO_PICK_SCHEDULE_MINUTES": "5",
+    "APP_ORIGIN": "https://nugaom-ai-pick.nuibhr1.workers.dev",
+    "LINE_REDIRECT_URI": "https://nugaom-ai-pick.nuibhr1.workers.dev/api/auth/line/callback",
+    "SETTRADE_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "YAHOO_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "TFEX_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "YAHOO_EOD_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "FMP_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "MARKETDX_PUBLIC_DISPLAY_RIGHTS_CONFIRMED": "true",
+    "FRED_PUBLIC_DISPLAY_RIGHTS_CONFIRMED": "true"
+  },
   "observability": {"enabled": true, "head_sampling_rate": 1}
 }
