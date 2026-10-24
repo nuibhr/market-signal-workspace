@@ -1,0 +1,12 @@
+{
+  "$schema":"../../node_modules/wrangler/config-schema.json",
+  "name":"nugaom-scanner-bridge",
+  "account_id":"84140dea513079cc7dc4166a4c71b2ee",
+  "main":"scanner-bridge-worker.mjs",
+  "compatibility_date":"2026-10-07",
+  "compatibility_flags":["nodejs_compat"],
+  "workers_dev":true,
+  "d1_databases":[{"binding":"DB","database_name":"nugaom-prod-db","database_id":"8d1f669c-a3b6-4231-9f00-bc97c2a0b817","migrations_dir":"migrations"}],
+  "vars":{"SCANNER_BRIDGE_ENABLED":"true"},
+  "observability":{"enabled":true,"head_sampling_rate":1}
+}

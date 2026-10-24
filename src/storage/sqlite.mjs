@@ -3,6 +3,8 @@ import { mkdirSync, chmodSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { BILLING_SCHEMA, AI_PLAN_CAPS_SCHEMA } from '../billing/schema.mjs';
 import { SIGNAL_DESK_SCHEMA } from '../signals/schema.mjs';
+import { SCANNER_BRIDGE_SCHEMA } from '../scanner/schema.mjs';
+import { DEMO_SCHEMA } from '../membership/demo-policy.mjs';
 import { BASE_SCHEMA, D1_SAFETY_SCHEMA, D1_IMPORT_SAFETY, ADMIN_OPERATIONS_SCHEMA, CLOUD_SCANNER_SCHEMA, CLOUD_SCANNER_PRIORITY_SCHEMA, COACH_PORTFOLIO_SCHEMA, COMMUNITY_SCHEMA, SCAN_PROGRESS_SCHEMA } from './schema.mjs';
 
 let database;
@@ -103,7 +105,7 @@ function db() {
   database.exec('CREATE INDEX IF NOT EXISTS ai_questions_conversation ON ai_questions(member_id,conversation_id,created_at)');
   database.exec(BASE_SCHEMA);
   database.exec('CREATE TABLE IF NOT EXISTS storage_migrations(version INTEGER PRIMARY KEY,applied_at TEXT NOT NULL)');
-  for (const [version,sql] of [[2,D1_SAFETY_SCHEMA],[3,D1_IMPORT_SAFETY],[4,ADMIN_OPERATIONS_SCHEMA],[5,CLOUD_SCANNER_SCHEMA],[6,CLOUD_SCANNER_PRIORITY_SCHEMA],[7,COACH_PORTFOLIO_SCHEMA],[8,COMMUNITY_SCHEMA],[9,SCAN_PROGRESS_SCHEMA],[10,SIGNAL_DESK_SCHEMA],[11,BILLING_SCHEMA],[12,AI_PLAN_CAPS_SCHEMA]]) {
+  for (const [version,sql] of [[2,D1_SAFETY_SCHEMA],[3,D1_IMPORT_SAFETY],[4,ADMIN_OPERATIONS_SCHEMA],[5,CLOUD_SCANNER_SCHEMA],[6,CLOUD_SCANNER_PRIORITY_SCHEMA],[7,COACH_PORTFOLIO_SCHEMA],[8,COMMUNITY_SCHEMA],[9,SCAN_PROGRESS_SCHEMA],[10,SIGNAL_DESK_SCHEMA],[11,BILLING_SCHEMA],[12,AI_PLAN_CAPS_SCHEMA],[13,DEMO_SCHEMA],[14,SCANNER_BRIDGE_SCHEMA]]) {
     if (database.prepare('SELECT version FROM storage_migrations WHERE version=?').get(version)) continue;
     database.exec('BEGIN IMMEDIATE');
     try { database.exec(sql);database.prepare('INSERT INTO storage_migrations VALUES(?,?)').run(version,new Date().toISOString());database.exec('COMMIT'); }

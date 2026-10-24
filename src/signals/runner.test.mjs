@@ -62,6 +62,15 @@ test('cloud scheduling coalesces outstanding symbols and acknowledges duplicate 
  assert.equal((await cloud.consume(messages[0].body.id,now+2000)).status,'done');
  assert.equal((await cloud.consume(messages[0].body.id,now+3000)).status,'ignored');assert.equal(calls,1);
 });
+test('a stalled provider or profile cannot hold the market lease indefinitely',async()=>{
+ const symbol=signalUniverse('thai')[5].symbol;
+ const stalled=createSignalRunner({clock:()=>now,allowed:()=>true,load:()=>new Promise(()=>{}),getBenchmark:()=>new Promise(()=>{}),sourceTimeoutMs:5,contextTimeoutMs:5});
+ const result=await stalled('thai',{symbols:[symbol]});assert.equal(result.status,'partial');assert.equal(result.errors[0].code,'SOURCE_TIMEOUT');
+ assert.equal((await storage.first('SELECT until_ms FROM signal_desk_leases WHERE market=?','thai')).until_ms,0);
+ const recovered=createSignalRunner({clock:()=>now,allowed:()=>true,load:async(_asset,frame)=>({source:'fixture',bars:frame==='1d'?daily:four}),getProfile:()=>new Promise(()=>{}),contextTimeoutMs:5});
+ assert.equal((await recovered('thai',{symbols:[symbol]})).status,'complete');
+ assert.equal((await storage.first('SELECT until_ms FROM signal_desk_leases WHERE market=?','thai')).until_ms,0);
+});
 test('queued monitoring respects persisted cooldown and treats already-checked delivery as completed, without forcing a new scan',async()=>{
  await storage.run('DELETE FROM scanner_jobs');
  for(const a of signalUniverse('dr'))await saveObservation({market:'dr',symbol:a.symbol,status:'UNAVAILABLE',checkedAt:new Date(now).toISOString()},now+600000);

@@ -6,6 +6,12 @@ let local,platform;
 const operation=(sql,...params)=>({sql,params});
 export {operation};
 
+// The VPS scanner receives a narrow HTTP adapter, never a customer DB binding.
+export function withScannerDatabase(adapter,action){
+  if(adapter?.kind!=='scanner-http')throw Error('SCANNER_ADAPTER_REQUIRED');
+  return context.run(adapter,action);
+}
+
 function d1Adapter(binding){
   if(!binding?.prepare||!binding?.batch)throw new Error('D1_BINDING_REQUIRED');
   const statement=({sql,params=[]})=>binding.prepare(sql).bind(...params);

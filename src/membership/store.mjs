@@ -3,6 +3,7 @@ import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { storage, operation as op } from '../storage/database.mjs';
 import {withBilling} from '../billing/store.mjs';
 import {membershipFor} from './rights.mjs';
+import {isDemoIdentity} from './demo-policy.mjs';
 const DAY = 86_400_000;
 
 export function digest(value) { return createHash('sha256').update(value).digest('hex'); }
@@ -29,7 +30,7 @@ export function normalizePortfolio(value) {
   if (!/^[A-Z0-9]{5,24}$/.test(number)) throw new Error('INVALID_PORTFOLIO');
   return number;
 }
-export function isAdmin(member) { return Boolean(member && process.env.ADMIN_LINE_IDS?.split(',').map(id => id.trim()).includes(member.line_id)); }
+export function isAdmin(member) { return Boolean(member && !isDemoIdentity(member) && process.env.ADMIN_LINE_IDS?.split(',').map(id => id.trim()).includes(member.line_id)); }
 
 const AI_FREE_DAILY = 5;
 function bangkokDay() {
@@ -81,8 +82,8 @@ export async function consumeLineFlow(value) {
   if(typeof value!=='string'||value.length>100)return null;
   return storage.first('DELETE FROM line_oauth_flows WHERE token_hash=? RETURNING state,nonce,verifier,expires_at',sessionDigest(value));
 }
-export async function createSession(memberId) {
-  const value=token(),expiresAt=new Date(Date.now()+30*DAY).toISOString();
+export async function createSession(memberId,expiresAt=new Date(Date.now()+30*DAY).toISOString()) {
+  const value=token();
   await storage.batch([op('DELETE FROM sessions WHERE expires_at<=?',new Date().toISOString()),
     op('INSERT INTO sessions (token_hash,member_id,expires_at) VALUES (?,?,?)',sessionDigest(value),memberId,expiresAt)]);
   return {value,expiresAt};
@@ -91,7 +92,8 @@ export async function sessionMember(value) {
   if(typeof value!=='string'||value.length>100||!process.env.SESSION_SECRET||process.env.SESSION_SECRET.length<32)return null;
   const member=await storage.first(`SELECT m.* FROM sessions s JOIN members m ON m.id=s.member_id
     WHERE s.token_hash=? AND s.expires_at>?`,sessionDigest(value),new Date().toISOString());
-  return member?.id?.startsWith('demo-') || member?.line_id?.startsWith('Udemo_') ? null : withBilling(member);
+  const resolved=await withBilling(member);
+  return isDemoIdentity(resolved)&&!resolved.demo?null:resolved;
 }
 export async function deleteSession(value) { if(value)await storage.run('DELETE FROM sessions WHERE token_hash=?',sessionDigest(value)); }
 export async function submitPortfolio(member,brokerInput,numberInput) {
@@ -232,7 +234,7 @@ export async function rejectRenewal(admin,requestId) {
 export async function accountSummary(member) {
   if(!member)return null;
   const renewal=await storage.first("SELECT id FROM renewal_requests WHERE member_id=? AND status='pending'",member.id);
-  return {id:member.id,displayName:member.display_name,pictureUrl:member.picture_url,broker:member.broker,
+  return {id:member.id,displayName:member.display_name,pictureUrl:member.picture_url,demo:member.demo??null,broker:member.broker,
     portfolioLast4:member.portfolio_last4,portfolioStatus:member.portfolio_status,trialStartedAt:member.trial_started_at,
     trialEndsAt:member.trial_ends_at,subscriptionEndsAt:member.subscription_ends_at,renewalPending:Boolean(renewal),admin:isAdmin(member),coach:Boolean(await storage.first('SELECT id FROM coach_portfolios WHERE owner_id=? LIMIT 1',member.id))};
 }

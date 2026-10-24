@@ -13,6 +13,7 @@ export async function POST(request) {
   if (Number(request.headers.get('content-length') || 0) > 4096) return Response.json({ error: 'PAYLOAD_TOO_LARGE' }, { status: 413, headers: privateHeaders });
   const member = await currentMember();
   if (!member) return Response.json({ error: 'LOGIN_REQUIRED' }, { status: 401, headers: privateHeaders });
+  if(member.demo)return Response.json({error:'DEMO_READ_ONLY'},{status:403,headers:privateHeaders});
   const limited = (await rateLimit('account', member.id, 12)); if (limited) return limited;
   try {
     const body = await readJsonBody(request, 4096);
