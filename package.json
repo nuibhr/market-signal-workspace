@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "scanner:build": "node scripts/build-vps-scanner.mjs",
+    "scanner:vps": "node scripts/vps-signal-worker.mjs",
+    "cloud:deploy:bridge": "wrangler deploy --config deploy/cloudflare/wrangler.scanner-bridge.jsonc",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",

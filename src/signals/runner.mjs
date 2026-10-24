@@ -41,7 +41,9 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
         if(!discover&&!track)continue;
         scanned++;
         try {
-          let snapshot=await storedObservation(market,symbol);
+          // Discovery replaces the snapshot; avoid reading the old payload
+          // across the VPS bridge when only monitoring needs it.
+          let snapshot=discover?null:await storedObservation(market,symbol);
           if(discover){
             try{
               const daily = await sourceDeadline(load(asset,'1d'),sourceTimeoutMs), four = await sourceDeadline(load(asset,'4h'),sourceTimeoutMs);
