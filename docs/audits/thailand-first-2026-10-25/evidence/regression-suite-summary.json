@@ -1,0 +1,19 @@
+{
+  "baselineCommit": "b2f8cb233f397cf1c0452982d9a0e2d87a15f8d7",
+  "sourceLogSha256": "fde05fc57dfeb07e6f843f1c40b6bf3367c64130e6155ece7f6175f2e223dccc",
+  "tests": 458,
+  "suites": 2,
+  "pass": 458,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "todo": 0,
+  "durationMs": 14537.608792,
+  "scope": "Recorded automated suite before Phase 0 audit; not rerun for this documentation commit.",
+  "notEquivalentTo": [
+    "production browser acceptance",
+    "LINE human consent",
+    "live broker validation",
+    "load benchmark"
+  ]
+}
