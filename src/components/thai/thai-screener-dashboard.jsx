@@ -1,4 +1,5 @@
 'use client';
+import {readApiJson} from '../../security/api-response.mjs';
 import {useEffect,useMemo,useState} from 'react';
 import {pollAfterCompletion} from '../../monitor/poll.mjs';
 import {DISCOVERY_INTERVAL_MS} from '../../signals/cadence.mjs';
@@ -39,7 +40,7 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
   if(!visible){setBusy(false);return;}
   setData(null);setError('');
   const controller=new AbortController();
-  const stop=pollAfterCompletion(async()=>{setBusy(true);try{const r=await fetch('/api/thai-screener',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])}),value=await r.json();if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setFetchCycle(v=>v+1);setError('');}}catch(e){if(!controller.signal.aborted){setData(null);setError(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}},{intervalMs:DISCOVERY_INTERVAL_MS});
+  const stop=pollAfterCompletion(async()=>{setBusy(true);try{const r=await fetch('/api/thai-screener',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])}),value=await readApiJson(r);if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setFetchCycle(v=>v+1);setError('');}}catch(e){if(!controller.signal.aborted){setData(null);setError(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}},{intervalMs:DISCOVERY_INTERVAL_MS});
   return()=>{stop();controller.abort();};
  },[signalAccess,revision,visible]);
  const rows=data?.rows??[],stats=data?.stats;
@@ -54,7 +55,7 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
   if(signalAccess!==true||!visible||!refreshKey)return;
   const controller=new AbortController();setBusy(true);
   fetch('/api/thai-screener',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbols:refreshKey.split(',')}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(60000)])})
-   .then(async r=>{const value=await r.json();if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setError('');}})
+   .then(async r=>{const value=await readApiJson(r);if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setError('');}})
    .catch(e=>{if(!controller.signal.aborted)setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});
   return()=>controller.abort();
  },[signalAccess,visible,refreshKey,revision,fetchCycle]);
@@ -124,7 +125,7 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
    {preset==='orb'&&<p className={styles.notice}>ORB 15m · พักสัญญาณใหม่ระหว่างวิจัย ฟีดหน่วงอย่างน้อย 15 นาที · <a href="#section-results" onClick={event=>{if(onResults){event.preventDefault();onResults();}}}>เปิดประวัติ Trade Ledger ↓</a></p>}
    {preset==='dividend'&&<p className={styles.notice}>เกณฑ์นี้ใช้ Dividend ≥3% และ P/E ≤15 จากข้อมูล provider ไม่ใช่การยืนยันสมาชิกดัชนี SETHD ข้อมูลที่ขาดจะไม่ผ่านตัวกรอง</p>}
    {error&&<p role="alert" className={styles.notice}>ยังอ่านข้อมูลไม่ได้ กรุณาลองโหลดผลล่าสุด · {error}</p>}
-   {!data?<p role="status" className={styles.message}>{busy||signalAccess===null?'กำลังอ่านผลและโหลดราคาจริง…':'รอข้อมูลจากผู้ให้บริการ'}</p>:<><ThaiScreenerTable showMetrics={showMetrics} rows={filtered.slice((current-1)*7,current*7)} favorites={favorites} selectedSymbol={selectedSymbol} onSelect={onSelect} onToggleFavorite={onToggleFavorite}/>{!filtered.length&&<p role="status" className={styles.message}>{preset==='orb'?'ไม่มีสัญญาณ ORB ใหม่ในโหมดที่พักวิจัย':'ยังไม่มีหุ้นผ่านตัวกรองนี้ ลองล้างตัวกรองหรือรอข้อมูลครบ'}</p>}<footer className={styles.pagination}><span>{filtered.length}/{rows.length} ตัว · หน้าละ 7 · คัดใหม่รายตัวทุก 10 นาทีตามคิว</span><div><button disabled={current===1} onClick={()=>setPage(current-1)}>ก่อนหน้า</button><span>{current}/{pages}</span><button disabled={current===pages} onClick={()=>setPage(current+1)}>ถัดไป</button></div></footer></>}
+   {!data?<p role="status" className={styles.message}>{busy||signalAccess===null?'กำลังอ่านผลและโหลดราคาจริง…':'รอข้อมูลจากผู้ให้บริการ'}</p>:<><ThaiScreenerTable showMetrics={showMetrics} rows={filtered.slice((current-1)*7,current*7)} favorites={favorites} selectedSymbol={selectedSymbol} onSelect={onSelect} onToggleFavorite={onToggleFavorite}/>{!filtered.length&&<p role="status" className={styles.message}>{preset==='orb'?'ไม่มีสัญญาณ ORB ใหม่ในโหมดที่พักวิจัย':'ยังไม่มีหุ้นผ่านตัวกรองนี้ ลองล้างตัวกรองหรือรอข้อมูลครบ'}</p>}<footer className={styles.pagination}><span>{filtered.length}/{rows.length} ตัว · หน้าละ 7 · {data?.dataMode==='daily-snapshot'?'ผลส่วนกลางรอบรายวัน · ใช้ร่วมกันทั้งวัน':'คัดใหม่รายตัวทุก 10 นาทีตามคิว'}</span><div><button disabled={current===1} onClick={()=>setPage(current-1)}>ก่อนหน้า</button><span>{current}/{pages}</span><button disabled={current===pages} onClick={()=>setPage(current+1)}>ถัดไป</button></div></footer></>}
    
    <div className={styles.elevatedSizing} aria-label="โต๊ะคำนวณขนาดไม้ 2R Position Sizing">
     <div className={styles.sizingHead}>

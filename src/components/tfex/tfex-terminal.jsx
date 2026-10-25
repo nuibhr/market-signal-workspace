@@ -284,11 +284,11 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
   if (isWhatIfCallTriggered) {
     const deficit = Math.abs(whatIfBufferToCall);
     const s50ToTrim = Math.min(whatIfS50Contracts, Math.ceil(deficit / (TFEX_SPECS.S50.im * 0.7)));
-    deRiskAdvice = `🚨 วิกฤต! พอร์ตจะโดน MARGIN CALL ทันที (เงินประกันขาด ${deficit.toLocaleString()} บาท) แนะนำปิด Long S50 ลงอย่างน้อย ${s50ToTrim} สัญญา หรือปิด GO 1 สัญญา เพื่อหยุดการขาดทุนและหลุดพ้นจากระดับ Margin Call ทันที!`;
+    deRiskAdvice = `🚨 วิกฤต! พอร์ตจะโดน MARGIN CALL ทันที (เงินประกันขาด ${deficit.toLocaleString('en-US')} บาท) แนะนำปิด Long S50 ลงอย่างน้อย ${s50ToTrim} สัญญา หรือปิด GO 1 สัญญา เพื่อหยุดการขาดทุนและหลุดพ้นจากระดับ Margin Call ทันที!`;
   } else if (Number(whatIfMarginUsagePct) > 65) {
     deRiskAdvice = `⚠️ ความเสี่ยงเริ่มตึงตัว (Margin Usage ${whatIfMarginUsagePct}%): หากตลาดกระแทกตามสมมติฐานนี้ แนะนำ 'ลดสถานะ S50 ลง 2 สัญญา' (คืนเงินประกัน 21,700฿) หรือ 'ปิด GO 1 สัญญา' (คืนเงินประกัน 31,500฿) เพื่อดึง Margin Usage กลับมาต่ำกว่า 50% ให้ปลอดภัยต่อการเปิดกระโดด Gap ข้ามคืน!`;
   } else {
-    deRiskAdvice = `✓ พอร์ตมีความปลอดภัยสูง: เงินทุนสำรองคงเหลือ ${Math.max(0, simNewEquity - whatIfTotalIm).toLocaleString()} บาท ยังรองรับการย่อตัวของ SET50 (${whatIfS50Shock >= 0 ? '+' : ''}${whatIfS50Shock} จุด) และทองคำ (${whatIfGoShock >= 0 ? '+' : ''}${whatIfGoShock}$) ได้โดยไม่โดน Margin Call`;
+    deRiskAdvice = `✓ พอร์ตมีความปลอดภัยสูง: เงินทุนสำรองคงเหลือ ${Math.max(0, simNewEquity - whatIfTotalIm).toLocaleString('en-US')} บาท ยังรองรับการย่อตัวของ SET50 (${whatIfS50Shock >= 0 ? '+' : ''}${whatIfS50Shock} จุด) และทองคำ (${whatIfGoShock >= 0 ? '+' : ''}${whatIfGoShock}$) ได้โดยไม่โดน Margin Call`;
   }
 
   // Sizing calculations
@@ -430,7 +430,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 <b>{settradeAccount?.brokerName?.split(' ')[0] || 'TRINITY'}</b>
                 <span>{settradeAccount?.accountNo || 'ACTIVE'}</span>
               </div>
-              <span className={styles.gatewayEquityChip}>{settradeAccount?.equity?.toLocaleString()} ฿</span>
+              <span className={styles.gatewayEquityChip}>{settradeAccount?.equity?.toLocaleString('en-US')} ฿</span>
             </div>
           ) : (
             <button
@@ -761,19 +761,19 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                         <div className={styles.byokHudStatCard}>
                           <span className={styles.byokHudStatLabel}>Equity จริง</span>
                           <span className={styles.byokHudStatVal} style={{ color: '#22d3ee' }}>
-                            {settradeAccount.equity?.toLocaleString()} ฿
+                            {settradeAccount.equity?.toLocaleString('en-US')} ฿
                           </span>
                         </div>
                         <div className={styles.byokHudStatCard}>
                           <span className={styles.byokHudStatLabel}>Excess Equity (EE)</span>
                           <span className={styles.byokHudStatVal} style={{ color: '#34d399' }}>
-                            {settradeAccount.excessEquity?.toLocaleString()} ฿
+                            {settradeAccount.excessEquity?.toLocaleString('en-US')} ฿
                           </span>
                         </div>
                         <div className={styles.byokHudStatCard}>
                           <span className={styles.byokHudStatLabel}>Margin ที่ใช้ (IM)</span>
                           <span className={styles.byokHudStatVal} style={{ color: '#fbbf24' }}>
-                            {settradeAccount.totalIm?.toLocaleString()} ฿ ({settradeAccount.marginUsagePct}%)
+                            {settradeAccount.totalIm?.toLocaleString('en-US')} ฿ ({settradeAccount.marginUsagePct}%)
                           </span>
                         </div>
                         <div className={styles.byokHudStatCard}>
@@ -863,10 +863,10 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                 <div className={styles.whatIfPlTotal}>
                   <div className={styles.whatIfPlLabel}>กำไร/ขาดทุนจำลองสุทธิ (SIMULATED P/L)</div>
                   <div className={`${styles.whatIfPlValue} ${simTotalPl >= 0 ? styles.whatIfPlPositive : styles.whatIfPlNegative}`}>
-                    {simTotalPl >= 0 ? `+${simTotalPl.toLocaleString()}` : simTotalPl.toLocaleString()} <small style={{ fontSize: '13px' }}>บาท</small>
+                    {simTotalPl >= 0 ? `+${simTotalPl.toLocaleString('en-US')}` : simTotalPl.toLocaleString('en-US')} <small style={{ fontSize: '13px' }}>บาท</small>
                   </div>
                   <small style={{ color: '#94a3b8' }}>
-                    Equity ใหม่: <b style={{ color: '#ffffff' }}>{simNewEquity.toLocaleString()} บาท</b>
+                    Equity ใหม่: <b style={{ color: '#ffffff' }}>{simNewEquity.toLocaleString('en-US')} บาท</b>
                   </small>
                 </div>
               </div>
@@ -877,7 +877,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   <h3 className={styles.formCardTitle}>📦 สถานะพอร์ตและปัจจัยกระแทก (Holdings & Shocks)</h3>
 
                   <div className={styles.formRow}>
-                    <label>เงินสดในพอร์ต (Starting Equity): {whatIfEquity.toLocaleString()} บาท</label>
+                    <label>เงินสดในพอร์ต (Starting Equity): {whatIfEquity.toLocaleString('en-US')} บาท</label>
                     <div className={styles.presetGroup}>
                       {[150000, 200000, 300000, 500000, 1000000].map(amt => (
                         <button
@@ -886,7 +886,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                           className={styles.presetBtn}
                           onClick={() => setWhatIfEquity(amt)}
                         >
-                          {(amt / 1000).toLocaleString()}k
+                          {(amt / 1000).toLocaleString('en-US')}k
                         </button>
                       ))}
                     </div>
@@ -896,7 +896,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <strong style={{ fontSize: '12px', color: '#22d3ee' }}>1. SET50 Futures (S50Z26)</strong>
-                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>IM: {(whatIfS50Contracts * TFEX_SPECS.S50.im).toLocaleString()} ฿</span>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>IM: {(whatIfS50Contracts * TFEX_SPECS.S50.im).toLocaleString('en-US')} ฿</span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                       <div>
@@ -939,7 +939,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <strong style={{ fontSize: '12px', color: '#fbbf24' }}>2. Gold Online Futures (GOZ26)</strong>
-                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>IM: {(whatIfGoContracts * TFEX_SPECS.GO.im).toLocaleString()} ฿</span>
+                      <span style={{ fontSize: '10px', color: '#94a3b8' }}>IM: {(whatIfGoContracts * TFEX_SPECS.GO.im).toLocaleString('en-US')} ฿</span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                       <div>
@@ -1092,8 +1092,8 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                         </div>
                         <div className={styles.metricBoxSub}>
                           {isWhatIfCallTriggered
-                            ? `ขาดเงินประกัน MM: ${Math.abs(whatIfBufferToCall).toLocaleString()} ฿`
-                            : `กันชนเหนือ MM: +${whatIfBufferToCall.toLocaleString()} ฿`}
+                            ? `ขาดเงินประกัน MM: ${Math.abs(whatIfBufferToCall).toLocaleString('en-US')} ฿`
+                            : `กันชนเหนือ MM: +${whatIfBufferToCall.toLocaleString('en-US')} ฿`}
                         </div>
                       </div>
 
@@ -1103,7 +1103,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                           {whatIfMarginUsagePct}%
                         </div>
                         <div className={styles.metricBoxSub}>
-                          IM รวม: <b>{whatIfTotalIm.toLocaleString()} ฿</b>
+                          IM รวม: <b>{whatIfTotalIm.toLocaleString('en-US')} ฿</b>
                         </div>
                       </div>
                     </div>
@@ -1114,32 +1114,32 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                     <div className={styles.marginRow}>
                       <span>ผลกระทบสัญญา S50 ({whatIfS50Contracts} สัญญา @ {whatIfS50Shock} pt):</span>
                       <b style={{ color: simS50Pl >= 0 ? '#34d399' : '#fb7185' }}>
-                        {simS50Pl >= 0 ? `+${simS50Pl.toLocaleString()}` : simS50Pl.toLocaleString()} บาท
+                        {simS50Pl >= 0 ? `+${simS50Pl.toLocaleString('en-US')}` : simS50Pl.toLocaleString('en-US')} บาท
                       </b>
                     </div>
                     <div className={styles.marginRow}>
                       <span>ผลกระทบสัญญา GO ({whatIfGoContracts} สัญญา @ {whatIfGoShock}$):</span>
                       <b style={{ color: simGoPl >= 0 ? '#34d399' : '#fb7185' }}>
-                        {simGoPl >= 0 ? `+${simGoPl.toLocaleString()}` : simGoPl.toLocaleString()} บาท
+                        {simGoPl >= 0 ? `+${simGoPl.toLocaleString('en-US')}` : simGoPl.toLocaleString('en-US')} บาท
                       </b>
                     </div>
                     <div className={styles.marginRow}>
                       <span>กำไร/ขาดทุนสุทธิ (Net P/L Impact):</span>
                       <b style={{ color: simTotalPl >= 0 ? '#34d399' : '#fb7185', fontSize: '13px' }}>
-                        {simTotalPl >= 0 ? `+${simTotalPl.toLocaleString()}` : simTotalPl.toLocaleString()} บาท
+                        {simTotalPl >= 0 ? `+${simTotalPl.toLocaleString('en-US')}` : simTotalPl.toLocaleString('en-US')} บาท
                       </b>
                     </div>
                     <div className={styles.marginRow}>
                       <span>เงินสดคงเหลือสุทธิ (Simulated Equity):</span>
-                      <b style={{ color: '#ffffff' }}>{simNewEquity.toLocaleString()} บาท</b>
+                      <b style={{ color: '#ffffff' }}>{simNewEquity.toLocaleString('en-US')} บาท</b>
                     </div>
                     <div className={styles.marginRow}>
                       <span>ระดับเงินประกันรักษาสภาพ (Combined MM 70%):</span>
-                      <b>{whatIfTotalMm.toLocaleString()} บาท</b>
+                      <b>{whatIfTotalMm.toLocaleString('en-US')} บาท</b>
                     </div>
                     <div className={styles.marginRow}>
                       <span>ระดับบังคับปิดสัญญา (Combined FM 30%):</span>
-                      <b style={{ color: '#fb7185' }}>{whatIfTotalFm.toLocaleString()} บาท</b>
+                      <b style={{ color: '#fb7185' }}>{whatIfTotalFm.toLocaleString('en-US')} บาท</b>
                     </div>
                   </div>
 
@@ -1184,7 +1184,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   <h3 className={styles.formCardTitle}>⚙️ พารามิเตอร์พอร์ตจำลองรายสัญญา</h3>
 
                   <div className={styles.formRow}>
-                    <label>เงินสดในพอร์ต (Equity): {marginEquity.toLocaleString()} บาท</label>
+                    <label>เงินสดในพอร์ต (Equity): {marginEquity.toLocaleString('en-US')} บาท</label>
                     <div className={styles.presetGroup}>
                       {[50000, 100000, 200000, 500000, 1000000].map(amt => (
                         <button
@@ -1193,7 +1193,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                           className={styles.presetBtn}
                           onClick={() => setMarginEquity(amt)}
                         >
-                          {(amt / 1000).toLocaleString()}k
+                          {(amt / 1000).toLocaleString('en-US')}k
                         </button>
                       ))}
                     </div>
@@ -1324,19 +1324,19 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   <div className={styles.marginBreakdown}>
                     <div className={styles.marginRow}>
                       <span>เงินประกันเริ่มต้น (IM Required):</span>
-                      <b>{totalIm.toLocaleString()} บาท</b>
+                      <b>{totalIm.toLocaleString('en-US')} บาท</b>
                     </div>
                     <div className={styles.marginRow}>
                       <span>เงินประกันรักษาสภาพ (MM 70%):</span>
-                      <b>{totalMm.toLocaleString()} บาท</b>
+                      <b>{totalMm.toLocaleString('en-US')} บาท</b>
                     </div>
                     <div className={styles.marginRow}>
                       <span>เงินประกันขั้นต่ำบังคับปิด (FM 30%):</span>
-                      <b>{totalFm.toLocaleString()} บาท</b>
+                      <b>{totalFm.toLocaleString('en-US')} บาท</b>
                     </div>
                     <div className={styles.marginRow}>
                       <span>เงินสดคงเหลือเพื่อรองรับความเสี่ยง:</span>
-                      <b style={{ color: '#34d399' }}>{Math.max(0, marginEquity - totalIm).toLocaleString()} บาท</b>
+                      <b style={{ color: '#34d399' }}>{Math.max(0, marginEquity - totalIm).toLocaleString('en-US')} บาท</b>
                     </div>
                   </div>
                 </div>
@@ -1572,7 +1572,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
               <h3 className={styles.formCardTitle}>🎯 วางงบความเสี่ยงและระยะ Stop Loss</h3>
 
               <div className={styles.formRow}>
-                <label>ขนาดพอร์ตลงทุน (Capital): {sizingCapital.toLocaleString()} บาท</label>
+                <label>ขนาดพอร์ตลงทุน (Capital): {sizingCapital.toLocaleString('en-US')} บาท</label>
                 <div className={styles.presetGroup}>
                   {[100000, 200000, 300000, 500000, 1000000].map(amt => (
                     <button
@@ -1581,7 +1581,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                       className={styles.presetBtn}
                       onClick={() => setSizingCapital(amt)}
                     >
-                      {(amt / 1000).toLocaleString()}k
+                      {(amt / 1000).toLocaleString('en-US')}k
                     </button>
                   ))}
                 </div>
@@ -1640,14 +1640,14 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                       {calculatedContracts} <small style={{ fontSize: '13px' }}>สัญญา</small>
                     </div>
                     <div className={styles.metricBoxSub}>
-                      ความเสี่ยงรวม: <b>{(calculatedContracts * riskPerContractTHB).toLocaleString()} บาท</b>
+                      ความเสี่ยงรวม: <b>{(calculatedContracts * riskPerContractTHB).toLocaleString('en-US')} บาท</b>
                     </div>
                   </div>
 
                   <div className={styles.metricBox} style={{ borderColor: 'rgba(16, 185, 129, 0.4)' }}>
                     <div className={styles.metricBoxLabel}>กำไรเป้าหมาย 2R (+{(sizingSlPoints * 2).toFixed(1)} จุด)</div>
                     <div className={styles.metricBoxValue} style={{ color: '#34d399' }}>
-                      +{(calculatedContracts * riskPerContractTHB * 2).toLocaleString()} <small style={{ fontSize: '13px' }}>บาท</small>
+                      +{(calculatedContracts * riskPerContractTHB * 2).toLocaleString('en-US')} <small style={{ fontSize: '13px' }}>บาท</small>
                     </div>
                     <div className={styles.metricBoxSub}>
                       Reward:Risk = <b>2.0 เท่า</b>
@@ -1659,15 +1659,15 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
               <div className={styles.marginBreakdown}>
                 <div className={styles.marginRow}>
                   <span>งบความเสี่ยงที่ตั้งไว้ ({sizingRiskPct}% ของพอร์ต):</span>
-                  <b>{maxRiskTHB.toLocaleString()} บาท</b>
+                  <b>{maxRiskTHB.toLocaleString('en-US')} บาท</b>
                 </div>
                 <div className={styles.marginRow}>
                   <span>ความเสี่ยงต่อ 1 สัญญา (SL {sizingSlPoints} จุด):</span>
-                  <b>{riskPerContractTHB.toLocaleString()} บาท</b>
+                  <b>{riskPerContractTHB.toLocaleString('en-US')} บาท</b>
                 </div>
                 <div className={styles.marginRow}>
                   <span>เงินประกัน IM ที่ต้องใช้ ({calculatedContracts} × 10,850 ฿):</span>
-                  <b style={{ color: sizingImOk ? '#ffffff' : '#fb7185' }}>{sizingImRequired.toLocaleString()} บาท</b>
+                  <b style={{ color: sizingImOk ? '#ffffff' : '#fb7185' }}>{sizingImRequired.toLocaleString('en-US')} บาท</b>
                 </div>
                 <div className={styles.marginRow}>
                   <span>สถานะเงินประกัน:</span>

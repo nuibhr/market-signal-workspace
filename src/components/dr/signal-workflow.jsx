@@ -11,7 +11,7 @@ export default function SignalWorkflow({market,onSelect,viewRequest,onSnapshot})
     const stop=pollAfterCompletion(read);return()=>{controller.abort();stop();};
   },[market]);
   return <section id="section-results" className={styles.workflowPanel} aria-label="ศูนย์สัญญาณและผล 100 ไม้ล่าสุด">
-    <p role="status">Swing worker: {health?.scanner==='running'?'มี heartbeat ล่าสุด':health?'ยังไม่มี heartbeat ล่าสุด — ยังไม่ยืนยันการสแกนอัตโนมัติ':'กำลังตรวจสถานะ'} · ตารางนี้อ่านเหตุการณ์ใหม่ทุก 1 นาทีขณะเปิดหน้าตลาด</p>
+    <p role="status">{health?.dataMode==='daily-snapshot'?'ข้อมูลส่วนกลางสแกนวันละครั้ง 07:00 น. ใช้ผลชุดเดียวกันตลอดวัน ไม่ใช่ราคาสด':`Swing worker: ${health?.scanner==='running'?'มี heartbeat ล่าสุด':health?'ยังไม่มี heartbeat ล่าสุด':'กำลังตรวจสถานะ'}`}</p>
     <SignalResults fixedMarket={market} onSelect={onSelect} sectionId="section-signal-ledger" initialScope="waiting" viewRequest={viewRequest} onSnapshot={onSnapshot}/>
   </section>;
 }

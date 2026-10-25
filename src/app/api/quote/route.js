@@ -1,3 +1,4 @@
+import {sharedDaily,sharedQuote} from '../../../market-data/shared-policy.mjs';
 import { ALL_ASSETS } from '../../../markets/catalog.mjs';
 
 export const runtime = 'nodejs';
@@ -37,6 +38,7 @@ export async function GET(request) {
   const symbol = new URL(request.url).searchParams.get('symbol')?.trim().toUpperCase() ?? '';
   const asset = ALL_ASSETS.find(item => item.symbol === symbol && item.feed === 'fmp-quote');
   if (!asset) return Response.json({ status: 'unavailable', code: 'INSTRUMENT_NOT_CONNECTED' }, { status: 404, headers: HEADERS });
+  if(sharedDaily()){try{return Response.json(await sharedQuote(asset),{headers:HEADERS});}catch{return Response.json({status:'unavailable',code:'SHARED_SNAPSHOT_PENDING'},{status:503,headers:HEADERS});}}
   if (!process.env.FMP_API_KEY) return Response.json({ status: 'unavailable', code: 'SOURCE_NOT_CONFIGURED' }, { status: 503, headers: HEADERS });
   if (process.env.NODE_ENV === 'production' && process.env.FMP_DISPLAY_RIGHTS_CONFIRMED !== 'true') {
     return Response.json({ status: 'unavailable', code: 'DISPLAY_RIGHTS_NOT_CONFIRMED' }, { status: 503, headers: HEADERS });

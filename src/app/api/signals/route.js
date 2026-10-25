@@ -36,6 +36,7 @@ export async function POST(request){
       return Response.json(await loadSignalReplay(asset,costs),{headers:privateHeaders});
     }
     if(body.action==='scan'&&['thai','dr','us'].includes(body.market)&&Array.isArray(body.symbols)&&body.symbols.length>0&&body.symbols.length<=6){
+      if(process.env.SHARED_MARKET_DATA_MODE==='daily')return Response.json({code:'PERSONAL_DATA_CONNECTION_REQUIRED',message:'ผลส่วนกลางสแกนวันละครั้ง การสแกนเพิ่มต้องเชื่อมข้อมูลส่วนตัวที่รองรับก่อน'},{status:409,headers:privateHeaders});
       const globalLimit=await rateLimit('signal-scan','provider-global',6);if(globalLimit)return globalLimit;
       if(process.env.SCANNER_RUNTIME==='vps')return Response.json(await enqueueScannerRequest(body.market,body.symbols),{status:202,headers:privateHeaders});
       return Response.json(await runSignalScan(body.market,{symbols:body.symbols,maxSymbols:6,budgetMs:25000}),{headers:privateHeaders});

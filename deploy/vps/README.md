@@ -1,5 +1,11 @@
 # Portable scanner: VPS compute, Cloudflare web + D1
 
+For the newer VPS web deployment and one shared daily scan, see
+`../web-vps/README.md`. The continuous scanner deployment below is retained as
+the original installation/migration reference. Set the daily schedule variables
+from `scanner.env.example` for the economical mode; the process waits without
+provider/bridge traffic between completed daily rounds.
+
 The web app, LINE callback, Stripe webhook, AI and authoritative signal ledger
 stay on Cloudflare. Only the Swing scanner moves to the VPS. No SQLite copy,
 new public VPS port, customer session key or Cloudflare account token is needed.

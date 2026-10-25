@@ -14,6 +14,7 @@ function displayPlan(plan) {
 export async function GET(request) {
   const member=await currentMember();
   if(!membershipFor(member).capabilities.autoPickFeed) return Response.json({status:'membership-required'},{status:403,headers:privateHeaders});
+  if(process.env.SHARED_MARKET_DATA_MODE==='daily')return Response.json({status:'unavailable',code:'PERSONAL_DATA_CONNECTION_REQUIRED'},{status:409,headers:privateHeaders});
   const limited=(await rateLimit('technical-plan',member.id,15)); if(limited)return limited;
   const symbol=new URL(request.url).searchParams.get('symbol')?.toUpperCase();
   const asset=ALL_ASSETS.find(a=>a.symbol===symbol&&a.feed==='settrade-daily');

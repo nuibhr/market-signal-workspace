@@ -27,6 +27,6 @@ export function decodeScannerQuery({id,params}={}){
   const sql=Object.hasOwn(SCANNER_QUERIES,id??'')?SCANNER_QUERIES[id]:null;
   if(!sql||!Array.isArray(params)||params.length!==(sql.match(/\?/g)??[]).length||params.some(v=>v!==null&&typeof v!=='string'&&(typeof v!=='number'||!Number.isFinite(v))))throw Error('INVALID_SCANNER_QUERY');
   // Scanner caches contain public market context/candles only.
-  if(id.startsWith('cache.')&&!/^(thai-stage2-(benchmark-v2|profile:[A-Z0-9-]{1,20})|chart-snapshot-v1:)/.test(params[0]))throw Error('INVALID_SCANNER_CACHE');
+  if(id.startsWith('cache.')&&!/^(thai-stage2-(benchmark-v2|profile:[A-Z0-9-]{1,20})|chart-snapshot-v1:|daily-scan-v1:(thai|dr|us|forex|tfex):\d{4}-\d{2}-\d{2}$)/.test(params[0]))throw Error('INVALID_SCANNER_CACHE');
   return {sql,params};
 }

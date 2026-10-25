@@ -1,3 +1,4 @@
+import {sharedDaily,sharedQuote} from '../../../../market-data/shared-policy.mjs';
 import YahooFinance from 'yahoo-finance2';
 import { createTfexClient, createSettradeClient } from '../../../../market-data/settrade.mjs';
 import { ALL_ASSETS } from '../../../../markets/catalog.mjs';
@@ -30,6 +31,7 @@ function getTfexProxyTicker(symbol) {
 async function fetchTfexQuote(symbol) {
   const asset = ALL_ASSETS.find(item => item.symbol === symbol && item.feed === 'tfex-quote');
   const instrumentId = asset?.instrumentId ?? `TFEX:${symbol}`;
+  if(sharedDaily()){try{return await sharedQuote(asset);}catch{return {symbol,instrumentId,status:'unavailable',code:'SHARED_SNAPSHOT_PENDING'};}}
   const tfexAllowed = process.env.NODE_ENV !== 'production' || process.env.TFEX_DISPLAY_RIGHTS_CONFIRMED === 'true';
   const yahooAllowed = process.env.NODE_ENV !== 'production' || process.env.YAHOO_DISPLAY_RIGHTS_CONFIRMED === 'true';
 
@@ -128,7 +130,7 @@ export async function GET(request) {
 
   const quotes = await Promise.all(symbols.map(quoteFor));
   let underlying = null;
-  if (symbols.some(s => s.startsWith('S50'))) {
+  if (!sharedDaily() && symbols.some(s => s.startsWith('S50'))) {
     if (tfexAllowed && client.configuration.configured) {
       underlying = await createSettradeClient().getQuote('SET50').catch(() => null);
     }

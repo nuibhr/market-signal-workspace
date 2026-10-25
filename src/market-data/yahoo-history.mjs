@@ -1,6 +1,7 @@
 import YahooFinance from 'yahoo-finance2';
 import {newYorkParts} from './fmp-us.mjs';
 import {delayedChartSeries} from './delayed-candles.mjs';
+import {sharedDaily,sharedSeries} from './shared-policy.mjs';
 const createYahoo=()=>new YahooFinance({suppressNotices:['yahooSurvey'],versionCheck:false,fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(12000)}),queue:{concurrency:2}});
 const yahoo=createYahoo();
 const cache=new Map(),pending=new Map();
@@ -29,6 +30,7 @@ export function yahooInstrument(asset){
  return null;
 }
 export async function getYahooHistory(asset,timeframe='1d',options={}){
+ if(sharedDaily()&&!options.chartFetcher)return sharedSeries(asset,timeframe);
  const instrument=yahooInstrument(asset);
  if(!instrument)throw error('INSTRUMENT_NOT_SUPPORTED');
  if(!['15m','1h','1d'].includes(timeframe))throw error('TIMEFRAME_NOT_AVAILABLE');

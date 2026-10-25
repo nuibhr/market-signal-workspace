@@ -2,6 +2,7 @@ import { rateLimit, readJsonBody, requestErrorResponse } from '../../../security
 import {parseSnapshot,generateChartAnalysis} from '../../../analysis/chart-ai.mjs';
 import { currentMember, sameOrigin } from '../../../membership/server.mjs';
 import { membershipFor } from '../../../membership/rights.mjs';
+import {createWebBridgeClient} from '../../../storage/web-client.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,7 @@ export async function POST(request) {
   let snapshot;
   try { snapshot = parseSnapshot(await readJsonBody(request,3000)); } catch (error) { return requestErrorResponse(error); }
   if (!snapshot) return Response.json({ status: 'unavailable', code: 'INVALID_INPUT' }, { status: 400, headers: NO_STORE });
-  const ai=globalThis[Symbol.for('__cloudflare-context__')]?.env?.AI;
+  const ai=globalThis[Symbol.for('__cloudflare-context__')]?.env?.AI||(process.env.STORAGE_PROVIDER==='d1-http'?createWebBridgeClient({url:process.env.WEB_BRIDGE_URL,secret:process.env.WEB_BRIDGE_SECRET}).ai:null);
   const key = `${member.demo?'demo':'real'}:${JSON.stringify(snapshot)}`;
   const hit = cache.get(key);
   if (hit && hit.expiresAt > Date.now()) return Response.json(hit.payload, { headers: NO_STORE });

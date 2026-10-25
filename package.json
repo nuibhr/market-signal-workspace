@@ -10,7 +10,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "cloud:build": "node scripts/cloud-build.mjs",
-    "cloud:deploy:web": "wrangler deploy --config wrangler.jsonc",
+    "cloud:deploy:web": "wrangler deploy --config deploy/cloudflare/wrangler.vps-proxy.jsonc",
     "cloud:deploy:scanner": "wrangler deploy --config deploy/cloudflare/wrangler.scanner.jsonc",
     "cloud:secrets:web": "node --env-file=.env.local scripts/cloud-secrets.mjs web",
     "cloud:secrets:scanner": "node --env-file=.env.local scripts/cloud-secrets.mjs scanner",
@@ -44,7 +44,9 @@
     "d1:import": "node --env-file=.env.local scripts/d1-migrate.mjs import deploy/cloudflare/wrangler.remote.jsonc",
     "d1:verify": "node --env-file=.env.local scripts/d1-migrate.mjs verify deploy/cloudflare/wrangler.remote.jsonc",
     "d1:unchanged": "node --env-file=.env.local scripts/d1-migrate.mjs unchanged",
-    "test": "node scripts/test.mjs"
+    "test": "node scripts/test.mjs",
+    "cloud:deploy:web:legacy": "wrangler deploy --config wrangler.jsonc",
+    "cloud:deploy:web-data": "wrangler deploy --config deploy/cloudflare/wrangler.web-data.jsonc"
   },
   "engines": {
     "node": ">=22.13"

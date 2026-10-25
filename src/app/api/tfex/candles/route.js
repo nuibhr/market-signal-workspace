@@ -1,3 +1,4 @@
+import {sharedDaily,sharedSeriesResponse} from '../../../../market-data/shared-policy.mjs';
 import { assessDailySeries, assessIntradaySeries, createTfexClient, MAX_CANDLE_BARS, SettradeDataError } from '../../../../market-data/settrade.mjs';
 import { ALL_ASSETS, TFEX_SYMBOLS } from '../../../../markets/catalog.mjs';
 import { rememberChartSnapshot } from '../../../../market-data/delayed-candles.mjs';
@@ -34,6 +35,7 @@ export async function GET(request) {
   if (process.env.NODE_ENV === 'production' && process.env.TFEX_DISPLAY_RIGHTS_CONFIRMED !== 'true') {
     return Response.json({ status: 'unavailable', code: 'DISPLAY_RIGHTS_NOT_CONFIRMED' }, { status: 503, headers: NO_STORE });
   }
+  if(sharedDaily()&&instrument)return sharedSeriesResponse(instrument,timeframe,NO_STORE);
   if (!client.configuration.configured) {
     if (instrument) {
       try {

@@ -6,6 +6,7 @@ import {discoveryIntervalMs,monitorDue} from './cadence.mjs';
 import {evaluateMinerviniStage2} from '../analysis/minervini-stage2.mjs';
 import {analyzeCandles} from '../analysis/technical.mjs';
 import {loadThaiBenchmark,loadThaiProfile} from './thai-context.mjs';
+import {publishSharedSeries} from '../market-data/shared-policy.mjs';
 
 async function sourceDeadline(task,milliseconds){
   let timer;
@@ -47,6 +48,10 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
           if(discover){
             try{
               const daily = await sourceDeadline(load(asset,'1d'),sourceTimeoutMs), four = await sourceDeadline(load(asset,'4h'),sourceTimeoutMs);
+              if(process.env.SCANNER_SCHEDULE_MODE==='daily'){
+                await publishSharedSeries(daily,asset,'1d',clock());
+                await publishSharedSeries(four,asset,'4h',clock());
+              }
               snapshot = inspectSignalBars({...asset,signalSource:`D1: ${daily.source} · 4H: ${four.source}`},daily.bars,four.bars,clock());
               if(market==='thai'){
                 const assessment=evaluateMinerviniStage2(daily.bars,{benchmarkBars:benchmark?.bars??[],now:clock(),costs:defaultSignalCosts(asset)});

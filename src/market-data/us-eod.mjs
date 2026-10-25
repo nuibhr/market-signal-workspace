@@ -1,4 +1,6 @@
 import YahooFinance from 'yahoo-finance2';
+import {sharedDaily,sharedSeries} from './shared-policy.mjs';
+import {ALL_ASSETS} from '../markets/catalog.mjs';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -77,6 +79,11 @@ export async function getYahooUsDailyBars(symbol, {now=Date.now(), assetKind='st
   pending.set(key,job);return job;
 }
 export async function getUsDailyBars(symbol, options={}) {
+  if(sharedDaily()){
+    if(!usEodRights().fmp&&!usEodRights().yahoo)throw fail('DISPLAY_RIGHTS_NOT_CONFIRMED');
+    const asset=ALL_ASSETS.find(a=>a.id==='us'&&a.symbol===symbol);if(!asset)throw fail('INSTRUMENT_MISMATCH');
+    return sharedSeries(asset,'1d');
+  }
   if(!['stock','etf'].includes(options.assetKind??'stock'))throw fail('INSTRUMENT_MISMATCH');
   const rights=usEodRights();
   if(rights.fmp&&process.env.FMP_API_KEY?.trim()&&Date.now()>=fmpRetryAt){

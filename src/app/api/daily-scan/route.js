@@ -29,6 +29,7 @@ export async function GET(request) {
     const row = (await storage.first('SELECT report_json FROM customer_daily_reports WHERE member_id=?',member.id));
     return Response.json(row ? JSON.parse(row.report_json) : { status: 'empty', results: [] }, { headers: HEADERS });
   }
+  if(process.env.SHARED_MARKET_DATA_MODE==='daily')return Response.json({status:'unavailable',code:'PERSONAL_DATA_CONNECTION_REQUIRED',message:'ใช้ผลสแกนส่วนกลางรอบรายวัน หรือเชื่อมแหล่งข้อมูลส่วนตัวที่รองรับเพื่อสแกนเพิ่มเติม'},{status:409,headers:HEADERS});
   const limited = (await rateLimit('daily-scan', member.id, 3)); if (limited) return limited;
   const requested = (new URL(request.url).searchParams.get('symbols') ?? 'PTT,AOT,CPALL,KBANK,SCB,ADVANC')
     .split(',').map(symbol => symbol.trim().toUpperCase()).filter(Boolean);

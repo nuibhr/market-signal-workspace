@@ -1,3 +1,5 @@
+import {sharedDaily,sharedQuote} from '../../../market-data/shared-policy.mjs';
+import {ALL_ASSETS} from '../../../markets/catalog.mjs';
 import YahooFinance from 'yahoo-finance2';
 import { createSettradeClient } from '../../../market-data/settrade.mjs';
 import { SETTRADE_SYMBOLS } from '../../../markets/catalog.mjs';
@@ -19,6 +21,7 @@ const quoteCache = new Map();
 const pending = new Map();
 
 async function fetchQuote(symbol) {
+  if(sharedDaily()){try{return await sharedQuote(ALL_ASSETS.find(a=>['thai','dr'].includes(a.id)&&a.symbol===symbol));}catch{return {symbol,status:'unavailable',code:'SHARED_SNAPSHOT_PENDING'};}}
   const settradeAllowed = process.env.NODE_ENV !== 'production' || process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED === 'true';
   const yahooAllowed = process.env.NODE_ENV !== 'production' || process.env.YAHOO_DISPLAY_RIGHTS_CONFIRMED === 'true';
 

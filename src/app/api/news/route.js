@@ -1,7 +1,7 @@
 import {publicNewsFeed} from '../../../market-data/rss-news.mjs';
 const BASE_URL = 'https://api.marketdx.lab.ai/v1/news';
 const MARKETS = [{ id: 'thai', country: 'TH', label: 'หุ้นไทย' }, { id: 'us', country: 'US', label: 'หุ้นอเมริกา' }];
-const TTL_MS = 15 * 60_000;
+const TTL_MS = process.env.SHARED_MARKET_DATA_MODE==='daily'?86400000:15 * 60_000;
 const STALE_MS = 24 * 60 * 60_000;
 const snapshots = new Map();
 const failures = new Map();
@@ -65,7 +65,7 @@ async function fetchMarket(market, key, alerts=false) {
     id: market.id, country: market.country, label: market.label,
     status: 'available', receivedAt,
     articles: payload.results.map(normalizeArticle).filter(Boolean).slice(0, alerts?30:4),
-    expiresAt: Date.now() + (alerts?60000:TTL_MS),
+    expiresAt: Date.now() + (process.env.SHARED_MARKET_DATA_MODE==='daily'?86400000:alerts?60000:TTL_MS),
   };
   snapshots.set(`${market.id}:${alerts}`, snapshot);
   return snapshot;
@@ -89,7 +89,7 @@ async function marketResult(market, key, alerts=false) {
     const result = cached && Date.now() - Date.parse(cached.receivedAt) < STALE_MS
       ? { ...cached, status: 'stale', code: errorCode(error) }
       : { id: market.id, country: market.country, label: market.label, status: 'unavailable', code: errorCode(error), articles: [] };
-    failures.set(cacheKey, { retryAt: Date.now()+60000, result });
+    failures.set(cacheKey, { retryAt: Date.now()+(process.env.SHARED_MARKET_DATA_MODE==='daily'?86400000:60000), result });
     return result;
   }
 }

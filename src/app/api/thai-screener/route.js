@@ -17,6 +17,7 @@ export async function POST(request){
  if(!sameOrigin(request))return Response.json({code:'INVALID_ORIGIN'},{status:403,headers:privateHeaders});
  const member=await currentMember();
  if(!membershipFor(member).capabilities.autoPickFeed)return Response.json({code:'MEMBERSHIP_REQUIRED'},{status:403,headers:privateHeaders});
+ if(process.env.SHARED_MARKET_DATA_MODE==='daily')return Response.json({...await thaiScreenerFeed(),refresh:{status:'shared-daily',message:'โหลดผลส่วนกลางรอบรายวัน ไม่เรียกสแกนใหม่'}},{headers:privateHeaders});
  if(!signalProviderAllowed('thai'))return Response.json({code:'DISPLAY_RIGHTS_NOT_CONFIRMED'},{status:503,headers:privateHeaders});
  const limited=await rateLimit('thai-desk-refresh',member.id,20);if(limited)return limited;
  let body;try{body=await readJsonBody(request,2048);}catch(e){return requestErrorResponse(e);}
