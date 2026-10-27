@@ -1,3 +1,4 @@
+import {chartHandler} from '../../../../market-data/contracts/v1/chart-runtime.mjs';
 import {sharedDaily,sharedSeriesResponse} from '../../../../market-data/shared-policy.mjs';
 import { assessDailySeries, assessIntradaySeries, createTfexClient, MAX_CANDLE_BARS, SettradeDataError } from '../../../../market-data/settrade.mjs';
 import { ALL_ASSETS, TFEX_SYMBOLS } from '../../../../markets/catalog.mjs';
@@ -21,7 +22,7 @@ function bangkokNow() {
   return { day: `${values.year}-${values.month}-${values.day}`, minutes: Number(values.hour) * 60 + Number(values.minute) };
 }
 
-export async function GET(request) {
+async function readLegacyChart(request) {
   const params = new URL(request.url).searchParams;
   const symbol = params.get('symbol')?.toUpperCase() ?? '';
   const timeframe = params.get('timeframe') ?? '1d';
@@ -86,3 +87,5 @@ export async function GET(request) {
     return Response.json({ status: 'unavailable', code }, { status: 503, headers: NO_STORE });
   }
 }
+
+export const GET=chartHandler(readLegacyChart, 'tfex');

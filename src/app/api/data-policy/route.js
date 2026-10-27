@@ -1,2 +1,9 @@
 export const dynamic='force-dynamic';
-export function GET(){return Response.json({mode:process.env.SHARED_MARKET_DATA_MODE==='daily'?'daily-snapshot':'continuous',dailyHourBangkok:7,sharedMarkets:['thai','dr','us','forex','tfex'],availability:'per-instrument-and-connected-source',personalBroker:{adapters:['MT5/Vantage','Settrade portfolio (SET/TFEX)'],isolatedPerMember:true,allBrokersSupported:false,personalRealtimeAcrossAllMarkets:false},ai:{provider:'project',quota:'membership-plan',unlimited:false}},{headers:{'Cache-Control':'public, max-age=300'}});}
+export function GET(){return Response.json({
+ mode:'canonical-read-only',dailyHourBangkok:null,
+ sharedMarkets:['thai','dr','us','forex','tfex'],
+ availability:'per-record-rights-freshness-and-quality-gates',
+ customerAccess:'read-only',realtimeVerified:false,
+ personalBroker:{adapters:[],customerConnectionEnabled:false,credentialInputEnabled:false,csvUploadEnabled:false,isolatedPerMember:false,allBrokersSupported:false,personalRealtimeAcrossAllMarkets:false},
+ ai:{provider:'project',quota:'membership-plan',unlimited:false}
+},{headers:{'Cache-Control':'private, no-store'}});}

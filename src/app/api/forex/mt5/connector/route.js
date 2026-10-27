@@ -1,8 +1,10 @@
+import {requireDataOwner} from '../../../../../market-data/contracts/v1/owner-server.mjs';
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export const runtime = "nodejs";
 export async function GET(request) {
+  const denied=await requireDataOwner(request); if(denied)return denied;
   const format = new URL(request.url).searchParams.get("format");
   const compiled = format === "ex5", relay = format === "relay";
   try {

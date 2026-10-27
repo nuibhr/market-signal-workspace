@@ -1,3 +1,4 @@
+import {chartHandler} from '../../../market-data/contracts/v1/chart-runtime.mjs';
 import { assessDailySeries } from '../../../market-data/settrade.mjs';
 import { newYorkParts } from '../../../market-data/fmp-us.mjs';
 import { getUsDailyBars, usEodRights } from '../../../market-data/us-eod.mjs';
@@ -6,7 +7,7 @@ import { rememberChartSnapshot } from '../../../market-data/delayed-candles.mjs'
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const HEADERS = { 'Cache-Control': 'private, no-store' };
-export async function GET(request) {
+async function readLegacyChart(request) {
   const params = new URL(request.url).searchParams;
   const symbol = params.get('symbol')?.trim().toUpperCase() ?? '';
   const timeframe = params.get('timeframe') ?? '1d';
@@ -32,3 +33,5 @@ export async function GET(request) {
     return Response.json({status:'unavailable',code}, {status:503,headers:HEADERS});
   }
 }
+
+export const GET=chartHandler(readLegacyChart, 'us');

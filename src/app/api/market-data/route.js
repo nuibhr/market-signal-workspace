@@ -1,3 +1,4 @@
+import {chartHandler} from '../../../market-data/contracts/v1/chart-runtime.mjs';
 import {sharedDaily,sharedSeriesResponse} from '../../../market-data/shared-policy.mjs';
 import { assessDailySeries, assessIntradaySeries, createSettradeClient, MAX_CANDLE_BARS, SettradeDataError } from '../../../market-data/settrade.mjs';
 import { ALL_ASSETS, SETTRADE_SYMBOLS } from '../../../markets/catalog.mjs';
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 const NO_STORE = { 'Cache-Control': 'private, no-store, max-age=0' };
 const client = createSettradeClient();
 
-export async function GET(request) {
+async function readLegacyChart(request) {
   const params = new URL(request.url).searchParams;
   const symbol = params.get('symbol')?.toUpperCase() ?? '';
   const timeframe = params.get('timeframe') ?? '1d';
@@ -80,3 +81,5 @@ export async function GET(request) {
     return Response.json({ status: 'unavailable', code }, { status: 503, headers: NO_STORE });
   }
 }
+
+export const GET=chartHandler(readLegacyChart);
