@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { launchConfiguration } from './launch-config.mjs';
+const rights=Object.fromEntries(['settrade','fmp','owner-ingest'].map(id=>[id,{status:'CONFIRMED',markets:['thai','dr','us','tfex','forex'],evidenceId:'FIXTURE_ONLY',verifiedAt:'2026-01-01T00:00:00Z',validUntil:'2099-01-01T00:00:00Z'}]));
 const configured = {
+  CANONICAL_DISPLAY_RIGHTS_JSON:JSON.stringify(rights),
   APP_ORIGIN: 'https://example.com', LINE_REDIRECT_URI: 'https://example.com/api/auth/line/callback',
   LINE_CHANNEL_ID: 'configured', LINE_CHANNEL_SECRET: 'private-line-value',
   SESSION_SECRET: 's'.repeat(64), PORTFOLIO_HASH_SECRET: 'p'.repeat(64), ADMIN_LINE_IDS: 'U'+'a'.repeat(32),
@@ -9,16 +11,25 @@ const configured = {
   YAHOO_DISPLAY_RIGHTS_CONFIRMED: 'true',
 };
 const check = (env,id) => launchConfiguration(env).checks.find(item=>item.id===id).status;
-test('configured deployment still blocks when maintenance or data entitlements are unresolved', () => {
+test('canonical rights require evidence; legacy booleans cannot certify a deployment', () => {
   assert.equal(check({...configured, LAUNCH_MAINTENANCE:'true'},'maintenance'),'blocked');
-  const enabled = {...configured, AUTO_PICK_ENABLED:'true', AUTO_PICK_DR_ENABLED:'true', AUTO_PICK_US_ENABLED:'true', MARKETDX_API_KEY:'news-secret', FRED_API_KEY:'macro-secret'};
-  for (const id of ['rights-thai-dr','rights-us','rights-news','rights-macro']) assert.equal(check(enabled,id),'blocked');
-  const confirmed = {...enabled,SETTRADE_DISPLAY_RIGHTS_CONFIRMED:'true',YAHOO_EOD_DISPLAY_RIGHTS_CONFIRMED:'true',MARKETDX_PUBLIC_DISPLAY_RIGHTS_CONFIRMED:'true',FRED_PUBLIC_DISPLAY_RIGHTS_CONFIRMED:'true'};
-  assert.ok(launchConfiguration(confirmed).checks.every(item=>item.status==='ready'));
+  const missing={...configured,CANONICAL_DISPLAY_RIGHTS_JSON:'{}',SETTRADE_DISPLAY_RIGHTS_CONFIRMED:'true',FMP_DISPLAY_RIGHTS_CONFIRMED:'true'};
+  for(const market of ['thai','dr','us','tfex','forex'])assert.equal(check(missing,`rights-${market}`),'blocked');
+  assert.ok(launchConfiguration(configured).checks.every(item=>item.status==='ready'));
+  assert.ok(!launchConfiguration(configured).checks.some(item=>item.id==='rights-history'),'No mandatory Yahoo source');
 });
-test('chart and quote permissions remain separate from AutoPick being disabled', () => {
-  const charts = {...configured, AUTO_PICK_ENABLED:'false', AUTO_PICK_US_ENABLED:'false', TFEX_APP_ID:'fixture', FMP_API_KEY:'fixture', SETTRADE_APP_ID:'fixture', YAHOO_DISPLAY_RIGHTS_CONFIRMED:'false'};
-  for (const id of ['rights-thai-dr','rights-tfex','rights-fmp-quotes','rights-history']) assert.equal(check(charts,id),'blocked');
+test('expired, future, malformed and wrong-market evidence stay blocked',()=>{
+ for(const evidence of [{settrade:{...rights.settrade,validUntil:'2020-01-01T00:00:00Z'}},{settrade:{...rights.settrade,verifiedAt:'2098-01-01T00:00:00Z'}},{settrade:{...rights.settrade,markets:['tfex']}},{}]){
+  assert.equal(check({...configured,CANONICAL_DISPLAY_RIGHTS_JSON:JSON.stringify(evidence)},'rights-thai'),'blocked');
+ }
+ assert.equal(check({...configured,CANONICAL_DISPLAY_RIGHTS_JSON:'invalid'},'rights-thai'),'blocked');
+});
+test('VPS D1 HTTP configuration needs an HTTPS bridge, daily snapshots and independent secrets',()=>{
+ const env={...configured,STORAGE_PROVIDER:'d1-http',WEB_BRIDGE_URL:'https://bridge.example',WEB_BRIDGE_SECRET:'w'.repeat(64),VPS_ORIGIN_SECRET:'v'.repeat(64),SHARED_MARKET_DATA_MODE:'daily'};
+ for(const id of ['storage','shared-daily','origin-security'])assert.equal(check(env,id),'ready');
+ for(const patch of [{WEB_BRIDGE_URL:'http://bridge.example'},{WEB_BRIDGE_URL:'https://user:password@bridge.example'},{WEB_BRIDGE_URL:'https://bridge.example/path'},{WEB_BRIDGE_SECRET:''}])assert.equal(check({...env,...patch},'storage'),'blocked');
+ assert.equal(check({...env,SHARED_MARKET_DATA_MODE:''},'shared-daily'),'blocked');
+ for(const key of [env.WEB_BRIDGE_SECRET,env.SESSION_SECRET])assert.equal(check({...env,VPS_ORIGIN_SECRET:key},'origin-security'),'blocked');
 });
 test('localhost, IPv6 loopback, credential-bearing URLs and mismatched callbacks cannot certify a public site', () => {
   for (const host of ['localhost','127.0.0.1','[::1]']) {

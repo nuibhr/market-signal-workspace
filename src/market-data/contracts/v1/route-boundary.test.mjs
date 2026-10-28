@@ -48,7 +48,7 @@ test('account portfolio submission is owner-only without changing redeem or rene
    b.onResolve({filter:/membership\/(server|store)\.mjs$/},a=>({path:a.path,namespace:'fixture'}));
    b.onResolve({filter:/security\/request-guard\.mjs$/},a=>({path:a.path,namespace:'fixture'}));
    b.onLoad({filter:/.*/,namespace:'fixture'},a=>({contents:a.path.endsWith('server.mjs')?`export const currentMember=async()=>globalThis.__canonicalActor;export const currentAccount=async()=>({ok:true});export const sameOrigin=()=>true;export const privateHeaders={'Cache-Control':'private, no-store'};export const errorResponse=()=>Response.json({error:'INTERNAL_ERROR'},{status:500});`:
-    a.path.endsWith('store.mjs')?`export const isAdmin=m=>m?.role==='owner';export const submitPortfolio=async()=>globalThis.__canonicalAccountWrites.push('portfolio');export const redeemCode=async()=>globalThis.__canonicalAccountWrites.push('redeem');export const requestRenewal=async()=>globalThis.__canonicalAccountWrites.push('renewal');`:
+    a.path.endsWith('store.mjs')?`export const isAdmin=m=>m?.role==='owner';export const startTrial=async()=>globalThis.__canonicalAccountWrites.push('start-trial');export const submitPortfolio=async()=>globalThis.__canonicalAccountWrites.push('portfolio');export const redeemCode=async()=>globalThis.__canonicalAccountWrites.push('redeem');export const requestRenewal=async()=>globalThis.__canonicalAccountWrites.push('renewal');`:
     `export class RequestError extends Error{};export const rateLimit=async()=>null;export const readJsonBody=r=>r.json();export const requestErrorResponse=()=>Response.json({error:'INVALID_REQUEST'},{status:400});`,loader:'js'}));
   }}]});
   const {POST}=await import(pathToFileURL(outfile));
@@ -58,13 +58,14 @@ test('account portfolio submission is owner-only without changing redeem or rene
    const response=await POST(request('portfolio'));
    assert.equal(response.status,actor?403:401);assert.ok(!JSON.stringify(await response.json()).includes('SECRET_ACCOUNT'));
   }
+  for(const actor of [null,{id:'demo',demo:true}]){globalThis.__canonicalActor=actor;assert.equal((await POST(request('start-trial'))).status,actor?403:401);}
   assert.deepEqual(globalThis.__canonicalAccountWrites,[]);
   globalThis.__canonicalActor={id:'customer'};
-  for(const action of ['redeem','renewal'])assert.equal((await POST(request(action))).status,200);
-  assert.deepEqual(globalThis.__canonicalAccountWrites,['redeem','renewal']);
+  for(const action of ['start-trial','redeem','renewal'])assert.equal((await POST(request(action))).status,200);
+  assert.deepEqual(globalThis.__canonicalAccountWrites,['start-trial','redeem','renewal']);
   globalThis.__canonicalActor={id:'owner',role:'owner'};
   assert.equal((await POST(request('portfolio'))).status,200);
-  assert.deepEqual(globalThis.__canonicalAccountWrites,['redeem','renewal','portfolio']);
+  assert.deepEqual(globalThis.__canonicalAccountWrites,['start-trial','redeem','renewal','portfolio']);
  }finally{delete globalThis.__canonicalActor;delete globalThis.__canonicalAccountWrites;await rm(dir,{recursive:true,force:true});}
 });
 

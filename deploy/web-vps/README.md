@@ -19,12 +19,9 @@ session signing keys, member IDs and Stripe mode remain unchanged.
   client-supplied forwarding/security headers; the origin fixes its public host
   to APP_ORIGIN. Keep TLS certificate verification enabled. The origin should
   return 404 when accessed without the secret.
-- MT5 pairing and terminal data remain in a separate durable Node SQLite volume,
-  scoped by member and connection. This private broker data must never be
-  inserted into the shared public candle cache. Current pairing supports the
-  existing Vantage adapter. The separate Settrade SET/TFEX portfolio reader
-  accepts the customer's own credentials for that request and does not store
-  them. Neither path is a universal broker/real-time market connector.
+- MT5 ingestion is owner-only and uses a separate durable Node SQLite volume.
+  Customer screens do not collect broker credentials or provide pairing controls.
+  Owner preview is loopback-only and never grants customer display rights.
 
 ## Economical shared data mode
 
@@ -42,8 +39,8 @@ API request. Charts, quotes, Radar and screeners read saved results. Refreshing
 the shared screen does not call the providers. Public results have a bounded
 five-minute process cache; member profiles and permissions are not shared.
 The web marks the results as a daily snapshot and retains real source times.
-`/shared` provides one read-only table for all five markets, including public
-Forex reference candles independently of a customer's private MT5 connection.
+`/shared` provides one read-only table for all five markets, subject to each market's rights and availability. Forex requires the verified owner-ingest path.
+The canonical API enforces per-market caps and each actual provider's evidence.
 No automatic live entry, stop or target guarantee is implied by daily data.
 
 The initial catalogue contains Thai equities, DR, US stocks/ETFs, Forex and TFEX.
@@ -53,8 +50,9 @@ and news data stay unavailable; do not fill them with fixtures or proxies.
 Crypto and additional broker adapters require separate verified integrations.
 Delaying data alone does not grant redistribution rights.
 
-Customers supply market/broker access only. AI continues using the project's
-provider and membership quota; a broker connection does not grant unlimited AI.
+Customers sign in through LINE. Optional one-time Trial enrollment uses the
+LINE member identity without broker details. It is disabled by default with
+TRIAL_ENROLLMENT_ENABLED=false. AI retains the existing membership quota.
 Bigdata costs and project-wide spending controls remain a separate launch item.
 
 ## Deploy and migrate

@@ -7,15 +7,15 @@ export function membershipFor(member) {
   const stripePaid=Boolean(!demo&&plan&&['active','past_due'].includes(member?.billing?.status)&&Date.parse(member.billing.paid_until)>now);
   const planPaid=stripePaid||Boolean(demo&&plan);
   const paid = planPaid || Boolean(!demo&&member?.subscription_ends_at && Date.parse(member.subscription_ends_at) > now);
-  const trial = demo?demo.role==='trial':Boolean(member?.trial_ends_at && member.portfolio_status !== 'missing' && Date.parse(member.trial_ends_at) > now);
+  const trial = demo?demo.role==='trial':Boolean(member?.trial_ends_at && Date.parse(member.trial_ends_at) > now);
   const tier = !member ? 'guest' : paid ? 'subscriber' : trial ? 'trial' : demo?demo.role:member.trial_ends_at
-    ? member.portfolio_status === 'missing' && Date.parse(member.trial_ends_at) > now ? 'portfolio-fix' : 'expired'
+    ? 'expired'
     : 'onboarding';
   const active = tier === 'subscriber' || tier === 'trial';
   const enabled=feature=>active&&(!planPaid||plan.features.includes(feature));
   return {
     tier,
-    label: { guest: 'ยังไม่เข้าสู่ระบบ', subscriber: 'สมาชิก', trial: 'ทดลองใช้ฟรี', expired: 'สิทธิหมดอายุ', onboarding: 'รอแจ้งเลขพอร์ต', 'portfolio-fix': 'แจ้งเลขพอร์ตใหม่' }[tier],
+    label: { guest: 'ยังไม่เข้าสู่ระบบ', subscriber: 'สมาชิก', trial: 'ทดลองใช้ฟรี', expired: 'สิทธิหมดอายุ', onboarding: 'สมาชิกใหม่', 'portfolio-fix': 'แจ้งเลขพอร์ตใหม่' }[tier],
     authenticated: Boolean(member),
     planId:planPaid?plan.id:null,planName:planPaid?plan.name:paid?'สมาชิกเดิม':trial?'ทดลองใช้ฟรี':null,
     billingSource:demo?'demo':stripePaid?'stripe':paid?'admin':null,

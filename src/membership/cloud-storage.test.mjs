@@ -23,6 +23,14 @@ test('native D1 preserves LINE profile, 14-day trial, monthly renewal, credits a
   const {membershipFor}=await import('./rights.mjs');
   try{await withD1Database(proxy.env.DB,async()=>{
     const admin=await member.upsertLineMember({lineId:process.env.ADMIN_LINE_IDS,displayName:'Fixture admin'});
+    process.env.TRIAL_ENROLLMENT_ENABLED='true';
+    const lineOnly=await member.upsertLineMember({lineId:'U'+'d'.repeat(32),displayName:'LINE-only trial fixture'});
+    const attempts=await Promise.allSettled([member.startTrial(lineOnly),member.startTrial(lineOnly)]);
+    assert.equal(attempts.filter(r=>r.status==='fulfilled').length,1);
+    const lineTrial=await storage.first('SELECT * FROM members WHERE id=?',lineOnly.id);
+    assert.equal(membershipFor(lineTrial).tier,'trial');assert.equal(lineTrial.portfolio_hash,null);
+    assert.equal(Date.parse(lineTrial.trial_ends_at)-Date.parse(lineTrial.trial_started_at),14*86400000);
+    assert.equal((await storage.first("SELECT COUNT(*) AS n FROM membership_events WHERE member_id=? AND event_type='trial_started'",lineOnly.id)).n,1);
     let customer=await member.upsertLineMember({lineId:'U'+'b'.repeat(32),displayName:'Fixture customer',pictureUrl:'https://example.com/avatar.png'});
     assert.equal(membershipFor(customer).tier,'onboarding');
     customer=await member.submitPortfolio(customer,'FIXTURE','12345678');

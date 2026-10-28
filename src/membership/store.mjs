@@ -96,6 +96,24 @@ export async function sessionMember(value) {
   return isDemoIdentity(resolved)&&!resolved.demo?null:resolved;
 }
 export async function deleteSession(value) { if(value)await storage.run('DELETE FROM sessions WHERE token_hash=?',sessionDigest(value)); }
+// Enrollment is explicit, disabled until launch, and one-time per persisted LINE identity.
+export function trialEnrollment(member, env=process.env) {
+  const enabled=env.TRIAL_ENROLLMENT_ENABLED==='true';
+  return {enabled,days:14,canStart:Boolean(enabled && member && !member.demo && !isDemoIdentity(member)
+    && !member.trial_started_at && !member.trial_ends_at && membershipFor(member).tier!=='subscriber')};
+}
+export async function startTrial(member) {
+  if(process.env.TRIAL_ENROLLMENT_ENABLED!=='true')throw Error('TRIAL_ENROLLMENT_CLOSED');
+  if(!member?.id || member.demo || isDemoIdentity(member))throw Error('TRIAL_NOT_AVAILABLE');
+  const current=await withBilling(await memberById(member.id));
+  if(!current || membershipFor(current).tier==='subscriber')throw Error('TRIAL_NOT_AVAILABLE');
+  return mutateMember(member.id,member.id,'trial_started',row=>{
+    if(row.trial_started_at || row.trial_ends_at)throw Error('TRIAL_ALREADY_USED');
+    if(row.subscription_ends_at && Date.parse(row.subscription_ends_at)>Date.now())throw Error('TRIAL_NOT_AVAILABLE');
+    const now=Date.now();
+    return {set:'trial_started_at=?,trial_ends_at=?',params:[new Date(now).toISOString(),new Date(now+14*DAY).toISOString()],details:'line-self-service-v1'};
+  });
+}
 export async function submitPortfolio(member,brokerInput,numberInput) {
   const broker=String(brokerInput??'').trim().replace(/\s+/g,' ').toUpperCase();
   if(!/^[\p{L}\p{M}\p{N} .&-]{2,40}$/u.test(broker))throw new Error('INVALID_BROKER');

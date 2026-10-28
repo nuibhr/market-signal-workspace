@@ -46,7 +46,8 @@
     "d1:unchanged": "node --env-file=.env.local scripts/d1-migrate.mjs unchanged",
     "test": "node scripts/test.mjs",
     "cloud:deploy:web:legacy": "wrangler deploy --config wrangler.jsonc",
-    "cloud:deploy:web-data": "wrangler deploy --config deploy/cloudflare/wrangler.web-data.jsonc"
+    "cloud:deploy:web-data": "wrangler deploy --config deploy/cloudflare/wrangler.web-data.jsonc",
+    "check:release": "node scripts/check-release-readiness.mjs"
   },
   "engines": {
     "node": ">=22.13"

@@ -1,6 +1,6 @@
 import { rateLimit, readJsonBody, requestErrorResponse, RequestError } from '../../../security/request-guard.mjs';
 import { currentAccount, currentMember, errorResponse, privateHeaders, sameOrigin } from '../../../membership/server.mjs';
-import { redeemCode, requestRenewal, submitPortfolio } from '../../../membership/store.mjs';
+import { redeemCode, requestRenewal, submitPortfolio, startTrial } from '../../../membership/store.mjs';
 import { requireDataOwner } from '../../../market-data/contracts/v1/owner-server.mjs';
 
 export const runtime = 'nodejs';
@@ -18,7 +18,8 @@ export async function POST(request) {
   const limited = (await rateLimit('account', member.id, 12)); if (limited) return limited;
   try {
     const body = await readJsonBody(request, 4096);
-    if (body.action === 'portfolio') {
+    if (body.action === 'start-trial') await startTrial(member);
+    else if (body.action === 'portfolio') {
       const denied = await requireDataOwner(request);
       if (denied) return denied;
       await submitPortfolio(member, body.broker, body.number);
