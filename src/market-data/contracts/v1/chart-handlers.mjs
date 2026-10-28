@@ -16,12 +16,13 @@ export function createChartHandler({read,currentMember,membershipFor,assets,scan
    const asset=assets.find(a=>a.id===market&&a.symbol===symbol);if(!asset)return apiError('INVALID_SYMBOL');
    const tier=canonicalTier(membershipFor(await currentMember(request))),cap=ENTITLEMENT_CAPS[tier].maxFullCards;
    if(!scanAssets(market,asset.sectionId==='US_ETFS'?'etf':'default').slice(0,cap).some(a=>a.symbol===symbol))return apiError('MEMBERSHIP_REQUIRED');
-   const now=clock(),rights=evidence(),sources=market==='us'?['fmp','yahoo']:market==='forex'?['owner-ingest']:['settrade','yahoo'];
-   if(!sources.every(id=>displayRights(rights,market,id,now)==='CONFIRMED'))return apiError('DISPLAY_RIGHTS_NOT_CONFIRMED');
+   const now=clock(),rights=evidence(),sources=market==='us'?['fmp','yahoo']:market==='forex'?['owner-ingest']:market==='tfex'?['settrade']:['settrade','yahoo'];
+   const allowedProviders=sources.filter(id=>displayRights(rights,market,id,now)==='CONFIRMED');
+   if(!allowedProviders.length)return apiError('DISPLAY_RIGHTS_NOT_CONFIRMED');
    // Customer FX charts must originate from the owner ingest service, never the
    // old generic Yahoo/history path. That path cannot establish owner provenance.
    if(market==='forex')return apiError('SOURCE_NOT_CONFIGURED');
-   const response=await read(request);if(!response.ok)return apiError(response.status===400?'INVALID_DATA_REQUEST':'PROVIDER_UNAVAILABLE');
+   const response=await read(request,{allowedProviders});if(!response.ok)return apiError(response.status===400?'INVALID_DATA_REQUEST':'PROVIDER_UNAVAILABLE');
    const data=await response.json();
    if(data.instrumentId!==asset.instrumentId||data.symbol!==symbol||data.timeframe!==timeframe)return apiError('PROVIDER_UNAVAILABLE');
    const bars=data.bars;

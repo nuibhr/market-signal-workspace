@@ -22,7 +22,7 @@ function bangkokNow() {
   return { day: `${values.year}-${values.month}-${values.day}`, minutes: Number(values.hour) * 60 + Number(values.minute) };
 }
 
-async function readLegacyChart(request) {
+async function readLegacyChart(request, {allowedProviders=[]}={}) {
   const params = new URL(request.url).searchParams;
   const symbol = params.get('symbol')?.toUpperCase() ?? '';
   const timeframe = params.get('timeframe') ?? '1d';
@@ -33,14 +33,12 @@ async function readLegacyChart(request) {
     return Response.json({ status: 'unavailable', code: 'INSTRUMENT_NOT_CONNECTED' }, { status: 404, headers: NO_STORE });
   }
   const instrument = ALL_ASSETS.find(item => item.symbol === symbol && item.feed === 'tfex-quote');
-  if (process.env.NODE_ENV === 'production' && process.env.TFEX_DISPLAY_RIGHTS_CONFIRMED !== 'true') {
-    return Response.json({ status: 'unavailable', code: 'DISPLAY_RIGHTS_NOT_CONFIRMED' }, { status: 503, headers: NO_STORE });
-  }
+
   if(sharedDaily()&&instrument)return sharedSeriesResponse(instrument,timeframe,NO_STORE);
-  if (!client.configuration.configured) {
+  if (!allowedProviders.includes('settrade') || !client.configuration.configured) {
     if (instrument) {
       try {
-        const backup = await loadChartBackup(instrument, timeframe);
+        const backup = await loadChartBackup(instrument, timeframe, {allowedProviders});
         if (backup?.status === 'available') return Response.json(backup, { headers: NO_STORE });
       } catch {}
     }
@@ -79,7 +77,7 @@ async function readLegacyChart(request) {
   } catch (error) {
     if (instrument) {
       try {
-        const backup = await loadChartBackup(instrument, timeframe);
+        const backup = await loadChartBackup(instrument, timeframe, {allowedProviders});
         if (backup?.status === 'available') return Response.json(backup, { headers: NO_STORE });
       } catch {}
     }

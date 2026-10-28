@@ -1,4 +1,5 @@
 import ForexWorkspace from "../../components/forex/forex-workspace.jsx";
+import {isAdmin} from "../../membership/store.mjs";
 import { currentMember } from "../../membership/server.mjs";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ export default async function MarketPage({ searchParams }) {
   return (
     <ForexWorkspace
       initialSymbol={typeof params.symbol === "string" ? params.symbol : null}
-      viewer={member ? { displayName: member.display_name, pictureUrl: member.picture_url } : null}
+      viewer={member ? { displayName: member.display_name, pictureUrl: member.picture_url, dataOwner:isAdmin(member) } : null}
     />
   );
 }

@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 const NO_STORE = { 'Cache-Control': 'private, no-store, max-age=0' };
 const client = createSettradeClient();
 
-async function readLegacyChart(request) {
+async function readLegacyChart(request, {allowedProviders=[]}={}) {
   const params = new URL(request.url).searchParams;
   const symbol = params.get('symbol')?.toUpperCase() ?? '';
   const timeframe = params.get('timeframe') ?? '1d';
@@ -24,16 +24,12 @@ async function readLegacyChart(request) {
   }
   const instrument = ALL_ASSETS.find(item => item.symbol === symbol && item.feed === 'settrade-daily');
 
-  // Keep licensed data local until the account's public-display rights are confirmed.
-  if (process.env.NODE_ENV === 'production' && process.env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED !== 'true') {
-    return Response.json({ status: 'unavailable', code: 'DISPLAY_RIGHTS_NOT_CONFIRMED' }, { status: 503, headers: NO_STORE });
-  }
-
+  // The canonical wrapper supplies provider rights before any source call.
   if(sharedDaily()&&instrument)return sharedSeriesResponse(instrument,timeframe,NO_STORE);
-  if (!client.configuration.configured) {
+  if (!allowedProviders.includes('settrade') || !client.configuration.configured) {
     if (instrument) {
       try {
-        const backup = await loadChartBackup(instrument, timeframe);
+        const backup = await loadChartBackup(instrument, timeframe, {allowedProviders});
         if (backup?.status === 'available') return Response.json(backup, { headers: NO_STORE });
       } catch {}
     }
@@ -73,7 +69,7 @@ async function readLegacyChart(request) {
   } catch (error) {
     if (instrument) {
       try {
-        const backup = await loadChartBackup(instrument, timeframe);
+        const backup = await loadChartBackup(instrument, timeframe, {allowedProviders});
         if (backup?.status === 'available') return Response.json(backup, { headers: NO_STORE });
       } catch {}
     }

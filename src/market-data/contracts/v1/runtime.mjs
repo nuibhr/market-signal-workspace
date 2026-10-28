@@ -1,19 +1,19 @@
 import {rateLimit} from '../../../security/request-guard.mjs';
-import {createTfexClient} from '../../settrade.mjs';
+import {createSettradeClient,createTfexClient} from '../../settrade.mjs';
+import {getFmpDailyBars} from '../../fmp-us.mjs';
+import {sharedDaily} from '../../shared-policy.mjs';
+import {createNativeSource,emptyNativeInput} from './native-source.mjs';
 import {storage} from '../../../storage/database.mjs';
 import {isAdmin} from '../../../membership/store.mjs';
 import {receiverConfiguration} from '../../../forex-mt5/runtime-policy.mjs';
 import {storeFor} from '../../../forex-mt5/store.mjs';
 import {currentMember} from '../../../membership/server.mjs';
 import {membershipFor} from '../../../membership/rights.mjs';
-import {generateStrategyFeed} from '../../../dr/strategy-feed.mjs';
-import {thaiScreenerFeed} from '../../../signals/thai-screener.mjs';
-import {usDeskBatch,US_FOCUS_SYMBOLS,US_ROTATION_SYMBOLS} from '../../desk-feed.mjs';
+import {US_FOCUS_SYMBOLS,US_ROTATION_SYMBOLS} from '../../desk-feed.mjs';
 import {ALL_ASSETS} from '../../../markets/catalog.mjs';
 import {candleClosedAt} from '../../delayed-candles.mjs';
 import {expectedThaiDailySession} from '../../thai-feed-meta.mjs';
 import {createCanonicalHandler} from './handlers.mjs';
-import {legacyInput} from './adapters.mjs';
 import {displayRights} from './pipeline.mjs';
 // This registry must be provisioned only after evidence is reviewed. A provider
 // flag, successful request, test fixture or development mode is not evidence.
@@ -31,38 +31,17 @@ export function scanAssets(market,universe="default"){
  const preferred=market==='thai'?thai:market==='dr'?dr:market==='us'?(universe==='etf'?US_ROTATION_SYMBOLS:US_FOCUS_SYMBOLS):null;
  return preferred?preferred.map(symbol=>ALL_ASSETS.find(a=>a.id===market&&a.symbol===symbol)??{id:market,symbol,instrumentId:`${market.toUpperCase()}:${symbol}`}):ALL_ASSETS.filter(a=>a.id===market);
 }
-const unavailable=(market,universe)=>scanAssets(market,universe).map(a=>({...legacyInput({symbol:a.symbol,instrumentId:a.instrumentId,status:'unavailable'},market,{closeAt}),attempted:false}));
+const unavailable=(market,universe)=>scanAssets(market,universe).map(a=>emptyNativeInput(a,market));
+export const nativeSource=createNativeSource({assets:scanAssets,createSettrade:()=>createSettradeClient(),createTfex:()=>createTfexClient(),
+ getUsBars:(symbol,now)=>getFmpDailyBars(symbol,{now,fetcher:(...args)=>fetch(...args)})});
 async function loadInputs(market,{now,evidence,universe}){
- // Require every source that a legacy loader may fall back to BEFORE it runs;
- // row-specific rights are checked again after loading.
- const required=market==='us'?['fmp','yahoo']:['settrade','yahoo'];
- if(market==='tfex')return loadTfex({now,evidence});
  if(market==='forex')return loadForex({now,evidence});
- if(!required.every(id=>displayRights(evidence,market,id,now)==='CONFIRMED'))return unavailable(market,universe);
- try{
-  let rows;
-  if(market==='thai')rows=(await thaiScreenerFeed(now)).rows;
-  else if(market==='dr'){
-   const data=await generateStrategyFeed({markets:['dr'],now});rows=[...data.scoredDRs,...data.unavailable];
-  }else rows=await usDeskBatch(universe==='etf'?US_ROTATION_SYMBOLS:US_FOCUS_SYMBOLS);
-  const bySymbol=new Map(rows.map(r=>[r.symbol,r]));
-  return scanAssets(market,universe).map(a=>legacyInput(bySymbol.get(a.symbol)??{symbol:a.symbol,status:'unavailable'},market,{closeAt}));
- }catch{return unavailable(market,universe);}
+ const providers=sharedDaily()?(market==='tfex'?['settrade']:market==='us'?['fmp','yahoo']:['settrade','yahoo']):[market==='us'?'fmp':'settrade'];
+ if(!providers.some(provider=>displayRights(evidence,market,provider,now)==='CONFIRMED'))return unavailable(market,universe);
+ return nativeSource(market,{universe});
 }
 export function marketHandler(market=null,legacyView=null){return createCanonicalHandler({currentMember,membershipFor,loadInputs,evidence:rightsEvidence,calendar,market,legacyView,rateLimit});}
 
-async function loadTfex({now,evidence}) {
- if(displayRights(evidence,'tfex','settrade',now)!=='CONFIRMED')return unavailable('tfex');
- const client=createTfexClient();if(!client.configuration.configured)return unavailable('tfex');
- const rows=[];
- for(const a of scanAssets('tfex').slice(0,8)){
-  let quote;try{quote=await client.getQuote(a.symbol);}catch{quote=null;}
-  rows.push({market:'tfex',symbol:a.symbol,instrumentId:a.instrumentId,providerId:'settrade',providerState:quote?.status==='available'?'READY':'UNAVAILABLE',
-   dataMode:'DELAYED',dataKind:'FUTURES_QUOTE',observedAt:quote?.observedAt??null,dataAsOf:quote?.observedAt??null,receivedAt:quote?.receivedAt??null,
-   qualityVerified:false,closed:false,available:quote?.status==='available',data:{price:quote?.price,changePct:quote?.changePercent,openInterest:quote?.openInterest??null}});
- }
- return rows;
-}
 async function loadForex({now,evidence}) {
  if(displayRights(evidence,'forex','owner-ingest',now)!=='CONFIRMED')return unavailable('forex');
  const ownerId=process.env.CANONICAL_FOREX_OWNER_ID;

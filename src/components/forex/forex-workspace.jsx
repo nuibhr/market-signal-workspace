@@ -25,6 +25,7 @@ import {useDeskResource} from "../use-desk-resource.jsx";
 import { CORE_FOREX } from "../../daytrade/universe.mjs";
 import MemberAvatar from "../member-avatar.jsx";
 import useMt5Connection from "./use-mt5-connection.jsx";
+import OwnerDataPreview from "../owner-data-preview.jsx";
 import ConnectionPanel from "./connection-panel.jsx";
 import InstrumentUniverse from "./instrument-universe.jsx";
 import TerminalChart, { DemoBadge } from "./terminal-chart.jsx";
@@ -94,7 +95,9 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
   const [selection, setSelected] = useState(() =>
     resolveInitialInstrument(initialSymbol ?? "XAU/USD"),
   );
-  const bridge = useMt5Connection(selection.broker_symbol, frame);
+  const bridge = useMt5Connection(selection.broker_symbol, frame, {enabled:viewer?.dataOwner===true});
+  const [ownerPreview,setOwnerPreview]=useState(false);
+  useEffect(()=>{const c=new AbortController();fetch('/api/owner-preview/status',{cache:'no-store',signal:c.signal}).then(r=>r.json()).then(v=>{if(!c.signal.aborted)setOwnerPreview(v.active===true);}).catch(()=>{});return()=>c.abort();},[]);
   const hasMt5 = Boolean(bridge.snapshot?.instruments.length);
   const universe = (hasMt5 ? bridge.snapshot.instruments : STARTER_UNIVERSE).filter(i => CORE_FOREX.includes(i.canonical_symbol));
   const selected =
@@ -288,7 +291,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
             <span>
               <i className={styles.dot} />
               <strong>
-                {hasMt5 ? `Vantage MT5 · ${bridge.status}` : "MT5 ยังไม่เชื่อม"}
+                {hasMt5 ? `Vantage MT5 · ${bridge.status}` : "แหล่งข้อมูลยังไม่พร้อม"}
               </strong>{" "}
               ·{" "}
               {hasMt5
@@ -381,7 +384,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
                 CONNECTION STATUS <span className={styles.demoBadge}>{bridge.status === "ready" ? "MT5 CONNECTED" : "DATA UNAVAILABLE"}</span>
               </span>
               <strong>
-                {bridge.status === "ready" ? "ฟีดจาก MT5 ของคุณ" : "รอข้อมูลจาก MT5"}
+                {bridge.status === "ready" ? "ฟีดจากเจ้าของข้อมูล" : "รอแหล่งข้อมูลเจ้าของ"}
               </strong>
               <small>
                 {hasMt5
@@ -470,7 +473,8 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
             </>
           )}
 
-          <details className={styles.devToolsAccordion}>
+          {ownerPreview&&<OwnerDataPreview market="forex"/>}
+          {viewer?.dataOwner===true&&<details className={styles.devToolsAccordion}>
             <summary>⚙️ เครื่องมือวิศวกรรมข้อมูลตลาด &amp; สถานะบริดจ์ (Market Depth &amp; Bridge Diagnostics)</summary>
             <div className={styles.twoColumns} style={{ marginTop: '1rem' }}>
               <Heatmap
@@ -483,7 +487,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
               />
               <ConnectionPanel bridge={bridge} />
             </div>
-          </details>
+          </details>}
           <footer className={styles.footer}>
             <span>NUGAOM / FOREX & CFD DESK</span>
             <span>

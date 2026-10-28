@@ -19,7 +19,7 @@ export function filterThaiRows(rows,{preset='all',query='',savedOnly=false,favor
 }
 export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onToggleFavorite,showMetrics=true}){
  return <div className={styles.tableScroll}><table className={`${styles.table} table-zebra table-pin-rows`} data-detailed={showMetrics}><thead><tr><th>หุ้น / กลุ่ม</th><th>ราคาปิด D1 / %Chg</th><th>EMA Template</th><th>Stage</th>{showMetrics&&<><th>RSI14</th><th>P/E / Div%</th><th>RVOL / RS vs SET</th></>}<th>แผน 2R · Entry / SL / TP1</th><th>กราฟ</th></tr></thead><tbody>{rows.map(r=><tr key={r.symbol} data-selected={r.symbol===selectedSymbol}>
-  <th><div className={styles.identity}><button type="button" className={styles.star} aria-label={`${favorites.includes(r.symbol)?'เลิกติดตาม':'ติดตาม'} ${r.symbol}`} aria-pressed={favorites.includes(r.symbol)} onClick={()=>onToggleFavorite?.(r.symbol,'thai')}>{favorites.includes(r.symbol)?'★':'☆'}</button><InstrumentLogo asset={{market:'thai',symbol:r.symbol}}/><span><b>{r.symbol}</b><small title={r.sectorLabel??'ยังไม่มีข้อมูลกลุ่ม'}>{r.sector??'—'} · {r.section==='SET100'?'SET100':'mai'}</small></span></div></th>
+  <th><div className={styles.identity}><button type="button" className={styles.star} aria-label={`${favorites.includes(r.symbol)?'เลิกติดตาม':'ติดตาม'} ${r.symbol}`} aria-pressed={favorites.includes(r.symbol)} onClick={()=>onToggleFavorite?.(r.symbol,'thai')}>{favorites.includes(r.symbol)?'★':'☆'}</button><InstrumentLogo asset={{market:'thai',symbol:r.symbol}}/><span><b>{r.symbol}</b><small title={r.sectorLabel??'ยังไม่มีข้อมูลกลุ่ม'}>{r.sector??'—'} · {r.section==='SET100'?'SET100':r.section==='MAI_INITIAL'?'mai':'—'}</small></span></div></th>
   <td><b>{n(r.price)}</b><small data-tone={r.changePercent>0?'up':r.changePercent<0?'down':'neutral'}>{r.changePercent>0?'+':''}{n(r.changePercent)}% · {r.priceDay??'รอข้อมูล'}</small><small>{r.source??'ยังไม่มีแหล่งข้อมูล'}</small></td>
   <td><details className={styles.criteria}><summary><span className={styles.badge} data-tone={r.templatePass?'up':'neutral'}>{r.score===null?'—':`${r.score}/8`}</span></summary><ul>{r.criteria.map(c=><li key={c.id} data-tone={c.passed===true?'up':c.passed===false?'down':'neutral'}>{c.passed===true?'✓':c.passed===false?'×':'—'} {c.label}</li>)}</ul>{!r.criteria.length&&<p>รอประวัติ D1 อย่างน้อย 220 วัน</p>}</details></td>
   <td><span className={styles.badge} data-tone={r.stage===2?'up':r.stage===4?'down':'neutral'}>{stageNames[r.stage]??'ประวัติไม่ครบ'}</span><small>{r.status==='stale'?'ข้อมูลเก่า':r.status==='partial'?'รอ RS / ประวัติ 52 สัปดาห์':r.status==='unavailable'?'รอตรวจข้อมูล':r.templatePass?'ผ่านคัดกรอง · ยังไม่ใช่ Entry':'แผนเฝ้า · รอเงื่อนไข'}</small></td>
@@ -29,7 +29,7 @@ export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onT
   <td><button type="button" className={styles.chartButton} onClick={()=>onSelect?.(r.symbol)} aria-label={`ดูกราฟ ${r.symbol}`}>ดูกราฟ ↗</button></td>
  </tr>)}</tbody></table></div>;
 }
-export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],onToggleFavorite,onSelect,selectedSymbol,favoritesRequest=0,onOpenStyleScanner,onResults,compact=false,visible=true}){
+export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',ownerPreview=false,signalAccess=null,favorites=[],onToggleFavorite,onSelect,selectedSymbol,favoritesRequest=0,onOpenStyleScanner,onResults,compact=false,visible=true}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[fetchCycle,setFetchCycle]=useState(0);
  const [preset,setPreset]=useState('all'),[query,setQuery]=useState(''),[savedOnly,setSavedOnly]=useState(false),[sector,setSector]=useState('all'),[peMax,setPeMax]=useState(80),[rsiMin,setRsiMin]=useState(0),[rsiMax,setRsiMax]=useState(100),[sort,setSort]=useState('quality'),[page,setPage]=useState(1);
  const [showMetrics,setShowMetrics]=useState(!compact);
@@ -40,9 +40,9 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
   if(!visible){setBusy(false);return;}
   setData(null);setError('');
   const controller=new AbortController();
-  const stop=pollAfterCompletion(async()=>{setBusy(true);try{const r=await fetch('/api/thai-screener',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])}),value=await readApiJson(r);if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setFetchCycle(v=>v+1);setError('');}}catch(e){if(!controller.signal.aborted){setData(null);setError(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}},{intervalMs:DISCOVERY_INTERVAL_MS});
+  const stop=pollAfterCompletion(async()=>{setBusy(true);try{const r=await fetch(apiUrl,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])}),value=await readApiJson(r);if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setFetchCycle(v=>v+1);setError('');}}catch(e){if(!controller.signal.aborted){setData(null);setError(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}},{intervalMs:DISCOVERY_INTERVAL_MS});
   return()=>{stop();controller.abort();};
- },[signalAccess,revision,visible]);
+ },[signalAccess,revision,visible,apiUrl]);
  const rows=data?.rows??[],stats=data?.stats;
  const filtered=useMemo(()=>filterThaiRows(rows,{preset,query,savedOnly,favorites,sector,peMax,rsiMin,rsiMax,sort}),[rows,preset,query,savedOnly,favorites,sector,peMax,rsiMin,rsiMax,sort]);
  useEffect(()=>setPage(1),[preset,query,savedOnly,sector,peMax,rsiMin,rsiMax,sort]);
@@ -52,13 +52,13 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
  const reset=()=>{setPreset('all');setQuery('');setSavedOnly(false);setSector('all');setPeMax(80);setRsiMin(0);setRsiMax(100);};
  const refreshKey=data?[...new Set([selectedSymbol,...filtered.slice((current-1)*7,current*7).map(r=>r.symbol)])].filter(Boolean).slice(0,8).join(','):'';
  useEffect(()=>{
-  if(signalAccess!==true||!visible||!refreshKey)return;
+  if(ownerPreview||signalAccess!==true||!visible||!refreshKey)return;
   const controller=new AbortController();setBusy(true);
   fetch('/api/thai-screener',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbols:refreshKey.split(',')}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(60000)])})
    .then(async r=>{const value=await readApiJson(r);if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setError('');}})
    .catch(e=>{if(!controller.signal.aborted)setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});
   return()=>controller.abort();
- },[signalAccess,visible,refreshKey,revision,fetchCycle]);
+ },[signalAccess,visible,refreshKey,revision,fetchCycle,ownerPreview]);
  const topFocus=useMemo(()=>{
   const candidates=rows.filter(r=>(r.templatePass||r.stage===2)&&r.plan&&!['unavailable','stale'].includes(r.status));
   return candidates.sort((a,b)=>((b.score??0)-(a.score??0))||((b.rs?.excessReturnPercent??-999)-(a.rs?.excessReturnPercent??-999))||((b.rvol??0)-(a.rvol??0))).slice(0,3);
@@ -99,7 +99,7 @@ export default function ThaiScreenerDashboard({signalAccess=null,favorites=[],on
         <InstrumentLogo asset={{market:'thai',symbol:item.symbol}}/>
         <div>
          <strong>{item.symbol}</strong>
-         <small>{item.sector??'—'} · {item.section==='SET100'?'SET100':'mai'}</small>
+         <small>{item.sector??'—'} · {item.section==='SET100'?'SET100':item.section==='MAI_INITIAL'?'mai':'—'}</small>
         </div>
        </div>
        <span className={styles.scorePill}>Score {item.score===null?'—':`${item.score}/8`}</span>

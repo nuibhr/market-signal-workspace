@@ -1,6 +1,8 @@
 import {buildDecisionBrief} from '../../../signals/decision-brief.mjs';
 import {summarizeSignals} from '../../../signals/model.mjs';
 import {timestamp} from './pipeline.mjs';
+import {ALL_ASSETS} from '../../../markets/catalog.mjs';
+const catalogById=new Map(ALL_ASSETS.map(asset=>[asset.instrumentId,asset]));
 // Names below are adapter identifiers, not a claim that a license is present.
 export function providerFor(source){
  if(typeof source!=='string')return 'unknown';
@@ -27,7 +29,7 @@ export function legacyInput(row,market,{closeAt=()=>null}={}) {
    openInterest:row.openInterest,score:row.score??scored.totalScore,entry:row.entry??scored.entry,
    stopLoss:row.stopLoss??scored.sl,tp1:row.tp1??scored.tp1,tp2:row.tp2??scored.tp2}};
 }
-const legacyRow=r=>({symbol:r.instrument.symbol,status:r.status.availability.toLowerCase(),code:r.statusCodes.find(c=>!['AVAILABLE','UNAVAILABLE'].includes(c)),
+const legacyRow=r=>({instrumentId:r.instrument.instrumentId,symbol:r.instrument.symbol,status:r.status.availability.toLowerCase(),code:r.statusCodes.find(c=>!['AVAILABLE','UNAVAILABLE'].includes(c)),
  source:r.source.providerId,observedAt:r.timestamps.observedAt,dataAsOf:r.timestamps.dataAsOf,receivedAt:r.timestamps.receivedAt,
  freshness:r.status.freshness.toLowerCase(),signalEligible:r.eligibility.signal,chartOnly:r.status.usability==='CHART_ONLY',isLiveFeed:false,
  ...(r.projection==='FULL'?{...r.data,changePercent:r.data.changePct}:{} )});
@@ -67,7 +69,7 @@ export function compatibility(envelope,view='rows',options={}) {
    thaiKpis:{...stats},drKpis:{...stats},thaiSampleText:'',drSampleText:'',topMorningThai:[],topMorningDr:[],allMorningSignals:[],autoTrackedPicks:[],
    liveUsdThb:null,liveHkdThb:null,liveDividendStocks:[],dividendModel:[],avgDivYield:'—',dividendStatus:'unavailable'};
  }
- if(view==='thai')return {...base,rows:rows.map(r=>({name:r.symbol,price:null,changePercent:null,score:null,stage:null,criteria:[],templatePass:false,plan:null,rs:null,rsi:null,macdHistogram:null,rvol:null,pe:null,dividendPercent:null,...r})),assessmentOnly:true,stats:{expected:rows.length,observed:envelope.coverage.availableTotal,stage2:0,surge:0,rsLeaders:[],advance:rows.filter(r=>r.changePercent>0).length,decline:rows.filter(r=>r.changePercent<0).length,flat:rows.filter(r=>r.changePercent===0).length,index:null}};
+ if(view==='thai')return {...base,rows:rows.map(r=>({name:catalogById.get(r.instrumentId)?.name??r.symbol,section:catalogById.get(r.instrumentId)?.sectionId??null,priceDay:r.dataAsOf?.slice(0,10)??null,price:null,changePercent:null,score:null,stage:null,criteria:[],templatePass:false,plan:null,rs:null,rsi:null,macdHistogram:null,rvol:null,pe:null,dividendPercent:null,...r})),assessmentOnly:true,stats:{expected:rows.length,observed:envelope.coverage.availableTotal,stage2:0,surge:0,rsLeaders:[],advance:rows.filter(r=>r.changePercent>0).length,decline:rows.filter(r=>r.changePercent<0).length,flat:rows.filter(r=>r.changePercent===0).length,index:null}};
  if(view==='single')return rows[0]??{...base,status:'unavailable'};
  if(view==='results')return {...base,results:rows,tier:envelope.entitlement.tier,timeframe:'1d',scannedAt:base.generatedAt};
  if(view==='plan'){const r=full.find(r=>r.eligibility.signal);return {status:r?'available':'unavailable',instrumentId:r?.instrument.instrumentId??full[0]?.instrument.instrumentId??null,plan:r?{tradeAllowed:false,entry:r.data.entry??null,stopLoss:r.data.stopLoss??null,tp1:r.data.tp1??null,tp2:r.data.tp2??null}:null};}
