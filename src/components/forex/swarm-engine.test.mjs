@@ -69,3 +69,4 @@ test("runSwarmDebate adapts dynamically to 1h timeframe", () => {
   assert.equal(result.plan.balance, "5000");
   assert.ok(Number(result.metrics.recommendedRiskPercent) > 0);
 });
+

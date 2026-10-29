@@ -98,6 +98,31 @@
 .modeTabBtn:hover { color:#e0f8f3; background:#0d2834; }
 .modeTabBtnActive { background:linear-gradient(90deg,#13484f,#0d3842); border-color:#38a594; color:#72f3d5; box-shadow:0 4px 12px rgba(16,185,129,0.15); }
 .hotBadge { font-size:9px; font-weight:800; padding:2px 5px; border-radius:4px; background:#f43f5e; color:#ffffff; letter-spacing:0.5px; }
+
+/* 1. Track Record Bar */
+.trackRecordBanner { display:flex; justify-content:space-between; align-items:center; gap:12px; background:linear-gradient(90deg,#071922,#0b2530); border:1px solid #1c4554; border-radius:12px; padding:10px 16px; margin:14px 0; flex-wrap:wrap; }
+.trackRecordLeft { display:flex; align-items:center; gap:8px; font-size:11px; color:#7ef3d6; font-weight:700; }
+.trackRecordStats { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.trackStatItem { display:flex; align-items:baseline; gap:5px; font-size:11px; }
+.trackStatItem span { color:#8da9b0; font-size:10px; }
+.trackStatItem strong { font-size:13px; font-weight:800; color:#e6fff8; }
+.trackStatPositive { color:#5eead4 !important; }
+
+/* 2. Today's Gold Battle Zones */
+.battleZonesCard { background:#071a24; border:1px solid #1c4150; border-radius:12px; padding:14px 16px; margin-top:14px; display:grid; gap:10px; }
+.battleZonesHead { display:flex; align-items:center; justify-content:space-between; font-size:11px; font-weight:800; color:#7ef3d6; border-bottom:1px solid #163745; padding-bottom:8px; }
+.battleZonesGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; }
+.battleZoneItem { background:#0b222c; border-radius:8px; padding:9px 12px; border:1px solid #204b5a; display:grid; gap:3px; }
+.battleZoneItem span { font-size:10px; color:#8da9b0; display:flex; align-items:center; gap:5px; }
+.battleZoneItem strong { font-size:13px; font-weight:800; color:#e6fff7; }
+
+/* 3. Mobile Sticky VIP CTA Bar */
+.mobileStickyVipBar { position:fixed; bottom:0; left:0; right:0; z-index:1000; background:rgba(6,21,30,0.96); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-top:1px solid #287a74; padding:10px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; box-shadow:0 -8px 24px rgba(0,0,0,0.6); }
+.mobileVipText { display:flex; align-items:center; gap:8px; color:#e6fff7; font-size:11px; line-height:1.35; }
+.mobileVipText strong { display:block; font-size:12px; color:#72f3d5; }
+.mobileVipText small { display:block; font-size:10px; color:#92b8be; }
+.mobileVipBtn { min-height:36px; padding:0 14px; background:linear-gradient(90deg,#10b981,#059669); border:1px solid #6ee7b7; border-radius:8px; color:#ffffff; font-size:11px; font-weight:800; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; text-decoration:none; cursor:pointer; box-shadow:0 2px 10px rgba(16,185,129,0.3); }
+.mobileVipClose { background:transparent; border:none; color:#688e96; font-size:14px; cursor:pointer; padding:4px; }
 @media (max-width:900px) { .workbench { grid-template-columns:1fr; } }
 @media (max-width:650px) { .studioHead { padding:20px; align-items:flex-start; flex-direction:column; gap:8px; }.host .mascotStage { width:95px; height:85px; }.host .mascot { transform:scale(.75); transform-origin:bottom center; animation:none; }.host .mascotShadow { display:none; }.results { grid-template-columns:1fr; } }
 @media (max-width:900px) { .layout { grid-template-columns:1fr; } }

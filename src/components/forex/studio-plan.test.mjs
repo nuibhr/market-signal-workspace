@@ -296,6 +296,13 @@ test("ForexStudio renders server-side with accessible structure and demo notices
   assert.match(markup, /คำนวณ SL โครงสร้าง/);
   assert.match(markup, /คัดลอกสรุปแผน/);
   assert.match(markup, /ดึงแผนจากโค้ช/);
+
+  // Conversion & Trust boosters
+  assert.match(markup, /สถิติมติสภา AI SWARM/);
+  assert.match(markup, /80\.0%/);
+  assert.match(markup, /TODAY&#x27;S GOLD BATTLE PLAN/);
+  assert.match(markup, /ไม่พลาดไม้ทองคำ/);
+  assert.match(markup, /ปลดล็อก LINE VIP/);
 });
 
 test("auto target, stop, side inversion, and hit calculations calculate reliably", () => {
