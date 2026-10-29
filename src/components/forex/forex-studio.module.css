@@ -93,6 +93,11 @@
 .applyCoachBtn:hover { background:#258880 !important; }
 .dismissNoticeBtn { min-height:32px !important; min-width:32px !important; background:transparent !important; border:1px solid #355464 !important; border-radius:6px !important; color:#8db6b5 !important; font-size:11px !important; padding:0 !important; cursor:pointer; }
 .pulseIcon { color:#72f3d5; }
+.modeTabBar { display:flex; gap:8px; margin:18px 0 14px; background:#06151e; padding:5px; border-radius:12px; border:1px solid #1c3e4d; }
+.modeTabBtn { flex:1; min-height:42px; display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid transparent; background:transparent; border-radius:8px; color:#8da9b0; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.2s ease; }
+.modeTabBtn:hover { color:#e0f8f3; background:#0d2834; }
+.modeTabBtnActive { background:linear-gradient(90deg,#13484f,#0d3842); border-color:#38a594; color:#72f3d5; box-shadow:0 4px 12px rgba(16,185,129,0.15); }
+.hotBadge { font-size:9px; font-weight:800; padding:2px 5px; border-radius:4px; background:#f43f5e; color:#ffffff; letter-spacing:0.5px; }
 @media (max-width:900px) { .workbench { grid-template-columns:1fr; } }
 @media (max-width:650px) { .studioHead { padding:20px; align-items:flex-start; flex-direction:column; gap:8px; }.host .mascotStage { width:95px; height:85px; }.host .mascot { transform:scale(.75); transform-origin:bottom center; animation:none; }.host .mascotShadow { display:none; }.results { grid-template-columns:1fr; } }
 @media (max-width:900px) { .layout { grid-template-columns:1fr; } }

@@ -19,6 +19,8 @@ import {
   Zap,
 } from "lucide-react";
 import CandlestickChart from "../candlestick-chart.jsx";
+import SwarmDebate from "./swarm-debate.jsx";
+import { runSwarmDebate } from "./swarm-engine.mjs";
 import { analyzeCandles } from "../../analysis/technical.mjs";
 import { demoBars } from "./terminal-demo.mjs";
 import { resolveInitialInstrument } from "./symbol-universe.mjs";
@@ -122,6 +124,8 @@ export default function ForexStudio() {
   const [speed, setSpeed] = useState(1);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [showEma, setShowEma] = useState(true);
+  const [studioTab, setStudioTab] = useState("swarm");
+  const [swarmTrigger, setSwarmTrigger] = useState(0);
   const [hitBanner, setHitBanner] = useState(null);
   const [coachPlanMeta, setCoachPlanMeta] = useState(null);
   const [liveCoachNotice, setLiveCoachNotice] = useState(null);
@@ -188,6 +192,9 @@ export default function ForexStudio() {
     [plan.entry, plan.stop, plan.target],
   );
   const result = useMemo(() => calculateStudioPlan(plan), [plan]);
+  const swarmDebateData = useMemo(() => {
+    return runSwarmDebate(bars, timeframe, plan.balance);
+  }, [bars, timeframe, plan.balance, swarmTrigger]);
 
   const update = (name, value) => {
     setPlan((current) => ({ ...current, [name]: value }));
@@ -381,6 +388,59 @@ export default function ForexStudio() {
     }
   };
 
+  const handleApplySwarmPlan = (swarmPlan) => {
+    if (!swarmPlan) return;
+    setPlan({
+      ...plan,
+      title: swarmPlan.title,
+      side: swarmPlan.side,
+      entry: swarmPlan.entry,
+      stop: swarmPlan.stop,
+      target: swarmPlan.target,
+      balance: swarmPlan.balance,
+      riskPercent: swarmPlan.riskPercent,
+      condition: swarmPlan.condition,
+    });
+    setActiveSetup({
+      setupName: swarmPlan.title,
+      summary: swarmPlan.condition,
+      atr: swarmDebateData?.metrics?.atr || "3.5",
+    });
+    setStudioTab("chart");
+    setMessage(`⚡ นำมติสภา AI Swarm (${swarmDebateData?.grade || "A+"}) มาวางบนกราฟเรียบร้อย!`);
+    if (soundEnabled) {
+      playChime("tp");
+      speakThai(`นำมติสภา ${swarmPlan.side === "buy" ? "ซื้อ" : "ขาย"} มาวางบนกราฟเรียบร้อยค่ะ`);
+    }
+  };
+
+  const handleBroadcastSwarmPlan = async (swarmPlan) => {
+    if (!swarmPlan) return;
+    try {
+      setMessage("📡 กำลังส่งข้อมูลถ่ายทอดมติสภา AI สด...");
+      const res = await fetch("/api/forex/studio/plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...swarmPlan,
+          coach: `สภา AI Swarm (6 Agents · Grade ${swarmDebateData?.grade || "A+"})`,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage("📡 ถ่ายทอดมติสภา AI สู่สมาชิกทุกคนเรียบร้อยแล้ว!");
+        if (soundEnabled) {
+          playChime("tp");
+          speakThai("ถ่ายทอดมติสภา AI เรียบร้อยค่ะ");
+        }
+      } else {
+        setMessage(data.message || "ไม่สามารถถ่ายทอดแผนได้");
+      }
+    } catch {
+      setMessage("เกิดข้อผิดพลาดในการเชื่อมต่อเพื่อถ่ายทอดแผน");
+    }
+  };
+
   const save = (event) => {
     event.preventDefault();
     if (result.error) {
@@ -444,14 +504,46 @@ export default function ForexStudio() {
         </p>
       </div>
 
+      {/* MODE TAB BAR: SWARM vs CHART */}
+      <div className={styles.modeTabBar}>
+        <button
+          type="button"
+          className={`${styles.modeTabBtn} ${
+            studioTab === "swarm" ? styles.modeTabBtnActive : ""
+          }`}
+          onClick={() => setStudioTab("swarm")}
+        >
+          <Zap size={15} className={styles.pulseIcon} />
+          <span>6 AI AGENTS SWARM (THE REACTOR)</span>
+          <span className={styles.hotBadge}>INSANE</span>
+        </button>
+        <button
+          type="button"
+          className={`${styles.modeTabBtn} ${
+            studioTab === "chart" ? styles.modeTabBtnActive : ""
+          }`}
+          onClick={() => setStudioTab("chart")}
+        >
+          <span>📊 กราฟราคา & REPLAY (PRACTICE CHART)</span>
+        </button>
+      </div>
+
       <div className={styles.workbench}>
         {/* PANEL กราฟ & REPLAY AUTOMATION */}
         <section className={styles.panel} aria-labelledby="chart-title">
           <div className={styles.heading}>
             <div>
-              <span className={styles.overline}>PRACTICE CHART</span>
+              <span className={styles.overline}>
+                {studioTab === "swarm" ? "QUANT REVOLUTION" : "PRACTICE CHART"}
+              </span>
               <h2 id="chart-title">
-                XAU/USD · {timeframe === "15m" ? "15 นาที (Daytrade)" : "1 ชั่วโมง (Structure)"}
+                {studioTab === "swarm"
+                  ? "6 AI AGENTS SWARM · THE REACTOR"
+                  : `XAU/USD · ${
+                      timeframe === "15m"
+                        ? "15 นาที (Daytrade)"
+                        : "1 ชั่วโมง (Structure)"
+                    }`}
               </h2>
             </div>
             <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
@@ -490,14 +582,16 @@ export default function ForexStudio() {
                   1H
                 </button>
               </span>
-              <button
-                type="button"
-                className={`${styles.smartBtn} ${showEma ? styles.smartBtnActive : ""}`}
-                onClick={() => setShowEma((v) => !v)}
-                title="เปิด/ปิดเส้น EMA20 (ส้ม) และ EMA50 (ม่วง)"
-              >
-                📈 EMA 20/50
-              </button>
+              {studioTab === "chart" && (
+                <button
+                  type="button"
+                  className={`${styles.smartBtn} ${showEma ? styles.smartBtnActive : ""}`}
+                  onClick={() => setShowEma((v) => !v)}
+                  title="เปิด/ปิดเส้น EMA20 (ส้ม) และ EMA50 (ม่วง)"
+                >
+                  📈 EMA 20/50
+                </button>
+              )}
             </div>
           </div>
 
@@ -533,127 +627,139 @@ export default function ForexStudio() {
             </div>
           )}
 
-          <div className={styles.chart}>
-            <CandlestickChart
-              symbol="XAUUSD"
-              timeframe={timeframe}
-              bars={bars}
-              priceLines={priceLines}
-              analysis={analysis}
-              indicators={{ ema20: showEma, ema50: showEma, volume: true }}
-              chartRange="all"
-              source="ข้อมูลจำลอง"
+          <div style={{ display: studioTab === "swarm" ? "block" : "none" }}>
+            <SwarmDebate
+              debateData={swarmDebateData}
+              onApplyPlan={handleApplySwarmPlan}
+              onBroadcastPlan={handleBroadcastSwarmPlan}
+              onReconvene={() => setSwarmTrigger((t) => t + 1)}
+              soundEnabled={soundEnabled}
             />
           </div>
-          <p className={styles.planFoot}>
-            เส้น Entry, SL, TP เปลี่ยนตามข้อมูลในแบบฟอร์ม · กราฟโดย{" "}
-            <a
-              href="https://www.tradingview.com/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              TradingView Lightweight Charts™
-            </a>
-          </p>
 
-          {/* HIT NOTIFICATION BANNER */}
-          {hitBanner && (
-            <div
-              className={`${styles.hitBanner} ${
-                hitBanner.type === "tp"
-                  ? styles.hitBannerTp
-                  : hitBanner.type === "sl"
-                    ? styles.hitBannerSl
-                    : styles.hitBannerEntry
-              }`}
-            >
-              <Zap size={16} />
-              <span>{hitBanner.text}</span>
+          <div style={{ display: studioTab === "chart" ? "block" : "none" }}>
+            <div className={styles.chart}>
+              <CandlestickChart
+                symbol="XAUUSD"
+                timeframe={timeframe}
+                bars={bars}
+                priceLines={priceLines}
+                analysis={analysis}
+                indicators={{ ema20: showEma, ema50: showEma, volume: true }}
+                chartRange="all"
+                source="ข้อมูลจำลอง"
+              />
             </div>
-          )}
+            <p className={styles.planFoot}>
+              เส้น Entry, SL, TP เปลี่ยนตามข้อมูลในแบบฟอร์ม · กราฟโดย{" "}
+              <a
+                href="https://www.tradingview.com/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                TradingView Lightweight Charts™
+              </a>
+            </p>
 
-          {/* AUTOMATION CONTROL BAR */}
-          <div className={styles.automationBar}>
-            <div className={styles.automationRow}>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <button
-                  type="button"
-                  className={styles.primary}
-                  onClick={() => setIsPlaying((p) => !p)}
-                  aria-label={isPlaying ? "หยุดชั่วคราว" : "เล่นแท่งเทียนอัตโนมัติ"}
-                >
-                  {isPlaying ? <Pause size={15} /> : <Play size={15} />}
-                  <span>{isPlaying ? "หยุดชั่วคราว" : "เล่นอัตโนมัติ"}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVisible(INITIAL_VISIBLE);
-                    setIsPlaying(false);
+            {/* HIT NOTIFICATION BANNER */}
+            {hitBanner && (
+              <div
+                className={`${styles.hitBanner} ${
+                  hitBanner.type === "tp"
+                    ? styles.hitBannerTp
+                    : hitBanner.type === "sl"
+                      ? styles.hitBannerSl
+                      : styles.hitBannerEntry
+                }`}
+              >
+                <Zap size={16} />
+                <span>{hitBanner.text}</span>
+              </div>
+            )}
+
+            {/* AUTOMATION CONTROL BAR */}
+            <div className={styles.automationBar}>
+              <div className={styles.automationRow}>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <button
+                    type="button"
+                    className={styles.primary}
+                    onClick={() => setIsPlaying((p) => !p)}
+                    aria-label={isPlaying ? "หยุดชั่วคราว" : "เล่นแท่งเทียนอัตโนมัติ"}
+                  >
+                    {isPlaying ? <Pause size={15} /> : <Play size={15} />}
+                    <span>{isPlaying ? "หยุดชั่วคราว" : "เล่นอัตโนมัติ"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVisible(INITIAL_VISIBLE);
+                      setIsPlaying(false);
+                      setHitBanner(null);
+                    }}
+                    disabled={visible === INITIAL_VISIBLE}
+                    aria-label="เริ่มจำลองใหม่จากแท่งที่ 60"
+                  >
+                    <RotateCcw size={14} /> เริ่มใหม่
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisible((n) => Math.min(candles.length, n + 1))}
+                    disabled={visible === candles.length || isPlaying}
+                    aria-label="ก้าวไปข้างหน้า 1 แท่ง"
+                  >
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <span className={styles.speedGroup}>
+                    {[1, 2, 5].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`${styles.speedBtn} ${
+                          speed === s ? styles.speedBtnActive : ""
+                        }`}
+                        onClick={() => setSpeed(s)}
+                      >
+                        {s}x
+                      </button>
+                    ))}
+                  </span>
+
+                  <button
+                    type="button"
+                    className={styles.smartBtn}
+                    onClick={() => setSoundEnabled((v) => !v)}
+                    title="เปิด/ปิด เสียงแจ้งเตือนของน้องนักออม"
+                    aria-pressed={soundEnabled}
+                  >
+                    {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+                    <span>{soundEnabled ? "เสียงเปิด" : "เสียงปิด"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* TIMELINE SCRUBBER */}
+              <div className={styles.scrubberContainer}>
+                <span>
+                  แท่ง {visible} / {candles.length} ({timeframe})
+                </span>
+                <input
+                  type="range"
+                  className={styles.scrubber}
+                  min={30}
+                  max={candles.length}
+                  value={visible}
+                  onChange={(e) => {
+                    setVisible(Number(e.target.value));
                     setHitBanner(null);
                   }}
-                  disabled={visible === INITIAL_VISIBLE}
-                  aria-label="เริ่มจำลองใหม่จากแท่งที่ 60"
-                >
-                  <RotateCcw size={14} /> เริ่มใหม่
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVisible((n) => Math.min(candles.length, n + 1))}
-                  disabled={visible === candles.length || isPlaying}
-                  aria-label="ก้าวไปข้างหน้า 1 แท่ง"
-                >
-                  <ChevronRight size={15} />
-                </button>
+                  aria-label="เลื่อนแถบเวลาแท่งเทียน"
+                />
+                <span>100%</span>
               </div>
-
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <span className={styles.speedGroup}>
-                  {[1, 2, 5].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      className={`${styles.speedBtn} ${
-                        speed === s ? styles.speedBtnActive : ""
-                      }`}
-                      onClick={() => setSpeed(s)}
-                    >
-                      {s}x
-                    </button>
-                  ))}
-                </span>
-
-                <button
-                  type="button"
-                  className={styles.smartBtn}
-                  onClick={() => setSoundEnabled((v) => !v)}
-                  title="เปิด/ปิด เสียงแจ้งเตือนของน้องนักออม"
-                  aria-pressed={soundEnabled}
-                >
-                  {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
-                  <span>{soundEnabled ? "เสียงเปิด" : "เสียงปิด"}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* TIMELINE SCRUBBER */}
-            <div className={styles.scrubberContainer}>
-              <span>
-                แท่ง {visible} / {candles.length} ({timeframe})
-              </span>
-              <input
-                type="range"
-                className={styles.scrubber}
-                min={30}
-                max={candles.length}
-                value={visible}
-                onChange={(e) => {
-                  setVisible(Number(e.target.value));
-                  setHitBanner(null);
-                }}
-                aria-label="เลื่อนแถบเวลาแท่งเทียน"
-              />
-              <span>100%</span>
             </div>
           </div>
         </section>

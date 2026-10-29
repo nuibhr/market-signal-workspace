@@ -10,3 +10,4 @@ if (!globalThis[broadcasterKey]) {
 }
 
 export const studioBroadcaster = globalThis[broadcasterKey];
+
