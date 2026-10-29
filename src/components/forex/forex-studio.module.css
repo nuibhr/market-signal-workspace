@@ -54,6 +54,45 @@
 .savedList { list-style:none; padding:0; margin:16px 0 0; display:grid; gap:8px; }
 .savedList li { display:flex; align-items:stretch; gap:8px; }.loadPlan { flex:1; display:grid; gap:4px; text-align:left; border:1px solid #355464; background:#102d37; border-radius:9px; padding:12px; color:#e6faf5; }.loadPlan span { color:#b0c7ca; font-size:11px; overflow-wrap:anywhere; }
 .deletePlan { min-width:44px; border:1px solid #73494e; border-radius:9px; background:#3d262c; color:#ffb4b1; }
+.automationBar { display:grid; gap:12px; background:#081822; padding:14px; border-radius:12px; border:1px solid #1a3c49; margin-top:14px; }
+.automationRow { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.speedGroup { display:inline-flex; gap:4px; background:#0e2832; padding:3px; border-radius:8px; border:1px solid #234855; }
+.speedBtn { min-height:28px !important; padding:0 8px !important; font-size:11px !important; border:0 !important; background:transparent !important; color:#8ab5be !important; border-radius:6px !important; }
+.speedBtnActive { background:#1f555e !important; color:#baffed !important; font-weight:700 !important; }
+.scrubberContainer { display:flex; align-items:center; gap:10px; width:100%; color:#9ebbc2; font-size:11px; }
+.scrubber { flex:1; height:6px; -webkit-appearance:none; background:#1b3944; border-radius:4px; outline:none; }
+.scrubber::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#70e1b9; cursor:pointer; }
+.hitBanner { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:600; }
+.hitBannerTp { background:#16453d; border:1px solid #369c81; color:#c6ffef; }
+.hitBannerSl { background:#451c23; border:1px solid #9e3d4c; color:#ffc8cd; }
+.hitBannerEntry { background:#1b3954; border:1px solid #3f7fae; color:#d2ecff; }
+.autoDraftBtn { width:100%; min-height:42px; display:inline-flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(90deg,#206764,#184956); border:1px solid #45a498; border-radius:10px; color:#e0fff7; font-weight:700; font-size:12px; cursor:pointer; margin-bottom:12px; }
+.autoDraftBtn:hover { background:linear-gradient(90deg,#2a7c79,#205766); }
+.presetRow { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:4px; }
+.smartBtn { min-height:30px !important; padding:0 9px !important; font-size:10px !important; background:#102c38 !important; border:1px solid #2f5363 !important; border-radius:6px !important; color:#c3e3e8 !important; cursor:pointer; }
+.smartBtn:hover { border-color:#65c4be !important; color:#e3fff9 !important; }
+.smartBtnActive { background:#1c5957 !important; border-color:#6ce7bf !important; color:#ffffff !important; }
+.actionGroup { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.secondaryBtn { min-height:44px; display:inline-flex; align-items:center; justify-content:center; gap:7px; border:1px solid #355464; background:#102d37; border-radius:10px; padding:0 14px; color:#d7eeec; font-size:12px; font-weight:600; cursor:pointer; }
+.secondaryBtn:hover { border-color:#5c8799; background:#153945; }
+.liveCoachBox { display:flex; justify-content:space-between; align-items:center; gap:10px; background:#102e38; border:1px solid #316470; border-radius:10px; padding:10px 14px; color:#cbfbf2; font-size:11px; margin-top:12px; }
+.timeframeGroup { display:inline-flex; gap:3px; background:#081822; padding:3px; border-radius:8px; border:1px solid #234855; }
+.timeframeBtn { min-height:28px !important; padding:0 10px !important; font-size:11px !important; border:0 !important; background:transparent !important; color:#8ab5be !important; border-radius:6px !important; cursor:pointer; font-weight:600 !important; }
+.timeframeBtnActive { background:#1b595b !important; color:#78f1d4 !important; font-weight:800 !important; }
+.livePill { display:inline-flex; align-items:center; gap:6px; font-size:10px; font-weight:700; padding:4px 9px; border-radius:20px; background:#0c363b; color:#72f3d5; border:1px solid #287a74; }
+.livePillOffline { background:#3b2024; color:#ffb4b4; border-color:#75373d; }
+.setupCard { background:#0a2530; border:1px solid #28646e; border-radius:10px; padding:12px 14px; margin-bottom:12px; font-size:11px; display:grid; gap:6px; }
+.setupCardHeader { display:flex; align-items:center; justify-content:space-between; color:#78f1d4; font-weight:800; font-size:12px; }
+.setupCardDesc { color:#c0dcde; line-height:1.5; margin:0; }
+.coachLiveNotice { display:flex; justify-content:space-between; align-items:center; gap:12px; background:linear-gradient(90deg,#103b41,#0c2b34); border:1px solid #45a498; border-radius:10px; padding:10px 14px; margin-bottom:12px; }
+.coachNoticeLeft { display:flex; align-items:center; gap:10px; color:#e0fff7; }
+.coachNoticeLeft strong { display:block; font-size:12px; color:#72f3d5; }
+.coachNoticeLeft small { display:block; font-size:11px; color:#a7c8c4; }
+.coachNoticeActions { display:flex; gap:6px; align-items:center; }
+.applyCoachBtn { min-height:32px !important; background:#1e7069 !important; border:1px solid #6ce7bf !important; border-radius:6px !important; color:#ffffff !important; font-size:11px !important; font-weight:700 !important; padding:0 10px !important; cursor:pointer; }
+.applyCoachBtn:hover { background:#258880 !important; }
+.dismissNoticeBtn { min-height:32px !important; min-width:32px !important; background:transparent !important; border:1px solid #355464 !important; border-radius:6px !important; color:#8db6b5 !important; font-size:11px !important; padding:0 !important; cursor:pointer; }
+.pulseIcon { color:#72f3d5; }
 @media (max-width:900px) { .workbench { grid-template-columns:1fr; } }
 @media (max-width:650px) { .studioHead { padding:20px; align-items:flex-start; flex-direction:column; gap:8px; }.host .mascotStage { width:95px; height:85px; }.host .mascot { transform:scale(.75); transform-origin:bottom center; animation:none; }.host .mascotShadow { display:none; }.results { grid-template-columns:1fr; } }
 @media (max-width:900px) { .layout { grid-template-columns:1fr; } }

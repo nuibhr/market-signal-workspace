@@ -165,7 +165,27 @@ export function createForexHandlers({currentMember,cookieStore,isLoginConfigured
         const token = request.headers
           .get("authorization")
           ?.match(/^Bearer ([A-Za-z0-9_-]{43})$/)?.[1];
-        return Response.json(store.ingest(token, body, config, Date.now(), request.headers.get("x-forex-retry") === "same-packet"), { headers });
+        const result = store.ingest(token, body, config, Date.now(), request.headers.get("x-forex-retry") === "same-packet");
+        try {
+          if (Array.isArray(body.quotes)) {
+            const xau = body.quotes.find(q => /xau/i.test(q.broker_symbol || q.symbol || ""));
+            if (xau) {
+              const price = Number(xau.bid ?? xau.price ?? xau.close);
+              if (price > 0) {
+                import("../app/api/forex/studio/broadcaster.mjs").then(({ studioBroadcaster }) => {
+                  studioBroadcaster.emit("market_tick", {
+                    type: "tick",
+                    symbol: "XAU/USD",
+                    price,
+                    time: Math.floor(Date.now() / 1000),
+                    status: "live_mt5",
+                  });
+                }).catch(() => {});
+              }
+            }
+          }
+        } catch {}
+        return Response.json(result, { headers });
       }
       sameSite(request);
       fail(
