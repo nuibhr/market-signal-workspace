@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useDeskResource } from '../use-desk-resource.jsx';
 const money=(value,digits=2)=>Number.isFinite(value)?value.toFixed(digits):'—';
 import styles from './us-stage2-desk.module.css';
+import { RotateCw } from 'lucide-react';
 import { US_STOCKS, US_ETFS } from '../../markets/catalog.mjs';
 
 // ─── HIGH CONVICTION STAGE 2 STOCKS MASTER DATA ───
@@ -821,8 +822,14 @@ export default function UsStage2Desk({
           <span className={styles.feedStatusText}>
             {feed.busy ? 'กำลังโหลดราคาและผลคำนวณ…' : feed.error ? 'โหลดข้อมูลไม่ได้: ' + feed.error : 'ข้อมูลแท่งปิด D1 · ' + (feed.data?.rows?.find(r => r.observedAt)?.observedAt || 'อัปเดตล่าสุด')}
           </span>
-          <button type="button" className={styles.reloadBtn} onClick={() => { feed.reload(); diagnostic.reload(); fxFeed.reload(); }}>
-            ↻ อัปเดตข้อมูล
+          <button
+            type="button"
+            className={styles.reloadBtn}
+            onClick={() => { feed.reload(); diagnostic.reload(); fxFeed.reload(); }}
+            title="อัปเดตข้อมูลราคาและผลการวิเคราะห์ล่าสุด"
+          >
+            <RotateCw size={12} className={feed.busy ? styles.spinIcon : ''} />
+            <span>อัปเดตข้อมูล</span>
           </button>
         </div>
       </div>

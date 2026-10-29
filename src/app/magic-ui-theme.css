@@ -1511,16 +1511,22 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='us-stage2-desk_reloadBtn'],
 [data-theme='dark'] [class*='us-stage2-desk_reloadBtn'] {
   background: rgba(56, 189, 248, 0.12) !important;
-  border: none !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
   color: #38bdf8 !important;
-  box-shadow: none !important;
-  border-radius: 8px !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-weight: 750 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='us-stage2-desk_reloadBtn']:hover,
 [data-theme='dark'] [class*='us-stage2-desk_reloadBtn']:hover {
-  background: #0284c7 !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
   color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.4) !important;
+  transform: translateY(-1px) !important;
 }
 
 /* ── PRO VIP Showcase Banner (No Gridlines, Pure Clean Editorial) ── */
@@ -2019,4 +2025,281 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
   background: #0284c7 !important;
   border: none !important;
   color: #ffffff !important;
+}
+
+/* ─── 26. Chart Controls, Timeframe & Action Buttons ─── */
+html:not([data-theme='light']) .timeframe-bar,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .timeframe-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 0 12px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  margin-bottom: 12px !important;
+  flex-wrap: wrap !important;
+}
+
+html:not([data-theme='light']) .timeframe-switch,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .timeframe-switch {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  padding: 3px 6px !important;
+  border-radius: 9999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html:not([data-theme='light']) .timeframe-switch button,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .timeframe-switch button {
+  border: none !important;
+  background: transparent !important;
+  color: #94A3B8 !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  padding: 5px 13px !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html:not([data-theme='light']) .timeframe-switch button:hover:not(:disabled),
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .timeframe-switch button:hover:not(:disabled) {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+html:not([data-theme='light']) .timeframe-switch button.selected,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .timeframe-switch button.selected {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4) !important;
+}
+
+html:not([data-theme='light']) .chart-tools-end,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-tools-end {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+}
+
+html:not([data-theme='light']) .chart-tool-btn,
+html:not([data-theme='light']) .chart-tools-end button,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-tools-end button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #cbd5e1 !important;
+  font-size: 11.5px !important;
+  font-weight: 750 !important;
+  padding: 6px 14px !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  backdrop-filter: blur(8px) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html:not([data-theme='light']) .chart-tool-btn:hover:not(:disabled),
+html:not([data-theme='light']) .chart-tools-end button:hover:not(:disabled),
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-tools-end button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25) !important;
+}
+
+html:not([data-theme='light']) .chart-expand-btn,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-expand-btn {
+  background: rgba(56, 189, 248, 0.12) !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+  color: #38bdf8 !important;
+}
+
+html:not([data-theme='light']) .chart-expand-btn:hover:not(:disabled),
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-expand-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.45) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+}
+
+html:not([data-theme='light']) .chart-refresh-btn,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-refresh-btn {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  color: #34d399 !important;
+}
+
+html:not([data-theme='light']) .chart-refresh-btn:hover:not(:disabled),
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-refresh-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+}
+
+html:not([data-theme='light']) .chart-range-btn.active,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-range-btn.active {
+  background: rgba(56, 189, 248, 0.18) !important;
+  border-color: #38bdf8 !important;
+  color: #38bdf8 !important;
+}
+
+html:not([data-theme='light']) .chart-tool-btn:disabled,
+html:not([data-theme='light']) .chart-tools-end button:disabled,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .chart-tools-end button:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html:not([data-theme='light']) .indicator-strip,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .indicator-strip {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+  padding: 8px 0 !important;
+}
+
+html:not([data-theme='light']) .indicator-strip button,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .indicator-strip button {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #94A3B8 !important;
+  border-radius: 9999px !important;
+  padding: 5px 12px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+html:not([data-theme='light']) .indicator-strip button:hover:not(:disabled),
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .indicator-strip button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+html:not([data-theme='light']) .indicator-strip button.selected,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .indicator-strip button.selected {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+}
+
+/* Modal Close Button */
+html:not([data-theme='light']) .modal-close,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .modal-close {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #cbd5e1 !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+html:not([data-theme='light']) .modal-close:hover,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .modal-close:hover {
+  background: rgba(244, 63, 94, 0.22) !important;
+  border-color: rgba(244, 63, 94, 0.45) !important;
+  color: #fb7185 !important;
+  transform: scale(1.08) !important;
+}
+
+/* Focus Refresh Button */
+html:not([data-theme='light']) .focus-refresh,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .focus-refresh {
+  border-radius: 9999px !important;
+  width: 36px !important;
+  height: 36px !important;
+  background: rgba(56, 189, 248, 0.1) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  color: #38bdf8 !important;
+  display: grid !important;
+  place-items: center !important;
+  transition: all 0.18s ease !important;
+}
+
+html:not([data-theme='light']) .focus-refresh:hover,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .focus-refresh:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35) !important;
+}
+
+/* ── Toolbox Pills & Controls (Modern Capsule Design) ── */
+html:not([data-theme='light']) .toolbox-tabs,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .toolbox-tabs {
+  display: flex !important;
+  gap: 6px !important;
+  padding: 8px !important;
+  background: rgba(15, 23, 42, 0.45) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+html:not([data-theme='light']) .toolbox-tabs button,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .toolbox-tabs button {
+  border: none !important;
+  background: transparent !important;
+  color: #94A3B8 !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+html:not([data-theme='light']) .toolbox-tabs button:hover,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .toolbox-tabs button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+html:not([data-theme='light']) .toolbox-tabs button.selected,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .toolbox-tabs button.selected {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3) !important;
+}
+
+html:not([data-theme='light']) .toolbox-category-tabs button,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .toolbox-category-tabs button {
+  border-radius: 9999px !important;
+  padding: 5px 12px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+html:not([data-theme='light']) .toolbox-overlay,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .toolbox-overlay {
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
 }

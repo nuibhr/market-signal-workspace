@@ -653,26 +653,289 @@
   box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.02) !important;
 }
 
-.market-workspace.theme-light-glass .timeframe-bar {
+.market-workspace.theme-light-glass .timeframe-bar,
+[data-theme='light'] .timeframe-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 0 12px !important;
   border-bottom: 1px solid #e2e8f0 !important;
+  margin-bottom: 12px !important;
+  flex-wrap: wrap !important;
+}
+
+.market-workspace.theme-light-glass .timeframe-switch,
+[data-theme='light'] .timeframe-switch {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background: #f1f5f9 !important;
+  padding: 3px 6px !important;
+  border-radius: 9999px !important;
+  border: 1px solid #cbd5e1 !important;
 }
 
 .market-workspace.theme-light-glass .timeframe-switch button,
-.market-workspace.theme-light-glass .indicator-strip button {
-  background: rgba(241, 245, 249, 0.9) !important;
-  border: 1px solid #cbd5e1 !important;
-  color: #334155 !important;
-  border-radius: 8px !important;
-  font-weight: 600 !important;
+[data-theme='light'] .timeframe-switch button {
+  border: none !important;
+  background: transparent !important;
+  color: #475569 !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  padding: 5px 13px !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.market-workspace.theme-light-glass .timeframe-switch button:hover:not(:disabled),
+[data-theme='light'] .timeframe-switch button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.8) !important;
+  color: #0f172a !important;
 }
 
 .market-workspace.theme-light-glass .timeframe-switch button.selected,
-.market-workspace.theme-light-glass .indicator-strip button.selected {
-  background: #0284c7 !important;
+[data-theme='light'] .timeframe-switch button.selected {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass .chart-tools-end,
+[data-theme='light'] .chart-tools-end {
+  margin-left: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.market-workspace.theme-light-glass .chart-tool-btn,
+.market-workspace.theme-light-glass .chart-tools-end button,
+[data-theme='light'] .chart-tool-btn,
+[data-theme='light'] .chart-tools-end button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.market-workspace.theme-light-glass .chart-tool-btn:hover:not(:disabled),
+.market-workspace.theme-light-glass .chart-tools-end button:hover:not(:disabled),
+[data-theme='light'] .chart-tool-btn:hover:not(:disabled),
+[data-theme='light'] .chart-tools-end button:hover:not(:disabled) {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Light Mode: Expand Chart Button (High-Converting Vibrant Cyan Pill) */
+.market-workspace.theme-light-glass .chart-expand-btn,
+[data-theme='light'] .chart-expand-btn {
+  background: rgba(2, 132, 199, 0.08) !important;
+  border-color: rgba(2, 132, 199, 0.3) !important;
+  color: #0284c7 !important;
+}
+
+.market-workspace.theme-light-glass .chart-expand-btn:hover:not(:disabled),
+[data-theme='light'] .chart-expand-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+}
+
+/* Light Mode: Refresh Chart Button (High-Converting Emerald Pill) */
+.market-workspace.theme-light-glass .chart-refresh-btn,
+[data-theme='light'] .chart-refresh-btn {
+  background: rgba(16, 185, 129, 0.08) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  color: #059669 !important;
+}
+
+.market-workspace.theme-light-glass .chart-refresh-btn:hover:not(:disabled),
+[data-theme='light'] .chart-refresh-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+  border-color: #059669 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+}
+
+/* Light Mode: Chart Range Toggle Pill */
+.market-workspace.theme-light-glass .chart-range-btn.active,
+[data-theme='light'] .chart-range-btn.active {
+  background: rgba(2, 132, 199, 0.12) !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+  font-weight: 800 !important;
+}
+
+.market-workspace.theme-light-glass .chart-tool-btn:disabled,
+.market-workspace.theme-light-glass .chart-tools-end button:disabled,
+[data-theme='light'] .chart-tool-btn:disabled,
+[data-theme='light'] .chart-tools-end button:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.market-workspace.theme-light-glass .indicator-strip,
+[data-theme='light'] .indicator-strip {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+  padding: 8px 0 !important;
+}
+
+.market-workspace.theme-light-glass .indicator-strip button,
+[data-theme='light'] .indicator-strip button {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+  border-radius: 9999px !important;
+  padding: 5px 12px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+.market-workspace.theme-light-glass .indicator-strip button:hover:not(:disabled),
+[data-theme='light'] .indicator-strip button:hover:not(:disabled) {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+.market-workspace.theme-light-glass .indicator-strip button.selected,
+[data-theme='light'] .indicator-strip button.selected {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
   color: #ffffff !important;
   border-color: #0284c7 !important;
   box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25) !important;
   font-weight: 700 !important;
+}
+
+/* Light Mode: Modal Close Capsule Pill Button */
+.market-workspace.theme-light-glass .modal-close,
+[data-theme='light'] .modal-close {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #f8fafc !important;
+  color: #64748b !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+.market-workspace.theme-light-glass .modal-close:hover,
+[data-theme='light'] .modal-close:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #ef4444 !important;
+  transform: scale(1.08) !important;
+}
+
+/* Light Mode: Focus Refresh Capsule Pill Button */
+.market-workspace.theme-light-glass .focus-refresh,
+[data-theme='light'] .focus-refresh {
+  border-radius: 9999px !important;
+  width: 36px !important;
+  height: 36px !important;
+  background: rgba(2, 132, 199, 0.08) !important;
+  border: 1px solid rgba(2, 132, 199, 0.25) !important;
+  color: #0284c7 !important;
+  display: grid !important;
+  place-items: center !important;
+  transition: all 0.18s ease !important;
+}
+
+.market-workspace.theme-light-glass .focus-refresh:hover,
+[data-theme='light'] .focus-refresh:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+}
+
+/* ── Light Mode: Toolbox Pills & Controls (Modern Capsule Design) ── */
+.market-workspace.theme-light-glass .toolbox-tabs,
+[data-theme='light'] .toolbox-tabs {
+  display: flex !important;
+  gap: 6px !important;
+  padding: 8px !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.market-workspace.theme-light-glass .toolbox-tabs button,
+[data-theme='light'] .toolbox-tabs button {
+  border: none !important;
+  background: transparent !important;
+  color: #64748b !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+.market-workspace.theme-light-glass .toolbox-tabs button:hover,
+[data-theme='light'] .toolbox-tabs button:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .toolbox-tabs button.selected,
+[data-theme='light'] .toolbox-tabs button.selected {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3) !important;
+}
+
+.market-workspace.theme-light-glass .toolbox-category-tabs button,
+[data-theme='light'] .toolbox-category-tabs button {
+  border-radius: 9999px !important;
+  padding: 5px 12px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+}
+
+.market-workspace.theme-light-glass .toolbox-overlay,
+[data-theme='light'] .toolbox-overlay {
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
 }
 
 .market-workspace.theme-light-glass .ohlc-strip {
@@ -2608,15 +2871,22 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_reloadBtn'],
 [data-theme='light'] [class*='us-stage2-desk_reloadBtn'] {
   background: rgba(2, 132, 199, 0.08) !important;
-  border: none !important;
+  border: 1px solid rgba(2, 132, 199, 0.22) !important;
   color: #0284c7 !important;
-  border-radius: 8px !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-weight: 750 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .market-workspace.theme-light-glass [class*='us-stage2-desk_reloadBtn']:hover,
 [data-theme='light'] [class*='us-stage2-desk_reloadBtn']:hover {
-  background: #0284c7 !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  border-color: #0284c7 !important;
   color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3) !important;
+  transform: translateY(-1px) !important;
 }
 
 /* ── PRO VIP Showcase Banner (Clean White Card, High-Converting Fintech Aesthetic) ── */
