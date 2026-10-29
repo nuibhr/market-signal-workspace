@@ -213,19 +213,19 @@ export default function ProToolsNav({ current = 'risk' }) {
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', marginRight: '4px' }}>
                   กระดานเทรด:
                 </span>
-                <Link href="/thai" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(16,185,129,0.15)', color: '#34d399', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(16,185,129,0.3)' }}>
+                <Link href="/thai" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', fontWeight: '700', padding: '5px 12px', borderRadius: '9999px', background: 'rgba(16,185,129,0.18)', color: '#34d399', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(16,185,129,0.35)' }}>
                   🇹🇭 หุ้นไทย
                 </Link>
-                <Link href="/tfex" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(234,88,12,0.15)', color: '#fb923c', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(234,88,12,0.3)' }}>
+                <Link href="/tfex" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', fontWeight: '700', padding: '5px 12px', borderRadius: '9999px', background: 'rgba(234,88,12,0.18)', color: '#fb923c', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(234,88,12,0.35)' }}>
                   ⚡ TFEX
                 </Link>
-                <Link href="/us" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(56,189,248,0.15)', color: '#38bdf8', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(56,189,248,0.3)' }}>
+                <Link href="/us" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', fontWeight: '700', padding: '5px 12px', borderRadius: '9999px', background: 'rgba(56,189,248,0.18)', color: '#38bdf8', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(56,189,248,0.35)' }}>
                   🇺🇸 US 500
                 </Link>
-                <Link href="/forex" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(168,85,247,0.15)', color: '#c084fc', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(168,85,247,0.3)' }}>
+                <Link href="/forex" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', fontWeight: '700', padding: '5px 12px', borderRadius: '9999px', background: 'rgba(168,85,247,0.18)', color: '#c084fc', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(168,85,247,0.35)' }}>
                   🌍 Forex
                 </Link>
-                <Link href="/dr" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(245,158,11,0.15)', color: '#fbbf24', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(245,158,11,0.3)' }}>
+                <Link href="/dr" className="ng-drawer-market-chip" onClick={() => setDrawerOpen(false)} style={{ fontSize: '11px', fontWeight: '700', padding: '5px 12px', borderRadius: '9999px', background: 'rgba(245,158,11,0.18)', color: '#fbbf24', textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid rgba(245,158,11,0.35)' }}>
                   🪙 DR
                 </Link>
               </div>

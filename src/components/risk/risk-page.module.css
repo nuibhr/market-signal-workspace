@@ -40,8 +40,8 @@
 
 .backLink {
   min-height: 38px;
-  padding: 0 12px;
-  border-radius: 10px;
+  padding: 0 16px;
+  border-radius: 9999px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #cbd5e1;
@@ -89,8 +89,8 @@
 
 .accountPill {
   min-height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
+  padding: 0 16px;
+  border-radius: 9999px;
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   border: 1px solid rgba(56, 189, 248, 0.35);
   color: #ffffff;
@@ -140,8 +140,8 @@
 
 .marketTabBtn {
   min-height: 42px;
-  padding: 0 16px;
-  border-radius: 10px;
+  padding: 0 18px;
+  border-radius: 9999px;
   background: rgba(14, 28, 38, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #94a3b8;
@@ -216,8 +216,8 @@
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.12);
   border: 1px solid rgba(56, 189, 248, 0.3);
-  padding: 3px 10px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
 }
 
 .riskTag {
@@ -227,8 +227,8 @@
   color: #fb7185;
   background: rgba(244, 63, 94, 0.12);
   border: 1px solid rgba(244, 63, 94, 0.3);
-  padding: 3px 10px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
 }
 
 /* ── Form Inputs ── */
@@ -310,8 +310,8 @@
 .quickPresetBtn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  padding: 3px 8px;
+  border-radius: 9999px;
+  padding: 4px 10px;
   font-size: 11px;
   font-weight: 600;
   color: #94a3b8;
@@ -335,8 +335,8 @@
 
 .presetPill {
   min-height: 38px;
-  padding: 0 13px;
-  border-radius: 8px;
+  padding: 0 16px;
+  border-radius: 9999px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #cbd5e1;
@@ -400,7 +400,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 10px;
+  border-radius: 9999px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #94a3b8;
@@ -416,7 +416,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 10px;
+  border-radius: 9999px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #94a3b8;
@@ -646,13 +646,13 @@
 
 .actionLink {
   min-height: 38px;
-  padding: 0 14px;
-  border-radius: 8px;
+  padding: 0 16px;
+  border-radius: 9999px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #cbd5e1;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -661,15 +661,17 @@
 }
 
 .actionLink:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .actionLinkPrimary {
-  background: rgba(2, 132, 199, 0.2) !important;
-  border-color: rgba(56, 189, 248, 0.4) !important;
-  color: #38bdf8 !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
   font-weight: 750 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35) !important;
 }
 
 .actionLinkPrimary:hover {

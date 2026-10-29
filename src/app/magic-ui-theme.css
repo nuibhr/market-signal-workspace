@@ -438,29 +438,32 @@ html:not([data-theme='light']) body:not([data-theme='light']) .account-menu butt
 /* ─── 6. Market Navigation Destinations ─── */
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a,
 html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a {
-  background: #111C33 !important;
-  border: 1px solid #243550 !important;
+  background: rgba(17, 28, 51, 0.75) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #94A3B8 !important;
-  border-radius: var(--magic-radius-menu) !important;
+  border-radius: 9999px !important;
+  padding: 8px 16px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-  transition: var(--magic-transition) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a:hover,
 html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a:hover {
-  background: #1C3250 !important;
+  background: rgba(28, 50, 80, 0.9) !important;
   color: #F1F5F9 !important;
-  border-color: rgba(34, 211, 238, 0.45) !important;
-  box-shadow: 0 0 14px rgba(34, 211, 238, 0.18) !important;
-  transform: translateY(-1px) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.25) !important;
+  transform: translateY(-2px) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a[aria-current='page'],
 html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
-  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
-  color: #22D3EE !important;
-  border-color: #22D3EE !important;
-  box-shadow: 0 0 18px rgba(34, 211, 238, 0.28) !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.45), 0 0 14px rgba(56, 189, 248, 0.35) !important;
   font-weight: 700 !important;
 }
 
@@ -470,8 +473,8 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
   background: rgba(17, 28, 51, 0.9) !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid #243550 !important;
-  border-radius: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
 }
 
@@ -487,27 +490,29 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a,
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a {
-  background: #0A1324 !important;
-  border: 1px solid #243550 !important;
+  background: rgba(10, 19, 36, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #94A3B8 !important;
-  border-radius: 9px !important;
-  transition: var(--magic-transition) !important;
+  border-radius: 14px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a:hover,
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a:hover {
-  background: #1C3250 !important;
+  background: rgba(28, 50, 80, 0.9) !important;
   color: #F1F5F9 !important;
-  border-color: rgba(34, 211, 238, 0.4) !important;
-  box-shadow: 0 0 12px rgba(34, 211, 238, 0.16) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.22) !important;
+  transform: translateY(-2px) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a[aria-current],
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a[aria-current] {
-  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
-  color: #22D3EE !important;
-  border-color: #22D3EE !important;
-  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25) !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4), 0 0 12px rgba(56, 189, 248, 0.3) !important;
 }
 
 /* ─── 8. Pro Tools Suite Navigation ─── */
@@ -515,32 +520,149 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-pro
 html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-suite-nav {
   background: rgba(17, 28, 51, 0.88) !important;
   backdrop-filter: blur(16px) !important;
-  border: 1px solid #243550 !important;
-  border-radius: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-suite-back-pill,
+html:not([data-theme='light']) body:not([data-theme='light']) .ng-suite-back-pill {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #cbd5e1 !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-suite-back-pill:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .ng-suite-back-pill:hover {
+  background: rgba(2, 132, 199, 0.2) !important;
+  border-color: #38bdf8 !important;
+  color: #38bdf8 !important;
+  transform: translateX(-2px) !important;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.25) !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-suite-badge,
+html:not([data-theme='light']) body:not([data-theme='light']) .ng-suite-badge {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+  color: #34d399 !important;
+  border-radius: 9999px !important;
+  padding: 4px 10px !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-pro-pill,
 html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-pill {
-  background: #0A1324 !important;
-  border: 1px solid #243550 !important;
+  background: rgba(10, 19, 36, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #94A3B8 !important;
-  border-radius: 9px !important;
-  transition: var(--magic-transition) !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-weight: 700 !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-pro-pill:hover,
 html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-pill:hover {
-  background: #1C3250 !important;
-  color: #F1F5F9 !important;
-  border-color: rgba(34, 211, 238, 0.4) !important;
+  background: rgba(28, 50, 80, 0.85) !important;
+  color: #ffffff !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-pro-pill.is-active,
 html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-pill.is-active {
-  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
-  color: #22D3EE !important;
-  border-color: #22D3EE !important;
-  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25) !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.45), 0 0 14px rgba(56, 189, 248, 0.35) !important;
+}
+
+/* ─── 8.1 Welcome CTA Button (High-Converting Glowing Capsule) ─── */
+html:not([data-theme='light']) .welcome-explore,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .welcome-explore,
+html:not([data-theme='light']) .monitor-workspace:not(.theme-light-glass) .nugaom-welcome .welcome-explore,
+html:not([data-theme='light']) body:not([data-theme='light']) .welcome-explore {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 22px !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.48), 0 0 14px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  white-space: nowrap !important;
+}
+
+html:not([data-theme='light']) .welcome-explore:hover,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .welcome-explore:hover,
+html:not([data-theme='light']) .monitor-workspace:not(.theme-light-glass) .nugaom-welcome .welcome-explore:hover,
+html:not([data-theme='light']) body:not([data-theme='light']) .welcome-explore:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #6366f1 100%) !important;
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.65), 0 0 24px rgba(56, 189, 248, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+html:not([data-theme='light']) .welcome-explore:active,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .welcome-explore:active,
+html:not([data-theme='light']) .monitor-workspace:not(.theme-light-glass) .nugaom-welcome .welcome-explore:active,
+html:not([data-theme='light']) body:not([data-theme='light']) .welcome-explore:active {
+  transform: translateY(0) scale(0.98) !important;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* ─── 8.2 Market Routine & Floating Dock Buttons ─── */
+html:not([data-theme='light']) .market-routine button,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-routine button {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #cbd5e1 !important;
+  border-radius: 9999px !important;
+  padding: 8px 18px !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html:not([data-theme='light']) .market-routine button:hover,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-routine button:hover {
+  background: rgba(2, 132, 199, 0.2) !important;
+  border-color: #38bdf8 !important;
+  color: #38bdf8 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25) !important;
+}
+
+html:not([data-theme='light']) .ng-pro-fab {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 16px rgba(2, 132, 199, 0.35) !important;
+  border-radius: 9999px !important;
+}
+
+html:not([data-theme='light']) .ng-pro-fab:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 12px 32px rgba(2, 132, 199, 0.55) !important;
+  transform: translateY(-2px) scale(1.03) !important;
 }
 
 /* ─── 9. Cards, Panels, and Elevated Surfaces ─── */

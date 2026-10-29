@@ -347,8 +347,8 @@
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
   color: #334155 !important;
-  border-radius: 10px !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
   transition: all 0.18s ease !important;
 }
 
@@ -424,10 +424,11 @@
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
   color: #1e293b !important;
-  border-radius: 12px !important;
+  border-radius: 9999px !important;
+  padding: 8px 16px !important;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
-  transition: all 0.18s ease !important;
-  font-weight: 600 !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  font-weight: 700 !important;
 }
 
 .market-workspace.theme-light-glass .market-destinations a svg,
@@ -440,16 +441,17 @@
   background: #f0f9ff !important;
   color: #0284c7 !important;
   border-color: #38bdf8 !important;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.12) !important;
-  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.18) !important;
+  transform: translateY(-2px) !important;
 }
 
 .market-workspace.theme-light-glass .market-destinations a[aria-current='page'],
 [data-theme='light'] .market-destinations a[aria-current='page'] {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
   color: #ffffff !important;
   border-color: #0284c7 !important;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.32) !important;
   font-weight: 700 !important;
 }
 
@@ -463,15 +465,36 @@
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
   color: #334155 !important;
+  border-radius: 9999px !important;
 }
 
 /* ─── 5.2 Pro Tools Navigation in Light Glass ─── */
 .market-workspace.theme-light-glass .ng-pro-suite-nav,
 [data-theme='light'] .ng-pro-suite-nav {
-  background: rgba(255, 255, 255, 0.88) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+}
+
+.market-workspace.theme-light-glass .ng-suite-back-pill,
+[data-theme='light'] .ng-suite-back-pill {
+  background: #f1f5f9 !important;
   border: 1px solid #cbd5e1 !important;
-  border-radius: 14px !important;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04) !important;
+  color: #0f172a !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+}
+
+.market-workspace.theme-light-glass .ng-suite-back-pill:hover,
+[data-theme='light'] .ng-suite-back-pill:hover {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #0284c7 !important;
+  transform: translateX(-2px) !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25) !important;
 }
 
 .market-workspace.theme-light-glass .ng-pro-pill,
@@ -479,10 +502,11 @@
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
   color: #334155 !important;
-  border-radius: 9px !important;
-  font-weight: 600 !important;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
-  transition: all 0.18s ease !important;
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .market-workspace.theme-light-glass .ng-pro-pill:hover,
@@ -490,14 +514,70 @@
   background: #f0f9ff !important;
   color: #0284c7 !important;
   border-color: #38bdf8 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.18) !important;
 }
 
 .market-workspace.theme-light-glass .ng-pro-pill.is-active,
 [data-theme='light'] .ng-pro-pill.is-active {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
   color: #ffffff !important;
   border-color: #0284c7 !important;
-  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.25) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28) !important;
+}
+
+/* ─── 5.3 Welcome CTA & Market Routine in Light Glass ─── */
+.market-workspace.theme-light-glass .welcome-explore,
+.monitor-workspace.theme-light-glass .nugaom-welcome .welcome-explore,
+[data-theme='light'] .welcome-explore {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 22px !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 18px rgba(2, 132, 199, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  white-space: nowrap !important;
+}
+
+.market-workspace.theme-light-glass .welcome-explore:hover,
+.monitor-workspace.theme-light-glass .nugaom-welcome .welcome-explore:hover,
+[data-theme='light'] .welcome-explore:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #1d4ed8 100%) !important;
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: 0 8px 26px rgba(2, 132, 199, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+  color: #ffffff !important;
+}
+
+.market-workspace.theme-light-glass .market-routine button,
+[data-theme='light'] .market-routine button {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  border-radius: 9999px !important;
+  padding: 8px 18px !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.2s ease !important;
+}
+
+.market-workspace.theme-light-glass .market-routine button:hover,
+[data-theme='light'] .market-routine button:hover {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.18) !important;
 }
 
 /* ─── 6. Liquid Glass Cards & Panels ─── */

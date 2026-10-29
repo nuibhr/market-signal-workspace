@@ -50,8 +50,30 @@ html, body { background: #0d191b; }
 .welcome-line { border: 1px solid #07865c; background: #0aa765; color: #fff; box-shadow: 0 9px 23px #078a5c34; }
 .welcome-line:hover { background: #058354; }
 .welcome-line-mark, .hub-line-icon { display: grid; place-items: center; flex: 0 0 auto; width: 25px; height: 25px; border-radius: 8px; background: #fff; color: #06a65d; font: 900 7px Manrope,sans-serif; letter-spacing: -.03em; }
-.welcome-explore { border: 1px solid #c8d8c9; background: #ffffffc7; color: #2a5143; }
-.welcome-explore:hover { background: #e4f0e2; }
+.welcome-explore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+.welcome-explore:hover {
+  background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #6366f1 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 26px rgba(37, 99, 235, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+}
 .welcome-steps { position: relative; display: grid; align-content: center; gap: 8px; padding: 17px; border: 1px solid #d1ddce; border-radius: 19px; background: #ffffffa6; box-shadow: 0 13px 30px #4c6e4d16; }
 .welcome-steps > span { margin-bottom: 5px; color: #567968; font-size: 11px; font-weight: 800; }
 .welcome-steps div { display: flex; align-items: center; gap: 10px; min-height: 34px; color: #234639; font-size: 11px; font-weight: 700; }

@@ -8,7 +8,7 @@ import MarketNavigation from './market-navigation.jsx';
 import {marketPage,marketHref} from '../markets/market-pages.mjs';
 import SignalDesk from './signal-desk.jsx';
 import {SoundControl} from './monitor/monitor-provider.jsx';
-import { BookOpen, Layers3, Newspaper, Radar, Waves } from 'lucide-react';
+import { ArrowRight, BookOpen, Layers3, Newspaper, Radar, Sparkles, Waves } from 'lucide-react';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS, TFEX_SYMBOLS } from '../markets/catalog.mjs';
 import { formatQuotePrice } from '../markets/quote-format.mjs';
 import { analyzeCandles } from '../analysis/technical.mjs';
@@ -513,7 +513,11 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               <span className="eyebrow">{page.eyebrow}</span>
               <h1>{page.title}</h1>
               <p>{page.description}</p>
-              <button className="welcome-explore" onClick={() => navigateTo('daily')}>เปิดเครื่องมือ →</button>
+              <button className="welcome-explore" onClick={() => navigateTo('daily')}>
+                <Sparkles size={14} className="welcome-explore-sparkle" />
+                <span>เปิดเครื่องมือ</span>
+                <ArrowRight size={14} className="welcome-explore-arrow" />
+              </button>
             </div>
           </section>}
 
