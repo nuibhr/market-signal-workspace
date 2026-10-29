@@ -1,0 +1,302 @@
+[
+  {
+    "path": "/api/news?alerts=1",
+    "outcome": "ok",
+    "cpuMs": 1,
+    "status": 503
+  },
+  {
+    "path": "/thai",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/4bd1b696-93bf506b236d6248.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/9375-561c1a771cda41db.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/css/0854549d14b8c833.css",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/4936-30053b9eb4eff47d.js",
+    "outcome": "ok",
+    "cpuMs": 1,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/8500-335e4da2b43dccf8.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/css/9213a122a144263e.css",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/5896-c20a083e52809de9.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/css/39a0824b105fdb16.css",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/2802-e27c1f194c20a18c.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/app/thai/page-8d9513e437fc63ec.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=dr&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/dr",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/nugaom-mascot.png",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 304
+  },
+  {
+    "path": "/_next/static/chunks/app/dr/page-9b844ded6fc27eb3.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/us?_rsc=rwVOCuMuW2_U7YbP",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/nugaom-mascot.png",
+    "outcome": "ok",
+    "cpuMs": 1,
+    "status": 304
+  },
+  {
+    "path": "/_next/static/chunks/app/calendar/page-c8b15924d8a8e9d3.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=thai&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=dr&after=0&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=thai&after=0&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/instrument-logos/dr/AAPL80.png",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/us",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/app/us/page-3e58d801b55a9fea.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/nugaom-mascot.png",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 304
+  },
+  {
+    "path": "/forex?_rsc=RIuQDHytnKrszaHG",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/daytrade?market=forex&compact=1",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/daytrade?market=dr&compact=1",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=thai&overview=0",
+    "outcome": "ok",
+    "cpuMs": 1,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=dr&after=0&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=us&after=0&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/forex",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=thai&after=0&overview=0",
+    "outcome": "canceled",
+    "cpuMs": 0,
+    "status": null
+  },
+  {
+    "path": "/_next/static/css/ccbc7cd8d1157eca.css",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/nugaom-mascot.png",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 304
+  },
+  {
+    "path": "/?_rsc=0zIMBTKBWavFZwgn",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/3266-deda41a0a842131b.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=thai&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=dr&after=0&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=thai&after=0&overview=0",
+    "outcome": "ok",
+    "cpuMs": 1,
+    "status": 200
+  },
+  {
+    "path": "/api/forex/mt5?frame=1h",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=us&after=0&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/tfex",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/_next/static/chunks/app/tfex/page-9768c082c5011a98.js",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/?_rsc=SK2Qe5K-bGnQr74E",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/membership",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=us&after=0&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/signals?market=dr&after=0&overview=0",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 200
+  },
+  {
+    "path": "/api/news?alerts=1",
+    "outcome": "ok",
+    "cpuMs": 0,
+    "status": 503
+  }
+]

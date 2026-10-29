@@ -1,4 +1,5 @@
 'use client';
+import {readApiJson} from '../../security/api-response.mjs';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import {DISCOVERY_INTERVAL_MS} from '../../signals/cadence.mjs';
 import {useEffect,useState} from 'react';
@@ -17,7 +18,7 @@ export default function WholeMarketScans({initialMarket,fixedMarket=false,onSele
       setBusy(true);setError('');
       try {
         const response=await fetch(`/api/signals?${params}`,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])});
-        const value=await response.json();
+        const value=await readApiJson(response);
         if(!response.ok)throw Error(response.status===403?'เข้าสู่ระบบสมาชิกเพื่ออ่านผลสแกนทั้งตลาด':'ยังอ่านผลสแกนไม่ได้ กรุณาลองใหม่');
         if(!controller.signal.aborted)setData(value);
       }catch(error){if(!controller.signal.aborted)setError(error.name==='TimeoutError'?'อ่านผลเกินเวลาที่กำหนด กำลังรอลองใหม่':error.message);}

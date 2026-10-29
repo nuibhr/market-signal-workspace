@@ -9,7 +9,7 @@ const initial = {
   quotes: {},
   chart: null,
 };
-export default function useMt5Connection(symbol, frame) {
+export default function useMt5Connection(symbol, frame, {enabled=true}={}) {
   const [data, setData] = useState(initial),
     [error, setError] = useState(null),
     [busy, setBusy] = useState(false);
@@ -23,6 +23,7 @@ export default function useMt5Connection(symbol, frame) {
     return () => { mounted.current = false; reader.current.invalidate(); actionController.current?.abort(); };
   }, []);
   useEffect(() => {
+    if(!enabled){setData(initial);setError(null);return;}
     reader.current.select(symbol, frame);
     let timer, disposed = false;
     const poll = async () => {
@@ -46,9 +47,9 @@ export default function useMt5Connection(symbol, frame) {
       reader.current.invalidate();
       clearTimeout(timer);
     };
-  }, [symbol, frame]);
+  }, [symbol, frame, enabled]);
   const action = async (action, server) => {
-    if (actionPending.current) return null;
+    if (!enabled || actionPending.current) return null;
     actionPending.current = true;
     reader.current.invalidate();
     const controller = new AbortController();

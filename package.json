@@ -3,11 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "scanner:build": "node scripts/build-vps-scanner.mjs",
+    "scanner:vps": "node scripts/vps-signal-worker.mjs",
+    "cloud:deploy:bridge": "wrangler deploy --config deploy/cloudflare/wrangler.scanner-bridge.jsonc",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "cloud:build": "node scripts/cloud-build.mjs",
-    "cloud:deploy:web": "wrangler deploy --config wrangler.jsonc",
+    "cloud:deploy:web": "wrangler deploy --config deploy/cloudflare/wrangler.vps-proxy.jsonc",
     "cloud:deploy:scanner": "wrangler deploy --config deploy/cloudflare/wrangler.scanner.jsonc",
     "cloud:secrets:web": "node --env-file=.env.local scripts/cloud-secrets.mjs web",
     "cloud:secrets:scanner": "node --env-file=.env.local scripts/cloud-secrets.mjs scanner",
@@ -41,7 +44,10 @@
     "d1:import": "node --env-file=.env.local scripts/d1-migrate.mjs import deploy/cloudflare/wrangler.remote.jsonc",
     "d1:verify": "node --env-file=.env.local scripts/d1-migrate.mjs verify deploy/cloudflare/wrangler.remote.jsonc",
     "d1:unchanged": "node --env-file=.env.local scripts/d1-migrate.mjs unchanged",
-    "test": "node scripts/test.mjs"
+    "test": "node scripts/test.mjs",
+    "cloud:deploy:web:legacy": "wrangler deploy --config wrangler.jsonc",
+    "cloud:deploy:web-data": "wrangler deploy --config deploy/cloudflare/wrangler.web-data.jsonc",
+    "check:release": "node scripts/check-release-readiness.mjs"
   },
   "engines": {
     "node": ">=22.13"
@@ -57,7 +63,9 @@
     "stripe": "23.0.0",
     "three": "0.186.1",
     "wrangler": "4.147.0",
-    "yahoo-finance2": "^4.0.2"
+    "yahoo-finance2": "^4.0.2",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
   },
   "overrides": {
     "sharp": "0.35.5",

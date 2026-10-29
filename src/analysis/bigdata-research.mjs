@@ -29,18 +29,22 @@ export async function researchWithBigdata(question, selectedSymbol, conversation
   let checkpointId = null;
   let buffer = '';
   let failed = false;
+  let completed = false;
   const sources = [];
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   const processLine = line => {
-    if (!line.startsWith('data: ')) return;
+    if (!line.startsWith('data:')) return;
     let event;
-    try { event = JSON.parse(line.slice(6)); } catch { return; }
+    try { event = JSON.parse(line.slice(5).trimStart()); } catch { return; }
     const delta = event?.message ?? {};
     if (typeof event?.chat_id === 'string') chatId = event.chat_id;
     if (delta.type === 'ANSWER' && typeof delta.content === 'string') answer += delta.content;
     if (delta.type === 'ERROR') failed = true;
-    if (delta.type === 'COMPLETE' && typeof delta.checkpoint_id === 'string') checkpointId = delta.checkpoint_id;
+    if (delta.type === 'COMPLETE') {
+      completed = true;
+      if(typeof delta.checkpoint_id === 'string')checkpointId = delta.checkpoint_id;
+    }
     if (delta.type === 'GROUNDING' && Array.isArray(delta.references)) {
       for (const reference of delta.references) {
         const source = publicSource(reference?.source);
@@ -59,9 +63,14 @@ export async function researchWithBigdata(question, selectedSymbol, conversation
       buffer = lines.pop() ?? '';
       lines.forEach(processLine);
     }
+    buffer+=decoder.decode();
     if (buffer) processLine(buffer);
+  } catch(error) {
+    await reader.cancel().catch(()=>{});
+    throw error;
   } finally { reader.releaseLock(); }
   if (failed || !answer.trim()) throw new Error('BIGDATA_EMPTY_RESPONSE');
+  if (!completed) throw new Error('BIGDATA_INCOMPLETE_RESPONSE');
   if (sources.length === 0) throw new Error('BIGDATA_UNGROUNDED');
   return { answer: answer.trim().slice(0, 8_000), sources: sources.slice(0, 8), provider: 'Bigdata.com Research Agent', generatedAt: new Date().toISOString(), chatId, checkpointId };
 }

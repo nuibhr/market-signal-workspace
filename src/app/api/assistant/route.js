@@ -7,6 +7,7 @@ import { membershipFor } from '../../../membership/rights.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 180;
 
 export async function GET() {
   const state = await currentAccount();
@@ -51,7 +52,7 @@ export async function POST(request) {
     return Response.json({ ...payload, quota }, { headers: privateHeaders });
   } catch (error) {
     const quota = (await releaseAiQuestion(member, requestId, reservation.reservationToken));
-    const known = new Set(['BIGDATA_AUTH_FAILED', 'BIGDATA_RATE_LIMIT', 'BIGDATA_EMPTY_RESPONSE', 'BIGDATA_UNGROUNDED', 'BIGDATA_RESPONSE_TOO_LONG']);
+    const known = new Set(['BIGDATA_AUTH_FAILED', 'BIGDATA_RATE_LIMIT', 'BIGDATA_EMPTY_RESPONSE', 'BIGDATA_INCOMPLETE_RESPONSE', 'BIGDATA_UNGROUNDED', 'BIGDATA_RESPONSE_TOO_LONG']);
     const code = known.has(error?.message) ? error.message : error?.name === 'TimeoutError' ? 'BIGDATA_TIMEOUT' : 'BIGDATA_UNAVAILABLE';
     return Response.json({ error: code, quota }, { status: 503, headers: privateHeaders });
   }

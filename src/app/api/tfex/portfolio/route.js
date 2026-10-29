@@ -1,3 +1,4 @@
+import {requireDataOwner,requireOwnedBrokerAccount} from '../../../../market-data/contracts/v1/owner-server.mjs';
 import {readBrokerPortfolio} from '../../../../market-data/broker-portfolio.mjs';
 import {currentMember,sameOrigin} from '../../../../membership/server.mjs';
 import {rateLimit,readJsonBody,requestErrorResponse} from '../../../../security/request-guard.mjs';
@@ -27,6 +28,7 @@ const SPEC_DATA = {
 };
 
 export async function GET(request) {
+  const denied=await requireDataOwner(request); if(denied)return denied;
   const url = new URL(request.url);
   const brokerId = url.searchParams.get('brokerId') || '032';
   const isDemo = url.searchParams.get('demo') !== 'false';
@@ -34,6 +36,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const denied=await requireDataOwner(request); if(denied)return denied;
   if(!sameOrigin(request))return Response.json({success:false,error:'INVALID_ORIGIN'},{status:403,headers:NO_STORE});
   let body;try{body=await readJsonBody(request,12288);}catch(e){return requestErrorResponse(e);}
   if (body?.isDemo || body?.isSandbox) {
@@ -121,6 +124,7 @@ async function handlePortfolioRequest(body = {}) {
       );
     }
 
+    if(!await requireOwnedBrokerAccount(body,'TFEX'))return Response.json({error:'FORBIDDEN'},{status:403,headers:NO_STORE});
     const live = await readBrokerPortfolio('TFEX', body);
     return Response.json({...live,brokerName},{headers:NO_STORE});
   } catch (error) {

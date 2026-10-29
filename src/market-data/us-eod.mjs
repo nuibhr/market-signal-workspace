@@ -1,4 +1,6 @@
 import YahooFinance from 'yahoo-finance2';
+import {sharedDaily,sharedSeries} from './shared-policy.mjs';
+import {ALL_ASSETS} from '../markets/catalog.mjs';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -27,11 +29,11 @@ function validSeries(data, symbol, day, allowCurrent, instrumentType) {
       &&[bar.open,bar.high,bar.low,bar.close].every(positive)&&Number.isFinite(bar.volume)&&bar.volume>=0
       &&bar.high>=Math.max(bar.open,bar.close,bar.low)&&bar.low<=Math.min(bar.open,bar.close));
 }
-export async function getYahooUsDailyBars(symbol, {now=Date.now(), assetKind='stock'}={}) {
+export async function getYahooUsDailyBars(symbol, {now=Date.now(), assetKind='stock',allowedProviders=null}={}) {
   if(!/^[A-Z][A-Z0-9-]{0,11}$/.test(symbol))throw fail('INVALID_SYMBOL');
   if(!['stock','etf'].includes(assetKind))throw fail('INSTRUMENT_MISMATCH');
   const instrumentType=assetKind==='etf'?'ETF':'EQUITY';
-  if(!usEodRights().yahoo)throw fail('DISPLAY_RIGHTS_NOT_CONFIRMED');
+  if(!(Array.isArray(allowedProviders)?allowedProviders.includes('yahoo'):usEodRights().yahoo))throw fail('DISPLAY_RIGHTS_NOT_CONFIRMED');
   const clock=newYorkParts(now),allowCurrent=!['Sat','Sun'].includes(clock.weekday)&&clock.minutes>=990;
   let closedThrough=clock.day;
   if(!allowCurrent){let date=new Date(Date.parse(`${clock.day}T12:00:00Z`)-86400000);
@@ -77,8 +79,13 @@ export async function getYahooUsDailyBars(symbol, {now=Date.now(), assetKind='st
   pending.set(key,job);return job;
 }
 export async function getUsDailyBars(symbol, options={}) {
+  const rights=Array.isArray(options.allowedProviders)?{fmp:options.allowedProviders.includes('fmp'),yahoo:options.allowedProviders.includes('yahoo')}:usEodRights();
+  if(sharedDaily()){
+    if(!rights.fmp&&!rights.yahoo)throw fail('DISPLAY_RIGHTS_NOT_CONFIRMED');
+    const asset=ALL_ASSETS.find(a=>a.id==='us'&&a.symbol===symbol);if(!asset)throw fail('INSTRUMENT_MISMATCH');
+    return sharedSeries(asset,'1d');
+  }
   if(!['stock','etf'].includes(options.assetKind??'stock'))throw fail('INSTRUMENT_MISMATCH');
-  const rights=usEodRights();
   if(rights.fmp&&process.env.FMP_API_KEY?.trim()&&Date.now()>=fmpRetryAt){
     try{return await getFmpDailyBars(symbol,options);}
     catch(error){
@@ -88,5 +95,6 @@ export async function getUsDailyBars(symbol, options={}) {
       if(!rights.yahoo)throw error;
     }
   }
+  if(!rights.yahoo)throw fail('SOURCE_NOT_CONFIGURED');
   return getYahooUsDailyBars(symbol,options);
 }

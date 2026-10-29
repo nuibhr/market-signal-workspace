@@ -1,3 +1,8 @@
+> Current scanner architecture (2026-10-24): Swing computation runs on a portable
+> VPS container and writes through `nugaom-scanner-bridge` to the same D1 database.
+> The old Cloudflare Cron/Queues scanner is disabled. See [VPS deployment and
+> migration](../vps/README.md). Earlier rollout notes below describe prior stages.
+
 # Cloudflare — แอป Nugaom เดิม
 
 เป้าหมาย: เว็บบน Workers, สแกนทุก 5 นาทีด้วย Cron/Queues และเก็บสมาชิก/สัญญาณใน D1 ไม่ต้องมี VPS หรือ Supabase

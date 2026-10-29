@@ -2,7 +2,6 @@
 import styles from './thai-workspace.module.css';
 
 export const THAI_VIEWS = [
-  { id: 'portfolio', hash: '#section-portfolio', label: '⚡ พอร์ต & API (ALGO_EQ)', note: 'ซิงค์ Trinity 022 / Pi 003 / InnovestX' },
   { id: 'stage2', hash: '#section-auto-pick', label: 'Stage 2 Screener', note: 'Trend Template หุ้นขาขึ้น' },
   { id: 'radar', hash: '#section-radar', label: 'Strategy Radar', note: 'เรดาร์สัญญาณ & แผนเฝ้า' },
   { id: 'chart', hash: '#chart-panel', label: 'Interactive Chart', note: 'กราฟเทคนิค & อินดิเคเตอร์' },

@@ -15,11 +15,11 @@ const headers = {
   "X-Content-Type-Options": "nosniff",
 };
 const cookieName = "forex_local_session";
-export function createForexHandlers({currentMember,cookieStore,isLoginConfigured,env=process.env,getStore=storeFor}) {
+export function createForexHandlers({currentMember,cookieStore,isLoginConfigured,env=process.env,getStore=storeFor,ownerPrefix="member",allowLocalSession=true}) {
   async function ownerFor(request, config) {
     const member=await currentMember(request);
-    if(member)return `member:${member.id}`;
-    if(config.local&&developmentTransport(request,env))
+    if(member)return `${ownerPrefix}:${member.id}`;
+    if(allowLocalSession&&config.local&&developmentTransport(request,env))
       return getStore(config).localOwner((await cookieStore(request)).get(cookieName)?.value);
     return null;
   }
@@ -173,7 +173,7 @@ export function createForexHandlers({currentMember,cookieStore,isLoginConfigured
         "UNSUPPORTED_FIELDS",
       );
       if (body.action === "local-session") {
-        fail(config.local && developmentTransport(request,env), "FORBIDDEN", 403);
+        fail(allowLocalSession && config.local && developmentTransport(request,env), "FORBIDDEN", 403);
         // The development server must be bound to loopback; this path never opens in production.
         store.limit("local-session", "loopback", 10, 3600000);
         const token = store.localSession();

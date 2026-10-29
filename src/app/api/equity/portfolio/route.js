@@ -1,3 +1,4 @@
+import {requireDataOwner,requireOwnedBrokerAccount} from '../../../../market-data/contracts/v1/owner-server.mjs';
 import { readBrokerPortfolio } from '../../../../market-data/broker-portfolio.mjs';
 import { currentMember, sameOrigin } from '../../../../membership/server.mjs';
 import { rateLimit, readJsonBody, requestErrorResponse } from '../../../../security/request-guard.mjs';
@@ -206,12 +207,14 @@ function buildDemoPortfolio(brokerId = '022', appCode = 'ALGO_EQ') {
 }
 
 export async function GET(request) {
+  const denied=await requireDataOwner(request); if(denied)return denied;
   const url = new URL(request.url);
   const brokerId = url.searchParams.get('brokerId') || '022';
   return Response.json(buildDemoPortfolio(brokerId), { headers: NO_STORE });
 }
 
 export async function POST(request) {
+  const denied=await requireDataOwner(request); if(denied)return denied;
   if (!sameOrigin(request)) {
     return Response.json({ success: false, error: 'INVALID_ORIGIN' }, { status: 403, headers: NO_STORE });
   }
@@ -245,6 +248,7 @@ export async function POST(request) {
   if (limited) return limited;
 
   try {
+    if(!await requireOwnedBrokerAccount(body,'SET'))return Response.json({error:'FORBIDDEN'},{status:403,headers:NO_STORE});
     const live = await readBrokerPortfolio('SET', body);
     const brokerName = BROKER_NAMES[brokerId] || `Broker Code ${brokerId}`;
 
@@ -342,7 +346,7 @@ export async function POST(request) {
       {
         success: false,
         error: code,
-        message: 'อ่านพอร์ตไม่สำเร็จ · ' + (e.message || code),
+        message: 'อ่านพอร์ตไม่สำเร็จ · ' + code,
       },
       { status: code === 'ACCOUNT_AND_CREDENTIALS_REQUIRED' ? 400 : 502, headers: NO_STORE }
     );

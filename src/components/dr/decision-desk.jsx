@@ -1,4 +1,5 @@
 'use client';
+import {readApiJson} from '../../security/api-response.mjs';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import {DISCOVERY_INTERVAL_MS} from '../../signals/cadence.mjs';
 import {useEffect,useState} from 'react';
@@ -37,7 +38,7 @@ export default function DecisionDesk({initialMarket='thai',fixedMarket=false,fav
     if(!custom||signalAccess===false)return;
     const controller=new AbortController();setFiltered(null);setFailure('');setBusy(true);let stop;
     const timer=setTimeout(()=>{const params=new URLSearchParams({market,q:query.trim(),overview:'0'});if(savedOnly)params.set('favorites',favoriteKey);
-      stop=pollAfterCompletion(async()=>{try{const response=await fetch(`/api/signals?${params}`,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])});const value=await response.json();if(!response.ok)throw Error(response.status===403?'เข้าสู่ระบบสมาชิกเพื่ออ่านแผน':'ยังอ่านแผนไม่ได้ กำลังรอลองใหม่');if(!controller.signal.aborted){setFiltered(value);setFailure('');}}catch(e){if(!controller.signal.aborted){setFiltered(null);setFailure(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}},{intervalMs:DISCOVERY_INTERVAL_MS});
+      stop=pollAfterCompletion(async()=>{try{const response=await fetch(`/api/signals?${params}`,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])});const value=await readApiJson(response);if(!response.ok)throw Error(response.status===403?'เข้าสู่ระบบสมาชิกเพื่ออ่านแผน':'ยังอ่านแผนไม่ได้ กำลังรอลองใหม่');if(!controller.signal.aborted){setFiltered(value);setFailure('');}}catch(e){if(!controller.signal.aborted){setFiltered(null);setFailure(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}},{intervalMs:DISCOVERY_INTERVAL_MS});
     },300);
     return()=>{clearTimeout(timer);stop?.();controller.abort();};
   },[market,query,savedOnly,favoriteKey,custom,signalAccess,revision]);

@@ -1,4 +1,5 @@
 'use client';
+import {readApiJson} from '../../security/api-response.mjs';
 import {pollAfterCompletion} from '../../monitor/poll.mjs';
 import {UI_POLL_INTERVAL_MS} from '../../signals/cadence.mjs';
 import {createContext,useContext,useEffect,useRef,useState} from 'react';
@@ -49,7 +50,7 @@ export default function MonitorProvider({children}) {
     const controller=new AbortController(),box=createNotificationInbox({scope:'news:public:v1',owner:crypto.randomUUID(),storage,historyLimit:1000,locks:navigator.locks,onPersistenceError:()=>setDurable(false)});
     const poll=async()=>{
       try{
-        const r=await fetch('/api/news?alerts=1',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])}),feed=await r.json();
+        const r=await fetch('/api/news?alerts=1',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])}),feed=await readApiJson(r);
         if(disposed)return;
         setNewsStatus(r.ok?feed.status:feed.code||'SOURCE_UNAVAILABLE');
         setNewsPolicy(feed.newsPolicy||'source-impact');setNewsArticles((feed.markets||[]).filter(m=>m.status==='available').flatMap(m=>m.articles||[]).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)).slice(0,6));
@@ -72,7 +73,7 @@ export default function MonitorProvider({children}) {
   useEffect(()=>{
     if(!active)return;
     let disposed=false,timer;const controller=new AbortController(),owner=crypto.randomUUID();
-    const request=async url=>{const r=await fetch(url,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});const d=await r.json();if(!r.ok)throw Error(d.error||d.code||`HTTP_${r.status}`);return d;};
+    const request=async url=>{const r=await fetch(url,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});const d=await readApiJson(r);if(!r.ok)throw Error(d.error||d.code||`HTTP_${r.status}`);return d;};
     const boxFor=scope=>{
       if(!boxes.current.has(scope)){let storage;try{storage=window.localStorage;}catch{setDurable(false);}
         boxes.current.set(scope,createNotificationInbox({scope,owner,storage,historyLimit:1000,locks:navigator.locks,onPersistenceError:()=>setDurable(false)}));}

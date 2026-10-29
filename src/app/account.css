@@ -183,3 +183,8 @@
 }
 
 .account-package-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:22px 0}.account-package{display:flex;flex-direction:column;gap:12px;padding:22px 18px;border:1px solid #d7e4e1;border-radius:17px;background:#f8fcfa}.account-package.selected{border:2px solid #14806e;background:#eaf8f2}.account-package h3{margin:0;color:#195549;font-size:20px}.account-package-price{margin:0;font-size:34px;font-weight:750;color:#173d35}.account-package-price small{font-size:13px;font-weight:400;color:#61786f;margin-left:4px}.account-package>strong{font-size:14px}.account-package ul{list-style:none;padding:0;margin:0 0 10px;font-size:12px;display:grid;gap:8px;color:#47655a}.account-package li{display:flex;gap:6px;align-items:center}.account-package button,.account-package>a{margin-top:auto;justify-content:center}.account-billing-note{padding:13px;border-radius:10px;background:#f4efdb;color:#745d28;font-size:13px}.account-billing-current{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#e9f7f0;padding:15px;border-radius:12px}.account-billing-current small{flex-basis:100%}@media(max-width:760px){.account-package-grid{grid-template-columns:1fr}.account-package{padding:20px}.account-package-price{font-size:30px}}
+
+.account-demo { border: 1px solid #6366f155; background: linear-gradient(130deg,#111c30,#17152c); }
+.account-demo p { color:#b7c5d8; line-height:1.7; font-size:13px; }
+.account-demo-options { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0; }
+.account-demo-options button { min-height:44px; }

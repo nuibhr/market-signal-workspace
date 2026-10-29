@@ -21,6 +21,7 @@ import './liquid-glass.css';
 import './magic-ui-theme.css';
 import AssistantProvider from '../components/assistant-provider.jsx';
 import MonitorProvider from '../components/monitor/monitor-provider.jsx';
+import SharedDataNotice from '../components/shared-data-notice.jsx';
 
 export const metadata = {
   title: 'Nugaom AI Pick — Market Intelligence Workspace',
@@ -31,7 +32,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="th">
-      <body><MonitorProvider><AssistantProvider>{children}</AssistantProvider></MonitorProvider></body>
+      <body><MonitorProvider><AssistantProvider><SharedDataNotice/>{children}</AssistantProvider></MonitorProvider></body>
     </html>
   );
 }

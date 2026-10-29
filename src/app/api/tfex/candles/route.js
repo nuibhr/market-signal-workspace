@@ -1,3 +1,5 @@
+import {chartHandler} from '../../../../market-data/contracts/v1/chart-runtime.mjs';
+import {sharedDaily,sharedSeriesResponse} from '../../../../market-data/shared-policy.mjs';
 import { assessDailySeries, assessIntradaySeries, createTfexClient, MAX_CANDLE_BARS, SettradeDataError } from '../../../../market-data/settrade.mjs';
 import { ALL_ASSETS, TFEX_SYMBOLS } from '../../../../markets/catalog.mjs';
 import { rememberChartSnapshot } from '../../../../market-data/delayed-candles.mjs';
@@ -20,7 +22,7 @@ function bangkokNow() {
   return { day: `${values.year}-${values.month}-${values.day}`, minutes: Number(values.hour) * 60 + Number(values.minute) };
 }
 
-export async function GET(request) {
+async function readLegacyChart(request, {allowedProviders=[]}={}) {
   const params = new URL(request.url).searchParams;
   const symbol = params.get('symbol')?.toUpperCase() ?? '';
   const timeframe = params.get('timeframe') ?? '1d';
@@ -31,13 +33,12 @@ export async function GET(request) {
     return Response.json({ status: 'unavailable', code: 'INSTRUMENT_NOT_CONNECTED' }, { status: 404, headers: NO_STORE });
   }
   const instrument = ALL_ASSETS.find(item => item.symbol === symbol && item.feed === 'tfex-quote');
-  if (process.env.NODE_ENV === 'production' && process.env.TFEX_DISPLAY_RIGHTS_CONFIRMED !== 'true') {
-    return Response.json({ status: 'unavailable', code: 'DISPLAY_RIGHTS_NOT_CONFIRMED' }, { status: 503, headers: NO_STORE });
-  }
-  if (!client.configuration.configured) {
+
+  if(sharedDaily()&&instrument)return sharedSeriesResponse(instrument,timeframe,NO_STORE);
+  if (!allowedProviders.includes('settrade') || !client.configuration.configured) {
     if (instrument) {
       try {
-        const backup = await loadChartBackup(instrument, timeframe);
+        const backup = await loadChartBackup(instrument, timeframe, {allowedProviders});
         if (backup?.status === 'available') return Response.json(backup, { headers: NO_STORE });
       } catch {}
     }
@@ -76,7 +77,7 @@ export async function GET(request) {
   } catch (error) {
     if (instrument) {
       try {
-        const backup = await loadChartBackup(instrument, timeframe);
+        const backup = await loadChartBackup(instrument, timeframe, {allowedProviders});
         if (backup?.status === 'available') return Response.json(backup, { headers: NO_STORE });
       } catch {}
     }
@@ -84,3 +85,5 @@ export async function GET(request) {
     return Response.json({ status: 'unavailable', code }, { status: 503, headers: NO_STORE });
   }
 }
+
+export const GET=chartHandler(readLegacyChart, 'tfex');

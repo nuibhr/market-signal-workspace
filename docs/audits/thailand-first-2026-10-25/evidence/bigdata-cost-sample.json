@@ -1,0 +1,68 @@
+{
+  "at": "2026-10-24T14:09:51.350Z",
+  "provider": "Bigdata Research Agent",
+  "effort": "lite",
+  "question": "Apple ทำธุรกิจอะไร สรุปจากเอกสารบริษัทล่าสุด 2 ประโยค พร้อมแหล่งอ้างอิง",
+  "answerCharacters": 389,
+  "sources": 1,
+  "durationMs": 26252,
+  "receipt": {
+    "completed": true,
+    "consumption": [
+      {
+        "type": "base",
+        "input_tokens": 33830,
+        "output_tokens": 1834,
+        "cached_tokens": 23596
+      },
+      {
+        "type": "search",
+        "mode": "fast",
+        "content_tier": "content-regulatory-filings",
+        "tokens_count": 5982
+      },
+      {
+        "type": "search_endpoint",
+        "endpoint": "knowledge-graph",
+        "tokens_count": 250
+      }
+    ],
+    "completeMetricFields": [
+      "role",
+      "type",
+      "usage",
+      "consumption"
+    ]
+  },
+  "usageDifference": [
+    {
+      "id": "search:fast:content-regulatory-filings:tokens",
+      "tokens": 5982,
+      "priceCentsPerToken": 0.001
+    },
+    {
+      "id": "agent:input:base:tokens",
+      "tokens": 33830,
+      "priceCentsPerToken": 0.0001
+    },
+    {
+      "id": "agent:output:base:tokens",
+      "tokens": 1834,
+      "priceCentsPerToken": 0.0006
+    },
+    {
+      "id": "agent:cache-read:base:tokens",
+      "tokens": 23596,
+      "priceCentsPerToken": 1e-05
+    },
+    {
+      "id": "search:knowledge-graph::tokens",
+      "tokens": 250,
+      "priceCentsPerToken": 0.0022
+    }
+  ],
+  "estimatedUsdFromAccountUsage": 0.11251360000000002,
+  "creditsUsageCentsDifference": 11,
+  "note": "One sample; account usage differences can include other concurrent use and provider rounding.",
+  "redactionNote": "Aggregate account credit balances omitted from repository copy; per-request usage and cost evidence retained."
+}

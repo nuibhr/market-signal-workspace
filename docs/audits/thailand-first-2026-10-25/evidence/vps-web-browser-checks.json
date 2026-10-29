@@ -1,0 +1,468 @@
+{
+  "pages": [
+    {
+      "path": "/shared",
+      "status": 200,
+      "dailyNotice": true,
+      "resourceError": false,
+      "jsonParserError": false,
+      "errorLines": []
+    },
+    {
+      "path": "/thai",
+      "status": 200,
+      "dailyNotice": true,
+      "resourceError": false,
+      "jsonParserError": false,
+      "errorLines": [
+        "ดัชนียังไม่พร้อม"
+      ]
+    },
+    {
+      "path": "/dr",
+      "status": 200,
+      "dailyNotice": true,
+      "resourceError": false,
+      "jsonParserError": false,
+      "errorLines": [
+        "ข้อมูลไม่พร้อม",
+        "DR เพิ่มสิ่งที่ต้องตรวจ: ทิศทางหุ้นแม่ ค่าเงิน เวลาเปิดตลาดหุ้นแม่ และสภาพคล่อง DR · รูปแบบกราฟอย่างเดียวอธิบายความเสี่ยงทั้งหมดไม่ได้"
+      ]
+    },
+    {
+      "path": "/us",
+      "status": 200,
+      "dailyNotice": true,
+      "resourceError": false,
+      "jsonParserError": false,
+      "errorLines": []
+    },
+    {
+      "path": "/forex",
+      "status": 200,
+      "dailyNotice": true,
+      "resourceError": false,
+      "jsonParserError": false,
+      "errorLines": [
+        "DATA UNAVAILABLE"
+      ]
+    },
+    {
+      "path": "/tfex",
+      "status": 200,
+      "dailyNotice": true,
+      "resourceError": false,
+      "jsonParserError": false,
+      "errorLines": []
+    }
+  ],
+  "errors": [
+    {
+      "path": "/tfex",
+      "message": "Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+    }
+  ],
+  "responses": [
+    {
+      "path": "/api/data-policy",
+      "status": 200
+    },
+    {
+      "path": "/api/shared-market?market=thai",
+      "status": 200
+    },
+    {
+      "path": "/api/data-policy",
+      "status": 200
+    },
+    {
+      "path": "/api/equity/portfolio",
+      "status": 200
+    },
+    {
+      "path": "/api/market-data?symbol=PTT&market=thai&timeframe=1d",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=tfex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=thai&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=forex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=us&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=dr&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/trade-results?market=thai&status=all&scope=waiting&strategy=all&page=1",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=dr&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/news?alerts=1",
+      "status": 200
+    },
+    {
+      "path": "/api/membership",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=thai&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/favorites",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=us&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/thai-screener",
+      "status": 200
+    },
+    {
+      "path": "/api/favorites",
+      "status": 200
+    },
+    {
+      "path": "/api/thai-screener",
+      "status": 200
+    },
+    {
+      "path": "/api/data-policy",
+      "status": 200
+    },
+    {
+      "path": "/api/news?alerts=1",
+      "status": 200
+    },
+    {
+      "path": "/api/market-data?symbol=AAPL80&market=dr&timeframe=1d",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=dr&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=us&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=thai&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/health",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=forex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=tfex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/market-watch?symbols=AAPL80%2CABBV80%2CADVANT80%2CAMD80%2CAMZN80%2CANET80",
+      "status": 200
+    },
+    {
+      "path": "/api/trade-results?market=dr&status=all&scope=waiting&strategy=all&page=1",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=dr&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=thai&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=us&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/account",
+      "status": 200
+    },
+    {
+      "path": "/api/membership",
+      "status": 200
+    },
+    {
+      "path": "/api/dr-strategy/feed",
+      "status": 200
+    },
+    {
+      "path": "/api/favorites",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=dr&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=thai&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=us&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/data-policy",
+      "status": 200
+    },
+    {
+      "path": "/api/news?alerts=1",
+      "status": 200
+    },
+    {
+      "path": "/api/quote?symbol=NVDA",
+      "status": 200
+    },
+    {
+      "path": "/api/us-bars?symbol=NVDA&market=us&timeframe=1d",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=thai&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=forex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=tfex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=us&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=dr&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/us/desk?view=fx",
+      "status": 503,
+      "code": "FX_SOURCE_UNAVAILABLE"
+    },
+    {
+      "path": "/api/us/desk?view=diagnostic&symbol=NVDA",
+      "status": 200
+    },
+    {
+      "path": "/api/membership",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=thai&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=dr&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=us&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/favorites",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=thai&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/us/desk?view=focus&q=&page=1",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=dr&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=us&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/data-policy",
+      "status": 200
+    },
+    {
+      "path": "/api/news?alerts=1",
+      "status": 200
+    },
+    {
+      "path": "/api/forex/mt5?frame=1h",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=us&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=thai&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=tfex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=forex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=dr&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=forex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=forex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=thai&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=us&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=dr&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=thai&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=us&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=dr&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/data-policy",
+      "status": 200
+    },
+    {
+      "path": "/api/news?alerts=1",
+      "status": 200
+    },
+    {
+      "path": "/api/tfex/candles?symbol=S50Z26&market=tfex&timeframe=1d",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=us&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=tfex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=forex&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=thai&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/daytrade?market=dr&compact=1",
+      "status": 200
+    },
+    {
+      "path": "/api/tfex/options?series=S50Z26",
+      "status": 200
+    },
+    {
+      "path": "/api/trade-results?market=tfex&status=all&scope=closed&strategy=all&page=1",
+      "status": 200
+    },
+    {
+      "path": "/api/account",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=us&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=dr&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/membership",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=thai&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/tfex/quotes?symbols=S50Z26%2CGOZ26%2CSVFZ26%2CUSDZ26%2CUSDV26%2CS50V26",
+      "status": 200
+    },
+    {
+      "path": "/api/tfex/quotes?symbols=S50Z26",
+      "status": 200
+    },
+    {
+      "path": "/api/tfex/quotes?symbols=S50Z26,GOZ26,SVFZ26,USDZ26",
+      "status": 200
+    },
+    {
+      "path": "/api/favorites",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=us&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=dr&after=0&overview=0",
+      "status": 200
+    },
+    {
+      "path": "/api/signals?market=thai&after=0&overview=0",
+      "status": 200
+    }
+  ]
+}

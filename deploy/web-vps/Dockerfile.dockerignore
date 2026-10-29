@@ -1,0 +1,14 @@
+node_modules
+.git
+.next*
+.open-next
+.env*
+data
+dist
+.wrangler
+*.pem
+*.key
+**/.credentials.json
+**/tunnel-token
+wrangler.bootstrap.jsonc
+deploy/cloudflare/web-bootstrap.mjs

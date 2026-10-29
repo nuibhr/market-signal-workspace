@@ -6,8 +6,14 @@ import {discoveryIntervalMs,monitorDue} from './cadence.mjs';
 import {evaluateMinerviniStage2} from '../analysis/minervini-stage2.mjs';
 import {analyzeCandles} from '../analysis/technical.mjs';
 import {loadThaiBenchmark,loadThaiProfile} from './thai-context.mjs';
+import {publishSharedSeries} from '../market-data/shared-policy.mjs';
 
-export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, allowed = signalProviderAllowed,getBenchmark=async()=>null,getProfile=async()=>null } = {}) {
+async function sourceDeadline(task,milliseconds){
+  let timer;
+  try{return await Promise.race([task,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Object.assign(Error('SOURCE_TIMEOUT'),{code:'SOURCE_TIMEOUT'})),milliseconds);})]);}
+  finally{clearTimeout(timer);}
+}
+export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, allowed = signalProviderAllowed,getBenchmark=async()=>null,getProfile=async()=>null,sourceTimeoutMs=20000,contextTimeoutMs=8000 } = {}) {
   return async function runSignalScan(market, { symbols = null, force = Boolean(symbols), budgetMs = 20000, maxSymbols = 12, enabled = true } = {}) {
     if (!['thai','dr','us'].includes(market) || !enabled || !allowed(market)) return { status:'blocked',code:'SIGNAL_SOURCE_NOT_READY' };
     const now = clock(), token = await claimSignalLease(market,now,Math.max(120000,budgetMs+60000));
@@ -25,7 +31,7 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
       const queue = [...new Set(symbols || [...activeSymbols.slice(0,Math.max(1,Math.floor(maxSymbols/2))),...due.filter(s=>!monitored.has(s)),...activeSymbols])];
       const profiles = market==='us'?await allCostProfiles():null;
       const deadline = clock()+budgetMs;
-      const benchmark=market==='thai'&&queue.some(s=>force||(schedules.get(s)??0)<=now)?await getBenchmark().catch(()=>null):null;
+      const benchmark=market==='thai'&&queue.some(s=>force||(schedules.get(s)??0)<=now)?await sourceDeadline(getBenchmark(),contextTimeoutMs).catch(()=>null):null;
       let profileTouched=false;
       for (const symbol of queue) {
         if (scanned>=maxSymbols || clock()>=deadline) break;
@@ -36,10 +42,16 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
         if(!discover&&!track)continue;
         scanned++;
         try {
-          let snapshot=await storedObservation(market,symbol);
+          // Discovery replaces the snapshot; avoid reading the old payload
+          // across the VPS bridge when only monitoring needs it.
+          let snapshot=discover?null:await storedObservation(market,symbol);
           if(discover){
             try{
-              const daily = await load(asset,'1d'), four = await load(asset,'4h');
+              const daily = await sourceDeadline(load(asset,'1d'),sourceTimeoutMs), four = await sourceDeadline(load(asset,'4h'),sourceTimeoutMs);
+              if(process.env.SCANNER_SCHEDULE_MODE==='daily'){
+                await publishSharedSeries(daily,asset,'1d',clock());
+                await publishSharedSeries(four,asset,'4h',clock());
+              }
               snapshot = inspectSignalBars({...asset,signalSource:`D1: ${daily.source} · 4H: ${four.source}`},daily.bars,four.bars,clock());
               if(market==='thai'){
                 const assessment=evaluateMinerviniStage2(daily.bars,{benchmarkBars:benchmark?.bars??[],now:clock(),costs:defaultSignalCosts(asset)});
@@ -50,10 +62,10 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
                 snapshot.stage2=assessment;
                 // At most one profile refresh per bounded scan; never 150
                 // company requests from a customer's dashboard GET.
-                if(!profileTouched){profileTouched=true;await getProfile(symbol).catch(()=>null);}
+                if(!profileTouched){profileTouched=true;await sourceDeadline(getProfile(symbol),contextTimeoutMs).catch(()=>null);}
               }
             }catch(error){
-              const code=['DISPLAY_RIGHTS_NOT_CONFIRMED','NO_AVAILABLE_CLOSED_BARS','INSTRUMENT_MISMATCH','HISTORY_UNAVAILABLE','TIMEFRAME_NOT_AVAILABLE'].includes(error.code)?error.code:'SOURCE_UNAVAILABLE';
+              const code=['SOURCE_TIMEOUT','DISPLAY_RIGHTS_NOT_CONFIRMED','NO_AVAILABLE_CLOSED_BARS','INSTRUMENT_MISMATCH','HISTORY_UNAVAILABLE','TIMEFRAME_NOT_AVAILABLE'].includes(error.code)?error.code:'SOURCE_UNAVAILABLE';
               snapshot={market,symbol,name:asset.name,status:'UNAVAILABLE',code,checkedAt:new Date(clock()).toISOString()};
               errors.push({symbol,code});
             }
@@ -63,7 +75,7 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
           // The stored snapshot's actual candle time is retained for trailing.
           const monitorSnapshot=snapshot&&clock()-Date.parse(snapshot.checkedAt)<=20*60000?snapshot:{status:'UNAVAILABLE'};
           if(track) {
-            const fifteen=await load(asset,'15m');
+            const fifteen=await sourceDeadline(load(asset,'15m'),sourceTimeoutMs);
             for(const previous of existing) {
               const {signal,events}=advanceReferenceSignal(previous,fifteen.bars,monitorSnapshot,clock());
               await saveReferenceAdvance(previous,signal,events);
@@ -79,7 +91,7 @@ export function createSignalRunner({ load = loadSignalFrame, clock = Date.now, a
             if(await insertReferenceSignal(startReferenceSignal(view,profile.id,clock())))published++;
           }
         } catch(error) {
-          const code = ['DISPLAY_RIGHTS_NOT_CONFIRMED','NO_AVAILABLE_CLOSED_BARS','INSTRUMENT_MISMATCH','HISTORY_UNAVAILABLE','TIMEFRAME_NOT_AVAILABLE'].includes(error.code)?error.code:'SOURCE_UNAVAILABLE';
+          const code = ['SOURCE_TIMEOUT','DISPLAY_RIGHTS_NOT_CONFIRMED','NO_AVAILABLE_CLOSED_BARS','INSTRUMENT_MISMATCH','HISTORY_UNAVAILABLE','TIMEFRAME_NOT_AVAILABLE'].includes(error.code)?error.code:'SOURCE_UNAVAILABLE';
           errors.push({symbol,code});
         }
       }
