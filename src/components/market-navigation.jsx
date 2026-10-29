@@ -41,11 +41,6 @@ export default function MarketNavigation({current}){
         <span>ชุมชน</span>
         <small>MEMBERS</small>
       </Link>
-      <Link href="/coaches" aria-current={current === 'coaches' ? 'page' : undefined}>
-        <Users size={18}/>
-        <span>พอร์ตโค้ช</span>
-        <small>PAPER</small>
-      </Link>
     </nav>
   );
 }

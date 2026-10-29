@@ -246,7 +246,7 @@ export const CORE_PRODUCTS = [
     badge: 'TRANSPARENCY',
     accent: '#0284c7',
     icon: ShieldCheck,
-    targetUrl: '/coaches',
+    targetUrl: '/community',
     features: [
       'บัญชีแยกประเภทผลงานแบบ Append-Only แก้ไขตัวเลขในอดีตไม่ได้',
       'แยกประวัติพอร์ตโค้ช (Paper Trading) ออกจากสถิติระบบอัตโนมัติ',
