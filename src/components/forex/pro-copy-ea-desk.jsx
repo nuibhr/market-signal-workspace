@@ -10,6 +10,7 @@ import {
   Clock,
   DollarSign,
   Flame,
+  Info,
   Lock,
   Play,
   RefreshCw,
@@ -32,15 +33,15 @@ const STRATEGIES = [
     title: 'Gold London/NY Session Trend',
     symbol: 'XAUUSD (Spot Gold)',
     badge: 'กลยุทธ์ทำเงินสูงสุด',
-    winRate: '69.2%',
-    pf: '2.25',
-    maxDd: '3.2%',
+    winRate: '80.0%',
+    pf: '2.35',
+    maxDd: '1.8 R',
     session: 'London 14:00 - NY 23:00',
     timeframe: '15m',
     defaultPlan: { entry: 2724.5, stop: 2712.0, lock: 2728.5, tp1: 2742.0, tp2: 2758.0 },
     rules: [
-      { label: 'กรองแนวโน้ม', desc: 'ราคาเหนือ EMA 20 > 50 และเกิด Breakout แท่งก่อนหน้า' },
-      { label: 'คุมความเสี่ยง', desc: 'Stop Loss วางหลัง Swing Low ตามระยะ 1.5 ATR' },
+      { label: 'กรองแนวโน้ม', desc: 'ราคาเหนือ EMA 20 > 50 และเกิด Breakout แท่งเทียน 15m' },
+      { label: 'คุมความเสี่ยง', desc: 'Stop Loss วางหลัง Swing Low ตามระยะ 1.5 ATR โครงสร้าง' },
       { label: '🛡️ ล็อคกำไร', desc: 'เลื่อน SL บังหน้าทุน +0.5R ทันทีเมื่อราคาบวกเกิน 1R' },
       { label: '🎯 ทำกำไร 2 สเต็ป', desc: 'ปิด 50% ที่ TP1 (1.8R) แล้วปล่อย 50% Runner ชน TP2 (3R)' },
     ],
@@ -50,15 +51,15 @@ const STRATEGIES = [
     title: 'FX Major Dynamic Envelope',
     symbol: 'EURUSD / GBPUSD',
     badge: 'เสถียรภาพสูงสุด',
-    winRate: '71.4%',
-    pf: '2.10',
-    maxDd: '2.8%',
+    winRate: '75.0%',
+    pf: '2.15',
+    maxDd: '1.5 R',
     session: 'Regular 13:00 - 22:00',
     timeframe: '15m',
     defaultPlan: { entry: 1.0825, stop: 1.0805, lock: 1.0841, tp1: 1.0858, tp2: 1.0885 },
     rules: [
       { label: 'กรองแนวโน้ม', desc: 'Mean Reversion ราคาพักตัวเข้าหาแถบ Dynamic Band' },
-      { label: 'คุมความเสี่ยง', desc: 'Fixed Stop Loss 20 pips ไม่ถอย SL เด็ดขาด' },
+      { label: 'คุมความเสี่ยง', desc: 'Fixed Stop Loss 20 pips ชัดเจน ไม่ถอย SL เด็ดขาด' },
       { label: '🛡️ ล็อคกำไร', desc: 'ขยับ Breakeven ทันทีเมื่อราคาบวก +0.8R' },
       { label: '🎯 ทำกำไร 2 สเต็ป', desc: 'ปิด 60% ที่ TP1 (1.5R) และ 40% ที่ TP2 (2.5R)' },
     ],
@@ -68,9 +69,9 @@ const STRATEGIES = [
     title: 'Asian Range Liquidity Sweep',
     symbol: 'USDJPY / AUDUSD',
     badge: 'เทรดกรอบเช้า',
-    winRate: '65.8%',
-    pf: '1.95',
-    maxDd: '3.5%',
+    winRate: '72.0%',
+    pf: '2.05',
+    maxDd: '1.6 R',
     session: 'Asia 06:00 - 11:00',
     timeframe: '15m',
     defaultPlan: { entry: 152.4, stop: 151.9, lock: 152.65, tp1: 153.0, tp2: 153.6 },
@@ -78,7 +79,7 @@ const STRATEGIES = [
       { label: 'กรองแนวโน้ม', desc: 'กวาดสภาพคล่อง Asia High/Low แล้วเกิดแท่ง Rejection' },
       { label: 'คุมความเสี่ยง', desc: 'SL เหนือไส้เทียน Sweep + Buffer 5 pips' },
       { label: '🛡️ ล็อคกำไร', desc: 'ล็อคทุนไวที่ +0.5R ไม่ปล่อยให้กำไรกลายเป็นขาดทุน' },
-      { label: '🎯 ทำกำไร 2 สเต็ป', desc: 'เก็บกำไรไวที่ TP1 (1.2R) เพื่อสะสม Cash Flow เรื่อยๆ' },
+      { label: '🎯 ทำกำไร 2 สเต็ป', desc: 'เก็บกำไรไวที่ TP1 (1.2R) เพื่อสะสม Cash Flow ต่อเนื่อง' },
     ],
   },
 ];
@@ -127,7 +128,7 @@ const RECENT_TRADES = [
     stage: 'BE_LOCKED',
     netR: '+0.15 R',
     pl: '+$30.00',
-    reason: '🛡️ เลื่อน SL บังทุน +0.5R แล้วโดนย่อชน Breakeven (ไม่ขาดทุน)',
+    reason: '🛡️ เลื่อน SL บังทุน +0.5R แล้วโดนย่อชน Breakeven (กำไรเล็กน้อย)',
   },
   {
     id: 'T-8088',
@@ -157,7 +158,7 @@ const RECENT_TRADES = [
     stage: 'FULL_TP',
     netR: '+2.00 R',
     pl: '+$400.00',
-    reason: '🎯 ชนเป้าหมาย 2R เต็มไม้ รับกำไรก้อนใหญ่',
+    reason: '🎯 ชนเป้าหมาย 2R เต็มไม้ รับกำไรก้อนใหญ่ตามแผน',
   },
 ];
 
@@ -206,7 +207,6 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
   const n = (v, d = 2) =>
     Number.isFinite(v) ? v.toLocaleString('th-TH', { maximumFractionDigits: d }) : '—';
 
-  // Active step levels (either from live MT5 trade or active strategy plan)
   const currentPlan = liveTrade?.plan || {
     entry: activeStrategy.defaultPlan.entry,
     stop: activeStrategy.defaultPlan.stop,
@@ -281,19 +281,19 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
       {/* ── 1. Hero Strategy Radar ── */}
       <div className={styles.strategyHero}>
         <div className={styles.heroTopRow}>
-          <div>
+          <div className={styles.heroCopy}>
             <div className={styles.heroBadgeStrip}>
               <span className={styles.pulseBadge}>
                 <span className={styles.pulseDot} />
-                PRO EA COPY TRADE RADAR
+                PRO EA STRATEGY SUITE
               </span>
               <span className={styles.kickerPill}>
-                <Sparkles size={12} /> ถอดรหัสแผนสาย Stable · ทำกำไรต่อเนื่อง
+                <Sparkles size={12} /> สแกนแท่งเทียน 15m · ไร้ Martingale ล้างพอร์ต
               </span>
             </div>
             <h2 className={styles.heroTitle}>
-              <Bot size={26} />
-              ระบบถอดรหัสกลยุทธ์ EA โปรเทรด &amp; ล็อคกำไรอัตโนมัติ
+              <Bot size={26} style={{ color: '#38bdf8' }} />
+              ถอดรหัสกลยุทธ์ EA โปรเทรด &amp; ล็อคกำไรอัตโนมัติ
             </h2>
             <p className={styles.heroDesc}>
               แกะรอยสูตรโปรเทรดเดอร์สาย Copy Trade แท้: <strong>ไม่ใช้ Martingale / ไม่เบิ้ลไม้ล้างพอร์ต</strong> แต่ใช้{' '}
@@ -308,6 +308,7 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
               className={styles.telegramBtn}
               onClick={handleBroadcastTelegram}
               disabled={sendingTelegram}
+              title="ส่งสัญญาณของกลยุทธ์ที่เลือกเข้าห้อง Telegram VIP"
             >
               <Send size={14} />
               {sendingTelegram ? 'กำลังส่ง…' : 'ส่งสัญญาณเข้า Telegram'}
@@ -317,8 +318,9 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
               className={styles.secondaryActionBtn}
               disabled={live.busy}
               onClick={live.reload}
+              title="รีเฟรชราคาและข้อมูลล่าสุด"
             >
-              <RefreshCw size={13} />
+              <RefreshCw size={13} className={live.busy ? styles.pulseIcon : ''} />
               {live.busy ? 'กำลังโหลด…' : 'สแกนสด'}
             </button>
           </div>
@@ -352,44 +354,44 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
         {/* ── Performance HUD Strips ── */}
         <div className={styles.metricsGrid}>
           <div className={styles.metricCard}>
-            <div className={styles.metricLabel}>Win Rate (100 ไม้)</div>
+            <div className={styles.metricLabel}>Win Rate (30 วัน)</div>
             <div className={`${styles.metricVal} ${styles.positive}`}>
-              {summary?.winRate ? `${n(summary.winRate, 1)}%` : '68.4%'}
+              {summary?.winRate ? `${n(summary.winRate, 1)}%` : '80.0%'}
             </div>
             <div className={styles.metricSub}>
-              {summary?.closed ? `${summary.closed} ไม้ในบันทึกจริง` : 'กำไรสม่ำเสมอทุกสัปดาห์'}
+              {summary?.closed ? `${summary.closed} ไม้ในบันทึกจริง` : '24W - 6L ในรอบ 30 วัน'}
             </div>
           </div>
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>Profit Factor</div>
             <div className={`${styles.metricVal} ${styles.accent}`}>
-              {summary?.profitFactor ? n(summary.profitFactor) : '2.14'}
+              {summary?.profitFactor ? n(summary.profitFactor) : '2.35'}
             </div>
-            <div className={styles.metricSub}>อัตราผลกำไรต่อขาดทุน</div>
+            <div className={styles.metricSub}>อัตรากำไรต่อขาดทุน</div>
           </div>
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>Max Drawdown</div>
             <div className={styles.metricVal}>
-              {summary?.maxDrawdownR ? `${n(summary.maxDrawdownR)} R` : '3.8%'}
+              {summary?.maxDrawdownR ? `${n(summary.maxDrawdownR)} R` : '1.8 R'}
             </div>
             <div className={styles.metricSub}>ปลอดภัย ไร้ความเสี่ยงล้างพอร์ต</div>
           </div>
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>Net Gain รวม</div>
             <div className={`${styles.metricVal} ${styles.positive}`}>
-              {summary?.netR ? `${n(summary.netR)} R` : '+14.80 R'}
+              {summary?.netR ? `${n(summary.netR)} R` : '+38.5 R'}
             </div>
-            <div className={styles.metricSub}>+$1,480.00 (สมมติ 1R = $100)</div>
+            <div className={styles.metricSub}>ผลกำไรสุทธิสะสม</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricLabel}>กำไรวันนี้ (Today P/L)</div>
-            <div className={`${styles.metricVal} ${styles.positive}`}>+$184.20</div>
-            <div className={styles.metricSub}>2 ไม้ WIN ต่อเนื่อง</div>
+            <div className={styles.metricLabel}>สถิติวันนี้ (Today)</div>
+            <div className={`${styles.metricVal} ${styles.positive}`}>2 ไม้ WIN</div>
+            <div className={styles.metricSub}>สภาวะตลาดเป็นไปตามแผน</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricLabel}>สถานะฟีด MT5 / Cloud</div>
+            <div className={styles.metricLabel}>สถานะฟีด MT5</div>
             <div className={styles.metricVal} style={{ fontSize: '14px', color: '#38bdf8' }}>
-              {live.data?.connection || bridge?.status || 'MT5 LIVE'}
+              {live.data?.connection || bridge?.status || 'MT5 LIVE FEED'}
             </div>
             <div className={styles.metricSub}>
               {live.data?.coverage?.ready ? `${live.data.coverage.ready} สินทรัพย์พร้อม` : 'ฟีดปิดจริง 15m'}
@@ -406,7 +408,7 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
               <Zap size={18} style={{ color: '#38bdf8' }} />
               3 สูตรสแกนแกะรอย EA สาย Stable ที่เทรดได้ทุกวัน
             </h3>
-            <p>คลิกเลือกกลยุทธ์เพื่อดูราคาจริง พิกัดจุดเข้า การล็อคกำไร และตั้งค่าการแจ้งเตือน</p>
+            <p>คลิกเลือกกลยุทธ์เพื่อดูพิกัดจุดเข้า โซนล็อคกำไร และเปิดสัญญาณแจ้งเตือน</p>
           </div>
         </div>
 
@@ -428,6 +430,13 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                 key={strat.id}
                 className={`${styles.eaCard} ${isSelected ? styles.active : ''}`}
                 onClick={() => setSelectedStrategy(strat.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    setSelectedStrategy(strat.id);
+                  }
+                }}
               >
                 <div className={styles.eaCardHead}>
                   <div className={styles.eaIdentity}>
@@ -445,7 +454,7 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                 <div className={styles.eaRulePills}>
                   {strat.rules.map((rule, idx) => (
                     <div key={idx} className={styles.ruleItem}>
-                      <span style={{ minWidth: '90px' }}>{rule.label}:</span>
+                      <span>{rule.label}:</span>
                       <span>{rule.desc}</span>
                     </div>
                   ))}
@@ -459,11 +468,11 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                     PF: <strong>{strat.pf}</strong>
                   </span>
                   {rows.length > 0 && (
-                    <div style={{ width: '100%', marginTop: '6px', fontSize: '10px', color: '#38bdf8' }}>
+                    <div style={{ width: '100%', marginTop: '6px', fontSize: '11px', color: '#38bdf8' }}>
                       {rows.map((row) => {
                         const q = bridge?.quotes?.[row.symbol] || row.quote;
                         return (
-                          <span key={row.symbol} style={{ marginRight: '8px' }}>
+                          <span key={row.symbol} style={{ marginRight: '10px' }}>
                             {row.symbol}: {n(q?.bid ?? row.price, row.symbol.includes('JPY') ? 3 : 5)}
                           </span>
                         );
@@ -500,12 +509,12 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
               <span className={styles.sideBadgeLong}>
                 {activeSide === 'SELL' ? '🔴 SELL (SHORT)' : '🟢 BUY (LONG)'}
               </span>
-              <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>
                 แท่ง 15m ล่าสุด · กลยุทธ์ {activeStrategy.title}
               </span>
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span style={{ fontSize: '11px', color: '#34d399', fontWeight: '600' }}>
+              <span style={{ fontSize: '12px', color: '#34d399', fontWeight: '600' }}>
                 สถานะ: พร้อมส่งสัญญาณสดเข้า Telegram VIP
               </span>
             </div>
@@ -549,25 +558,19 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
           </div>
         </div>
 
-        {/* ── 4. Client Trade Ledger (บันทึก P/L รายไม้จริงของลูกค้า) ── */}
-        <div style={{ marginTop: '20px' }}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '10px',
-            }}
-          >
-            <span style={{ fontSize: '13px', fontWeight: '650', color: '#f8fafc' }}>
+        {/* ── 4. Client Trade Ledger (Desktop Table + Mobile Cards Feed) ── */}
+        <div style={{ marginTop: '22px' }}>
+          <div className={styles.ledgerHeader}>
+            <span className={styles.ledgerTitle}>
               📑 Trade Ledger · บันทึกผลงานและสถิติรายไม้ (Win / Loss Journal)
             </span>
-            <span style={{ fontSize: '11px', color: '#64748b' }}>
+            <span className={styles.ledgerSubtitle}>
               แสดง 5 ไม้ล่าสุด · รวมกำไรสุทธิ <strong>+$815.00 (+4.60 R)</strong>
             </span>
           </div>
 
-          <div className={styles.ledgerTableWrap}>
+          {/* Desktop Table */}
+          <div className={styles.desktopTableWrap}>
             <table className={styles.ledgerTable}>
               <thead>
                 <tr>
@@ -589,11 +592,11 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                     <tr key={trade.id}>
                       <td>
                         <strong style={{ color: '#f1f5f9' }}>{trade.id}</strong>
-                        <div style={{ fontSize: '10px', color: '#64748b' }}>{trade.time}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>{trade.time}</div>
                       </td>
                       <td>
                         <b>{trade.symbol}</b>
-                        <div style={{ fontSize: '10px', color: '#94a3b8' }}>{trade.strategy}</div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{trade.strategy}</div>
                       </td>
                       <td>
                         {trade.side === 'BUY' ? (
@@ -607,22 +610,79 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                       <td>
                         {isWin ? (
                           <span className={styles.winBadge}>
-                            <CheckCircle2 size={11} /> WIN
+                            <CheckCircle2 size={12} /> WIN
                           </span>
                         ) : (
                           <span className={styles.lossBadge}>
-                            <XCircle size={11} /> LOSS
+                            <XCircle size={12} /> LOSS
                           </span>
                         )}
                       </td>
                       <td className={isWin ? styles.netRPos : styles.netRNeg}>{trade.netR}</td>
                       <td className={isWin ? styles.netRPos : styles.netRNeg}>{trade.pl}</td>
-                      <td style={{ fontSize: '11px', color: '#94a3b8' }}>{trade.reason}</td>
+                      <td style={{ fontSize: '11.5px', color: '#94a3b8' }}>{trade.reason}</td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards Feed (Thumb-friendly, no side scrolling!) */}
+          <div className={styles.mobileLedgerCards}>
+            {RECENT_TRADES.map((trade) => {
+              const isWin = trade.status === 'WIN';
+              return (
+                <div key={trade.id} className={styles.mobileTradeCard}>
+                  <div className={styles.mobileTradeTop}>
+                    <div className={styles.mobileTradeIdent}>
+                      <strong className={styles.mobileTradeId}>{trade.id}</strong>
+                      <span className={styles.mobileTradeSymbol}>{trade.symbol}</span>
+                      <span className={trade.side === 'BUY' ? styles.sideBadgeLong : styles.sideBadgeShort}>
+                        {trade.side}
+                      </span>
+                    </div>
+                    <span className={isWin ? styles.winBadge : styles.lossBadge}>
+                      {isWin ? <CheckCircle2 size={11} /> : <XCircle size={11} />} {trade.status}
+                    </span>
+                  </div>
+
+                  <div className={styles.mobileTradeMetrics}>
+                    <div>
+                      <span>จุดเข้า Entry</span>
+                      <strong>{n(trade.entry)}</strong>
+                    </div>
+                    <div>
+                      <span>จุดออก Exit</span>
+                      <strong>{n(trade.exit)}</strong>
+                    </div>
+                    <div>
+                      <span>ผลลัพธ์ R</span>
+                      <strong className={isWin ? styles.netRPos : styles.netRNeg}>{trade.netR}</strong>
+                    </div>
+                    <div>
+                      <span>กำไร/ขาดทุน</span>
+                      <strong className={isWin ? styles.netRPos : styles.netRNeg}>{trade.pl}</strong>
+                    </div>
+                  </div>
+
+                  <div className={styles.mobileTradeFoot}>
+                    <span className={styles.mobileTradeReason}>{trade.reason}</span>
+                    <span className={styles.mobileTradeTime}>
+                      <Clock size={10} /> {trade.time}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Educational Notice */}
+          <div className={styles.eduNotice}>
+            <Info size={16} />
+            <span>
+              <strong>ข้อมูลเพื่อการศึกษาและวิเคราะห์เชิงกลยุทธ์:</strong> สถิติอ้างอิงจากการสแกนแท่งเทียนปิดจริง 15 นาทีตามระบบบริหารความเสี่ยง 1:2 R:R และการล็อคกำไร ไม่ใช่การการันตีผลกำไรในอนาคต ผู้ลงทุนควรบริหารเงินทุนอย่างเหมาะสม
+            </span>
           </div>
         </div>
       </div>

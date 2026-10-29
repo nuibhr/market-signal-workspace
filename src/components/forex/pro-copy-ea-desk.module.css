@@ -1,43 +1,40 @@
-/* ── Pro Copy EA Stable Desk · Magic UI Cyber-Fintech Theme ── */
+/* ── Pro Copy EA Stable Desk · Clean FinTech Theme (Desktop & Mobile Optimized) ── */
 
 .deskContainer {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 28px;
+  gap: 22px;
+  margin-bottom: 32px;
+  font-family: inherit;
+  color: #e2e8f0;
 }
 
-/* ── Hero Strategy Radar Banner ── */
+/* ── 1. Hero Strategy Radar Banner ── */
 .strategyHero {
   position: relative;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(3, 10, 20, 0.95) 100%);
+  background: radial-gradient(circle at 85% 15%, rgba(14, 165, 233, 0.14) 0%, transparent 45%),
+              linear-gradient(135deg, #091a24 0%, #051017 100%);
   border: 1px solid rgba(56, 189, 248, 0.22);
-  border-radius: 14px;
-  padding: 24px;
+  border-radius: 16px;
+  padding: 24px 28px;
   overflow: hidden;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-}
-
-.strategyHero::before {
-  content: "";
-  position: absolute;
-  top: -50px;
-  right: -50px;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.25) 0%, transparent 70%);
-  filter: blur(40px);
-  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
 }
 
 .heroTopRow {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
+}
+
+.heroCopy {
+  flex: 1;
+  min-width: 280px;
+  max-width: 720px;
 }
 
 .heroBadgeStrip {
@@ -45,29 +42,30 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .pulseBadge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 4px 11px;
   border-radius: 9999px;
   font-size: 11px;
-  font-weight: 600;
-  background: rgba(16, 185, 129, 0.12);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(16, 185, 129, 0.14);
   border: 1px solid rgba(16, 185, 129, 0.35);
   color: #34d399;
 }
 
 .pulseDot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #10b981;
   box-shadow: 0 0 8px #10b981;
-  animation: pulseAnim 2s infinite;
+  animation: pulseAnim 2s infinite ease-in-out;
 }
 
 @keyframes pulseAnim {
@@ -78,33 +76,37 @@
 .kickerPill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: 5px;
+  padding: 4px 11px;
   border-radius: 9999px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  border: 1px solid rgba(56, 189, 248, 0.28);
   color: #38bdf8;
 }
 
 .heroTitle {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: clamp(20px, 2.3vw, 26px);
+  font-weight: 800;
   color: #f8fafc;
-  margin: 0 0 6px 0;
+  margin: 0 0 8px 0;
   display: flex;
   align-items: center;
   gap: 10px;
   letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
 .heroDesc {
-  font-size: 13px;
+  font-size: 13.5px;
   color: #94a3b8;
   margin: 0;
-  line-height: 1.5;
-  max-width: 680px;
+  line-height: 1.6;
+}
+
+.heroDesc strong {
+  color: #e2e8f0;
 }
 
 .actionButtonRow {
@@ -115,24 +117,27 @@
 }
 
 .telegramBtn {
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff;
   border: 1px solid rgba(56, 189, 248, 0.4);
-  padding: 9px 16px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+  text-decoration: none;
 }
 
 .telegramBtn:hover:not(:disabled) {
   background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5);
+  box-shadow: 0 6px 22px rgba(14, 165, 233, 0.5);
   transform: translateY(-1px);
 }
 
@@ -142,16 +147,18 @@
 }
 
 .secondaryActionBtn {
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 7px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #cbd5e1;
-  padding: 9px 14px;
-  border-radius: 8px;
+  padding: 0 15px;
+  border-radius: 10px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -165,33 +172,41 @@
 /* ── Performance HUD Strips ── */
 .metricsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 10px;
-  margin-top: 18px;
-  padding-top: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .metricCard {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.metricCard:hover {
+  border-color: rgba(56, 189, 248, 0.25);
+  background: rgba(15, 23, 42, 0.75);
 }
 
 .metricLabel {
-  font-size: 10px;
-  color: #64748b;
+  font-size: 11px;
+  color: #8da2b0;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 3px;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  font-weight: 600;
 }
 
 .metricVal {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
   color: #f1f5f9;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  line-height: 1.2;
 }
 
 .metricVal.positive {
@@ -203,145 +218,25 @@
 }
 
 .metricSub {
-  font-size: 10px;
-  color: #94a3b8;
-  margin-top: 2px;
-}
-
-/* ── 3 Reverse-Engineered EA Strategy Cards ── */
-.strategyGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: 14px;
-}
-
-.eaCard {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.eaCard:hover {
-  border-color: rgba(56, 189, 248, 0.4);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.eaCard.active {
-  background: rgba(14, 165, 233, 0.08);
-  border-color: rgba(56, 189, 248, 0.5);
-  box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
-}
-
-.eaCardHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.eaIdentity {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.eaIconCircle {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-}
-
-.eaTitle {
-  font-size: 14px;
-  font-weight: 650;
-  color: #f1f5f9;
-  margin: 0;
-}
-
-.eaSymbol {
   font-size: 11px;
-  color: #94a3b8;
-  font-family: monospace;
+  color: #8da2b0;
+  margin-top: 4px;
+  line-height: 1.35;
 }
 
-.eaWinRateBadge {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  color: #34d399;
-  padding: 3px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.eaRulePills {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 12px 0;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 6px;
-  font-size: 11px;
-  color: #cbd5e1;
-}
-
-.ruleItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ruleItem span:first-child {
-  color: #64748b;
-  font-size: 10px;
-}
-
-.eaMetricsFoot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  color: #94a3b8;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding-top: 10px;
-  margin-top: 10px;
-}
-
-.eaMetricsFoot strong {
-  color: #f8fafc;
-}
-
-/* ── Live Profit-Locking Command Center ── */
-.liveDeskSection {
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 18px;
-}
-
+/* ── 2. Strategy Selector Cards ── */
 .sectionHeading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .sectionHeading h3 {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 750;
   color: #f8fafc;
   margin: 0;
   display: flex;
@@ -350,71 +245,197 @@
 }
 
 .sectionHeading p {
-  font-size: 11px;
-  color: #64748b;
-  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: #8da2b0;
+  margin: 3px 0 0 0;
 }
 
-/* ── Active Trade Card with Lifecycle Steps ── */
-.activeTradeCard {
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+.strategyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.eaCard {
+  background: rgba(10, 26, 36, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.eaCard:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.eaCard.active {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 24px rgba(14, 165, 233, 0.2);
+}
+
+.eaCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 10px;
+}
+
+.eaIdentity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.eaIconCircle {
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  flex-shrink: 0;
+}
+
+.eaTitle {
+  font-size: 14.5px;
+  font-weight: 750;
+  color: #f1f5f9;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.eaSymbol {
+  font-size: 11.5px;
+  color: #8da2b0;
+  font-family: monospace;
+}
+
+.eaWinRateBadge {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.eaRulePills {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #cbd5e1;
+  flex: 1;
+}
+
+.ruleItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.45;
+}
+
+.ruleItem span:first-child {
+  color: #8da2b0;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 95px;
+  flex-shrink: 0;
+}
+
+.eaMetricsFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: #8da2b0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.eaMetricsFoot strong {
+  color: #f8fafc;
+}
+
+/* ── 3. Live Profit-Locking Command Center ── */
+.liveDeskSection {
+  background: rgba(9, 24, 34, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.activeTradeCard {
+  background: linear-gradient(180deg, rgba(17, 34, 46, 0.8) 0%, rgba(9, 22, 31, 0.9) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 20px;
 }
 
 .tradeHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .tradeIdentity {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .symbolPill {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   color: #f8fafc;
   font-family: monospace;
 }
 
 .sideBadgeLong {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.18);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 2px 8px;
-  border-radius: 4px;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 3px 9px;
+  border-radius: 6px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .sideBadgeShort {
-  background: rgba(244, 63, 94, 0.15);
+  background: rgba(244, 63, 94, 0.18);
   color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
-  padding: 2px 8px;
-  border-radius: 4px;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  padding: 3px 9px;
+  border-radius: 6px;
   font-size: 11px;
-  font-weight: 700;
-}
-
-.statusPillActive {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .statusPillLocked {
@@ -423,138 +444,339 @@
   gap: 6px;
   background: rgba(16, 185, 129, 0.18);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  padding: 4px 10px;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  padding: 4px 12px;
   border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 11.5px;
+  font-weight: 750;
 }
 
-/* ── 4-Stage Lifecycle Stepper ── */
+/* ── 5-Stage Stepper Grid ── */
 .stepperGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
-  margin: 14px 0;
+  margin: 14px 0 6px;
 }
 
 .stepBox {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 12px 14px;
   position: relative;
+  transition: all 0.2s ease;
 }
 
 .stepBox.passed {
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.06);
 }
 
 .stepBox.current {
-  border-color: rgba(56, 189, 248, 0.5);
-  background: rgba(14, 165, 233, 0.1);
-  box-shadow: 0 0 12px rgba(14, 165, 233, 0.15);
+  border-color: rgba(56, 189, 248, 0.6);
+  background: rgba(14, 165, 233, 0.12);
+  box-shadow: 0 0 16px rgba(14, 165, 233, 0.2);
 }
 
 .stepTitle {
-  font-size: 10px;
-  color: #64748b;
+  font-size: 10.5px;
+  color: #8da2b0;
   text-transform: uppercase;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
 .stepPrice {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
   color: #f1f5f9;
-  font-family: monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .stepNote {
-  font-size: 10px;
+  font-size: 11px;
   color: #94a3b8;
-  margin-top: 3px;
+  margin-top: 4px;
+  line-height: 1.35;
 }
 
-/* ── Trade Ledger Table ── */
-.ledgerTableWrap {
+/* ── 4. Trade Ledger Section ── */
+.ledgerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ledgerTitle {
+  font-size: 14px;
+  font-weight: 750;
+  color: #f8fafc;
+}
+
+.ledgerSubtitle {
+  font-size: 11.5px;
+  color: #8da2b0;
+}
+
+.ledgerSubtitle strong {
+  color: #34d399;
+}
+
+/* Desktop Table View */
+.desktopTableWrap {
+  display: block;
   overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
 }
 
 .ledgerTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 12.5px;
   text-align: left;
 }
 
 .ledgerTable th {
-  background: rgba(255, 255, 255, 0.04);
-  color: #64748b;
-  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  color: #8da2b0;
+  font-weight: 700;
   font-size: 11px;
   text-transform: uppercase;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
 }
 
 .ledgerTable td {
-  padding: 11px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: #cbd5e1;
 }
 
 .ledgerTable tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .winBadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  background: rgba(16, 185, 129, 0.15);
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 750;
+  background: rgba(16, 185, 129, 0.18);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .lossBadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 700;
-  background: rgba(244, 63, 94, 0.15);
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 750;
+  background: rgba(244, 63, 94, 0.18);
   color: #fb7185;
-  border: 1px solid rgba(244, 63, 94, 0.3);
+  border: 1px solid rgba(244, 63, 94, 0.35);
 }
 
 .netRPos {
   color: #34d399;
-  font-weight: 700;
+  font-weight: 750;
   font-family: monospace;
 }
 
 .netRNeg {
   color: #fb7185;
+  font-weight: 750;
+  font-family: monospace;
+}
+
+/* Mobile Cards Feed (Hidden on desktop, shown on mobile) */
+.mobileLedgerCards {
+  display: none;
+}
+
+.mobileTradeCard {
+  background: rgba(15, 30, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mobileTradeTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mobileTradeIdent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mobileTradeId {
+  color: #f1f5f9;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.mobileTradeSymbol {
+  color: #7dd3fc;
+  font-size: 12px;
   font-weight: 700;
   font-family: monospace;
 }
 
+.mobileTradeMetrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.mobileTradeMetrics div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobileTradeMetrics span {
+  font-size: 10.5px;
+  color: #8da2b0;
+}
+
+.mobileTradeMetrics strong {
+  font-size: 13.5px;
+  color: #f1f5f9;
+  font-family: monospace;
+}
+
+.mobileTradeFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: #8da2b0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 8px;
+  flex-wrap: wrap;
+}
+
+.mobileTradeReason {
+  color: #cbd5e1;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.mobileTradeTime {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #64748b;
+  font-size: 10.5px;
+}
+
+/* Educational Notice */
+.eduNotice {
+  margin-top: 18px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11.5px;
+  color: #94a3b8;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.eduNotice svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #38bdf8;
+}
+
+/* ── Responsive Mobile Breakpoints ── */
 @media (max-width: 768px) {
+  .strategyHero {
+    padding: 18px 16px;
+  }
+
   .heroTopRow {
     flex-direction: column;
+    gap: 14px;
+    margin-bottom: 16px;
   }
+
+  .actionButtonRow {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .telegramBtn, .secondaryActionBtn {
+    width: 100%;
+    padding: 0 10px;
+    font-size: 11.5px;
+  }
+
+  .metricsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+
+  .metricCard {
+    padding: 10px 11px;
+  }
+
+  .metricVal {
+    font-size: 16px;
+  }
+
   .strategyGrid {
     grid-template-columns: 1fr;
+  }
+
+  .liveDeskSection {
+    padding: 16px 14px;
+  }
+
+  .stepperGrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .desktopTableWrap {
+    display: none;
+  }
+
+  .mobileLedgerCards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 }

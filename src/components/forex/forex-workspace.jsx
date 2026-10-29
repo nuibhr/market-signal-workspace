@@ -18,6 +18,7 @@ import {
 import MarketNavigation from "../market-navigation.jsx";
 import DaytradePanel from "../daytrade/daytrade-panel.jsx";
 import ForexStudio from "./forex-studio.jsx";
+import ProCopyEaDesk from "./pro-copy-ea-desk.jsx";
 import {useDeskResource} from "../use-desk-resource.jsx";
 import { CORE_FOREX } from "../../daytrade/universe.mjs";
 import MemberAvatar from "../member-avatar.jsx";
@@ -48,6 +49,13 @@ const SECTIONS = [
     description: "ห้องวางแผนและฝึกอ่านกราฟด้วยข้อมูลจำลอง",
   },
   {
+    id: "pro",
+    label: "Pro Suite EA",
+    icon: ShieldCheck,
+    badge: "PRO",
+    description: "ถอดรหัสกลยุทธ์ EA สายเสถียร · แผนล็อคกำไร & สถิติ Win/Loss",
+  },
+  {
     id: "scanner",
     label: "สแกนเนอร์สัญญาณ 15m",
     icon: ListFilter,
@@ -69,7 +77,7 @@ const SECTIONS = [
     description: "รับสัญญาณสดเข้ามือถือผ่าน Telegram VIP (ฟรี 100%) และเสียงน้องนักออมภาษาไทย",
   },
 ];
-export default function ForexWorkspace({ initialSymbol = null, viewer = null }) {
+export default function ForexWorkspace({ initialSymbol = null, initialSection = "studio", viewer = null }) {
   const performance=useDeskResource('/api/daytrade?market=forex&compact=1',{interval:30000});
   const fmt=v=>Number.isFinite(v)?v.toFixed(2):'—';
   const METRICS=[
@@ -80,7 +88,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
     ['สินทรัพย์พร้อม',String(performance.data?.coverage?.ready??0),'จาก MT5',''],
     ['ระบบสแกน 15m',performance.data?.connection||'รอเชื่อม',performance.data?.generatedAt||performance.error||'กำลังโหลด','']
   ];
-  const [section, setSection] = useState("studio");
+  const [section, setSection] = useState(initialSection);
   const [demoPreview, setPreview] = useState(false);
   const [frame, setFrame] = useState("1h");
   const [query, setQuery] = useState(""),
@@ -434,6 +442,8 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
           </nav>
 
           {section === "studio" && <ForexStudio />}
+
+          {section === "pro" && <ProCopyEaDesk bridge={bridge} viewer={viewer} />}
 
           {section === "scanner" && (
             <>

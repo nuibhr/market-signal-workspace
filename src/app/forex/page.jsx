@@ -12,6 +12,7 @@ export default async function MarketPage({ searchParams }) {
   return (
     <ForexWorkspace
       initialSymbol={typeof params.symbol === "string" ? params.symbol : null}
+      initialSection={typeof params.section === "string" ? params.section : "studio"}
       viewer={member ? { displayName: member.display_name, pictureUrl: member.picture_url, dataOwner:isAdmin(member) } : null}
     />
   );
