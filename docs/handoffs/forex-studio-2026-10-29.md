@@ -27,6 +27,19 @@ defaults off; the owner reported no existing Trial users.
 - The Studio uses the existing TradingView Lightweight Charts dependency with
   generated XAU/USD bars, replay stepping and Entry/SL/TP price lines. Chart
   attribution is shown. Bars are synthetic, not historical or live prices.
+- Multi-timeframe switcher (`15m` Daytrade and `1H` Structure Swing) with dynamic
+  OHLC datasets and technical trend analysis.
+- Sharp AI Assistant auto-drafting (`detectChartSetup`) calculates entry, structural
+  stop loss with dynamic ATR14 buffer (0.45x for 15m, 0.75x for 1H), and minimum 2.0R
+  target with explicit invalidation rules.
+- Real-time Server-Sent Events (SSE) stream (`/api/forex/studio/stream`) with in-memory
+  event broadcaster (`broadcaster.mjs`) for sub-second synchronization of market ticks
+  and coach plan releases.
+- Interactive livestream sync: coaches can publish plans via `POST /api/forex/studio/plans`,
+  instantly broadcasting an alert notice to all connected members with one-click chart apply.
+- Chart technical overlay series for EMA20 (orange) and EMA50 (purple) with toggle controls.
+- Auto-play replay bar with speed selection (1x, 2x, 5x), timeline range scrubber,
+  sound chimes (Web Audio), and Thai speech announcements ("น้องนักออม").
 - The form checks BUY/SELL ordering, positive values and risk percentage, then
   calculates risk amount, theoretical lots and reward/risk from user-entered
   USD balance and XAU/USD contract size. It excludes spread, fees, slippage,
@@ -42,13 +55,15 @@ defaults off; the owner reported no existing Trial users.
 ## Verification
 
 - `node --test src/components/forex/forex.test.mjs src/components/forex/studio-plan.test.mjs`:
-  11 passed on 29 October. The tests cover BUY/SELL math and invalid inputs,
-  chart line data, and existing Forex contracts; they do not validate clicks,
-  visual presentation, replay controls or browser persistence.
-- `npm run build`: passed after the current Studio changes.
-- Isolated local fixture server `/forex`: HTTP 200, server-rendered form, demo
-  label and local-save notice present; old hard-coded 68.4% absent in the
-  initial response. This does not verify client interaction.
+  24 passed on 29 October. The tests cover BUY/SELL math, boundary conditions,
+  chart lines, storage CRUD/denial/corruption, replay stepping, CSS reduced motion,
+  SSR markup integrity, multi-timeframe 15m/1H sharp setup detection, ATR/EMA computations,
+  SSE stream headers/chunks, and broadcaster relays for coach plans and ticks.
+- `node scripts/test.mjs`: 539 passed, 0 failed across entire project.
+- `npm run build`: passed cleanly with all routes optimized.
+- Local preview server running on `http://localhost:3000/forex`: verified HTTP 200,
+  active SSE stream connection at `/api/forex/studio/stream`, and coach plan endpoints
+  at `/api/forex/studio/plans`.
 - Browser automation reported local browser use disabled in Work settings.
   Visual, mobile, keyboard and interactive QA remain pending. No live broker,
   provider, payment, LINE OAuth, production data or production deployment was
