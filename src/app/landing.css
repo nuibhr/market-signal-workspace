@@ -13,7 +13,7 @@
   background-size:cover;
   background-attachment:fixed;
   color:var(--ng-ink);
-  font-family:'Noto Sans Thai','Plus Jakarta Sans',system-ui,sans-serif;
+  font-family: var(--font-apple);
   overflow:clip;
   font-size:16px;
   line-height:1.65;
@@ -281,11 +281,11 @@
   pointer-events:none;
 }
 .ng-robot-hud>span{font:11px monospace;letter-spacing:1px;font-weight:800;color:#0f172a}
-.ng-robot-hud small{display:block;font:11px/1.6 'Noto Sans Thai',system-ui,sans-serif;letter-spacing:0;color:#475569;margin-top:3px;font-weight:600}
+.ng-robot-hud small{display:block;font:11px/1.6 var(--font-apple);letter-spacing:0;color:#475569;margin-top:3px;font-weight:600}
 .ng-robot-hud-top{top:20%;right:-1%;transform:rotate(3deg)}
 .ng-robot-hud-top i{height:6px;width:6px;background:#10b981;border-radius:50%;margin-left:8px}
 .ng-robot-hud-bottom{left:4%;bottom:18%;transform:rotate(-3deg)}
-.ng-robot-hud-bottom>span{font:14px 'Noto Sans Thai',sans-serif;letter-spacing:0;color:#0f172a;font-weight:800}
+.ng-robot-hud-bottom>span{font:14px var(--font-apple);letter-spacing:0;color:#0f172a;font-weight:800}
 .ng-robot-visual-foot{position:absolute;bottom:10px;left:10%;right:0;display:flex;justify-content:space-between;align-items:center;gap:12px;color:#64748b;font-weight:600}
 .ng-robot-visual-foot>span{font-size:9px;letter-spacing:1px;font-family:monospace}
 .ng-robot-visual-foot button{cursor:pointer;border:1px solid #cbd5e1;background:#ffffff;color:#0f172a;border-radius:100px;padding:9px 16px;font-size:11px;font-weight:700;min-height:40px;box-shadow:0 2px 8px rgba(15,23,42,0.05);transition:all .2s}

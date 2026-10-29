@@ -605,8 +605,8 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                           <span className={styles.sideBadgeShort}>SELL</span>
                         )}
                       </td>
-                      <td style={{ fontFamily: 'monospace' }}>{n(trade.entry)}</td>
-                      <td style={{ fontFamily: 'monospace' }}>{n(trade.exit)}</td>
+                      <td style={{ fontFamily: 'var(--font-apple-mono)', fontFeatureSettings: '"tnum" 1' }}>{n(trade.entry)}</td>
+                      <td style={{ fontFamily: 'var(--font-apple-mono)', fontFeatureSettings: '"tnum" 1' }}>{n(trade.exit)}</td>
                       <td>
                         {isWin ? (
                           <span className={styles.winBadge}>

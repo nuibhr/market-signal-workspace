@@ -28,7 +28,7 @@ export default function CandlestickChart({ symbol, timeframe = '1d', bars = null
       chart = createChart(container, {
         width: container.clientWidth,
         height: 355,
-        layout: { background: { type: ColorType.Solid, color: '#09111d' }, textColor: '#8291a8', fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif', fontSize: 11 },
+        layout: { background: { type: ColorType.Solid, color: '#09111d' }, textColor: '#8291a8', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Sukhumvit Set", "Prompt", Inter, sans-serif', fontSize: 11 },
         grid: { vertLines: { color: '#172334' }, horzLines: { color: '#172334' } },
         crosshair: { vertLine: { color: '#47c8bd', labelBackgroundColor: '#16323a' }, horzLine: { color: '#47c8bd', labelBackgroundColor: '#16323a' } },
         rightPriceScale: { borderColor: '#223047', scaleMargins: { top: 0.08, bottom: 0.22 } },

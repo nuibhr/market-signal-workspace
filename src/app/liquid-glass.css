@@ -3504,3 +3504,92 @@
   border: none !important;
 }
 
+/* ─── 27. Apple iOS Typography Standard (iPhone Native Feel across Light Theme) ─── */
+.market-workspace.theme-light-glass,
+[data-theme='light'],
+.market-workspace.theme-light-glass *,
+[data-theme='light'] * {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Sukhumvit Set", "Prompt", "Inter", -system-ui, system-ui, sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+/* Monospace & Tabular Figures for Tickers, Prices, Percentages, and Financial Timestamps */
+.market-workspace.theme-light-glass code,
+[data-theme='light'] code,
+.market-workspace.theme-light-glass pre,
+[data-theme='light'] pre,
+.market-workspace.theme-light-glass .market-clock,
+[data-theme='light'] .market-clock,
+.market-workspace.theme-light-glass .instrument-symbol,
+[data-theme='light'] .instrument-symbol,
+.market-workspace.theme-light-glass .instrument-price strong,
+[data-theme='light'] .instrument-price strong,
+.market-workspace.theme-light-glass .instrument-price span,
+[data-theme='light'] .instrument-price span,
+.market-workspace.theme-light-glass .level-card strong,
+[data-theme='light'] .level-card strong,
+.market-workspace.theme-light-glass .stat-value,
+[data-theme='light'] .stat-value,
+.market-workspace.theme-light-glass .stat-value *,
+[data-theme='light'] .stat-value *,
+.market-workspace.theme-light-glass .ohlc-strip,
+[data-theme='light'] .ohlc-strip,
+.market-workspace.theme-light-glass .ohlc-strip b,
+[data-theme='light'] .ohlc-strip b,
+.market-workspace.theme-light-glass .financial-results strong,
+[data-theme='light'] .financial-results strong,
+.market-workspace.theme-light-glass [class*='mono'],
+[data-theme='light'] [class*='mono'],
+.market-workspace.theme-light-glass [class*='Mono'],
+[data-theme='light'] [class*='Mono'],
+.market-workspace.theme-light-glass .side-label,
+[data-theme='light'] .side-label,
+.market-workspace.theme-light-glass .eyebrow,
+[data-theme='light'] .eyebrow,
+.market-workspace.theme-light-glass .demo-pill,
+[data-theme='light'] .demo-pill,
+.market-workspace.theme-light-glass .asset-result-price,
+[data-theme='light'] .asset-result-price {
+  font-family: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, "JetBrains Mono", "DM Mono", monospace !important;
+  font-feature-settings: "tnum" 1, "cv01" 1 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* Apple iOS Typography Scale & Confident Tracking */
+.market-workspace.theme-light-glass h1,
+[data-theme='light'] h1 {
+  letter-spacing: -0.035em !important;
+  font-weight: 750 !important;
+}
+
+.market-workspace.theme-light-glass h2,
+[data-theme='light'] h2 {
+  letter-spacing: -0.025em !important;
+  font-weight: 700 !important;
+}
+
+.market-workspace.theme-light-glass h3,
+[data-theme='light'] h3 {
+  letter-spacing: -0.02em !important;
+  font-weight: 650 !important;
+}
+
+.market-workspace.theme-light-glass p,
+[data-theme='light'] p,
+.market-workspace.theme-light-glass span,
+[data-theme='light'] span,
+.market-workspace.theme-light-glass a,
+[data-theme='light'] a,
+.market-workspace.theme-light-glass button,
+[data-theme='light'] button {
+  letter-spacing: -0.012em !important;
+}
+
+.market-workspace.theme-light-glass .eyebrow,
+[data-theme='light'] .eyebrow {
+  letter-spacing: 0.08em !important;
+  font-weight: 750 !important;
+}
+

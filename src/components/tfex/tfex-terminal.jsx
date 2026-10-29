@@ -749,7 +749,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   <div className={styles.stressControlCard}>
                     <div className={styles.stressTitle}>
                       <span>⚡ สมมติฐานการเปลี่ยนแปลงของ SET50:</span>
-                      <b style={{ color: whatIfS50Shock >= 0 ? '#34d399' : '#fb7185', fontFamily: 'monospace' }}>
+                      <b style={{ color: whatIfS50Shock >= 0 ? '#34d399' : '#fb7185', fontFamily: 'var(--font-apple-mono)', fontFeatureSettings: '"tnum" 1' }}>
                         {whatIfS50Shock >= 0 ? `+${whatIfS50Shock}` : whatIfS50Shock} จุด
                       </b>
                     </div>
@@ -780,7 +780,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   <div className={styles.stressControlCard}>
                     <div className={styles.stressTitle}>
                       <span>⚡ สมมติฐานการเปลี่ยนแปลงของราคาทองคำ (GO):</span>
-                      <b style={{ color: whatIfGoShock >= 0 ? '#34d399' : '#fb7185', fontFamily: 'monospace' }}>
+                      <b style={{ color: whatIfGoShock >= 0 ? '#34d399' : '#fb7185', fontFamily: 'var(--font-apple-mono)', fontFeatureSettings: '"tnum" 1' }}>
                         {whatIfGoShock >= 0 ? `+${whatIfGoShock}` : whatIfGoShock} USD
                       </b>
                     </div>

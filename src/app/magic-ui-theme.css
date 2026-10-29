@@ -2303,3 +2303,74 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .toolbo
   cursor: pointer !important;
   transition: all 0.18s ease !important;
 }
+
+/* ─── 27. Apple iOS Typography Standard (iPhone Native Feel across Dark Theme) ─── */
+:root {
+  --font-apple-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Sukhumvit Set", "Prompt", "Inter", -system-ui, system-ui, sans-serif;
+  --font-apple-mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Monaco, Consolas, "JetBrains Mono", "DM Mono", monospace;
+}
+
+html, body,
+.market-workspace,
+.monitor-workspace,
+.account-page,
+.landing-body,
+button, input, select, textarea,
+h1, h2, h3, h4, h5, h6, p, span, a, label, strong, small, em, div, li, td, th {
+  font-family: var(--font-apple-system) !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+/* Monospace & Tabular Figures for Tickers, Prices, Percentages, and Financial Timestamps */
+code, pre, kbd, samp,
+.market-clock,
+.instrument-symbol,
+.instrument-price strong,
+.instrument-price span,
+.level-card strong,
+.level-card small,
+.stat-value,
+.stat-value *,
+.ohlc-strip,
+.ohlc-strip b,
+.financial-results strong,
+[class*='mono'], [class*='Mono'], .mono,
+.auto-pick-levels b,
+.signal-meta,
+.side-label,
+.tab-detail,
+.eyebrow,
+.demo-pill,
+.asset-result-price,
+.asset-result-price small {
+  font-family: var(--font-apple-mono) !important;
+  font-feature-settings: "tnum" 1, "cv01" 1 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* Apple iOS Typography Scale & Confident Tracking */
+h1 {
+  letter-spacing: -0.035em !important;
+  font-weight: 750 !important;
+}
+
+h2 {
+  letter-spacing: -0.025em !important;
+  font-weight: 700 !important;
+}
+
+h3 {
+  letter-spacing: -0.02em !important;
+  font-weight: 650 !important;
+}
+
+p, span, a, button, input, label {
+  letter-spacing: -0.012em !important;
+}
+
+.eyebrow {
+  letter-spacing: 0.08em !important;
+  font-weight: 750 !important;
+}

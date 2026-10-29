@@ -16,7 +16,7 @@ html, body { background: #0d191b; }
 .hub-account-card strong { color: #fff; font-size: 13px; }
 .hub-account-card small { color: #e2ffee; font-size: 10px; line-height: 1.45; }
 .hub-account-arrow { align-self: flex-start; font-size: 17px; line-height: 1; }
-.hub-sidebar-caption { margin: 20px 10px 8px; color: #698276; font: 800 10px Manrope,'Noto Sans Thai',sans-serif; letter-spacing: .03em; }
+.hub-sidebar-caption { margin: 20px 10px 8px; color: #698276; font: 800 10px var(--font-apple); letter-spacing: .03em; }
 .hub-group-list { gap: 6px; }
 .hub-menu-group { border: 1px solid transparent; border-radius: 15px; }
 .hub-group-toggle { min-height: 44px; gap: 7px; padding: 5px 8px; border-radius: 12px; color: #285046; font-size: 12px; font-weight: 800; }
@@ -30,9 +30,9 @@ html, body { background: #0d191b; }
 .hub-subnav.active { border-color: #a7d3b6; background: #d7eede; color: #0b714d; font-weight: 800; }
 .hub-subnav em { color: #0d8e61; font-size: 9px; }
 .hub-sidebar .engine-card { margin: 17px 2px 0; border-color: #cfddcf; border-radius: 13px; background: #ffffff9c; box-shadow: none; }
-.hub-sidebar .engine-heading { color: #4b6b5f; font: 800 10px Manrope,'Noto Sans Thai',sans-serif; letter-spacing: 0; }
+.hub-sidebar .engine-heading { color: #4b6b5f; font: 800 10px var(--font-apple); letter-spacing: 0; }
 .hub-sidebar .engine-card p { color: #647a6e; font-size: 10px; line-height: 1.55; }
-.hub-sidebar .sidebar-foot { padding: 12px 16px; border-top-color: #d0ddcf; background: #e5eee3; color: #416455; font: 800 10px Manrope,'Noto Sans Thai',sans-serif; }
+.hub-sidebar .sidebar-foot { padding: 12px 16px; border-top-color: #d0ddcf; background: #e5eee3; color: #416455; font: 800 10px var(--font-apple); }
 .hub-sidebar .sidebar-foot span { color: #769483; font-weight: 600; }
 .main-area { margin-left: 252px; width: calc(100% - 252px); }
 
@@ -41,15 +41,15 @@ html, body { background: #0d191b; }
 .page-content { max-width: 1600px; padding: 22px 24px 46px; }
 .nugaom-welcome { position: relative; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(210px, .65fr); align-items: stretch; gap: 30px; overflow: hidden; margin: 0 0 22px; padding: clamp(22px, 3vw, 37px); border: 1px solid #f3f0e8; border-radius: 26px; background: radial-gradient(circle at 67% 90%, #e5f3d1 0, transparent 42%), linear-gradient(118deg, #fffdf7, #f1f0e6 65%, #e2eadd); color: var(--nugaom-ink); box-shadow: 0 24px 48px #00100e43, inset 0 1px #fff; scroll-margin-top: 82px; }
 .nugaom-welcome::before { position: absolute; top: -100px; right: -100px; width: 320px; height: 320px; border: 1px solid #98ba9d63; border-radius: 50%; content: ''; box-shadow: 0 0 0 38px #bfd9ba26, 0 0 0 82px #bfd9ba1a; pointer-events: none; }
-.nugaom-welcome .eyebrow { color: #178267; font: 800 10px Manrope,'Noto Sans Thai',sans-serif; letter-spacing: .12em; }
-.nugaom-welcome h1 { margin: 11px 0 12px; color: #1a382f; font: 850 clamp(29px, 3vw, 48px)/1.22 Manrope,'Noto Sans Thai',sans-serif; letter-spacing: -.05em; }
+.nugaom-welcome .eyebrow { color: #178267; font: 800 10px var(--font-apple); letter-spacing: .12em; }
+.nugaom-welcome h1 { margin: 11px 0 12px; color: #1a382f; font: 850 clamp(29px, 3vw, 48px)/1.22 var(--font-apple); letter-spacing: -.05em; }
 .nugaom-welcome h1 em { color: #07875e; font-style: normal; }
 .nugaom-welcome p { max-width: 650px; color: #526b5c; font-size: 13px; line-height: 1.8; }
 .welcome-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 25px; }
 .welcome-actions a, .welcome-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 9px 16px; border-radius: 13px; text-decoration: none; font-size: 12px; font-weight: 800; cursor: pointer; }
 .welcome-line { border: 1px solid #07865c; background: #0aa765; color: #fff; box-shadow: 0 9px 23px #078a5c34; }
 .welcome-line:hover { background: #058354; }
-.welcome-line-mark, .hub-line-icon { display: grid; place-items: center; flex: 0 0 auto; width: 25px; height: 25px; border-radius: 8px; background: #fff; color: #06a65d; font: 900 7px Manrope,sans-serif; letter-spacing: -.03em; }
+.welcome-line-mark, .hub-line-icon { display: grid; place-items: center; flex: 0 0 auto; width: 25px; height: 25px; border-radius: 8px; background: #fff; color: #06a65d; font: 900 7px var(--font-apple); letter-spacing: -.03em; }
 .welcome-explore {
   display: inline-flex;
   align-items: center;
@@ -133,7 +133,7 @@ html, body { background: #0d191b; }
 .account-hero p { color: #5b7764; }
 .account-layout { grid-template-columns: minmax(0, 1fr); align-content: start; gap: 17px; max-width: 1100px; min-height: 0; }
 .account-nav { flex-flow: row wrap; align-items: center; gap: 5px; padding: 11px; border: 1px solid #d5e2d3; border-radius: 16px; background: #fffdf8; box-shadow: 0 10px 28px #193e2812; }
-.account-nav-label { flex: 0 0 100%; margin: 2px 9px 4px; color: #698571; font: 800 10px Manrope,'Noto Sans Thai',sans-serif; letter-spacing: 0; }
+.account-nav-label { flex: 0 0 100%; margin: 2px 9px 4px; color: #698571; font: 800 10px var(--font-apple); letter-spacing: 0; }
 .account-nav button { flex: 0 0 auto; width: auto; min-height: 42px; padding: 0 12px; color: #57725d; }
 .account-nav button svg { color: #5d9672; }
 .account-nav button:hover, .account-nav button.selected { background: #e2f2e4; color: #0b744d; }

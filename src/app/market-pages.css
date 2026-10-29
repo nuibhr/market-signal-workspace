@@ -26,7 +26,7 @@
   background-size: cover;
   background-attachment: fixed;
   color: #0f172a;
-  font-family: 'Noto Sans Thai', 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: var(--font-apple);
   padding-bottom: 90px;
 }
 .ng-market-header {
