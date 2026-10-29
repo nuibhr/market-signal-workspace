@@ -5,22 +5,19 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
-  BookOpen,
   Bot,
   Cable,
   CalendarDays,
   CandlestickChart as ChartIcon,
   Globe2,
-  LayoutDashboard,
   ListFilter,
   Search,
   ShieldCheck,
   Sparkles,
-  Wallet,
 } from "lucide-react";
 import MarketNavigation from "../market-navigation.jsx";
 import DaytradePanel from "../daytrade/daytrade-panel.jsx";
-import ProCopyEaDesk from "./pro-copy-ea-desk.jsx";
+import ForexStudio from "./forex-studio.jsx";
 import {useDeskResource} from "../use-desk-resource.jsx";
 import { CORE_FOREX } from "../../daytrade/universe.mjs";
 import MemberAvatar from "../member-avatar.jsx";
@@ -32,8 +29,6 @@ import TerminalChart, { DemoBadge } from "./terminal-chart.jsx";
 import {
   AiAnalysis,
   Heatmap,
-  Sessions,
-  Calendar,
   Alerts,
 } from "./terminal-panels.jsx";
 import {
@@ -41,16 +36,16 @@ import {
   filterUniverse,
   resolveInitialInstrument,
 } from "./symbol-universe.mjs";
-import { demoBars, demoQuote, formatDemoPrice } from "./terminal-demo.mjs";
+import { demoQuote, formatDemoPrice } from "./terminal-demo.mjs";
 import styles from "./forex-workspace.module.css";
 
 const SECTIONS = [
   {
-    id: "pro-ea",
-    label: "Pro Copy EA (สาย Stable)",
+    id: "studio",
+    label: "Forex Live Studio",
     icon: Bot,
-    badge: "Hot",
-    description: "ถอดรหัสกลยุทธ์ EA สเตเบิ้ล · ระบบล็อคกำไรหน้าทุน (+0.5R) & บันทึก P/L 100 ไม้",
+    badge: "DEMO",
+    description: "ห้องวางแผนและฝึกอ่านกราฟด้วยข้อมูลจำลอง",
   },
   {
     id: "scanner",
@@ -85,7 +80,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
     ['สินทรัพย์พร้อม',String(performance.data?.coverage?.ready??0),'จาก MT5',''],
     ['ระบบสแกน 15m',performance.data?.connection||'รอเชื่อม',performance.data?.generatedAt||performance.error||'กำลังโหลด','']
   ];
-  const [section, setSection] = useState("pro-ea");
+  const [section, setSection] = useState("studio");
   const [demoPreview, setPreview] = useState(false);
   const [frame, setFrame] = useState("1h");
   const [query, setQuery] = useState(""),
@@ -329,7 +324,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
               ))}
             </select>
           </label>
-          <section className={styles.hero}>
+          {section !== "studio" && <section className={styles.hero}>
             <div className={styles.heroGlobe}>
               <Globe2 size={110} strokeWidth={0.75} />
               <i />
@@ -337,19 +332,19 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
             </div>
             <div className={styles.heroCopy}>
               <span className={styles.eyebrow}>
-                PRO COPY EA &amp; 15M DAYTRADE RADAR
+                FOREX &amp; GOLD WORKSPACE
               </span>
               <h1>FOREX &amp; GOLD INTELLIGENCE DESK</h1>
               <p>
-                ถอดรหัสกลยุทธ์ EA สเตเบิ้ล · ระบบล็อคกำไรหน้าทุน (+0.5R) · สรุป Win/Loss โปร่งใส · ปลอดภัย ไม่ต้องเชื่อมรหัสพอร์ต
+                เครื่องมือดูกราฟและศึกษาตลาด พร้อมสถานะข้อมูลที่ตรวจสอบได้
               </p>
               <div>
                 <span>
                   <i className={styles.greenDot} />
                   Zero-Custody (ทุกโบรกเกอร์)
                 </span>
-                <span>🛡️ ล็อคกำไร Breakeven +0.5R</span>
-                <span>⚡ สัญญาณ Telegram VIP ฟรี</span>
+                <span>กราฟและแผนการศึกษา</span>
+                <span>ไม่มีการส่งคำสั่งซื้อขาย</span>
               </div>
             </div>
             <svg
@@ -401,9 +396,9 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
                 <span style={{ color: "#22d3ee", fontWeight: 700 }}>New York</span>
               </div>
             </div>
-          </section>
+          </section>}
 
-          <div className={styles.metrics}>
+          {section !== "studio" && <div className={styles.metrics}>
             {METRICS.map(([label, value, note, tone]) => (
               <div key={label}>
                 <span>
@@ -423,7 +418,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
                 <small>{note}</small>
               </div>
             ))}
-          </div>
+          </div>}
 
           <nav className={styles.sectionTabs} aria-label="มุมมอง Forex">
             {SECTIONS.map((item) => (
@@ -438,15 +433,7 @@ export default function ForexWorkspace({ initialSymbol = null, viewer = null }) 
             ))}
           </nav>
 
-          {section === "pro-ea" && (
-            <>
-              <ProCopyEaDesk bridge={bridge} viewer={viewer} />
-              <div className={styles.twoColumns}>
-                <Sessions preview={preview} />
-                <Calendar preview={preview} compact />
-              </div>
-            </>
-          )}
+          {section === "studio" && <ForexStudio />}
 
           {section === "scanner" && (
             <>
