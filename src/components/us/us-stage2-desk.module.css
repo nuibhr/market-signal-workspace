@@ -1,4 +1,4 @@
-/* ─── US 500 & GLOBAL ETFS STAGE 2 COMMAND DESK STYLESHEET (CLEAN MAGIC UI AESTHETIC) ─── */
+/* ─── US 500 & GLOBAL ETFS STAGE 2 COMMAND DESK STYLESHEET (BORDERLESS CLEAN FINTECH) ─── */
 .desk {
   --us-cyan: #22d3ee;
   --us-purple: #a855f7;
@@ -6,46 +6,26 @@
   --us-amber: #f59e0b;
   --us-rose: #f43f5e;
   --us-blue: #38bdf8;
-  --us-card-bg: linear-gradient(145deg, rgba(17, 28, 51, 0.8) 0%, rgba(13, 21, 38, 0.9) 100%);
-  --us-border: rgba(255, 255, 255, 0.06);
-  --us-subtle: rgba(255, 255, 255, 0.03);
 
-  background: linear-gradient(150deg, rgba(9, 16, 36, 0.95) 0%, rgba(13, 23, 50, 0.9) 50%, rgba(8, 13, 28, 0.95) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
-  padding: 24px;
-  margin: 10px 0 24px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0 0 24px;
   color: #f1f5f9;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   scroll-margin-top: 85px;
 }
 
-.desk::before {
-  content: '';
-  position: absolute;
-  top: -120px;
-  right: -100px;
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ─── 1. Single Command Status Ribbon (No Stacked Rows) ─── */
+/* ─── 1. Clean Inline Command Status Ribbon (Zero Boxed Frames) ─── */
 .commandStatusRibbon {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0 0 12px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
@@ -74,31 +54,30 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
   color: #38bdf8;
   font-size: 11px;
   font-weight: 700;
-  padding: 5px 12px;
+  padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .reloadBtn:hover {
-  background: rgba(56, 189, 248, 0.22);
-  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
   color: #ffffff;
 }
 
-/* ─── 2. High-Converting PRO VIP Showcase Banner ─── */
+/* ─── 2. High-Converting PRO VIP Showcase Banner (Clean Editorial, No Inner Boxes) ─── */
 .proHeroBanner {
-  background: linear-gradient(135deg, rgba(14, 27, 54, 0.95) 0%, rgba(9, 16, 36, 0.98) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  background: linear-gradient(135deg, rgba(14, 27, 54, 0.75) 0%, rgba(9, 16, 36, 0.85) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.18);
   border-radius: 18px;
   padding: 24px;
-  margin-bottom: 22px;
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  margin-bottom: 24px;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
 }
@@ -148,16 +127,15 @@
 
 .proFeatureGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
   margin-bottom: 20px;
 }
 
 .proFeatureItem {
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -453,13 +431,15 @@
 .filterPills {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 12px;
+  padding: 4px;
   overflow-x: auto;
   white-space: nowrap;
   flex-wrap: nowrap;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  padding: 2px 0;
 }
 
 .filterPills::-webkit-scrollbar {
@@ -473,37 +453,34 @@
   gap: 6px;
   font-size: 11.5px;
   font-weight: 600;
-  padding: 7px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
   color: #94a3b8;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .filterPill:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f1f5f9;
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
 }
 
 .filterPillActive {
-  background: rgba(34, 211, 238, 0.16) !important;
-  border-color: rgba(34, 211, 238, 0.4) !important;
+  background: rgba(56, 189, 248, 0.18) !important;
   color: #38bdf8 !important;
   font-weight: 700;
-  box-shadow: 0 4px 14px rgba(34, 211, 238, 0.15);
 }
 
 .searchBox {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: none;
+  border-radius: 10px;
   padding: 7px 14px;
   min-width: 220px;
   transition: all 0.2s ease;
@@ -684,37 +661,35 @@
   border: none;
 }
 
-/* ── 2R Blueprint Levels Grid (Soft Micro-Tiles, Zero Cutting Lines) ── */
+/* ── 2R Blueprint Levels (Borderless Clean Financial Data) ── */
 .blueprintGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  border: none; /* Removed outer border */
-  border-radius: 12px;
-  padding: 6px;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  padding: 6px 0;
 }
 
 .blueprintCol {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  background: rgba(255, 255, 255, 0.035);
-  border-radius: 8px;
-  padding: 8px 10px;
-  border: none; /* Removed cell borders */
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .blueprintLabel {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   color: #64748b;
   text-transform: uppercase;
 }
 
 .blueprintVal {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   color: #f1f5f9;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -729,7 +704,7 @@
 }
 
 .blueprintSub {
-  font-size: 9px;
+  font-size: 11px;
   color: #94a3b8;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -1471,14 +1446,12 @@
   color: #f59e0b;
 }
 
-/* ─── AI STAGE HEALTH DIAGNOSTIC BAR (NO HARSH CUTTING LINES) ─── */
+/* ─── AI STAGE HEALTH DIAGNOSTIC (BORDERLESS MODERN FLOW) ─── */
 .diagBar {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(24, 34, 54, 0.75) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  padding: 18px 22px;
-  margin-bottom: 22px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 24px;
 }
 
 .diagHeader {
@@ -1567,10 +1540,10 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 7px 13px;
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
   color: #cbd5e1;
   font-size: 11.5px;
   cursor: pointer;
@@ -1580,49 +1553,45 @@
 
 .diagTickerChip:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
+  color: #ffffff;
 }
 
 .diagTickerChipActive {
-  background: rgba(56, 189, 248, 0.18) !important;
-  border-color: rgba(56, 189, 248, 0.45) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.2) !important;
+  color: #38bdf8 !important;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.25);
 }
 
-/* Removed harsh 3px border-left lines that sliced the screen */
 .diagTickerChipBull {
-  border-left: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .diagTickerChipWarn {
-  border-left: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.08);
 }
 
 .diagTickerChipBear {
-  border-left: 1px solid rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.08);
 }
 
 .diagCard {
-  border-radius: 14px;
-  padding: 18px 20px;
+  border-radius: 16px;
+  padding: 20px 22px;
   transition: all 0.25s ease;
+  border: none;
 }
 
 .diagCardBull {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.09) 0%, rgba(6, 78, 59, 0.15) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.22);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .diagCardWarn {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.09) 0%, rgba(120, 53, 15, 0.15) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.22);
+  background: rgba(245, 158, 11, 0.08);
 }
 
 .diagCardBear {
-  background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(136, 19, 55, 0.18) 100%);
-  border: 1px solid rgba(244, 63, 94, 0.25);
+  background: rgba(244, 63, 94, 0.08);
 }
 
 .diagCardTop {
@@ -1793,13 +1762,12 @@
 
 /* ─── OVERNIGHT GTC SMART ORDER PLAYBOOK ─── */
 .gtcPlaybookCard {
-  background: linear-gradient(140deg, rgba(15, 23, 42, 0.85) 0%, rgba(26, 22, 58, 0.75) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 18px;
-  padding: 20px 24px;
+  padding: 22px;
   margin-top: 24px;
   margin-bottom: 20px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.3);
 }
 
 .gtcHeader {
@@ -1855,10 +1823,10 @@
 }
 
 .gtcStepBox {
-  background: rgba(255, 255, 255, 0.035);
-  border: none; /* Removed harsh border */
-  border-radius: 12px;
-  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 2px solid #38bdf8;
+  border-radius: 0 10px 10px 0;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
 }

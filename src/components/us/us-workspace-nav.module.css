@@ -1,22 +1,11 @@
-/* ─── US WORKSPACE NAVIGATION (SLEEK SEGMENTED STRIP) ─── */
+/* ─── US WORKSPACE NAVIGATION (BORDERLESS CLEAN SEGMENTED CONTROL) ─── */
 .toolbar {
   position: relative;
-  background: linear-gradient(180deg, rgba(11, 20, 38, 0.95) 0%, rgba(7, 14, 27, 0.98) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 16px;
-  padding: 14px 18px;
-  margin: 8px 0 16px;
+  background: transparent;
+  border: none;
+  padding: 0 0 12px;
+  margin: 6px 0 16px;
   color: #e2e8f0;
-  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  scroll-margin-top: 80px;
-  transition: all 0.25s ease;
-}
-
-.toolbar:hover {
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 12px 34px -8px rgba(0, 0, 0, 0.7), 0 0 16px rgba(56, 189, 248, 0.1);
 }
 
 .heading {
@@ -36,7 +25,7 @@
 }
 
 .heading h1 {
-  font-size: 17px;
+  font-size: 19px;
   margin: 0;
   line-height: 1.3;
   font-weight: 800;
@@ -50,29 +39,26 @@
 .scopeBadge {
   background: rgba(56, 189, 248, 0.12);
   color: #38bdf8;
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
   font-size: 11px;
   font-weight: 700;
-  border: 1px solid rgba(56, 189, 248, 0.25);
   letter-spacing: 0.3px;
 }
 
 .symbol {
-  font-size: 11px;
+  font-size: 11.5px;
   color: #94a3b8;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(15, 23, 42, 0.8);
-  padding: 5px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px 14px;
+  border-radius: 20px;
 }
 
 .symbol b {
-  font-size: 13px;
+  font-size: 13.5px;
   color: #38bdf8;
   font-weight: 800;
   letter-spacing: 0.5px;
@@ -86,24 +72,25 @@
   box-shadow: 0 0 8px #10b981;
 }
 
-/* Navigation Segmented Tab Ribbon (Single-Row Horizontal Scrollable, No Multi-Row Grids) */
+/* ── Seamless Segmented Tab Control (iOS/Raycast style, NO boxes with borders) ── */
 .row {
   display: flex;
   align-items: center;
-  position: relative;
-  overflow: hidden;
+  width: 100%;
 }
 
 .views {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 12px;
+  padding: 4px;
   overflow-x: auto;
   white-space: nowrap;
   flex-wrap: nowrap;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  padding: 4px 2px;
   width: 100%;
 }
 
@@ -117,51 +104,43 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 9px 15px;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
   text-decoration: none;
   color: #94a3b8;
-  background: rgba(15, 23, 42, 0.65);
+  background: transparent;
   font-size: 12.5px;
   font-weight: 700;
   line-height: 1;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .views a:hover {
-  background: rgba(30, 48, 77, 0.75);
-  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(255, 255, 255, 0.06);
   color: #ffffff;
-  transform: translateY(-1px);
 }
 
 .views a[aria-current] {
   color: #ffffff;
-  border-color: #38bdf8;
-  background: linear-gradient(135deg, rgba(22, 58, 99, 0.95) 0%, rgba(30, 64, 175, 0.9) 100%);
-  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  background: #0284c7;
+  box-shadow: 0 2px 12px rgba(2, 132, 199, 0.4);
 }
 
 @media (max-width: 650px) {
-  .toolbar {
-    padding: 12px 14px;
-    margin: 6px 0 12px;
-    border-radius: 14px;
-  }
   .heading {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   .heading h1 {
-    font-size: 15px;
+    font-size: 16px;
   }
   .views a {
-    padding: 8px 12px;
+    padding: 7px 12px;
     font-size: 11.5px;
   }
 }
