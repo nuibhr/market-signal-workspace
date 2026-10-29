@@ -24,7 +24,6 @@
   gap: 12px;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   padding: 0 0 12px;
   margin-bottom: 16px;
   flex-wrap: wrap;
@@ -73,7 +72,7 @@
 /* ─── 2. High-Converting PRO VIP Showcase Banner (Clean Editorial, No Inner Boxes) ─── */
 .proHeroBanner {
   background: linear-gradient(135deg, rgba(14, 27, 54, 0.75) 0%, rgba(9, 16, 36, 0.85) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.18);
+  border: none;
   border-radius: 18px;
   padding: 24px;
   margin-bottom: 24px;
@@ -163,7 +162,7 @@
   gap: 16px;
   flex-wrap: wrap;
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: none;
 }
 
 .proCtaNotice {
@@ -280,7 +279,7 @@
   font-weight: 600;
   color: #94a3b8;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   padding: 4px 10px;
   border-radius: 6px;
   white-space: nowrap;
@@ -350,7 +349,7 @@
   align-items: center;
   gap: 14px;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(34, 211, 238, 0.04) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.18);
+  border: none;
   border-radius: 14px;
   padding: 14px 20px;
   margin: 14px 0 20px;
@@ -379,7 +378,7 @@
   font-weight: 700;
   color: #fda4af;
   background: rgba(244, 63, 94, 0.12);
-  border: 1px solid rgba(244, 63, 94, 0.25);
+  border: none;
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;
@@ -390,7 +389,7 @@
   font-weight: 700;
   color: #34d399;
   background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: none;
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;
@@ -515,7 +514,7 @@
 
 .stage2Card {
   background: linear-gradient(145deg, rgba(17, 28, 51, 0.75) 0%, rgba(13, 21, 38, 0.85) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 18px;
   padding: 20px;
   display: flex;
@@ -529,12 +528,10 @@
 
 .stage2Card:hover {
   transform: translateY(-3px);
-  border-color: rgba(34, 211, 238, 0.35);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35), 0 0 20px rgba(34, 211, 238, 0.12);
 }
 
 .stage2CardTopPick {
-  border-color: rgba(245, 158, 11, 0.3);
   box-shadow: 0 8px 26px rgba(245, 158, 11, 0.08);
 }
 
@@ -744,7 +741,7 @@
   font-weight: 700;
   padding: 8px 14px;
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.16) 0%, rgba(56, 189, 248, 0.24) 100%);
-  border: 1px solid rgba(34, 211, 238, 0.35);
+  border: none;
   border-radius: 9px;
   color: #38bdf8;
   cursor: pointer;
@@ -755,7 +752,6 @@
 .cardActionBtn:hover {
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.28) 0%, rgba(56, 189, 248, 0.38) 100%);
   color: #ffffff;
-  border-color: #38bdf8;
   box-shadow: 0 4px 14px rgba(34, 211, 238, 0.25);
   transform: translateY(-1px);
 }
@@ -766,7 +762,7 @@
   justify-content: center;
   gap: 5px;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: none;
   border-radius: 9px;
   padding: 8px 12px;
   color: #cbd5e1;
@@ -780,7 +776,6 @@
 .cardGtcBtn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* ─── TAB 2: THEMATIC ETF SECTOR ROTATION DESK ─── */
@@ -792,7 +787,7 @@
 
 .rotationExplainer {
   background: rgba(14, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 18px 22px;
   display: flex;
@@ -838,7 +833,7 @@
 
 .quadrantBox {
   background: var(--us-card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 18px;
   display: flex;
@@ -1020,7 +1015,7 @@
 
 .fxControlPanel {
   background: var(--us-card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -1078,7 +1073,7 @@
   padding: 6px 12px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -1099,7 +1094,7 @@
 /* ── FX Outcome Summary Box (Floating Glass Surface) ── */
 .fxOutcomeBox {
   background: linear-gradient(145deg, rgba(14, 23, 42, 0.8) 0%, rgba(17, 30, 59, 0.8) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -1159,7 +1154,7 @@
 
 .fxPrescription {
   background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: none;
   border-radius: 12px;
   padding: 14px;
 }
@@ -1211,7 +1206,7 @@
 
 .sizingCard {
   background: var(--us-card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -1255,7 +1250,7 @@
 
 .inputField input {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 13px;
@@ -1284,7 +1279,7 @@
   padding: 5px 10px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1305,7 +1300,7 @@
 /* ── Sizing Result Visual Card ── */
 .sizingResultCard {
   background: linear-gradient(145deg, rgba(14, 23, 42, 0.8) 0%, rgba(17, 30, 59, 0.8) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: none;
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -1389,7 +1384,7 @@
 
 .tableContainer {
   overflow-x: auto;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 14px;
   background: rgba(10, 18, 34, 0.5);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
@@ -1763,7 +1758,7 @@
 /* ─── OVERNIGHT GTC SMART ORDER PLAYBOOK ─── */
 .gtcPlaybookCard {
   background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: none;
   border-radius: 18px;
   padding: 22px;
   margin-top: 24px;
@@ -1924,7 +1919,7 @@
 .brokerChip {
   padding: 6px 13px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 8px;
   color: #cbd5e1;
   font-size: 11px;
@@ -1940,7 +1935,6 @@
 
 .brokerChipActive {
   background: rgba(245, 158, 11, 0.18) !important;
-  border-color: #f59e0b !important;
   color: #fbbf24 !important;
   font-weight: 700;
 }
@@ -1955,7 +1949,7 @@
   flex: 1;
   padding: 8px 14px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 8px;
   color: #94a3b8;
   font-size: 11px;
@@ -1967,7 +1961,6 @@
 
 .modeBtnActive {
   background: rgba(34, 211, 238, 0.18) !important;
-  border-color: #22d3ee !important;
   color: #ffffff !important;
   font-weight: 700;
 }
@@ -1984,7 +1977,7 @@
 .quickBudgetBtn {
   padding: 5px 10px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 6px;
   color: #94a3b8;
   font-size: 10px;
@@ -1999,7 +1992,6 @@
 
 .quickBudgetBtnActive {
   background: rgba(52, 211, 153, 0.2) !important;
-  border-color: #34d399 !important;
   color: #34d399 !important;
   font-weight: 700;
 }

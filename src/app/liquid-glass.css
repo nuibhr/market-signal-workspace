@@ -2480,7 +2480,6 @@
 [data-theme='light'] [class*='us-stage2-desk_commandStatusRibbon'] {
   background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
   box-shadow: none !important;
   padding: 0 0 12px !important;
 }
@@ -2544,7 +2543,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_proHeroBanner'],
 [data-theme='light'] [class*='us-stage2-desk_proHeroBanner'] {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06) !important;
   border-radius: 18px !important;
   padding: 24px !important;
@@ -2593,7 +2592,7 @@
 
 .market-workspace.theme-light-glass [class*='us-stage2-desk_proCtaRow'],
 [data-theme='light'] [class*='us-stage2-desk_proCtaRow'] {
-  border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-top: none !important;
   background: transparent !important;
 }
 
@@ -2709,7 +2708,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_diagCard'],
 [data-theme='light'] [class*='us-stage2-desk_diagCard'] {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
   border-radius: 16px !important;
 }
@@ -2838,8 +2837,8 @@
 
 .market-workspace.theme-light-glass [class*='us-stage2-desk_searchBox'],
 [data-theme='light'] [class*='us-stage2-desk_searchBox'] {
-  background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: #f1f5f9 !important;
+  border: none !important;
   border-radius: 10px !important;
 }
 
@@ -2853,7 +2852,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_stage2Card'],
 [data-theme='light'] [class*='us-stage2-desk_stage2Card'] {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
   border-radius: 18px !important;
 }
@@ -2925,7 +2924,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_rotationExplainer'],
 [data-theme='light'] [class*='us-stage2-desk_rotationExplainer'] {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04) !important;
   border-radius: 16px !important;
 }
@@ -2943,7 +2942,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_quadrantBox'],
 [data-theme='light'] [class*='us-stage2-desk_quadrantBox'] {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
   border-radius: 14px !important;
 }
@@ -2976,7 +2975,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_fxOutcomeBox'],
 [data-theme='light'] [class*='us-stage2-desk_fxOutcomeBox'] {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
   border-radius: 16px !important;
 }
@@ -3019,7 +3018,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_sizingResultCard'],
 [data-theme='light'] [class*='us-stage2-desk_sizingResultCard'] {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
   border-radius: 18px !important;
 }
@@ -3037,7 +3036,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_inputField'] input,
 [data-theme='light'] [class*='us-stage2-desk_inputField'] input {
   background: #f8fafc !important;
-  border: 1px solid #cbd5e1 !important;
+  border: none !important;
   color: #0f172a !important;
   border-radius: 8px !important;
 }
@@ -3068,7 +3067,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_tableContainer'],
 [data-theme='light'] [class*='us-stage2-desk_tableContainer'] {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
   border-radius: 18px !important;
 }
@@ -3095,7 +3094,7 @@
 .market-workspace.theme-light-glass [class*='us-stage2-desk_gtcPlaybookCard'],
 [data-theme='light'] [class*='us-stage2-desk_gtcPlaybookCard'] {
   background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
   border-radius: 18px !important;
 }
