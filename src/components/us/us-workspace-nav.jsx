@@ -3,10 +3,10 @@ import styles from './us-workspace-nav.module.css';
 
 export const US_VIEWS = [
   { id: 'focus', hash: '#section-focus', label: '🎯 Stage 2 Picks' },
+  { id: 'screener', hash: '#section-screener', label: '📊 S&P 500 Scanner' },
   { id: 'rotation', hash: '#section-rotation', label: '🌐 ETF Rotation' },
-  { id: 'fx', hash: '#section-fx', label: '💵 USD/THB Hedge' },
   { id: 'sizing', hash: '#section-sizing', label: '📐 Dime! & 2R Lab' },
-  { id: 'screener', hash: '#section-screener', label: '📊 S&P 500' },
+  { id: 'fx', hash: '#section-fx', label: '💵 USD/THB Hedge' },
   { id: 'chart', hash: '#chart-panel', label: '📈 Interactive Chart' },
 ];
 
@@ -17,18 +17,12 @@ export default function UsWorkspaceNav({ activeTab = 'focus', symbol, onTabChang
         <div className={styles.titleGroup}>
           <h1>
             <span>🇺🇸 หุ้นสหรัฐฯ &amp; Global ETFs</span>
-            <span className={styles.scopeBadge}>S&amp;P 500 + NASDAQ 100</span>
+            <span className={styles.scopeBadge}>S&amp;P 500 · NASDAQ 100</span>
           </h1>
-          <div className={styles.headerMetricsRow}>
-            <span className={styles.headerMetricPill}>Stage 2 · ผลจากข้อมูลที่โหลด</span>
-            <span className={styles.headerMetricPill}>ข้อมูลราคา EOD</span>
-            <span className={styles.headerMetricPill}>Risk ≤ 8%</span>
-            <span className={styles.headerMetricPill}>Dime! 0.0001</span>
-          </div>
         </div>
         <span className={styles.symbol}>
           <span className={styles.liveDot} />
-          <span>วิเคราะห์</span>
+          <span>วิเคราะห์:</span>
           <b>{symbol}</b>
         </span>
       </div>

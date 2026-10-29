@@ -36,6 +36,192 @@
   z-index: 0;
 }
 
+/* ─── 1. Single Command Status Ribbon (No Stacked Rows) ─── */
+.commandStatusRibbon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.statusGroupLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.statusGroupRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.feedStatusText {
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.reloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reloadBtn:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+/* ─── 2. High-Converting PRO VIP Showcase Banner ─── */
+.proHeroBanner {
+  background: linear-gradient(135deg, rgba(14, 27, 54, 0.95) 0%, rgba(9, 16, 36, 0.98) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 22px;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.proHeroBanner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100%;
+  background: radial-gradient(circle at right top, rgba(34, 211, 238, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.proHeroEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.proHeroTitle {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 8px;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+}
+
+.proHeroSubtitle {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  max-width: 900px;
+}
+
+.proFeatureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.proFeatureItem {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.proFeatureItem b {
+  font-size: 12.5px;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.proFeatureItem p {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.proCtaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.proCtaNotice {
+  font-size: 12px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.proCtaNotice b {
+  color: #34d399;
+}
+
+.proCtaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 800;
+  padding: 10px 20px;
+  border-radius: 12px;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.proCtaBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
 /* ── Header & Executive Status Strip (Seamless, Line-Free) ── */
 .header {
   position: relative;
@@ -268,14 +454,24 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0;
+}
+
+.filterPills::-webkit-scrollbar {
+  display: none;
 }
 
 .filterPill {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
   padding: 7px 14px;
   background: rgba(255, 255, 255, 0.04);
@@ -284,6 +480,7 @@
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
 }
 
 .filterPill:hover {
@@ -537,32 +734,40 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* ── Card Footer Actions (Natural Spacing, No Line) ── */
+/* ── Card Footer Actions (Natural Spacing, Clean Buttons) ── */
 .cardFooter {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 10px;
   padding-top: 4px;
-  border-top: none; /* Removed harsh divider line */
 }
 
 .trailingNote {
-  font-size: 10px;
+  font-size: 11px;
   color: #94a3b8;
+  line-height: 1.4;
 }
 
 .trailingNote b {
   color: #38bdf8;
 }
 
+.cardBtnRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
 .cardActionBtn {
+  flex: 1;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 7px 15px;
+  padding: 8px 14px;
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.16) 0%, rgba(56, 189, 248, 0.24) 100%);
   border: 1px solid rgba(34, 211, 238, 0.35);
   border-radius: 9px;
@@ -578,6 +783,29 @@
   border-color: #38bdf8;
   box-shadow: 0 4px 14px rgba(34, 211, 238, 0.25);
   transform: translateY(-1px);
+}
+
+.cardGtcBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  padding: 8px 12px;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cardGtcBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* ─── TAB 2: THEMATIC ETF SECTOR ROTATION DESK ─── */
@@ -1311,29 +1539,43 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 2px 8px;
+  margin-bottom: 14px;
+  width: 100%;
+}
+
+.diagTickerPills::-webkit-scrollbar {
+  display: none;
 }
 
 .diagTickerLabel {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #94a3b8;
-  margin-right: 4px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .diagTickerChip {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  padding: 6px 13px;
+  padding: 7px 13px;
   color: #cbd5e1;
-  font-size: 11px;
+  font-size: 11.5px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
 }
 
 .diagTickerChip:hover {
@@ -1895,5 +2137,21 @@
   }
   .focusGrid {
     grid-template-columns: 1fr;
+  }
+  .blueprintGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .proHeroBanner {
+    padding: 18px 16px;
+  }
+  .proHeroTitle {
+    font-size: 19px;
+  }
+  .proCtaRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .proCtaBtn {
+    justify-content: center;
   }
 }

@@ -802,59 +802,79 @@ export default function UsStage2Desk({
 
   return (
     <section id="us-stage2-command-desk" className={styles.desk} aria-label="US 500 Equities and Thematic ETFs Stage 2 Command Desk">
-      <div className={styles.filterStrip} role="status">
-        <span>{feed.busy?'กำลังโหลดราคาและผลคำนวณ…':feed.error?'โหลดข้อมูลไม่ได้: '+feed.error:'ข้อมูลแท่งปิด D1 · '+(feed.data?.rows?.find(r=>r.observedAt)?.observedAt||'รอข้อมูล')}
-        </span><button type="button" onClick={()=>{feed.reload();diagnostic.reload();fxFeed.reload();}}>โหลดข้อมูลล่าสุด</button>
-      </div>
-      {activeTab==='screener'&&<div className={styles.filterStrip}><button type="button" disabled={feedPage<=1||feed.busy} onClick={()=>setFeedPage(v=>v-1)}>ก่อนหน้า</button><span>หน้า {feedPage}/{feed.data?.pages||1} · รายชื่อทั้งหมด {feed.data?.universe||US_STOCKS.length}</span><button type="button" disabled={feed.busy||feedPage>=(feed.data?.pages||1)} onClick={()=>setFeedPage(v=>v+1)}>ถัดไป</button></div>}
-      {/* ─── 1. Header Bar with Market Session Badge ─── */}
-      <div className={styles.header}>
-        <div className={styles.brand}>
-          <div className={styles.eyebrow}>
-            <span>✦ US 500 & GLOBAL ETFS · HIGH-CONVICTION STAGE 2 COMMAND DESK</span>
-          </div>
-          <h2 className={styles.title}>
-            <span className={styles.titleFlag}>🇺🇸</span>
-            <span>ตลาดหุ้นสหรัฐฯ &amp; กองทุน ETF เมกะเทรนด์โลก</span>
-            <span className={styles.titleBadge}>EOD SCREENER &amp; 2R RISK LAB</span>
-          </h2>
-          <div className={styles.headerMetricsRow}>
-            <span className={styles.metricPill}>ผ่านเกณฑ์ {feed.data?.rows?.filter(r=>r.topPick).length??0} / {feed.data?.rows?.length??0} ที่โหลด</span>
-            <span className={styles.metricPill}>Universe {feed.data?.universe??US_STOCKS.length}</span>
-            <span className={styles.metricPill}>Risk ≤ 8%</span>
-            <span className={styles.metricPill}>Dime! 0.0001 Shares</span>
-            <span className={styles.metricPill}>Overnight GTC Ready</span>
-          </div>
-        </div>
-
-        <div className={styles.marketClockBox}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <div className={`${styles.clockBadge} ${!marketSession.isOpen ? styles.clockBadgeClosed : ''}`}>
-              <span className={marketSession.isOpen ? styles.livePulseDot : styles.livePulseDotBlue} />
-              <span>{marketSession.label}</span>
-            </div>
-            <div className={styles.commandBarFxChip}>
-              <span>USD/THB:</span>
-              <b>{fxFeed.data?.price>0?money(fxFeed.data.price)+' ฿':'รอราคา'}</b>
-              <span style={{ fontSize: '10px', color: '#34d399', marginLeft: '4px' }}>• Dime! Ready</span>
-            </div>
+      {/* ─── 1. Single Command Status Ribbon (No Stacked Toolbars) ─── */}
+      <div className={styles.commandStatusRibbon}>
+        <div className={styles.statusGroupLeft}>
+          <div className={`${styles.clockBadge} ${!marketSession.isOpen ? styles.clockBadgeClosed : ''}`}>
+            <span className={marketSession.isOpen ? styles.livePulseDot : styles.livePulseDotBlue} />
+            <span>{marketSession.label}</span>
           </div>
           <span className={styles.clockHours}>{marketSession.hoursLabel}</span>
+          <div className={styles.commandBarFxChip}>
+            <span>USD/THB:</span>
+            <b>{fxFeed.data?.price > 0 ? money(fxFeed.data.price) + ' ฿' : 'รอราคา'}</b>
+            <span style={{ fontSize: '10.5px', color: '#34d399', marginLeft: '4px' }}>• Dime! Ready</span>
+          </div>
+        </div>
+
+        <div className={styles.statusGroupRight}>
+          <span className={styles.feedStatusText}>
+            {feed.busy ? 'กำลังโหลดราคาและผลคำนวณ…' : feed.error ? 'โหลดข้อมูลไม่ได้: ' + feed.error : 'ข้อมูลแท่งปิด D1 · ' + (feed.data?.rows?.find(r => r.observedAt)?.observedAt || 'อัปเดตล่าสุด')}
+          </span>
+          <button type="button" className={styles.reloadBtn} onClick={() => { feed.reload(); diagnostic.reload(); fxFeed.reload(); }}>
+            ↻ อัปเดตข้อมูล
+          </button>
         </div>
       </div>
 
-      {/* ─── 2. Capital Protection Shield ─── */}
-      <div className={styles.guardBanner}>
-        <div className={styles.guardIcon}>🛡️</div>
-        <div className={styles.guardContent}>
-          <div className={styles.guardHeaderRow}>
-            <strong>ระบบเกราะคุ้มครองเงินต้น (Wall Street Capital Protection Guard)</strong>
-            <span className={styles.guardPillBadge}>Stage 4 จากข้อมูลที่โหลด: {feed.data?.rows?.filter(r=>r.stage===4).length??0} ตัว</span>
-            <span className={styles.guardPillBadgeGreen}>ล็อกความเสี่ยง ≤ 8%</span>
+      {activeTab === 'screener' && (
+        <div className={styles.filterStrip}>
+          <button type="button" disabled={feedPage <= 1 || feed.busy} onClick={() => setFeedPage(v => v - 1)}>ก่อนหน้า</button>
+          <span>หน้า {feedPage}/{feed.data?.pages || 1} · รายชื่อทั้งหมด {feed.data?.universe || US_STOCKS.length}</span>
+          <button type="button" disabled={feed.busy || feedPage >= (feed.data?.pages || 1)} onClick={() => setFeedPage(v => v + 1)}>ถัดไป</button>
+        </div>
+      )}
+
+      {/* ─── 2. High-Converting PRO VIP Showcase Banner ─── */}
+      <div className={styles.proHeroBanner}>
+        <div className={styles.proHeroEyebrow}>
+          <span>✦ MINERVINI &amp; WEINSTEIN STAGE 2 ENGINE</span>
+        </div>
+        <h2 className={styles.proHeroTitle}>
+          🇺🇸 สแกนหุ้นผู้นำ Stage 2 สหรัฐฯ &amp; วางแผนคำนวณความเสี่ยง 2R
+        </h2>
+        <p className={styles.proHeroSubtitle}>
+          คัดกรองเฉพาะหุ้น S&amp;P 500 และ NASDAQ ที่มี Relative Strength สูงสุด ทรง Breakout ชัดเจน ล็อกจุดตัดขาดทุน Stop Loss ไม่เกิน 8% เสมอ พร้อมตั้งคำสั่ง Overnight GTC ล่วงหน้าตอน 2 ทุ่มก่อนนอน ไม่ต้องเฝ้าจอดึก
+        </p>
+
+        <div className={styles.proFeatureGrid}>
+          <div className={styles.proFeatureItem}>
+            <b><span>⚡</span> Auto-Pick Daily Signals</b>
+            <p>จุดซื้อ Breakout ชัดเจน พร้อมเป้า Take Profit 2R ล่วงหน้า ไม่ต้องเดาทาง</p>
           </div>
-          <p>
-            กรองเฉพาะ <b>ผู้นำ Stage 2 จากข้อมูลจริง</b> ที่มี Relative Strength &gt; 85 พร้อมจุดตัดขาดทุน Stop Loss ล็อกไว้ไม่เกิน 8% เสมอ
-          </p>
+          <div className={styles.proFeatureItem}>
+            <b><span>🛡️</span> Capital Protection Guard</b>
+            <p>คัดกรองหุ้นขาลง Stage 4 (Value Trap) ทิ้ง 100% ป้องกันพอร์ตแตก</p>
+          </div>
+          <div className={styles.proFeatureItem}>
+            <b><span>🌙</span> Overnight GTC Playbook</b>
+            <p>ตั้ง 3 คำสั่งล่วงหน้า (Buy, Cut, TP) ก่อนตลาดเปิด แล้วเข้านอนอย่างสบายใจ</p>
+          </div>
+          <div className={styles.proFeatureItem}>
+            <b><span>💰</span> Dime! &amp; InnovestX Sizing</b>
+            <p>คำนวณเศษหุ้นทศนิยม 4 ตำแหน่ง เริ่มต้น $10 (฿350) ก็เทรดตามระบบเซียนได้</p>
+          </div>
+        </div>
+
+        <div className={styles.proCtaRow}>
+          <div className={styles.proCtaNotice}>
+            <span>🔒 สถานะสมาชิก: <b>ระบบวิเคราะห์ EOD พร้อมใช้งาน</b></span>
+            <span>· รับสัญญาณ Auto-Pick ทุกวันหลังตลาดปิด</span>
+          </div>
+          <a href="/account" className={styles.proCtaBtn}>
+            <span>⭐️ สมัครสมาชิก PRO VIP เพื่อปลดล็อกสัญญาณทุกวัน</span>
+            <span>↗</span>
+          </a>
         </div>
       </div>
 
@@ -1073,13 +1093,23 @@ export default function UsStage2Desk({
                   <div className={styles.trailingNote}>
                     <span>💡 <b>Trailing Strategy:</b> {item.trailingGuide}</span>
                   </div>
-                  <button
-                    type="button"
-                    className={styles.cardActionBtn}
-                    onClick={() => handleSelectAsset(item)}
-                  >
-                    เปิดกราฟ &amp; แผนเทรด →
-                  </button>
+                  <div className={styles.cardBtnRow}>
+                    <button
+                      type="button"
+                      className={styles.cardActionBtn}
+                      onClick={() => handleSelectAsset(item)}
+                    >
+                      📈 ดูกราฟแท่งราคา →
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.cardGtcBtn}
+                      onClick={() => handleCopyGtcPlaybook(item.symbol, item.entry, item.stopLoss, item.tp1)}
+                      title="คัดลอกพารามิเตอร์เพื่อตั้งคำสั่ง GTC ล่วงหน้า"
+                    >
+                      📋 ตั้งคำสั่ง GTC
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
