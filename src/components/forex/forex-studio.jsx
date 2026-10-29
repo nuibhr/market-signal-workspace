@@ -18,6 +18,7 @@ import {
   ShieldAlert,
   Zap,
   Lock,
+  Heart,
 } from "lucide-react";
 import CandlestickChart from "../candlestick-chart.jsx";
 import SwarmDebate from "./swarm-debate.jsx";
@@ -43,21 +44,352 @@ import styles from "./forex-studio.module.css";
 const initialInstrument = resolveInitialInstrument("XAU/USD");
 const INITIAL_VISIBLE = 60;
 
-function Mascot() {
+const COMPANION_TIPS = [
+  {
+    icon: "📊",
+    status: "วิเคราะห์กราฟ 15m",
+    text: "ยินดีต้อนรับสู่ห้องฝึกเทรดทองครับ! วินัยและ Stop Loss สำคัญที่สุด อย่าลืมเช็ค Risk/Reward ก่อนเปิดไม้นะครับ 🎯",
+  },
+  {
+    icon: "🤖",
+    status: "สภา AI Swarm 6 ตัว",
+    text: "ลองสลับไปแท็บ '6 AI Swarm' ดูสิครับ บอททั้ง 6 กำลังโต้เถียงทิศทางทองกันสดๆ แนะนำดูข้อโต้แย้งของ PRIOR ด้วยนะ!",
+  },
+  {
+    icon: "🎯",
+    status: "กลยุทธ์ R:R",
+    text: "คำนวณ R:R อย่างน้อย 1:2 เสมอครับ เสี่ยง 1 ส่วนเพื่อกำไร 2 ส่วน แค่ชนะ 40% พอร์ตก็เติบโตอย่างมั่นคงแล้วครับ 📈",
+  },
+  {
+    icon: "⚡",
+    status: "เฝ้าระวังข่าว 21:00",
+    text: "คืนนี้มี Flash PMI สหรัฐฯ 21:00 น. ช่วงมีข่าวราคามักกระชากและสเปรดกว้าง แนะนำลด Lot หรือรอแท่งปิดนิ่งก่อนครับ ⚠️",
+  },
+  {
+    icon: "🛡️",
+    status: "คุมอารมณ์และจิตวิทยา",
+    text: "ถ้าตกรถ ห้าม FOMO ไล่ราคาเด็ดขาด! รอ Retest แนวรับ-ต้าน สบายใจและได้แต้มต่อ (Edge) สูงกว่าเยอะครับ",
+  },
+  {
+    icon: "🧘",
+    status: "ทักษะการรอคอย",
+    text: "ไม่จำเป็นต้องมีออเดอร์ตลอดเวลาครับ การนั่งทับมือรอจังหวะคมๆ ก็คือหนึ่งในกลยุทธ์ของนักเทรดมืออาชีพ",
+  },
+  {
+    icon: "📈",
+    status: "โซนปะทะทองคำ",
+    text: "Buy Zone วันนี้อยู่แถว $2,645 - $2,648 เป็นจุดสปริงตัวสวย หากแตะแนวแล้วมีสัญญาณ Price Action ค่อยพิจารณาครับ",
+  },
+  {
+    icon: "💡",
+    status: "เทคนิคเก็บกำไร",
+    text: "แบ่งปิดกำไร (Partial TP) ที่ระยะ 1R หรือ TP1 แล้วเลื่อน SL มาบังทุน จะช่วยให้เทรดได้อย่างสบายใจไร้ความกดดันครับ 💎",
+  },
+  {
+    icon: "💚",
+    status: "ให้กำลังใจ",
+    text: "การคัตลอสตามแผนไม่ใช่เรื่องน่าอาย แต่คือการปกป้องทุน รักษาวินัยไว้เสมอ น้องนักออมเป็นกำลังใจให้พี่ๆ ทุกคนครับ! ✨",
+  },
+  {
+    icon: "✦",
+    status: "จิ้มเพื่อคุยต่อ",
+    text: "แตะที่ตัวผมหรือกล่องข้อความได้เรื่อยๆ เลยนะ! ผมมีทริกและกำลังใจดีๆ เตรียมไว้แชร์ให้อีกเพียบเลยครับ 💬",
+  },
+];
+
+function NugaomVector({ isJumping }) {
   return (
-    <div className={styles.mascotStage} aria-hidden="true">
-      <div className={styles.mascotShadow} />
-      <div className={styles.mascot}>
-        <span className={styles.hair} />
-        <span className={styles.face}>
-          <i />
-          <i />
-          <b />
-        </span>
-        <span className={styles.body} />
-        <span className={styles.legs} />
+    <svg
+      className={`${styles.mascot} ${isJumping ? styles.mascotJumping : ""}`}
+      viewBox="0 0 100 128"
+      fill="none"
+      aria-hidden="true"
+    >
+      <ellipse
+        cx="50"
+        cy="123"
+        rx="26"
+        ry="4"
+        fill="#041a24"
+        opacity="0.3"
+        className={styles.mascotShadow}
+      />
+      <g className={styles.nugaomCharacterBody}>
+        <path
+          d="M33 94 29 116 46 118 50 102 54 118 71 116 67 94"
+          fill="#1e293b"
+          stroke="#0f172a"
+          strokeWidth="2"
+        />
+        <path d="M31 90q19-10 38 0l-3 20H34z" fill="#0f766e" />
+        <path d="m40 87 10 16 10-16" fill="#f0fdf4" />
+        <path d="m47 92 3 5 3-5-3-4z" fill="#f59e0b" />
+        <g className={styles.nugaomCharacterWave}>
+          <path
+            d="M65 94q14-5 13-19"
+            stroke="#0f766e"
+            strokeWidth="10"
+            strokeLinecap="round"
+          />
+          <ellipse
+            cx="78"
+            cy="72"
+            rx="7"
+            ry="9"
+            fill="#ffd0b4"
+            stroke="#b47a61"
+            strokeWidth="1.5"
+          />
+          <path
+            d="m75 66-1-6m5 5 1-7"
+            stroke="#ffd0b4"
+            strokeWidth="4"
+            strokeLinecap="round"
+          />
+        </g>
+        <path
+          d="M33 94q-8 6-5 13"
+          stroke="#0f766e"
+          strokeWidth="10"
+          strokeLinecap="round"
+        />
+        <rect
+          x="18"
+          y="88"
+          width="24"
+          height="20"
+          rx="3"
+          fill="#064e3b"
+          stroke="#10b981"
+          strokeWidth="1.5"
+          transform="rotate(-8 30 98)"
+        />
+        <line
+          x1="22"
+          y1="94"
+          x2="22"
+          y2="101"
+          stroke="#10b981"
+          strokeWidth="1"
+        />
+        <rect x="21" y="96" width="2" height="3" fill="#34d399" />
+        <line
+          x1="27"
+          y1="92"
+          x2="27"
+          y2="99"
+          stroke="#10b981"
+          strokeWidth="1"
+        />
+        <rect x="26" y="93" width="2" height="4" fill="#34d399" />
+        <line
+          x1="32"
+          y1="90"
+          x2="32"
+          y2="98"
+          stroke="#fbbf24"
+          strokeWidth="1"
+        />
+        <rect x="31" y="91" width="2" height="3" fill="#f59e0b" />
+        <circle cx="34" cy="99" r="4" fill="#4f9c65" opacity="0.3" />
+        <ellipse cx="25" cy="107" rx="5.5" ry="4.5" fill="#ffd0b4" />
+        <path
+          d="M17 45C9 13 36 5 52 10c22-6 40 17 32 38"
+          fill="#451a03"
+          stroke="#291205"
+          strokeWidth="2"
+        />
+        <ellipse cx="17" cy="57" rx="8" ry="10" fill="#ffc5aa" />
+        <ellipse cx="83" cy="57" rx="8" ry="10" fill="#ffc5aa" />
+        <ellipse cx="17" cy="57" rx="4" ry="6" fill="#fca5a5" opacity="0.6" />
+        <ellipse cx="83" cy="57" rx="4" ry="6" fill="#fca5a5" opacity="0.6" />
+        <path
+          d="M18 41q32-31 64 0v21c0 38-64 38-64 0z"
+          fill="#ffd0b4"
+          stroke="#bf8870"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M17 46c-7-34 21-42 36-36 25-4 38 16 30 38-13-5-20-16-24-25-7 17-28 21-42 23"
+          fill="#5a230b"
+        />
+        <path
+          d="M24 26q10-11 25-10"
+          stroke="#8a4422"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <g className={styles.nugaomCharacterEyes}>
+          <ellipse cx="35" cy="55" rx="5.5" ry="7.5" fill="#18181b" />
+          <ellipse cx="65" cy="55" rx="5.5" ry="7.5" fill="#18181b" />
+          <circle cx="37" cy="52" r="2" fill="white" />
+          <circle cx="67" cy="52" r="2" fill="white" />
+          <circle cx="33" cy="57" r="1" fill="white" opacity="0.8" />
+          <circle cx="63" cy="57" r="1" fill="white" opacity="0.8" />
+        </g>
+        <circle cx="34" cy="55" r="14.5" stroke="#0f172a" strokeWidth="3.2" />
+        <circle cx="66" cy="55" r="14.5" stroke="#0f172a" strokeWidth="3.2" />
+        <path d="M48.5 54.5h3M18 51l-5-2m69 2 5-2" stroke="#0f172a" strokeWidth="3" />
+        <path
+          d="M26 49 L32 59"
+          stroke="rgba(255,255,255,0.7)"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M58 49 L64 59"
+          stroke="rgba(255,255,255,0.7)"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <ellipse cx="26" cy="71" rx="7" ry="3.5" fill="#f87171" opacity="0.75" />
+        <ellipse cx="74" cy="71" rx="7" ry="3.5" fill="#f87171" opacity="0.75" />
+        {isJumping ? (
+          <g>
+            <path
+              d="M42 71 Q50 82 58 71 Z"
+              fill="#be123c"
+              stroke="#881337"
+              strokeWidth="1.5"
+            />
+            <path
+              d="M46 76 Q50 73 54 76 Q50 79 46 76"
+              fill="#fda4af"
+            />
+          </g>
+        ) : (
+          <path
+            d="M42 73q8 6 16 0"
+            stroke="#991b1b"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+          />
+        )}
+      </g>
+    </svg>
+  );
+}
+
+function Mascot() {
+  const [tipIndex, setTipIndex] = useState(0);
+  const [isJumping, setIsJumping] = useState(false);
+  const [particles, setParticles] = useState([]);
+  const [likes, setLikes] = useState(12);
+  const [speaking, setSpeaking] = useState(false);
+
+  const currentTip = COMPANION_TIPS[tipIndex];
+
+  const handleNextTip = (e) => {
+    if (e) e.stopPropagation();
+    setIsJumping(true);
+    setTimeout(() => setIsJumping(false), 450);
+
+    playChime("mascot");
+
+    const emojis = ["✨", "💡", "🎯", "📈", "💛", "✦", "+1R"];
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const pId = Date.now() + Math.random();
+    const x = Math.floor(Math.random() * 30) - 15;
+    setParticles((prev) => [...prev.slice(-3), { id: pId, emoji, x }]);
+
+    setTipIndex((prev) => (prev + 1) % COMPANION_TIPS.length);
+  };
+
+  const handleHeart = (e) => {
+    if (e) e.stopPropagation();
+    setLikes((l) => l + 1);
+    setIsJumping(true);
+    setTimeout(() => setIsJumping(false), 450);
+    playChime("tp");
+    const pId = Date.now() + Math.random();
+    setParticles((prev) => [...prev.slice(-3), { id: pId, emoji: "❤️", x: 5 }]);
+  };
+
+  const handleSpeak = (e) => {
+    if (e) e.stopPropagation();
+    setSpeaking(true);
+    speakThai(currentTip.text);
+    setTimeout(() => setSpeaking(false), 2500);
+  };
+
+  return (
+    <div className={styles.hostPod}>
+      <button
+        type="button"
+        className={styles.mascotStage}
+        onClick={handleNextTip}
+        title="แตะที่ตัวน้องนักออมเพื่อขอทริกเทรดทองคำใหม่"
+        aria-label="น้องนักออม เพื่อนร่วมทาง AI แตะเพื่อขอเคล็ดลับเทรด"
+      >
+        <div className={styles.mascotAura} />
+        <NugaomVector isJumping={isJumping} />
+        {particles.map((p) => (
+          <span
+            key={p.id}
+            className={styles.particle}
+            style={{ left: `calc(50% + ${p.x}px)` }}
+          >
+            {p.emoji}
+          </span>
+        ))}
+        <span className={styles.touchHint}>แตะผมสิ 👆</span>
+      </button>
+
+      <div
+        className={styles.companionBubble}
+        onClick={handleNextTip}
+        title="คลิกเพื่อสลับคำแนะนำถัดไป"
+      >
+        <div className={styles.companionHeader}>
+          <div className={styles.companionIdentity}>
+            <div>
+              <strong>น้องนักออม</strong>
+              <small>เพื่อนร่วมทางในห้องฝึก</small>
+            </div>
+            <span className={styles.companionBadge}>AI Companion</span>
+          </div>
+          <span className={styles.companionStatus}>
+            <span className={styles.companionStatusDot} />
+            {currentTip.status}
+          </span>
+        </div>
+
+        <div className={styles.companionQuote} aria-live="polite">
+          <p>{currentTip.text}</p>
+        </div>
+
+        <div className={styles.companionActions}>
+          <button
+            type="button"
+            className={styles.companionActionBtn}
+            onClick={handleNextTip}
+            title="แตะเพื่อสลับทริกถัดไป"
+          >
+            <RotateCcw size={11} />
+            <span>ทริกถัดไป ({tipIndex + 1}/{COMPANION_TIPS.length})</span>
+          </button>
+          <div className={styles.companionRightActions}>
+            <button
+              type="button"
+              className={styles.companionActionBtn}
+              onClick={handleSpeak}
+              title="ฟังเสียงน้องนักออมอ่านข้อความ"
+            >
+              <Volume2 size={11} className={speaking ? styles.pulseIcon : ""} />
+              <span>{speaking ? "กำลังอ่าน..." : "ฟังเสียง"}</span>
+            </button>
+            <button
+              type="button"
+              className={styles.companionHeartBtn}
+              onClick={handleHeart}
+              title="กดให้กำลังใจน้องนักออม"
+            >
+              <Heart size={11} fill="currentColor" />
+              <span>{likes}</span>
+            </button>
+          </div>
+        </div>
       </div>
-      <span className={styles.spark}>✦</span>
     </div>
   );
 }
@@ -94,6 +426,14 @@ function playChime(type) {
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
       osc.start();
       osc.stop(ctx.currentTime + 0.35);
+    } else if (type === "mascot") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(783.99, ctx.currentTime);
+      osc.frequency.setValueAtTime(1046.5, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
     } else {
       osc.type = "sine";
       osc.frequency.setValueAtTime(880, ctx.currentTime);
@@ -490,10 +830,6 @@ export default function ForexStudio() {
         </div>
         <div className={styles.host}>
           <Mascot />
-          <div>
-            <strong>น้องนักออม</strong>
-            <small>เพื่อนร่วมทางในห้องฝึก</small>
-          </div>
         </div>
       </section>
 
