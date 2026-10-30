@@ -1204,8 +1204,9 @@
   color: #ffffff;
 }
 
-/* Floating Action Button (FAB) */
+/* Floating Action Button (FAB) - Disabled for cleaner retail UI */
 .ng-floating-pro-dock {
+  display: none !important;
   position: fixed;
   bottom: 24px;
   right: 24px;

@@ -26,7 +26,7 @@ export default function HomeLanding() {
         <Link href="/thai" style={{ color: '#72dfb3', fontWeight: '800' }}>🇹🇭 หุ้นไทย</Link>
         <a href="#discover">เลือกตลาด</a>
         <a href="#products-suite">ผลิตภัณฑ์ทั้งหมด</a>
-        <a href="#pro-analysis-suite" style={{ color: '#0284c7', fontWeight: '700' }}>เครื่องมือสถาบัน ⚡</a>
+        <a href="#pro-analysis-suite" style={{ color: '#0284c7', fontWeight: '700' }}>เครื่องมือช่วยเทรดมือโปร ⚡</a>
         <Link href="/thai#section-results">ผลงานสัญญาณ</Link>
         <Link href="/community">ชุมชนและทีม</Link>
       </nav>

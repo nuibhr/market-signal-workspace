@@ -507,8 +507,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           <MarketNavigation current={marketId}/>
           {marketId==='thai'&&<ThaiWorkspaceNav view={thaiView} symbol={asset.symbol} onNavigate={chooseThaiView} onOpenScanner={()=>navigateTo('scanner')}/>}
           {marketId==='us'&&<UsWorkspaceNav activeTab={usTab} symbol={asset.symbol} onTabChange={setUsTab} onScrollToChart={scrollToChart}/>}
-          {marketId!=='thai'&&marketId!=='us'&&<ProToolsNav current={marketId} />}
-          {marketId!=='thai'&&marketId!=='tfex'&&marketId!=='us'&&<section id="section-overview" className="workspace-intro nugaom-welcome">
+          {!['thai','us','dr','tfex'].includes(marketId)&&<ProToolsNav current={marketId} />}
+          {!['thai','tfex','us','dr'].includes(marketId)&&<section id="section-overview" className="workspace-intro nugaom-welcome">
             <div className="welcome-main">
               <span className="eyebrow">{page.eyebrow}</span>
               <h1>{page.title}</h1>

@@ -30,7 +30,7 @@ export default function MarketNavigation({current}){
         href="/risk"
         aria-current={isProSuite ? 'page' : undefined}
         style={{'--destination-accent': '#0284c7'}}
-        title="ชุดเครื่องมือวิเคราะห์เชิงลึกระดับสถาบัน (Risk, Calendar, SMC API)"
+        title="ชุดเครื่องมือช่วยเทรดมือโปร (Risk, Scanner, Calendar)"
       >
         <Sparkles size={18}/>
         <span>Pro Suite</span>

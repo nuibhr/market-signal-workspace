@@ -120,7 +120,7 @@ export const CORE_PRODUCTS = [
     highlights: [
       { label: 'ความปลอดภัยสูงสุด', desc: 'สถาปัตยกรรม Fail-Closed ไร้สิทธิ์การถอนเงินหรือส่งคำสั่งซื้อขาย' },
       { label: 'Telemetry วัดความเสถียร', desc: 'แสดง Ping, Active Symbols และความสดของฟีดราคาตลอดเวลา' },
-      { label: 'สัญญาณระดับสถาบัน', desc: 'ใช้ข้อมูลแท่งเทียนดิบจากเซิร์ฟเวอร์โบรกเกอร์ที่เชื่อมต่อ' },
+      { label: 'สัญญาณเทรดแม่นยำ', desc: 'ใช้ข้อมูลแท่งเทียนดิบจากเซิร์ฟเวอร์โบรกเกอร์ที่เชื่อมต่อ' },
     ],
     whatsInside: [
       'Forex Connection Panel พร้อมตัววัดสถานะเซิร์ฟเวอร์',
@@ -161,7 +161,7 @@ export const CORE_PRODUCTS = [
     number: '06',
     title: 'Economic Calendar & Macro Impact',
     subtitle: 'รับมือข่าวเศรษฐกิจและดอกเบี้ยก่อนใคร',
-    tagline: 'ปฏิทินเศรษฐกิจระดับสถาบัน วิเคราะห์ผลกระทบรายตลาดและข้อควรระวังก่อนเทรด',
+    tagline: 'ปฏิทินเศรษฐกิจ & ข่าวการเงิน เจาะลึกผลกระทบรายตลาดและข้อควรระวังก่อนเทรด',
     badge: 'MACRO INTEL',
     accent: '#ea580c',
     icon: Newspaper,
@@ -336,7 +336,7 @@ export default function ProductsShowcase() {
         <div>
           <span className="ng-kicker">02 / PRODUCTS &amp; ANALYSIS ECOSYSTEM</span>
           <h2 id="products-title">
-            ผลิตภัณฑ์ระดับสถาบัน<br />
+            เครื่องมือเทรดเกรดมือโปร<br />
             <span>ครบ จบ ในแพลตฟอร์มเดียว</span>
           </h2>
         </div>
@@ -405,9 +405,9 @@ export default function ProductsShowcase() {
         <div className="ng-pro-analysis-banner">
           <div className="ng-pro-banner-content">
             <span className="ng-pro-badge">
-              <Sparkles size={14} /> PRO ANALYSIS SUITE
+              <Sparkles size={14} /> PRO TRADING SUITE
             </span>
-            <h3>ชุดเครื่องมือวิเคราะห์เชิงลึกระดับสถาบัน</h3>
+            <h3>ชุดเครื่องมือช่วยเทรดมือโปรสำหรับรายย่อย</h3>
             <p>
               ครอบคลุมทั้ง 6 มิติหลักของการวิเคราะห์ตลาด ออกแบบมาให้ทำงานสอดประสานกัน
               เพิ่มความแม่นยำในการคัดกรองความน่าจะเป็นสูง

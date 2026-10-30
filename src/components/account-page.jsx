@@ -116,32 +116,32 @@ export default function AccountPage({initialData=null}) {
               <div><span>ขอบเขตตลาด</span><strong>ตามแหล่งที่พร้อม</strong><small>ตรวจสิทธิข้อมูลแยกแต่ละตลาด</small></div>
             </div>
 
-            {/* Quick Access to Pro Institutional Tools */}
+            {/* Quick Access to Pro Tools */}
             <div className="account-pro-suite-strip">
               <div className="account-pro-suite-title">
-                <strong><Sparkles size={15} style={{ color: '#38bdf8' }} /> ชุดเครื่องมือวิเคราะห์เชิงลึกระดับสถาบัน (Pro Suite)</strong>
+                <strong><Sparkles size={15} style={{ color: '#38bdf8' }} /> ชุดเครื่องมือช่วยเทรดมือโปร (Pro Suite)</strong>
                 <span style={{ fontSize: '11px', color: '#64748b' }}>คลิกเข้าใช้งานได้ทันที</span>
               </div>
               <div className="account-pro-grid">
                 <a href="/risk" className="account-pro-link">
                   <BarChart3 size={16} style={{ color: '#0d9488' }} />
-                  <span>🎛️ บริหารความเสี่ยง (2R Risk)</span>
-                </a>
-                <a href="/calendar" className="account-pro-link">
-                  <CalendarClock size={16} style={{ color: '#d97706' }} />
-                  <span>📅 ปฏิทินเศรษฐกิจ (Macro)</span>
-                </a>
-                <a href="/developers" className="account-pro-link">
-                  <Fingerprint size={16} style={{ color: '#7c3aed' }} />
-                  <span>⚡ SMC Structure API</span>
-                </a>
-                <a href="/daytrade" className="account-pro-link">
-                  <Clock3 size={16} style={{ color: '#0284c7' }} />
-                  <span>🚀 Daytrade Desk 15m</span>
+                  <span>🎛️ บริหารความเสี่ยง & คำนวณไม้ (2R Risk)</span>
                 </a>
                 <a href="/thai" className="account-pro-link">
                   <BadgeCheck size={16} style={{ color: '#059669' }} />
-                  <span>🎯 สแกนเนอร์ตลาดไทย</span>
+                  <span>📈 สแกนหุ้นขาขึ้นรอบใหญ่ (Stage 2)</span>
+                </a>
+                <a href="/us" className="account-pro-link">
+                  <Sparkles size={16} style={{ color: '#38bdf8' }} />
+                  <span>🇺🇸 สแกนหุ้นสหรัฐฯ (S&P 500)</span>
+                </a>
+                <a href="/calendar" className="account-pro-link">
+                  <CalendarClock size={16} style={{ color: '#d97706' }} />
+                  <span>📅 ปฏิทินเศรษฐกิจ & ข่าว (Macro)</span>
+                </a>
+                <a href="/daytrade" className="account-pro-link">
+                  <Clock3 size={16} style={{ color: '#0284c7' }} />
+                  <span>🚀 Daytrade Desk 15m (TFEX / หุ้นนอก)</span>
                 </a>
               </div>
             </div>
