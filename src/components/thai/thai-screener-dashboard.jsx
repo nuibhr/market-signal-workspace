@@ -190,9 +190,14 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
      <h3>บันทึกผลงานสัญญาณระบบ 2R · โปร่งใส ตรวจสอบได้ทุกไม้</h3>
      <p>คัดกรองเฉพาะหุ้นที่มีโครงสร้างความได้เปรียบสูง (High Probability Setup) บันทึก Entry / SL / TP ชัดเจน</p>
     </div>
-    <button type="button" className={styles.ledgerButton} onClick={()=>{if(onResults)onResults();}}>
-     📑 ดูประวัติ Trade Ledger (100 ไม้) ↗
-    </button>
+    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+     <a href="https://t.me/DRThaibot" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)', color: '#fff', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)' }}>
+      ✈️ รับการบ้านหุ้นเข้า Telegram VIP ↗
+     </a>
+     <button type="button" className={styles.ledgerButton} onClick={()=>{if(onResults)onResults();}}>
+      📑 ดูประวัติ Trade Ledger (100 ไม้) ↗
+     </button>
+    </div>
    </div>
 
    <div className={styles.scoreboardMetrics}>

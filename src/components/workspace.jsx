@@ -30,6 +30,7 @@ import ProToolsNav from './pro-tools-nav.jsx';
 import ThaiScreenerDashboard from './thai/thai-screener-dashboard.jsx';
 import ThaiWorkspaceNav,{THAI_VIEWS,thaiViewForHash} from './thai/thai-workspace-nav.jsx';
 import thaiWorkspaceStyles from './thai/thai-workspace.module.css';
+import EquityPortfolioDesk from './equity/equity-portfolio-desk.jsx';
 import TfexTerminal from './tfex/tfex-terminal.jsx';
 import OwnerDataPreview from './owner-data-preview.jsx';
 import UsStage2Desk from './us/us-stage2-desk.jsx';
@@ -523,6 +524,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
           {ownerPreview&&<OwnerDataPreview market={marketId} onSelect={selectLedgerSymbol}/>}
           {marketId==='thai'&&<div id="section-overview" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='stage2'}><ThaiScreenerDashboard apiUrl={ownerPreview?'/api/owner-preview?market=thai&view=thai':'/api/thai-screener'} ownerPreview={ownerPreview} compact visible={thaiView==='stage2'} signalAccess={ownerPreview?true:accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} onOpenStyleScanner={()=>navigateTo('scanner')} onResults={()=>navigateTo('results')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
+          {marketId==='thai'&&<div id="section-portfolio" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='portfolio'}><EquityPortfolioDesk onSelectSymbol={selectAsset}/></div>}
           {['thai','dr'].includes(marketId) && (
             <div className={thaiWorkspaceStyles.panel} hidden={marketId==='thai'&&!['radar','results'].includes(thaiView)}>
             <DrStrategyRadar

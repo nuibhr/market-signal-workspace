@@ -23,11 +23,11 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const [filter, setFilter] = useState('all'); // all | thai | dr | stage2 | danger
   const [showModal, setShowModal] = useState(false);
 
-  // BYOK form states
+  // BYOK form states (Pre-configured for Trinity 022)
   const [brokerId, setBrokerId] = useState('022');
-  const [accountNo, setAccountNo] = useState('');
-  const [appId, setAppId] = useState('');
-  const [appSecret, setAppSecret] = useState('');
+  const [accountNo, setAccountNo] = useState('99242240');
+  const [appId, setAppId] = useState('2Ojgos6LlYIEU3n0');
+  const [appSecret, setAppSecret] = useState('AMeylhfYKDRtm2yC+qyN+ivzRXceX23b93zGvMCTe4vF');
   const [appCode, setAppCode] = useState('ALGO_EQ');
   const [latency, setLatency] = useState(35);
 
