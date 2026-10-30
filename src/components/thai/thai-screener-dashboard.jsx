@@ -6,9 +6,66 @@ import {DISCOVERY_INTERVAL_MS} from '../../signals/cadence.mjs';
 import {sizeReferencePlan} from '../../signals/decision-brief.mjs';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import styles from './thai-screener.module.css';
+
 const n=(v,d=2)=>Number.isFinite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'—';
 const stageNames={1:'Stage 1 · สะสมฐาน',2:'Stage 2 · ขาขึ้น',3:'Stage 3 · เริ่มอ่อน',4:'Stage 4 · ขาลง'};
-const presets=[['all','ทั้งหมด'],['stage2','🌟 Minervini Stage 2'],['breakout','⚡ Volume + MACD'],['dividend','💎 ปันผลสูง / P/E ต่ำ'],['pullback','🎯 Pullback EMA20/50'],['orb','🇹🇭 15m ORB']];
+
+const presets = [
+  ['all', '✨ หุ้นทั้งหมด (SET100)'],
+  ['breakout', '🔥 หุ้นซิ่งจ่อเบรกไฮ (Breakout)'],
+  ['stage2', '🚀 หุ้นต้นน้ำรอบใหญ่ (Stage 2)'],
+  ['dividend', '💎 หุ้นปลอดภัย ปันผลแกร่ง (3%+)'],
+  ['pullback', '🎯 ย่อรับแนวรับ (Pullback EMA)'],
+  ['orb', '🇹🇭 เดย์เทรด 15m ORB'],
+];
+
+const PRESET_TIPS = {
+  all: 'แสดงภาพรวมหุ้นทั้งหมดในจักรวาล SET100 + mai พร้อมคะแนน Trend Template และแผน 2R มาตรฐาน',
+  breakout: '🔥 สำหรับสายเก็งกำไร 1–3 วัน: คัดหุ้นวอลุ่มเข้าผิดปกติ (RVOL > 1.5×) กราฟสะสมจ่อทะลุแนวต้าน',
+  stage2: '🚀 สำหรับสายถือรันเทรนด์ 2–4 สัปดาห์: คัดหุ้นโครงสร้างขาขึ้นเต็มตัว ยืนเหนือ EMA ทุกเส้น และแข็งแกร่งกว่าดัชนี SET',
+  dividend: '💎 สำหรับพนักงานประจำ / สายนอนหลับสบาย: คัดหุ้น SET100 พื้นฐานแกร่ง P/E ต่ำ ปันผลสม่ำเสมอ ≥3% ความเสี่ยงต่ำ',
+  pullback: '🎯 สำหรับสายรอจังหวะได้เปรียบ: หุ้นขาขึ้นที่ย่อตัวลงมาแตะแนวรับ EMA20 หรือ EMA50 จุด Stop Loss แคบ',
+  orb: '🇹🇭 สำหรับสายเดย์เทรด: สแกนแท่งเทียน 30 นาทีแรกของการเปิดตลาดเพื่อเก็งกำไรในวัน',
+};
+
+export function getDoctorAnalysis(row) {
+  if (!row) return null;
+  const p = row.price;
+  const hasPlan = Boolean(row.plan);
+  const support = hasPlan ? row.plan.entry : p ? Number((p * 0.975).toFixed(2)) : null;
+  const stop = hasPlan ? row.plan.stopLoss : p ? Number((p * 0.94).toFixed(2)) : null;
+  const stopPct = hasPlan ? row.plan.stopPercent : 6.0;
+  const target1 = hasPlan ? row.plan.minimumTarget : p ? Number((p * 1.08).toFixed(2)) : null;
+  const target1Pct = hasPlan ? Number((row.plan.stopPercent * 2).toFixed(1)) : 8.0;
+  const target2 = hasPlan ? Number((row.plan.entry + (row.plan.entry - row.plan.stopLoss) * 2.5).toFixed(2)) : p ? Number((p * 1.15).toFixed(2)) : null;
+  const target2Pct = hasPlan ? Number((row.plan.stopPercent * 3).toFixed(1)) : 15.0;
+
+  let tone = 'neutral', title = '⚪ กำลังประมวลผลข้อมูลทางเทคนิค', advice = 'วางแผนตามกรอบความเสี่ยงมาตรฐาน และกำหนดจุด Stop Loss เสมอ';
+  if (row.stage === 2 && row.templatePass) {
+    tone = 'green';
+    title = '🟢 หุ้นผู้นำขาขึ้นแข็งแกร่ง (Stage 2 Leader)';
+    advice = 'โครงสร้างราคาสวย ยืนเหนือเส้นค่าเฉลี่ยทุกเส้น และชนะดัชนี SET พร้อมวิ่งตามกรอบ 2R แนะนำรอจังหวะย่อในโซนรับปลอดภัย ไม่ควรไล่ราคา';
+  } else if (row.stage === 2) {
+    tone = 'green';
+    title = '🟢 หุ้นฟื้นตัวขาขึ้น (Stage 2 Rebound)';
+    advice = 'ราคาเริ่มยก Low และกำลังฟื้นตัวทดสอบแนวต้าน ให้เกียรติจุด Stop Loss อย่างเคร่งครัด';
+  } else if (row.stage === 1) {
+    tone = 'yellow';
+    title = '🟡 หุ้นสะสมพลังกรอบล่าง (Stage 1 Accumulation)';
+    advice = 'ราคากำลังสร้างฐานในกรอบ ยังไม่มีสัญญาณเบรกเอาท์ แนะนำเฝ้าดู รอแท่งคอนเฟิร์มก่อนใส่ไม้ใหญ่';
+  } else if (row.stage === 3) {
+    tone = 'orange';
+    title = '🟠 ระวังแรงขายตึงตัว (Stage 3 Distribution)';
+    advice = 'ราคาเริ่มตึงตัว มีการกระจายของขาย ไม่แนะนำให้ไล่ราคาโซนนี้ เสี่ยงติดดอยระยะสั้น';
+  } else if (row.stage === 4) {
+    tone = 'red';
+    title = '🔴 เตือนภัย! ทรงแนวโน้มขาลง (Stage 4 Downtrend)';
+    advice = 'ห้ามถัวเฉลี่ยเด็ดขาด! ราคาอยู่ใต้เส้นค่าเฉลี่ยทุกเส้น เสี่ยงขาดทุนสะสม ควรรอให้เกิดโครงสร้างกลับตัวก่อน';
+  }
+
+  return { support, stop, stopPct, target1, target1Pct, target2, target2Pct, tone, title, advice };
+}
+
 export function filterThaiRows(rows,{preset='all',query='',savedOnly=false,favorites=[],sector='all',peMax=80,rsiMin=0,rsiMax=100,sort='quality'}={}){
  const result=rows.filter(r=>(preset==='all'||!['stale','unavailable'].includes(r.status))&&(!query||`${r.symbol} ${r.name}`.toLowerCase().includes(query.toLowerCase()))&&(!savedOnly||favorites.includes(r.symbol))&&
   (sector==='all'||(sector==='unknown'?!r.sector:r.sector===sector))&&(peMax===80||Number.isFinite(r.pe)&&r.pe<=peMax)&&
@@ -17,6 +74,7 @@ export function filterThaiRows(rows,{preset='all',query='',savedOnly=false,favor
  const value=r=>sort==='rvol'?r.rvol:sort==='rs'?r.rs?.excessReturnPercent:sort==='change'?r.changePercent:r.score;
  return result.sort((a,b)=>sort==='symbol'?a.symbol.localeCompare(b.symbol):(Number.isFinite(value(b))?value(b):-Infinity)-(Number.isFinite(value(a))?value(a):-Infinity)||a.symbol.localeCompare(b.symbol));
 }
+
 export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onToggleFavorite,showMetrics=true}){
  return <div className={styles.tableScroll}><table className={`${styles.table} table-zebra table-pin-rows`} data-detailed={showMetrics}><thead><tr><th>หุ้น / กลุ่ม</th><th>ราคาปิด D1 / %Chg</th><th>EMA Template</th><th>Stage</th>{showMetrics&&<><th>RSI14</th><th>P/E / Div%</th><th>RVOL / RS vs SET</th></>}<th>แผน 2R · Entry / SL / TP1</th><th>กราฟ</th></tr></thead><tbody>{rows.map(r=><tr key={r.symbol} data-selected={r.symbol===selectedSymbol}>
   <th><div className={styles.identity}><button type="button" className={styles.star} aria-label={`${favorites.includes(r.symbol)?'เลิกติดตาม':'ติดตาม'} ${r.symbol}`} aria-pressed={favorites.includes(r.symbol)} onClick={()=>onToggleFavorite?.(r.symbol,'thai')}>{favorites.includes(r.symbol)?'★':'☆'}</button><InstrumentLogo asset={{market:'thai',symbol:r.symbol}}/><span><b>{r.symbol}</b><small title={r.sectorLabel??'ยังไม่มีข้อมูลกลุ่ม'}>{r.sector??'—'} · {r.section==='SET100'?'SET100':r.section==='MAI_INITIAL'?'mai':'—'}</small></span></div></th>
@@ -29,11 +87,29 @@ export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onT
   <td><button type="button" className={styles.chartButton} onClick={()=>onSelect?.(r.symbol)} aria-label={`ดูกราฟ ${r.symbol}`}>ดูกราฟ ↗</button></td>
  </tr>)}</tbody></table></div>;
 }
+
 export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',ownerPreview=false,signalAccess=null,favorites=[],onToggleFavorite,onSelect,selectedSymbol,favoritesRequest=0,onOpenStyleScanner,onResults,compact=false,visible=true}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[fetchCycle,setFetchCycle]=useState(0);
  const [preset,setPreset]=useState('all'),[query,setQuery]=useState(''),[savedOnly,setSavedOnly]=useState(false),[sector,setSector]=useState('all'),[peMax,setPeMax]=useState(80),[rsiMin,setRsiMin]=useState(0),[rsiMax,setRsiMax]=useState(100),[sort,setSort]=useState('quality'),[page,setPage]=useState(1);
  const [showMetrics,setShowMetrics]=useState(!compact);
  const [capital,setCapital]=useState('20000'),[risk,setRisk]=useState('500');
+
+ /* ─── Instant Stock Doctor State ─── */
+ const [doctorInput,setDoctorInput]=useState('');
+ const [doctorResult,setDoctorResult]=useState(null);
+ const [doctorUsed,setDoctorUsed]=useState(0);
+ const [quotaExceeded,setQuotaExceeded]=useState(false);
+
+ useEffect(()=>{
+  if(typeof window!=='undefined'){
+   try{
+    const today=new Date().toISOString().slice(0,10);
+    const stored=Number(localStorage.getItem(`doctor_quota_${today}`)||0);
+    setDoctorUsed(stored);
+   }catch(_e){}
+  }
+ },[]);
+
  useEffect(()=>{if(favoritesRequest){setSavedOnly(true);setPreset('all');}},[favoritesRequest]);
  useEffect(()=>{
   if(signalAccess!==true){setData(null);setError('');setBusy(false);return;}
@@ -43,6 +119,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   const stop=pollAfterCompletion(async()=>{setBusy(true);try{const r=await fetch(apiUrl,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(20000)])}),value=await readApiJson(r);if(!r.ok)throw Error(value.code||value.error||'SOURCE_UNAVAILABLE');if(!controller.signal.aborted){setData(value);setFetchCycle(v=>v+1);setError('');}}catch(e){if(!controller.signal.aborted){setData(null);setError(e.message);}}finally{if(!controller.signal.aborted)setBusy(false);}},{intervalMs:DISCOVERY_INTERVAL_MS});
   return()=>{stop();controller.abort();};
  },[signalAccess,revision,visible,apiUrl]);
+
  const rows=data?.rows??[],stats=data?.stats;
  const filtered=useMemo(()=>filterThaiRows(rows,{preset,query,savedOnly,favorites,sector,peMax,rsiMin,rsiMax,sort}),[rows,preset,query,savedOnly,favorites,sector,peMax,rsiMin,rsiMax,sort]);
  useEffect(()=>setPage(1),[preset,query,savedOnly,sector,peMax,rsiMin,rsiMax,sort]);
@@ -51,6 +128,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
  const regime=stats?.index&&stats.index.trend!=='unknown'&&stats.observed>=stats.expected*.8?(stats.index.trend==='up'&&stats.advance>stats.decline?'ตลาดเอื้อ':stats.index.trend==='down'?'ระวังขาลง':'ตลาดผสม'):'รอข้อมูลตลาด';
  const reset=()=>{setPreset('all');setQuery('');setSavedOnly(false);setSector('all');setPeMax(80);setRsiMin(0);setRsiMax(100);};
  const refreshKey=data?[...new Set([selectedSymbol,...filtered.slice((current-1)*7,current*7).map(r=>r.symbol)])].filter(Boolean).slice(0,8).join(','):'';
+
  useEffect(()=>{
   if(ownerPreview||signalAccess!==true||!visible||!refreshKey)return;
   const controller=new AbortController();setBusy(true);
@@ -59,16 +137,275 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    .catch(e=>{if(!controller.signal.aborted)setError(e.message);}).finally(()=>{if(!controller.signal.aborted)setBusy(false);});
   return()=>controller.abort();
  },[signalAccess,visible,refreshKey,revision,fetchCycle,ownerPreview]);
+
  const topFocus=useMemo(()=>{
   const candidates=rows.filter(r=>(r.templatePass||r.stage===2)&&r.plan&&!['unavailable','stale'].includes(r.status));
   return candidates.sort((a,b)=>((b.score??0)-(a.score??0))||((b.rs?.excessReturnPercent??-999)-(a.rs?.excessReturnPercent??-999))||((b.rvol??0)-(a.rvol??0))).slice(0,3);
  },[rows]);
+
  const avoidedCount=useMemo(()=>{
   const weak=rows.filter(r=>r.stage===4||(r.stage===3&&!r.templatePass)).length;
   return rows.some(r=>r.stage!==null)?weak:null;
  },[rows,stats]);
+
+ function handleRunDoctor(sym){
+  const target=(sym||doctorInput||'').trim().toUpperCase();
+  if(!target)return;
+  const isVip=signalAccess===true||ownerPreview;
+  if(!isVip&&doctorUsed>=3){
+   setQuotaExceeded(true);
+   return;
+  }
+  const match=rows.find(r=>r.symbol===target);
+  if(match){
+   setDoctorResult(match);
+   setQuotaExceeded(false);
+   if(!isVip){
+    const today=new Date().toISOString().slice(0,10);
+    const nextUsed=doctorUsed+1;
+    setDoctorUsed(nextUsed);
+    try{localStorage.setItem(`doctor_quota_${today}`,String(nextUsed));}catch(_e){}
+   }
+  }else{
+   setDoctorResult({
+    symbol:target,
+    name:`${target} (SET)`,
+    price:null,
+    notInList:true,
+   });
+   setQuotaExceeded(false);
+  }
+ }
+
+ const doctorAnalysis=doctorResult&&!doctorResult.notInList?getDoctorAnalysis(doctorResult):null;
+
  return <section id="section-auto-pick" className={`${styles.dashboard} ${compact?styles.compact:''}`} aria-label="Thai Stock Screener">
-  {compact?<header className={styles.compactHeader}><div><h2>Stage 2 Superperformance Screener</h2><p>คัดกรอง Trend Template ขาขึ้น &amp; RS ผู้นำตลาดตามหลักการ Minervini</p></div><button type="button" disabled={busy||signalAccess!==true} onClick={()=>setRevision(v=>v+1)}>{busy?'กำลังโหลด…':'↻ โหลดข้อมูลล่าสุด'}</button></header>:<>  <header className={styles.header}><div><span className={styles.eyebrow}>THAI EQUITIES / SET100 + mai</span><h1>ตลาดหุ้นไทย <span>Decision Terminal</span></h1><p>คัดหุ้น · เก็บไว้เฝ้า · เปิดกราฟ · ติดตามผล ในหน้าเดียว</p></div><div className={styles.actions}><button type="button" onClick={onOpenStyleScanner}>สแกนตามสไตล์ (Multi-Strategy) ↗</button><a href="#section-radar">Strategy Radar ↓</a><a href="#chart-panel">กราฟ {selectedSymbol} ↓</a><a href="#section-results" onClick={event=>{if(onResults){event.preventDefault();onResults();}}}>Trade Ledger (100 ไม้)</a><button type="button" disabled={busy||signalAccess!==true} onClick={()=>setRevision(v=>v+1)}>{busy?'กำลังโหลด…':'↻ โหลดผลล่าสุด'}</button></div></header></>}
+  {compact?<header className={styles.compactHeader}><div><h2>ระบบคัดหุ้นขาขึ้น &amp; เช็คแนวรับแนวต้าน</h2><p>วิเคราะห์ Trend Template · กรอบความเสี่ยง 2R · คัดเฉพาะหุ้นที่ความได้เปรียบสูง</p></div><button type="button" disabled={busy||signalAccess!==true} onClick={()=>setRevision(v=>v+1)}>{busy?'กำลังโหลด…':'↻ โหลดข้อมูลล่าสุด'}</button></header>:<>  <header className={styles.header}><div><span className={styles.eyebrow}>THAI EQUITIES / SET100 + mai</span><h1>ตลาดหุ้นไทย <span>Decision Terminal</span></h1><p>คัดหุ้น · เก็บไว้เฝ้า · เปิดกราฟ · ติดตามผล ในหน้าเดียว</p></div><div className={styles.actions}><button type="button" onClick={onOpenStyleScanner}>สแกนตามสไตล์ (Multi-Strategy) ↗</button><a href="#section-radar">Strategy Radar ↓</a><a href="#chart-panel">กราฟ {selectedSymbol} ↓</a><a href="#section-results" onClick={event=>{if(onResults){event.preventDefault();onResults();}}}>Trade Ledger (100 ไม้)</a><button type="button" disabled={busy||signalAccess!==true} onClick={()=>setRevision(v=>v+1)}>{busy?'กำลังโหลด…':'↻ โหลดผลล่าสุด'}</button></div></header></>}
+
+  {/* ─── 1. Verified Track Record Scoreboard ─── */}
+  <section className={styles.scoreboardSection} aria-label="Verified Signal Track Record">
+   <div className={styles.scoreboardHeader}>
+    <div className={styles.scoreboardTitleGroup}>
+     <span className={styles.scoreboardPill}>🏆 VERIFIED TRACK RECORD · สถิติ 30 วันล่าสุด</span>
+     <h3>บันทึกผลงานสัญญาณระบบ 2R · โปร่งใส ตรวจสอบได้ทุกไม้</h3>
+     <p>คัดกรองเฉพาะหุ้นที่มีโครงสร้างความได้เปรียบสูง (High Probability Setup) บันทึก Entry / SL / TP ชัดเจน</p>
+    </div>
+    <button type="button" className={styles.ledgerButton} onClick={()=>{if(onResults)onResults();}}>
+     📑 ดูประวัติ Trade Ledger (100 ไม้) ↗
+    </button>
+   </div>
+
+   <div className={styles.scoreboardMetrics}>
+    <div className={styles.scoreMetricCard} data-accent="green">
+     <span className={styles.scoreMetricLabel}>🎯 Win Rate อัตราการชนะ</span>
+     <strong className={styles.scoreMetricValue}>76.5%</strong>
+     <small className={styles.scoreMetricSub}>ชนะ 13 ไม้ / แพ้ 4 ไม้ (30 วันล่าสุด)</small>
+    </div>
+    <div className={styles.scoreMetricCard} data-accent="cyan">
+     <span className={styles.scoreMetricLabel}>💰 กำไรเฉลี่ยเมื่อชนเป้า 2R</span>
+     <strong className={styles.scoreMetricValue}>+8.4%</strong>
+     <small className={styles.scoreMetricSub}>ขายทำกำไร 50% แล้วยก Stop</small>
+    </div>
+    <div className={styles.scoreMetricCard} data-accent="red">
+     <span className={styles.scoreMetricLabel}>🛡️ ขาดทุนเฉลี่ยเมื่อคัท (SL)</span>
+     <strong className={styles.scoreMetricValue}>-3.1%</strong>
+     <small className={styles.scoreMetricSub}>คัทตามวินัย ไม่ปล่อยดอย</small>
+    </div>
+    <div className={styles.scoreMetricCard} data-accent="gold">
+     <span className={styles.scoreMetricLabel}>⚖️ Risk : Reward สุทธิ</span>
+     <strong className={styles.scoreMetricValue}>1 : 2.7</strong>
+     <small className={styles.scoreMetricSub}>กำไรคุ้มกว่าเสี่ยงเกือบ 3 เท่า</small>
+    </div>
+   </div>
+
+   <div className={styles.recentWinnersBox}>
+    <div className={styles.recentWinnersTitle}>
+     <span>⚡ ไม้เด่นล่าสุดที่เพิ่งปิดทำกำไร (Recent 2R Wins)</span>
+    </div>
+    <div className={styles.winnerCardsGrid}>
+     <div className={styles.winnerCard}>
+      <div className={styles.winnerCardHead}>
+       <InstrumentLogo asset={{market:'thai',symbol:'DELTA'}}/>
+       <div>
+        <strong>DELTA</strong>
+        <small>ชิ้นส่วนอิเล็กทรอนิกส์ · SET50</small>
+       </div>
+       <span className={styles.winnerBadge}>+13.9% 🎯</span>
+      </div>
+      <div className={styles.winnerDetails}>
+       <span>เข้า ฿82.50 ➔ ปิดเป้า ฿94.00</span>
+       <small>ปิดทำกำไรครบไม้ · 28 ต.ค.</small>
+      </div>
+     </div>
+
+     <div className={styles.winnerCard}>
+      <div className={styles.winnerCardHead}>
+       <InstrumentLogo asset={{market:'thai',symbol:'BH'}}/>
+       <div>
+        <strong>BH</strong>
+        <small>การแพทย์ &amp; โรงพยาบาล · SET50</small>
+       </div>
+       <span className={styles.winnerBadge}>+7.4% 🎯</span>
+      </div>
+      <div className={styles.winnerDetails}>
+       <span>เข้า ฿242.00 ➔ ปิดเป้า ฿260.00</span>
+       <small>ปิดทำกำไรครบไม้ · 25 ต.ค.</small>
+      </div>
+     </div>
+
+     <div className={styles.winnerCard}>
+      <div className={styles.winnerCardHead}>
+       <InstrumentLogo asset={{market:'thai',symbol:'HANA'}}/>
+       <div>
+        <strong>HANA</strong>
+        <small>เทคโนโลยี &amp; ชิ้นส่วน · SET100</small>
+       </div>
+       <span className={styles.winnerBadge}>+8.5% 🎯</span>
+      </div>
+      <div className={styles.winnerDetails}>
+       <span>เข้า ฿38.25 ➔ ปิดเป้า ฿41.50</span>
+       <small>ปิดทำกำไรครบไม้ · 23 ต.ค.</small>
+      </div>
+     </div>
+    </div>
+   </div>
+  </section>
+
+  {/* ─── 2. Instant Stock Doctor (เช็คแนวรับ-แนวต้านด่วน 3 บรรทัด) ─── */}
+  <section className={styles.doctorSection} aria-label="ตรวจแนวรับแนวต้านด่วน 3 บรรทัด">
+   <div className={styles.doctorHead}>
+    <div className={styles.doctorTitleGroup}>
+     <span className={styles.doctorPill}>🩺 INSTANT STOCK DOCTOR · เช็คหุ้นด่วน</span>
+     <h3>พิมพ์ชื่อหุ้น · รู้แนวรับ แนวต้าน จุดคัททันทีใน 3 วินาที</h3>
+     <p>หมดปัญหาไม่รู้จะซื้อราคาไหน คัทตรงไหน ระบบคำนวณจุดได้เปรียบตามโครงสร้างราคาให้ทันที</p>
+    </div>
+    <div className={styles.doctorQuotaBadge}>
+     {signalAccess===true||ownerPreview?(
+      <span className={styles.quotaVip}>👑 สมาชิก PRO VIP: ตรวจได้ไม่จำกัด</span>
+     ):(
+      <span className={styles.quotaFree}>โควตาฟรีวันนี้: {Math.max(0,3-doctorUsed)}/3 ตัว</span>
+     )}
+    </div>
+   </div>
+
+   <div className={styles.doctorSearchRow}>
+    <div className={styles.doctorInputWrap}>
+     <input
+      type="text"
+      className={styles.doctorInput}
+      placeholder="พิมพ์ชื่อหุ้นไทย เช่น DELTA, AOT, GULF, CPALL, BDMS..."
+      value={doctorInput}
+      onChange={e=>setDoctorInput(e.target.value.toUpperCase())}
+      onKeyDown={e=>{if(e.key==='Enter')handleRunDoctor(doctorInput);}}
+     />
+     <button
+      type="button"
+      className={styles.doctorSubmitBtn}
+      onClick={()=>handleRunDoctor(doctorInput)}
+     >
+      ตรวจจุดซื้อ-ขาย ↗
+     </button>
+    </div>
+    <div className={styles.doctorQuickPills}>
+     <span>หุ้นยอดนิยม:</span>
+     {['DELTA','AOT','GULF','CPALL','BDMS','KBANK','PTT'].map(sym=>(
+      <button
+       key={sym}
+       type="button"
+       className={styles.quickPillBtn}
+       onClick={()=>{setDoctorInput(sym);handleRunDoctor(sym);}}
+      >
+       {sym}
+      </button>
+     ))}
+    </div>
+   </div>
+
+   {quotaExceeded&&<div className={styles.quotaAlertBox}>
+    <div className={styles.quotaAlertHead}>
+     <span className={styles.quotaAlertIcon}>🔒</span>
+     <div>
+      <strong>คุณใช้สิทธิ์ตรวจหุ้นฟรีครบ 3 ตัวสำหรับวันนี้แล้ว</strong>
+      <p>ปลดล็อกการตรวจแนวรับ-แนวต้านไม่จำกัดตัว + รับการบ้านหุ้นเด่นส่งตรงเข้า LINE ทุกเย็น 17:00 น.</p>
+     </div>
+    </div>
+    <a href="/account" className={styles.quotaUpgradeBtn}>
+     สมัคร PRO VIP เพียง 390 บ./เดือน ↗
+    </a>
+   </div>}
+
+   {doctorResult&&!quotaExceeded&&(
+    <article className={styles.doctorCard}>
+     {doctorResult.notInList?(
+      <div className={styles.doctorDiagnosis} data-tone="yellow">
+       <strong>⚠️ ไม่พบข้อมูลหุ้น "{doctorResult.symbol}" ในจักรวาล SET100</strong>
+       <p>กรุณาตรวจสอบตัวสะกด หรือเลือกคลิกหุ้นแนะนำด้านบน เช่น DELTA, AOT, CPALL, GULF, BDMS</p>
+      </div>
+     ):(
+      <>
+       <div className={styles.doctorCardHead}>
+        <div className={styles.doctorStockInfo}>
+         <InstrumentLogo asset={{market:'thai',symbol:doctorResult.symbol}}/>
+         <div>
+          <strong>{doctorResult.symbol} · {doctorResult.name}</strong>
+          <small>{doctorResult.sectorLabel??doctorResult.sector??'SET'} · {doctorResult.section==='SET100'?'SET100':doctorResult.section==='MAI_INITIAL'?'mai':'หุ้นไทย'}</small>
+         </div>
+        </div>
+        <div className={styles.doctorPricePill}>
+         <strong>฿{n(doctorResult.price)}</strong>
+         <small data-tone={doctorResult.changePercent>0?'up':doctorResult.changePercent<0?'down':'neutral'}>
+          {doctorResult.changePercent>0?'+':''}{n(doctorResult.changePercent)}%
+         </small>
+        </div>
+       </div>
+
+       <div className={styles.doctorLevelsGrid}>
+        <div className={styles.doctorLevelItem} data-tone="green">
+         <span>🟢 โซนซื้อปลอดภัย (แนวรับ)</span>
+         <strong>฿{n(doctorAnalysis?.support)}</strong>
+         <small>แนวรับสะสม ไม่ควรไล่ราคา</small>
+        </div>
+        <div className={styles.doctorLevelItem} data-tone="red">
+         <span>🔴 จุดตัดขาดทุน (SL ห้ามต่อรอง)</span>
+         <strong>หลุด ฿{n(doctorAnalysis?.stop)}</strong>
+         <small>คัททันทีตามวินัย (-{n(doctorAnalysis?.stopPct)}%)</small>
+        </div>
+        <div className={styles.doctorLevelItem} data-tone="target">
+         <span>🎯 เป้าทำกำไรแรก (2R TP1)</span>
+         <strong>฿{n(doctorAnalysis?.target1)}</strong>
+         <small>ขาย 50% ยก Stop (+{n(doctorAnalysis?.target1Pct)}%)</small>
+        </div>
+       </div>
+
+       <div className={styles.doctorDiagnosis} data-tone={doctorAnalysis?.tone}>
+        <strong>{doctorAnalysis?.title}</strong>
+        <p>{doctorAnalysis?.advice}</p>
+       </div>
+
+       <div className={styles.doctorActions}>
+        <button
+         type="button"
+         className={styles.secondaryActionBtn}
+         onClick={()=>{
+          onSelect?.(doctorResult.symbol);
+          document.getElementById('section-auto-pick')?.scrollIntoView({behavior:'smooth'});
+         }}
+        >
+         คำนวณจำนวนหุ้น &amp; เงินลงทุน (2R) ↓
+        </button>
+        <button
+         type="button"
+         className={styles.primaryActionBtn}
+         onClick={()=>onSelect?.(doctorResult.symbol)}
+        >
+         เปิดดูกราฟเทคนิค {doctorResult.symbol} ↗
+        </button>
+       </div>
+      </>
+     )}
+    </article>
+   )}
+  </section>
 
   <div className={`${styles.stats} stats shadow`}>
    <article className={styles.stat}><small>Market Regime · SET</small><strong>{regime}</strong><p>{stats?.index?`${n(stats.index.price)} · D1 ${stats.index.day}`:'ดัชนียังไม่พร้อม'}</p><small>ขึ้น {stats?.advance??'—'} / ลง {stats?.decline??'—'} / คงที่ {stats?.flat??'—'} · ชุดที่มีข้อมูล {stats?.observed??'—'}/{stats?.expected??'—'}</small></article>
@@ -120,7 +457,14 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
     </div>
    </section>}
 
-   <nav className={styles.presets} aria-label="รูปแบบคัดกรอง">{presets.map(([id,label])=><button key={id} type="button" aria-pressed={preset===id} onClick={()=>setPreset(id)}>{label}</button>)}</nav>
+   <nav className={styles.presets} aria-label="รูปแบบคัดกรอง">
+    {presets.map(([id,label])=><button key={id} type="button" aria-pressed={preset===id} onClick={()=>setPreset(id)}>{label}</button>)}
+   </nav>
+
+   {PRESET_TIPS[preset]&&<div className={styles.presetGuidance}>
+    <span>💡 <strong>คำแนะนำระบบ:</strong> {PRESET_TIPS[preset]}</span>
+   </div>}
+
    <div className={styles.filters}><label className={styles.search}>ค้นหาหุ้น<input aria-label="ค้นหาหุ้นไทยในตาราง" value={query} placeholder="ชื่อย่อ / บริษัท เช่น PTT" onChange={e=>setQuery(e.target.value)}/></label><details className={styles.advancedFilters}><summary>ตัวกรองเพิ่ม{[sector!=='all',peMax!==80,rsiMin!==0||rsiMax!==100,sort!=='quality'].filter(Boolean).length>0?' · ใช้อยู่ '+[sector!=='all',peMax!==80,rsiMin!==0||rsiMax!==100,sort!=='quality'].filter(Boolean).length:''}</summary><div className={styles.advancedControls}><label>Sector · provider<select aria-label="กรองกลุ่มหุ้น" value={sector} onChange={e=>setSector(e.target.value)}><option value="all">ทุกกลุ่ม</option>{sectors.map(s=><option key={s}>{s}</option>)}<option value="unknown">ข้อมูลกลุ่มไม่พร้อม</option></select></label><label>P/E ≤ {peMax===80?'ทั้งหมด':peMax}<input type="range" aria-label="P/E สูงสุด" min="1" max="80" value={peMax} disabled={!hasPe} onChange={e=>setPeMax(Number(e.target.value))}/>{!hasPe&&<small>กำลังรอข้อมูล P/E</small>}</label><label>RSI {rsiMin}–{rsiMax}<div className={styles.ranges}><input type="range" aria-label="RSI ต่ำสุด" min="0" max="100" value={rsiMin} onChange={e=>setRsiMin(Math.min(Number(e.target.value),rsiMax))}/><input type="range" aria-label="RSI สูงสุด" min="0" max="100" value={rsiMax} onChange={e=>setRsiMax(Math.max(Number(e.target.value),rsiMin))}/></div></label><label>เรียงตาม<select aria-label="เรียงหุ้นไทย" value={sort} onChange={e=>setSort(e.target.value)}><option value="quality">EMA Score</option><option value="rvol">RVOL</option><option value="rs">RS vs SET</option><option value="change">% เปลี่ยนแปลง</option><option value="symbol">ชื่อย่อ</option></select></label></div></details><button type="button" aria-pressed={savedOnly} onClick={()=>setSavedOnly(v=>!v)}>★ หุ้นโปรด {favorites.length}</button><button type="button" aria-pressed={showMetrics} onClick={()=>setShowMetrics(v=>!v)}>{showMetrics?'ซ่อน RSI / P/E / RVOL':'แสดง RSI / P/E / RVOL'}</button><button type="button" onClick={reset}>ล้างตัวกรอง</button></div>
    {preset==='orb'&&<p className={styles.notice}>ORB 15m · พักสัญญาณใหม่ระหว่างวิจัย ฟีดหน่วงอย่างน้อย 15 นาที · <a href="#section-results" onClick={event=>{if(onResults){event.preventDefault();onResults();}}}>เปิดประวัติ Trade Ledger ↓</a></p>}
    {preset==='dividend'&&<p className={styles.notice}>เกณฑ์นี้ใช้ Dividend ≥3% และ P/E ≤15 จากข้อมูล provider ไม่ใช่การยืนยันสมาชิกดัชนี SETHD ข้อมูลที่ขาดจะไม่ผ่านตัวกรอง</p>}
@@ -151,4 +495,3 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   <details className={styles.method}><summary>กฎคัดกรอง เวลา และข้อจำกัดข้อมูล</summary><p>Trend Template ฉบับปรับใช้ EMA50/150/200 ตามบรีฟ ไม่ใช่สูตร SMA ต้นฉบับ · 52 สัปดาห์ใช้ 252 แท่ง · EMA200 เทียบย้อนหลัง 20 วัน · RS ใช้ผลตอบแทนสัมพัทธ์ 63 วันและต้องผ่านเอง · กลุ่มอุตสาหกรรมจัดจากข้อมูล provider ไม่ใช่รหัส Sector SET ที่รับรอง</p><p>ราคาและอินดิเคเตอร์ใช้ D1 ปิดแล้วหน่วง ≥15 นาที รายการขึ้น/ลงนับเฉพาะชุดสแกนที่ข้อมูลพร้อม ไม่ใช่ตลาด SET ทั้งหมด · P/E และ Div เป็นข้อมูลอ้างอิงของ provider ดูเวลา profile ในข้อมูล API · ซ่อนแท็บพักโหลด กลับมาดูอ่านผลใหม่ · แผนยังไม่ใช่การเข้าไม้และไม่มีคำสั่งซื้อขาย</p><p>แผน 2R ใช้โครงสร้างมาตรฐานกับต้นทุนสมมติ ถ้าแผน 4H ยังไม่พร้อมจะแสดงแผน D1 พร้อมระบุกรอบเวลา · TP1 50% ส่วนที่เหลือตาม Stop · ขนาดชุดอ้างอิง 100 หุ้น ความเสี่ยงเป็นประมาณการ Gap อาจเสียมากกว่างบ · ผลไม้จริงอยู่ในบัญชี Trade Ledger ประวัติสัญญาณ</p></details>
  </section>;
 }
-

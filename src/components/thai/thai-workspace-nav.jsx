@@ -2,10 +2,10 @@
 import styles from './thai-workspace.module.css';
 
 export const THAI_VIEWS = [
-  { id: 'stage2', hash: '#section-auto-pick', label: 'Stage 2 Screener', note: 'Trend Template หุ้นขาขึ้น' },
-  { id: 'radar', hash: '#section-radar', label: 'Strategy Radar', note: 'เรดาร์สัญญาณ & แผนเฝ้า' },
-  { id: 'chart', hash: '#chart-panel', label: 'Interactive Chart', note: 'กราฟเทคนิค & อินดิเคเตอร์' },
-  { id: 'results', hash: '#section-results', label: 'Trade Ledger', note: 'ประวัติ & ผลลัพธ์ 100 ไม้' },
+  { id: 'stage2', hash: '#section-auto-pick', label: 'สแกนหุ้นขาขึ้น (Stage 2)', note: 'คัดหุ้นเด่น & เช็คแนวรับแนวต้าน' },
+  { id: 'radar', hash: '#section-radar', label: 'เรดาร์สัญญาณสด (Radar)', note: 'แผนเฝ้ารายวัน & เสียงแจ้งเตือน' },
+  { id: 'chart', hash: '#chart-panel', label: 'กราฟเทคนิค (Chart)', note: 'แท่งเทียน & อินดิเคเตอร์' },
+  { id: 'results', hash: '#section-results', label: 'บันทึกผลงาน (Trade Ledger)', note: 'ประวัติ & สถิติชนะ 100 ไม้' },
 ];
 
 export function thaiViewForHash(hash) {
