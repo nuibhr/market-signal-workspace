@@ -77,7 +77,7 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
      <li><Check size={16} className="feat-icon-ok"/> ค้นหาแนวรับ-แนวต้านด่วน 10 ตัว / วัน</li>
      <li><Check size={16} className="feat-icon-ok"/> โต๊ะคำนวณไม้ 2R Position Sizing พื้นฐาน</li>
      <li><Check size={16} className="feat-icon-ok"/> ดูกราฟเทคนิค &amp; อินดิเคเตอร์ D1/4H</li>
-     <li className="is-disabled"><X size={16} className="feat-icon-no"/> การบ้านหุ้นเด่นส่งเข้า LINE Notify</li>
+     <li className="is-disabled"><X size={16} className="feat-icon-no"/> การบ้านหุ้นเด่นส่งเข้า Telegram VIP</li>
      <li className="is-disabled"><X size={16} className="feat-icon-no"/> ปลดล็อก DR80, หุ้นสหรัฐฯ, TFEX</li>
      <li className="is-disabled"><X size={16} className="feat-icon-no"/> เสียงแจ้งเตือน Real-Time ทันที</li>
      <li className="is-disabled"><X size={16} className="feat-icon-no"/> สิทธิ์เข้ากลุ่มปิด VIP Community</li>
@@ -90,7 +90,7 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
     <span className="package-badge-popular">🌟 ยอดนิยม แนะนำ</span>
     <div className="package-head">
      <h3 className="package-title">👑 PRO VIP</h3>
-     <p className="package-subtitle">สายลุยทำกำไร · ปลดล็อกครบทุกตลาด + รับหุ้นเด่นเข้า LINE</p>
+     <p className="package-subtitle">สายลุยทำกำไร · ปลดล็อกครบทุกตลาด + การบ้านหุ้นส่งเข้า Telegram VIP</p>
     </div>
     <div className="package-price-wrap">
      <div className="package-price-num">
@@ -104,12 +104,12 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
     <span className="package-ai-quota">โควตาถาม AI: 60 คำถาม / วัน</span>
     <ul className="package-feature-list">
      <li><Check size={16} className="feat-icon-ok"/> <b>ปลดล็อกครบทุกตลาด:</b> หุ้นไทย + DR80 + US + TFEX</li>
-     <li><Check size={16} className="feat-icon-ok"/> <b>การบ้านหุ้นเด่นส่งเข้า LINE ทุกเย็น 17:00 น.</b></li>
+     <li><Check size={16} className="feat-icon-ok"/> <b>การบ้านหุ้นเด่นส่งเข้า Telegram VIP ทุกเย็น 17:00 น.</b></li>
      <li><Check size={16} className="feat-icon-ok"/> <b>ค้นหาแนวรับ-แนวต้านด่วน ไม่จำกัดตัว</b></li>
      <li><Check size={16} className="feat-icon-ok"/> <b>เสียงแจ้งเตือนสไตล์เพื่อนกัน Real-Time ทันที</b></li>
      <li><Check size={16} className="feat-icon-ok"/> โต๊ะคำนวณไม้ 2R Full Option คุมความเสี่ยง</li>
      <li><Check size={16} className="feat-icon-ok"/> ระบบเกราะคุ้มครองเงินต้น (เตือนหุ้นดอย Stage 4)</li>
-     <li><Check size={16} className="feat-icon-ok"/> <b>สิทธิ์เข้ากลุ่มปิด VIP LINE Community</b></li>
+     <li><Check size={16} className="feat-icon-ok"/> <b>สิทธิ์เข้ากลุ่มปิด VIP Telegram Community</b></li>
      <li><Check size={16} className="feat-icon-ok"/> สิทธิ์ขอเพิ่มฟีเจอร์ก่อนใคร</li>
     </ul>
     {!account?<a href="/api/auth/line/start" className="account-primary">เข้าสู่ระบบ LINE</a>:<button className="account-primary" disabled={Boolean(busy)||!catalog?.configured} onClick={()=>go(managed?'portal':'checkout',proPlan.id)}>{busy===proPlan.id?'กำลังเปิด…':rights?.planId==='pro'?'แพ็กเกจปัจจุบัน':managed?'อัปเกรดเป็น PRO VIP':'สมัคร PRO VIP'} <ArrowUpRight size={15}/></button>}
@@ -143,7 +143,7 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
        <td className="col-vip"><span className="check-yes"><Check size={14}/> ไม่จำกัดตัว</span></td>
       </tr>
       <tr>
-       <td><b>การบ้านหุ้นเด่นส่งเข้า LINE Notify</b></td>
+       <td><b>การบ้านหุ้นเด่นส่งเข้า Telegram VIP</b></td>
        <td className="col-basic"><span className="cross-no"><X size={14}/> ไม่ได้รับ</span></td>
        <td className="col-vip"><span className="check-yes"><Check size={14}/> ส่งทุกเย็น 17:00 น.</span></td>
       </tr>
@@ -173,7 +173,7 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
        <td className="col-vip"><span className="check-yes"><Check size={14}/> ปลดล็อกครบทุกตลาด</span></td>
       </tr>
       <tr>
-       <td><b>สิทธิ์เข้ากลุ่มปิด VIP LINE Community</b></td>
+       <td><b>สิทธิ์เข้ากลุ่มปิด VIP Telegram Community</b></td>
        <td className="col-basic"><span className="cross-no"><X size={14}/> ไม่ได้รับ</span></td>
        <td className="col-vip"><span className="check-yes"><Check size={14}/> สิทธิ์เข้ากลุ่มทันที</span></td>
       </tr>
