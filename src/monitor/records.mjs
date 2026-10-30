@@ -10,8 +10,23 @@ export function eventLabel(event) {
   return EVENT_LABELS[event.type]||event.type;
 }
 export function eventSpeech(event) {
-  if(event.type==='NEWS')return `${eventLabel(event)} ${MARKET_LABELS[event.market]} ${event.title}`;
-  return `${event.symbol} ${MARKET_LABELS[event.market]} ${event.side||''} ${eventLabel(event)} ราคาอ้างอิง ${event.price??'ไม่ระบุ'}`;
+  if(event.type==='NEWS') {
+    return event.breaking ? `มีข่าวด่วน ${event.title}` : `มีข่าวหุ้น ${event.title}`;
+  }
+  const sym = event.symbol || 'ตัวนี้';
+  if(event.type === 'ENTRY') {
+    return `เพื่อนๆ ${sym} ${event.side==='SHORT'?'ฝั่ง SHORT ':'จุดซื้อ'}มาแล้วนะ แถว ${event.price??'นี้'}`;
+  }
+  if(event.type === 'TARGET') {
+    return `${sym} ถึงเป้าทำกำไรแล้วนะ ใครมีของอย่าลืมล็อคกำไร`;
+  }
+  if(event.type === 'STOP') {
+    return `เตือนนะ ${sym} หลุดจุดคัทแล้ว คุมความเสี่ยงกันด้วย`;
+  }
+  if(event.type === 'EXIT') {
+    return `${sym} จบแผนแล้วนะ`;
+  }
+  return `${sym} ${event.side||''} ${eventLabel(event)} แถว ${event.price??''}`;
 }
 export function countedTrade(record,ledger) {
   return Number.isFinite(record.netR)&&(ledger==='daytrade'?record.status==='CLOSED':['STOP','CLOSED'].includes(record.status));
