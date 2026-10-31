@@ -675,7 +675,17 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
                 </div>
               </div>
               <div className="indicator-strip"><span>CHART</span><button className={chartStyle === 'candles' ? 'selected' : ''} aria-pressed={chartStyle === 'candles'} onClick={() => setChartStyle('candles')}>Candles</button><button className={chartStyle === 'line' ? 'selected' : ''} aria-pressed={chartStyle === 'line'} onClick={() => setChartStyle('line')}>Line</button><span>OVERLAYS</span>{[['ema20', 'EMA 20'], ['ema50', 'EMA 50'], ['sma20', 'SMA 20'], ['bollinger', 'Bollinger'], ['donchian', 'Donchian 20'], ['vwap', 'VWAP*'], ['volume', 'Volume'], ['levels', 'แนวรับ / ต้าน']].map(([key, label]) => <button key={key} className={chartIndicators[key] ? 'selected' : ''} disabled={!analysis || key === 'volume' && asset.id==='forex' || key === 'vwap' && !analysis?.vwapSeries?.length} aria-pressed={Boolean(chartIndicators[key])} title={key === 'vwap' ? 'VWAP สะสมเฉพาะแท่งที่โหลดและมี Volume' : undefined} onClick={() => toggleIndicator(key)}>{label}</button>)}<button onClick={() => setIndicators(Object.fromEntries(Object.keys(DEFAULT_INDICATORS).map(key => [key, false])))}>ล้าง</button><button onClick={() => { setIndicators(DEFAULT_INDICATORS); setChartStyle('candles'); }}>ค่าเริ่มต้น</button></div>
-              {liveState === 'unavailable' && <p role="alert" className="chart-data-note">DATA UNAVAILABLE · {liveError || 'SOURCE_UNAVAILABLE'}{liveError === 'DISPLAY_RIGHTS_NOT_CONFIRMED' ? ' · ยังไม่ยืนยันสิทธิแสดงข้อมูลใน environment นี้' : ''}</p>}
+              {liveState === 'unavailable' && (
+                <p role="alert" className="chart-data-note">
+                  {liveError === 'MEMBERSHIP_REQUIRED' ? (
+                    <span>
+                      🔒 <b>ต้องใช้สิทธิสมาชิกเพื่อดูกราฟเต็ม</b> · กรุณา <a href="/account" style={{ color: '#38bdf8', textDecoration: 'underline', fontWeight: 700 }}>เข้าสู่ระบบหรือเปิด Demo สมาชิกที่นี่ ↗</a>
+                    </span>
+                  ) : (
+                    <>DATA UNAVAILABLE · {liveError || 'SOURCE_UNAVAILABLE'}{liveError === 'DISPLAY_RIGHTS_NOT_CONFIRMED' ? ' · ยังไม่ยืนยันสิทธิแสดงข้อมูลใน environment นี้' : ''}</>
+                  )}
+                </p>
+              )}
               {hasRealBars && liveSeries.session && <p role="status" className="chart-data-note">SET / mai · {liveSeries.quote?.marketStatus ? `สถานะจากผู้ให้บริการ ${liveSeries.quote.marketStatus}` : `ตามปฏิทิน ${liveSeries.session.scheduledSession}`} · Asia/Bangkok{!liveSeries.quote?.observedAt ? ' · ไม่ทราบความหน่วง quote (ผู้ให้บริการไม่ส่ง timestamp)' : ''}</p>}
               <CandlestickChart symbol={asset.symbol} timeframe={timeframe} bars={displayBars} analysis={analysis} indicators={chartIndicators} chartStyle={chartStyle} chartRange={chartRange} loading={hasCandleConnection && liveState === 'loading'} unavailable={hasCandleConnection && liveState === 'unavailable'} source={sourceLabel} />
               {hasTfexConnection && <div className="tfex-quote-note">กราฟใช้แท่ง OHLCV ที่มีเวลาแท่งจาก TFEX Open API · เวลา quote ล่าสุดอาจไม่ระบุ · AutoPick ยังรอยืนยันสัญญานำ วันหมดอายุ และความเสี่ยงต่อสัญญา</div>}
