@@ -3,25 +3,25 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
   width: 100%;
   margin-bottom: 24px;
 }
 
-/* ─── TOP COCKPIT BAR (BYOK HUD) ─── */
-.byokBar {
+/* ─── UNIFIED LUXURY FINTECH COCKPIT (BORDERLESS HERO DESK) ─── */
+.cockpitHeroDesk {
   position: relative;
-  background: rgba(13, 23, 48, 0.65);
+  background: rgba(13, 23, 48, 0.45);
   border: none;
-  border-radius: 16px;
-  padding: 18px 22px;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4);
+  border-radius: 22px;
+  padding: 24px 28px;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
   overflow: hidden;
 }
 
-.byokBarGlow {
+.cockpitAmbientGlow {
   position: absolute;
   top: 0;
   left: 0;
@@ -31,116 +31,127 @@
   opacity: 0.85;
 }
 
-.byokHeader {
+.cockpitHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
 }
 
-.byokBadgeRow {
+.cockpitLeft {
+  flex: 1;
+  min-width: 320px;
+}
+
+.badgeRow {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   flex-wrap: wrap;
 }
 
-.byokTag {
-  background: rgba(34, 211, 238, 0.15);
+.gatewayPill {
+  background: rgba(34, 211, 238, 0.12);
   border: none;
   color: #22d3ee;
   font-size: 10px;
   font-weight: 800;
-  padding: 3px 9px;
-  border-radius: 6px;
-  letter-spacing: 0.8px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.6px;
 }
 
-.byokBrokerBadge {
-  background: rgba(168, 85, 247, 0.18);
+.brokerPill {
+  background: rgba(168, 85, 247, 0.15);
   border: none;
   color: #c084fc;
   font-size: 10px;
   font-weight: 800;
-  padding: 3px 9px;
-  border-radius: 6px;
-  letter-spacing: 0.6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.5px;
 }
 
-.byokEnclaveBadge {
+.enclavePill {
   background: rgba(16, 185, 129, 0.12);
   border: none;
   color: #34d399;
   font-size: 9px;
   font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 5px;
-  letter-spacing: 0.6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
 }
 
-.byokPingBadge {
-  background: rgba(255, 255, 255, 0.06);
+.latencyPill {
+  background: rgba(255, 255, 255, 0.05);
   border: none;
   color: #94a3b8;
   font-size: 9px;
   font-weight: 700;
-  padding: 3px 7px;
-  border-radius: 5px;
+  padding: 4px 9px;
+  border-radius: 9999px;
   font-family: ui-monospace, SFMono-Regular, monospace;
 }
 
-.byokTitle {
-  font-size: 16px;
+.modePill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: none;
+}
+
+.cockpitTitle {
+  font-size: 18px;
   font-weight: 800;
   color: #ffffff;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   letter-spacing: -0.2px;
 }
 
-.byokDesc {
+.cockpitDesc {
   font-size: 12px;
   color: #94a3b8;
   margin: 0;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
-.byokActions {
+.cockpitActions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.byokBtnPrimary {
+.actionBtnPrimary {
   background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
   color: #ffffff;
   border: none;
-  border-radius: 10px;
-  padding: 9px 15px;
+  border-radius: 9999px;
+  padding: 9px 18px;
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  box-shadow: 0 4px 18px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.35);
   transition: all 0.2s ease;
 }
 
-.byokBtnPrimary:hover {
+.actionBtnPrimary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(6, 182, 212, 0.55);
+  box-shadow: 0 6px 22px rgba(6, 182, 212, 0.5);
 }
 
-.byokBtnSecondary {
+.actionBtnSecondary {
   background: rgba(255, 255, 255, 0.05);
   border: none;
   color: #f1f5f9;
-  border-radius: 10px;
-  padding: 9px 13px;
+  border-radius: 9999px;
+  padding: 9px 16px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -149,71 +160,84 @@
   transition: all 0.2s ease;
 }
 
-.byokBtnSecondary:hover {
+.actionBtnSecondary:hover {
   background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
-.byokBtnDanger {
-  background: rgba(244, 63, 94, 0.12);
+.partnerActionBtn {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.28) 100%);
+  color: #34d399;
   border: none;
-  color: #fb7185;
-  border-radius: 10px;
-  padding: 9px 13px;
+  border-radius: 9999px;
+  padding: 9px 18px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);
   transition: all 0.2s ease;
 }
 
-.byokBtnDanger:hover {
-  background: rgba(244, 63, 94, 0.22);
+.partnerActionBtn:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.32) 0%, rgba(5, 150, 105, 0.38) 100%);
+  color: #6ee7b7;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
 }
 
-/* ─── HUD STATS CARDS ─── */
-.hudStatsGrid {
+/* ─── HERO KPI STRIP (SEAMLESS OPEN BORDERLESS CANVAS) ─── */
+.kpiHeroStrip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: none;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 22px 0 18px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.hudCard {
-  background: rgba(255, 255, 255, 0.03);
-  border: none;
-  border-radius: 12px;
-  padding: 12px 14px;
+.kpiHeroMetric {
+  padding: 0 20px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  gap: 4px;
 }
 
-.hudCardLabel {
-  font-size: 10px;
+.kpiHeroMetric:first-child {
+  padding-left: 0;
+}
+
+.kpiHeroMetric:last-child {
+  border-right: none;
+}
+
+.kpiHeroLabel {
+  font-size: 11px;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
   font-weight: 700;
-  margin-bottom: 4px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.hudCardVal {
-  font-size: 18px;
-  font-weight: 800;
-  color: #ffffff;
-  font-family: ui-monospace, SFMono-Regular, monospace;
   margin-bottom: 2px;
 }
 
-.hudCardSub {
+.kpiHeroValue {
+  font-size: 24px;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
+}
+
+.kpiHeroSub {
   font-size: 11px;
   color: #64748b;
   display: flex;
@@ -231,20 +255,15 @@
   font-weight: 700;
 }
 
-/* ─── ASSET ALLOCATION & FX BAR ─── */
-.allocationCard {
-  background: rgba(15, 23, 42, 0.55);
-  border: none;
-  border-radius: 14px;
-  padding: 14px 18px;
+/* ─── INTEGRATED ALLOCATION RIBBON (ZERO BOX-IN-A-BOX) ─── */
+.allocationRibbon {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  margin-top: 4px;
 }
 
-.allocationTop {
+.allocationHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -253,29 +272,29 @@
 }
 
 .allocationTitle {
-  font-size: 13px;
-  font-weight: 800;
-  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2e8f0;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.allocationFxAlert {
+.allocationFxPill {
   font-size: 11px;
   color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
+  background: rgba(56, 189, 248, 0.1);
   border: none;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
   font-weight: 600;
   backdrop-filter: blur(10px);
 }
 
-.allocationBarTrack {
-  height: 10px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 999px;
+.allocationTrack {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 9999px;
   overflow: hidden;
   display: flex;
   border: none;
@@ -301,7 +320,7 @@
 
 .allocationLegend {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   font-size: 11px;
   color: #94a3b8;
   flex-wrap: wrap;
@@ -312,7 +331,37 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-right: 5px;
+  margin-right: 6px;
+}
+
+/* Backwards-compatibility aliases */
+.byokBar {
+  position: relative;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.hudStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 16px 0;
+}
+.hudCard {
+  background: transparent;
+  border: none;
+  padding: 0 20px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hudCard:last-child {
+  border-right: none;
+}
+.allocationCard {
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 /* ─── FILTER TABS & SEARCH ─── */
@@ -322,41 +371,54 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  margin-top: 4px;
 }
 
 .filterTabs {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .filterTabBtn {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
   border: none;
   color: #94a3b8;
-  padding: 7px 13px;
-  border-radius: 8px;
+  padding: 8px 18px;
+  border-radius: 9999px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .filterTabBtn:hover {
-  background: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
+  transform: translateY(-1px);
 }
 
 .filterTabBtnActive {
-  background: rgba(34, 211, 238, 0.2);
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%);
   border: none;
-  color: #22d3ee;
-  box-shadow: 0 0 14px rgba(34, 211, 238, 0.3);
+  color: #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+  font-weight: 800;
 }
 
-/* ─── STAGE-DIAGNOSED PORTFOLIO TABLE ─── */
+@media (max-width: 900px) {
+  .kpiHeroStrip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .kpiHeroMetric {
+    border-right: none;
+    padding: 0;
+  }
+}
+
 .tableWrapper {
   background: rgba(15, 23, 42, 0.6);
   border: none;

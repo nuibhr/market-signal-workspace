@@ -1,7 +1,7 @@
 .container {
   margin: 24px 0 32px;
   background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 20px;
   padding: 24px;
   color: #f8fafc;
@@ -79,7 +79,7 @@
 
 .statBox {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 14px;
   padding: 12px 14px;
   display: flex;
@@ -120,7 +120,7 @@
   gap: 8px;
   padding: 10px 18px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 12px;
   color: #94a3b8;
   font-size: 13px;
@@ -215,7 +215,7 @@
 .filterPill {
   padding: 6px 14px;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 8px;
   color: #94a3b8;
   font-size: 12px;
@@ -539,7 +539,7 @@
 
 .camarillaDrawer {
   background: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 10px;
   padding: 10px;
   margin-bottom: 12px;
@@ -687,7 +687,7 @@
 
 .sandboxCard {
   background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 24px;
@@ -792,7 +792,7 @@
 
 .tableCard {
   background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 16px;
   padding: 20px;
 }
@@ -1202,8 +1202,8 @@
 }
 
 .kpiCard {
-  background: #1a2234;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
   border-radius: 14px;
   padding: 12px 14px;
   display: flex;
@@ -1212,7 +1212,7 @@
 }
 
 .kpiCard:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .kpiLabel {
@@ -1758,7 +1758,7 @@
 
 .morningPickBox {
   background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 14px;
   padding: 12px;
   display: flex;
@@ -1917,7 +1917,7 @@
 
 .ledgerStatPill {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 10px;
   padding: 6px 12px;
   display: flex;
@@ -1934,7 +1934,7 @@
 
 .ledgerTableCard {
   background: #141c2e;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 16px;
   overflow: hidden;
 }
@@ -2310,7 +2310,7 @@
 
 .scoreMetricCard {
   background: rgba(10, 19, 36, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 12px;
   padding: 12px 14px;
   text-align: center;
@@ -2685,7 +2685,7 @@
 
 .doctorLevelItem {
   background: rgba(10, 19, 36, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 10px;
   padding: 10px 12px;
   text-align: center;

@@ -676,20 +676,53 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .nugaom
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .asset-hero,
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='dashboard'],
 html:not([data-theme='light']) body:not([data-theme='light']) .panel {
-  background: #111C33 !important;
-  border: 1px solid #243550 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+  background: rgba(17, 28, 51, 0.6) !important;
+  border: none !important;
+  border-radius: 18px !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
   color: #F1F5F9 !important;
 }
 
-/* Elevated Surfaces (Stats & Headers) */
-html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stats'],
-html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stat'],
-html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) thead th {
-  background: #172641 !important;
-  border-color: #243550 !important;
+/* Clear outer panels & containers completely to eliminate nested boxes (ตารางกรอบๆ) */
+html:not([data-theme='light']) #section-portfolio,
+html:not([data-theme='light']) .market-workspace #section-portfolio,
+html:not([data-theme='light']) .market-workspace #section-portfolio.panel,
+html:not([data-theme='light']) #section-overview.panel,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='equity-portfolio-desk_container'],
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='thai-workspace_panel'] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Elevated Surfaces (Stats & Headers) - Seamless Borderless Typography */
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stats'] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stat'] {
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
   color: #F1F5F9 !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stat']:last-child {
+  border-right: none !important;
+}
+
+html:not([data-theme='light']) thead th {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  color: #94A3B8 !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stat'] strong {
@@ -934,17 +967,23 @@ html:not([data-theme='light']) .signal-costs {
 
 /* ── 3. DR Strategy Radar & Decision Desk ── */
 html:not([data-theme='light']) [class*='dr-strategy_container'],
-html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='container']:not([class*='us-stage2-desk_']) {
-  background: #111C33 !important;
-  border: 1px solid #243550 !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='container']:not([class*='us-stage2-desk_']):not([class*='equity-portfolio-desk_']) {
+  background: rgba(17, 28, 51, 0.5) !important;
+  border: none !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3) !important;
   color: #F1F5F9 !important;
 }
 
-html:not([data-theme='light']) [class*='statBox'] {
-  background: #172641 !important;
-  border: 1px solid #243550 !important;
-  border-radius: 12px !important;
+html:not([data-theme='light']) [class*='statBox'],
+html:not([data-theme='light']) [class*='kpiCard'] {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  box-shadow: none !important;
 }
 
 html:not([data-theme='light']) [class*='statVal'] {
@@ -956,24 +995,26 @@ html:not([data-theme='light']) [class*='statLabel'] {
 }
 
 html:not([data-theme='light']) [class*='tabBtn'] {
-  background: #172641 !important;
-  border: 1px solid #243550 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: none !important;
   color: #94A3B8 !important;
-  border-radius: 10px !important;
+  border-radius: 9999px !important;
+  padding: 8px 18px !important;
   transition: var(--magic-transition) !important;
 }
 
 html:not([data-theme='light']) [class*='tabBtn']:hover {
-  background: #1C3250 !important;
-  border-color: #22D3EE !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: none !important;
   color: #F1F5F9 !important;
+  transform: translateY(-1px) !important;
 }
 
 html:not([data-theme='light']) [class*='tabBtnActive'] {
-  background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
-  border-color: #22D3EE !important;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%) !important;
+  border: none !important;
   color: #22D3EE !important;
-  box-shadow: 0 0 14px rgba(34, 211, 238, 0.25) !important;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25) !important;
 }
 
 html:not([data-theme='light']) [class*='filterPill']:not([class*='us-stage2-desk_']) {

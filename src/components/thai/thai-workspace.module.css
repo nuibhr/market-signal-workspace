@@ -167,6 +167,13 @@
   outline-offset: 3px;
 }
 
+.panel {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
 .panel[hidden] {
   display: none !important;
 }

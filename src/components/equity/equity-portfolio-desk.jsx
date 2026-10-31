@@ -516,47 +516,45 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
 
   return (
     <div className={styles.container}>
-      {/* ─── TOP COCKPIT BAR (BYOK HUD) ─── */}
-      <section className={styles.byokBar}>
-        <div className={styles.byokBarGlow} />
-        <div className={styles.byokHeader}>
-          <div className={styles.byokLeft}>
-            <div className={styles.byokBadgeRow}>
-              <span className={styles.byokTag}>SETTRADE OPEN API GATEWAY</span>
-              <span className={styles.byokBrokerBadge}>
+      {/* ─── UNIFIED LUXURY FINTECH COCKPIT (BORDERLESS HERO DESK) ─── */}
+      <section className={styles.cockpitHeroDesk}>
+        <div className={styles.cockpitAmbientGlow} />
+
+        {/* Cockpit Header with Floating Micro-Pills */}
+        <div className={styles.cockpitHeader}>
+          <div className={styles.cockpitLeft}>
+            <div className={styles.badgeRow}>
+              <span className={styles.gatewayPill}>SETTRADE OPEN API GATEWAY</span>
+              <span className={styles.brokerPill}>
                 [{data?.brokerId || brokerId}] {data?.brokerName || 'บล.ทรีนีตี้'}
               </span>
-              <span className={styles.byokEnclaveBadge}>
+              <span className={styles.enclavePill}>
                 🛡️ ZERO-CUSTODY CLIENT ENCLAVE (ALGO_EQ)
               </span>
-              <span className={styles.byokPingBadge}>⚡ {latency}ms</span>
+              <span className={styles.latencyPill}>⚡ {latency}ms</span>
               <span
+                className={styles.modePill}
                 style={{
-                  fontSize: '10px',
-                  fontWeight: 800,
-                  padding: '3px 9px',
-                  borderRadius: '6px',
-                  background: data?.mode === 'LIVE' ? 'rgba(16,185,129,0.25)' : 'rgba(56,189,248,0.25)',
+                  background: data?.mode === 'LIVE' ? 'rgba(16,185,129,0.2)' : 'rgba(56,189,248,0.2)',
                   color: data?.mode === 'LIVE' ? '#34d399' : '#38bdf8',
-                  border: 'none',
                 }}
               >
                 {data?.mode === 'LIVE' ? '🟢 LIVE REAL MARKET' : '🧪 DEMO SANDBOX'}
               </span>
             </div>
-            <h2 className={styles.byokTitle}>
+            <h2 className={styles.cockpitTitle}>
               ศูนย์บัญชาการพอร์ตหุ้นไทย &amp; DR อัจฉริยะ (Smart Equity Command Desk)
             </h2>
-            <p className={styles.byokDesc}>
+            <p className={styles.cockpitDesc}>
               วิเคราะห์เทรนด์ Stage 2 อัตโนมัติ, เฝ้าระวังจุด Trailing Stop / Cut Loss, และตรวจสอบความคุ้มค่า DR
               ผ่าน 2 พันธมิตรโบรกเกอร์อย่างเป็นทางการ (บล.พาย Pi Securities &amp; บล.ทรีนีตี้ Trinity Securities)
             </p>
           </div>
 
-          <div className={styles.byokActions}>
+          <div className={styles.cockpitActions}>
             <button
               type="button"
-              className={styles.byokBtnPrimary}
+              className={styles.actionBtnPrimary}
               onClick={() => syncPortfolio(data?.mode === 'DEMO')}
               disabled={loading}
             >
@@ -564,33 +562,33 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
             </button>
             <button
               type="button"
-              className={styles.byokBtnSecondary}
+              className={styles.actionBtnSecondary}
               onClick={() => syncPortfolio(true, '003')}
               disabled={loading}
               style={{
-                background: (data?.brokerId || brokerId) === '003' ? 'rgba(168,85,247,0.3)' : undefined,
-                boxShadow: (data?.brokerId || brokerId) === '003' ? '0 0 16px rgba(168,85,247,0.35)' : undefined,
-                color: (data?.brokerId || brokerId) === '003' ? '#ffffff' : undefined,
+                background: (data?.brokerId || brokerId) === '003' ? 'rgba(168,85,247,0.25)' : undefined,
+                boxShadow: (data?.brokerId || brokerId) === '003' ? '0 0 16px rgba(168,85,247,0.3)' : undefined,
+                color: (data?.brokerId || brokerId) === '003' ? '#c084fc' : undefined,
               }}
             >
               🥧 ทดลอง บล.พาย (003)
             </button>
             <button
               type="button"
-              className={styles.byokBtnSecondary}
+              className={styles.actionBtnSecondary}
               onClick={() => syncPortfolio(true, '022')}
               disabled={loading}
               style={{
-                background: (data?.brokerId || brokerId) === '022' ? 'rgba(34,211,238,0.3)' : undefined,
-                boxShadow: (data?.brokerId || brokerId) === '022' ? '0 0 16px rgba(34,211,238,0.35)' : undefined,
-                color: (data?.brokerId || brokerId) === '022' ? '#ffffff' : undefined,
+                background: (data?.brokerId || brokerId) === '022' ? 'rgba(34,211,238,0.25)' : undefined,
+                boxShadow: (data?.brokerId || brokerId) === '022' ? '0 0 16px rgba(34,211,238,0.3)' : undefined,
+                color: (data?.brokerId || brokerId) === '022' ? '#38bdf8' : undefined,
               }}
             >
               🌟 ทดลอง บล.ทรีนีตี้ (022)
             </button>
             <button
               type="button"
-              className={styles.partnerBtn}
+              className={styles.partnerActionBtn}
               onClick={() => {
                 setLeadSuccess(null);
                 setLeadError(null);
@@ -601,7 +599,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
             </button>
             <button
               type="button"
-              className={styles.byokBtnSecondary}
+              className={styles.actionBtnSecondary}
               onClick={() => setShowModal(true)}
             >
               ⚙️ ตั้งค่า API พอร์ตจริง
@@ -612,18 +610,20 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
         {error && (
           <div
             style={{
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.4)',
-              borderRadius: '8px',
-              padding: '10px 14px',
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '12px 18px',
               color: '#f87171',
               fontSize: '12px',
-              marginBottom: '14px',
+              marginTop: '16px',
+              marginBottom: '4px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '8px',
+              gap: '10px',
               flexWrap: 'wrap',
+              backdropFilter: 'blur(12px)',
             }}
           >
             <span>⚠️ {error}</span>
@@ -632,13 +632,14 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 type="button"
                 onClick={() => syncPortfolio(true, '022')}
                 style={{
-                  background: 'rgba(255,255,255,0.1)',
+                  background: 'rgba(255,255,255,0.08)',
                   border: 'none',
                   color: '#fff',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
+                  padding: '5px 12px',
+                  borderRadius: '9999px',
                   cursor: 'pointer',
                   fontSize: '11px',
+                  fontWeight: 600,
                 }}
               >
                 สลับกลับโหมด Sandbox
@@ -650,11 +651,11 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                   setShowLeadModal(true);
                 }}
                 style={{
-                  background: 'rgba(16,185,129,0.3)',
-                  border: '1px solid #10b981',
+                  background: 'linear-gradient(135deg, rgba(16,185,129,0.3), rgba(5,150,105,0.35))',
+                  border: 'none',
                   color: '#34d399',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
+                  padding: '5px 12px',
+                  borderRadius: '9999px',
                   cursor: 'pointer',
                   fontSize: '11px',
                   fontWeight: 700,
@@ -666,28 +667,28 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
           </div>
         )}
 
-        {/* ─── HUD STATS ROW ─── */}
-        <div className={styles.hudStatsGrid}>
-          <div className={styles.hudCard}>
-            <span className={styles.hudCardLabel}>
+        {/* ─── HERO KPI STRIP (OPEN BORDERLESS METRICS) ─── */}
+        <div className={styles.kpiHeroStrip}>
+          <div className={styles.kpiHeroMetric}>
+            <div className={styles.kpiHeroLabel}>
               <span>มูลค่าพอร์ตสุทธิ (Net Equity)</span>
               <span>💰</span>
-            </span>
-            <span className={styles.hudCardVal}>
+            </div>
+            <div className={styles.kpiHeroValue}>
               {data?.equity?.toLocaleString('th-TH') || '0'} ฿
-            </span>
-            <span className={styles.hudCardSub}>
+            </div>
+            <div className={styles.kpiHeroSub}>
               วงเงินพร้อมซื้อ: {data?.lineAvailable?.toLocaleString('th-TH') || '0'} ฿
-            </span>
+            </div>
           </div>
 
-          <div className={styles.hudCard}>
-            <span className={styles.hudCardLabel}>
+          <div className={styles.kpiHeroMetric}>
+            <div className={styles.kpiHeroLabel}>
               <span>กำไร/ขาดทุนรวม (Unrealized P/L)</span>
               <span>📈</span>
-            </span>
-            <span
-              className={`${styles.hudCardVal} ${
+            </div>
+            <div
+              className={`${styles.kpiHeroValue} ${
                 (data?.totalUnrealizedPl || 0) >= 0 ? styles.positiveText : styles.negativeText
               }`}
             >
@@ -695,82 +696,82 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               {data?.totalUnrealizedPl?.toLocaleString('th-TH')} ฿ (
               {(data?.totalUnrealizedPlPct || 0) >= 0 ? '+' : ''}
               {data?.totalUnrealizedPlPct}%)
-            </span>
-            <span className={styles.hudCardSub}>
+            </div>
+            <div className={styles.kpiHeroSub}>
               มูลค่าตลาด: {data?.totalMarketValue?.toLocaleString('th-TH')} ฿
-            </span>
+            </div>
           </div>
 
-          <div className={styles.hudCard}>
-            <span className={styles.hudCardLabel}>
+          <div className={styles.kpiHeroMetric}>
+            <div className={styles.kpiHeroLabel}>
               <span>คะแนนสุขภาพพอร์ต (Stage Health)</span>
               <span>🌟</span>
-            </span>
-            <span className={`${styles.hudCardVal} ${styles.positiveText}`}>
+            </div>
+            <div className={`${styles.kpiHeroValue} ${styles.positiveText}`}>
               {data?.health?.score ?? 83} / 100
-            </span>
-            <span className={styles.hudCardSub}>
+            </div>
+            <div className={styles.kpiHeroSub}>
               {data?.health?.grade || 'เกรด A ขาขึ้นแข็งแกร่ง'}
-            </span>
+            </div>
           </div>
 
-          <div className={styles.hudCard}>
-            <span className={styles.hudCardLabel}>
+          <div className={styles.kpiHeroMetric}>
+            <div className={styles.kpiHeroLabel}>
               <span>สัดส่วนหุ้นขาขึ้น vs หุ้นอันตราย</span>
               <span>🛡️</span>
-            </span>
-            <span className={styles.hudCardVal} style={{ fontSize: '15px' }}>
+            </div>
+            <div className={styles.kpiHeroValue} style={{ fontSize: '18px' }}>
               <span className={styles.positiveText}>Stage 2: {data?.health?.stage2RatioPct ?? 69.4}%</span>
-              {' | '}
+              {' · '}
               <span className={styles.negativeText}>Stage 4: {data?.health?.stage4DangerRatioPct ?? 10.7}%</span>
-            </span>
-            <span className={styles.hudCardSub}>
+            </div>
+            <div className={styles.kpiHeroSub}>
               ระบบกรองและแจ้งเตือนหุ้นหลุดแนวรับเรียลไทม์
+            </div>
+          </div>
+        </div>
+
+        {/* ─── INTEGRATED ALLOCATION RIBBON (SEAMLESS STREAM) ─── */}
+        <div className={styles.allocationRibbon}>
+          <div className={styles.allocationHeader}>
+            <div className={styles.allocationTitle}>
+              <span>📊 สัดส่วนพอร์ตลงทุน (Portfolio Allocation: Thai Stock vs Global DR)</span>
+            </div>
+            <div className={styles.allocationFxPill}>
+              💵 {data?.fxEnvironment?.impactSummary || 'USD/THB 34.25 บาท (ค่าเงินเสถียร ไม่กดดันพอร์ต DR)'}
+            </div>
+          </div>
+
+          <div className={styles.allocationTrack}>
+            <div
+              className={styles.barThai}
+              style={{ width: `${data?.allocation?.thaiStockPct || 62}%` }}
+              title={`หุ้นไทย ${data?.allocation?.thaiStockPct || 62}%`}
+            />
+            <div
+              className={styles.barDr}
+              style={{ width: `${data?.allocation?.drStockPct || 38}%` }}
+              title={`DR หุ้นโลก ${data?.allocation?.drStockPct || 38}%`}
+            />
+          </div>
+
+          <div className={styles.allocationLegend}>
+            <span>
+              <span className={styles.legendDot} style={{ background: '#06b6d4' }} />
+              🇹🇭 หุ้นไทย SET100: {data?.allocation?.thaiStockPct || 62}% (
+              {data?.allocation?.thaiStockValue?.toLocaleString('th-TH') || '0'} ฿)
+            </span>
+            <span>
+              <span className={styles.legendDot} style={{ background: '#a855f7' }} />
+              🌐 DR หุ้นโลก: {data?.allocation?.drStockPct || 38}% (
+              {data?.allocation?.drStockValue?.toLocaleString('th-TH') || '0'} ฿)
+            </span>
+            <span>
+              <span className={styles.legendDot} style={{ background: '#10b981' }} />
+              💵 เงินสดคงเหลือ: {data?.allocation?.cashBalance?.toLocaleString('th-TH') || '0'} ฿ (
+              {data?.allocation?.cashPct || 12}%)
             </span>
           </div>
-        </div>
-      </section>
-
-      {/* ─── ASSET ALLOCATION & FX STRIP ─── */}
-      <section className={styles.allocationCard}>
-        <div className={styles.allocationTop}>
-          <div className={styles.allocationTitle}>
-            <span>📊 สัดส่วนพอร์ตลงทุน (Portfolio Allocation: Thai Stock vs Global DR)</span>
-          </div>
-          <div className={styles.allocationFxAlert}>
-            💵 {data?.fxEnvironment?.impactSummary || 'USD/THB 34.25 บาท (ค่าเงินเสถียร ไม่กดดันพอร์ต DR)'}
-          </div>
-        </div>
-
-        <div className={styles.allocationBarTrack}>
-          <div
-            className={styles.barThai}
-            style={{ width: `${data?.allocation?.thaiStockPct || 62}%` }}
-            title={`หุ้นไทย ${data?.allocation?.thaiStockPct || 62}%`}
-          />
-          <div
-            className={styles.barDr}
-            style={{ width: `${data?.allocation?.drStockPct || 38}%` }}
-            title={`DR หุ้นโลก ${data?.allocation?.drStockPct || 38}%`}
-          />
-        </div>
-
-        <div className={styles.allocationLegend}>
-          <span>
-            <span className={styles.legendDot} style={{ background: '#06b6d4' }} />
-            🇹🇭 หุ้นไทย SET100: {data?.allocation?.thaiStockPct || 62}% (
-            {data?.allocation?.thaiStockValue?.toLocaleString('th-TH') || '0'} ฿)
-          </span>
-          <span>
-            <span className={styles.legendDot} style={{ background: '#a855f7' }} />
-            🌐 DR หุ้นโลก: {data?.allocation?.drStockPct || 38}% (
-            {data?.allocation?.drStockValue?.toLocaleString('th-TH') || '0'} ฿)
-          </span>
-          <span>
-            <span className={styles.legendDot} style={{ background: '#10b981' }} />
-            💵 เงินสดคงเหลือ: {data?.allocation?.cashBalance?.toLocaleString('th-TH') || '0'} ฿ (
-            {data?.allocation?.cashPct || 12}%)
-          </span>
         </div>
       </section>
 
