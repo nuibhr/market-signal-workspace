@@ -9,15 +9,8 @@ export const dynamic = 'force-dynamic';
 const NO_STORE = { 'Cache-Control': 'private, no-store, max-age=0' };
 
 const BROKER_NAMES = {
-  '022': 'Trinity Securities (บล.ทรีนีตี้)',
   '003': 'Pi Securities (บล.พาย)',
-  '032': 'InnovestX Securities (บล.อินโนเวสท์ เอกซ์)',
-  '011': 'Maybank Securities (บล.เมย์แบงก์)',
-  '025': 'CGS International Securities (บล.ซีจีเอส)',
-  '001': 'Bualuang Securities (บล.บัวหลวง)',
-  '006': 'Kiatnakin Phatra Securities (บล.เกียรตินาคินภัทร)',
-  '028': 'Globlex Securities (บล.โกลเบล็ก)',
-  '098': 'Settrade Sandbox / Testnet',
+  '022': 'Trinity Securities (บล.ทรีนีตี้)',
 };
 
 function buildDemoPortfolio(brokerId = '022', appCode = 'ALGO_EQ') {

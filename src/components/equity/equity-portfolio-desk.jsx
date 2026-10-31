@@ -4,17 +4,345 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import styles from './equity-portfolio-desk.module.css';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
 
+// ─── OFFICIAL BROKERAGE PARTNERS (EXCLUSIVELY PI & TRINITY) ───
 const BROKER_OPTIONS = [
-  { id: '022', name: 'Trinity Securities', thaiName: 'บล.ทรีนีตี้', tag: 'RECOMMENDED' },
-  { id: '003', name: 'Pi Securities', thaiName: 'บล.พาย (มหาชน)', tag: 'POPULAR' },
-  { id: '032', name: 'InnovestX Securities', thaiName: 'บล.อินโนเวสท์ เอกซ์', tag: 'POPULAR' },
-  { id: '011', name: 'Maybank Securities', thaiName: 'บล.เมย์แบงก์ ประเทศไทย', tag: 'POPULAR' },
-  { id: '025', name: 'CGS International', thaiName: 'บล.ซีจีเอส อินเตอร์เนชั่นแนล', tag: 'ACTIVE' },
-  { id: '001', name: 'Bualuang Securities', thaiName: 'บล.บัวหลวง', tag: 'ACTIVE' },
-  { id: '006', name: 'Kiatnakin Phatra', thaiName: 'บล.เกียรตินาคินภัทร', tag: 'INSTITUTION' },
-  { id: '028', name: 'Globlex Securities', thaiName: 'บล.โกลเบล็ก', tag: 'STANDARD' },
-  { id: '098', name: 'Settrade Testnet', thaiName: 'Settrade Open API Sandbox', tag: 'TESTNET' },
+  {
+    id: '003',
+    name: 'Pi Securities',
+    thaiName: 'บล.พาย (มหาชน)',
+    tag: 'OFFICIAL PARTNER',
+    badge: '🥧 บล.พาย',
+    tagline: 'แอป Pi Financial ซื้อขายหุ้นไทย & DR ทั่วโลก เปิดพอร์ต NDID อนุมัติไวใน 5 นาที',
+    openUrl: 'https://www.pi.financial/open-account',
+  },
+  {
+    id: '022',
+    name: 'Trinity Securities',
+    thaiName: 'บล.ทรีนีตี้',
+    tag: 'OFFICIAL PARTNER',
+    badge: '🌟 บล.ทรีนีตี้',
+    tagline: 'โบรกเกอร์ชั้นนำ บทวิเคราะห์แม่นยำ พร้อม Settrade Open API เต็มประสิทธิภาพ',
+    openUrl: 'https://www.trinitythai.com/OpenAccount',
+  },
 ];
+
+const INTEREST_OPTIONS = [
+  { id: 'thai', label: '🇹🇭 หุ้นไทย Stage 2 (SET50 / SET100)' },
+  { id: 'dr', label: '🌐 DR หุ้นนอกสหรัฐฯ & ยุโรป (NVDA80, AAPL80)' },
+  { id: 'tfex', label: '📈 TFEX & Block Trade สัญญาดัชนี / หุ้น' },
+  { id: 'algo', label: '🤖 AI อัลกอริทึม & ระบบเตือน Trailing Stop' },
+];
+
+function generateDemoPortfolio(brokerId = '022', appCode = 'ALGO_EQ') {
+  const isPi = brokerId === '003';
+  const brokerName = isPi ? 'Pi Securities (บล.พาย)' : 'Trinity Securities (บล.ทรีนีตี้)';
+  const usdThbRate = 34.25;
+
+  const demoHoldings = isPi
+    ? [
+        {
+          symbol: 'CPALL',
+          market: 'THAI',
+          assetType: 'EQUITY',
+          sector: 'COMMERCE',
+          section: 'SET50',
+          quantity: 2500,
+          avgCost: 59.5,
+          marketPrice: 65.5,
+          marketValue: 163750,
+          costValue: 148750,
+          unrealizedPl: 15000,
+          unrealizedPlPct: 10.08,
+          stage: 2,
+          stageName: 'Stage 2 ขาขึ้นแข็งแกร่ง (Trend Leader)',
+          stageColor: '#10b981',
+          trailingStop: 63.5,
+          cutLossPrice: 58.0,
+          action: 'HOLD & LET PROFIT RUN',
+          actionNote: 'ราคายก Low ยืนเหนือ EMA20 สวยงาม ถือรันเทรนด์ตามรอบ',
+        },
+        {
+          symbol: 'NVDA80',
+          market: 'DR',
+          assetType: 'DR_US',
+          sector: 'SEMICONDUCTORS',
+          section: 'DR Global',
+          quantity: 4000,
+          avgCost: 38.0,
+          marketPrice: 44.5,
+          marketValue: 178000,
+          costValue: 152000,
+          unrealizedPl: 26000,
+          unrealizedPlPct: 17.11,
+          stage: 2,
+          stageName: 'Stage 2 Super Momentum',
+          stageColor: '#10b981',
+          trailingStop: 41.8,
+          cutLossPrice: 36.5,
+          action: 'TAKE PROFIT 50%',
+          actionNote: 'กำไรแตะเป้า 2R (+17%) แบ่งขายล็อคกำไรครึ่งหนึ่งตามวินัย',
+          drMeta: {
+            underlying: 'NVDA (NASDAQ)',
+            usPrice: 138.2,
+            fairPrice: 44.1,
+            spreadPct: 0.9,
+            fairStatus: 'FAIR (สอดคล้องราคาแม่)',
+            fxImpact: 'USD/THB 34.25 (ผลกระทบค่าเงิน -0.3%)',
+          },
+        },
+        {
+          symbol: 'TSLA80',
+          market: 'DR',
+          assetType: 'DR_US',
+          sector: 'AUTOMOTIVE',
+          section: 'DR Global',
+          quantity: 3000,
+          avgCost: 32.5,
+          marketPrice: 37.0,
+          marketValue: 111000,
+          costValue: 97500,
+          unrealizedPl: 13500,
+          unrealizedPlPct: 13.85,
+          stage: 2,
+          stageName: 'Stage 2 High Momentum',
+          stageColor: '#10b981',
+          trailingStop: 35.2,
+          cutLossPrice: 31.0,
+          action: 'HOLD & RUN TREND',
+          actionNote: 'แรงซื้อ DR หุ้นแม่ทะลุแนวต้านสำคัญ ถือรันเทรนด์ต่อ',
+          drMeta: {
+            underlying: 'TSLA (NASDAQ)',
+            usPrice: 220.5,
+            fairPrice: 36.8,
+            spreadPct: 0.54,
+            fairStatus: 'FAIR (พรีเมียมต่ำ ปลอดภัย)',
+            fxImpact: 'USD/THB 34.25 (ผลกระทบค่าเงิน -0.2%)',
+          },
+        },
+        {
+          symbol: 'GULF',
+          market: 'THAI',
+          assetType: 'EQUITY',
+          sector: 'ENERGY',
+          section: 'SET50',
+          quantity: 2000,
+          avgCost: 62.0,
+          marketPrice: 63.5,
+          marketValue: 127000,
+          costValue: 124000,
+          unrealizedPl: 3000,
+          unrealizedPlPct: 2.42,
+          stage: 1,
+          stageName: 'Stage 1 สะสมฐาน (Base Building)',
+          stageColor: '#f59e0b',
+          trailingStop: 61.5,
+          cutLossPrice: 59.5,
+          action: 'HOLD BASE',
+          actionNote: 'พักตัวสร้างฐานเหนือแนวรับสำคัญ ถือจับตาจังหวะเบรคเอาท์',
+        },
+        {
+          symbol: 'HANA',
+          market: 'THAI',
+          assetType: 'EQUITY',
+          sector: 'ELECTRONICS',
+          section: 'SET100',
+          quantity: 2000,
+          avgCost: 40.5,
+          marketPrice: 37.75,
+          marketValue: 75500,
+          costValue: 81000,
+          unrealizedPl: -5500,
+          unrealizedPlPct: -6.79,
+          stage: 4,
+          stageName: 'Stage 4 ขาลงอันตราย (หลุด EMA50)',
+          stageColor: '#f43f5e',
+          trailingStop: null,
+          cutLossPrice: 37.0,
+          action: '🚨 REDUCE / CUT LOSS NOW',
+          actionNote: 'หลุดแนวรับ EMA50 ขาดทุนเกิน 6% แนะนำตัดขาดทุนก่อนเสียหายหนัก',
+        },
+      ]
+    : [
+        {
+          symbol: 'DELTA',
+          market: 'THAI',
+          assetType: 'EQUITY',
+          sector: 'ELECTRONICS',
+          section: 'SET50',
+          quantity: 1500,
+          avgCost: 110.0,
+          marketPrice: 135.5,
+          marketValue: 203250,
+          costValue: 165000,
+          unrealizedPl: 38250,
+          unrealizedPlPct: 23.18,
+          stage: 2,
+          stageName: 'Stage 2 ขาขึ้นแข็งแกร่ง (Trend Leader)',
+          stageColor: '#10b981',
+          trailingStop: 128.0,
+          cutLossPrice: 121.0,
+          action: 'HOLD & LET PROFIT RUN',
+          actionNote: 'ราคายืนเหนือ EMA20/50 แข็งแกร่ง ถือรันเทรนด์ ห้ามขายหมู',
+        },
+        {
+          symbol: 'NVDA80',
+          market: 'DR',
+          assetType: 'DR_US',
+          sector: 'SEMICONDUCTORS',
+          section: 'DR Global',
+          quantity: 4000,
+          avgCost: 38.0,
+          marketPrice: 44.5,
+          marketValue: 178000,
+          costValue: 152000,
+          unrealizedPl: 26000,
+          unrealizedPlPct: 17.11,
+          stage: 2,
+          stageName: 'Stage 2 Super Momentum',
+          stageColor: '#10b981',
+          trailingStop: 41.8,
+          cutLossPrice: 36.5,
+          action: 'TAKE PROFIT 50%',
+          actionNote: 'กำไรแตะเป้า 2R (+17%) แบ่งขายล็อคกำไรครึ่งหนึ่งตามวินัย',
+          drMeta: {
+            underlying: 'NVDA (NASDAQ)',
+            usPrice: 138.2,
+            fairPrice: 44.1,
+            spreadPct: 0.9,
+            fairStatus: 'FAIR (สอดคล้องราคาแม่)',
+            fxImpact: 'USD/THB 34.25 (ผลกระทบค่าเงิน -0.3%)',
+          },
+        },
+        {
+          symbol: 'AAPL80',
+          market: 'DR',
+          assetType: 'DR_US',
+          sector: 'TECHNOLOGY',
+          section: 'DR Global',
+          quantity: 5000,
+          avgCost: 28.2,
+          marketPrice: 31.4,
+          marketValue: 157000,
+          costValue: 141000,
+          unrealizedPl: 16000,
+          unrealizedPlPct: 11.35,
+          stage: 2,
+          stageName: 'Stage 2 High Conviction',
+          stageColor: '#10b981',
+          trailingStop: 30.1,
+          cutLossPrice: 27.0,
+          action: 'HOLD & RUN TREND',
+          actionNote: 'หุ้นแม่ All-Time High ถือต่อตามแนวเส้น EMA20',
+          drMeta: {
+            underlying: 'AAPL (NASDAQ)',
+            usPrice: 235.4,
+            fairPrice: 31.25,
+            spreadPct: 0.48,
+            fairStatus: 'FAIR (พรีเมียมต่ำ ปลอดภัย)',
+            fxImpact: 'USD/THB 34.25 (ผลกระทบค่าเงิน -0.2%)',
+          },
+        },
+        {
+          symbol: 'BDMS',
+          market: 'THAI',
+          assetType: 'EQUITY',
+          sector: 'HEALTHCARE',
+          section: 'SET100',
+          quantity: 6000,
+          avgCost: 28.5,
+          marketPrice: 29.25,
+          marketValue: 175500,
+          costValue: 171000,
+          unrealizedPl: 4500,
+          unrealizedPlPct: 2.63,
+          stage: 1,
+          stageName: 'Stage 1 สะสมฐาน (Base Building)',
+          stageColor: '#f59e0b',
+          trailingStop: 28.25,
+          cutLossPrice: 27.5,
+          action: 'HOLD BASE',
+          actionNote: 'พักตัวสร้างฐานสวย มี Volume สะสม ไม่หลุดแนวรับสำคัญ',
+        },
+        {
+          symbol: 'PTT',
+          market: 'THAI',
+          assetType: 'EQUITY',
+          sector: 'ENERGY',
+          section: 'SET100',
+          quantity: 3000,
+          avgCost: 33.0,
+          marketPrice: 31.5,
+          marketValue: 94500,
+          costValue: 99000,
+          unrealizedPl: -4500,
+          unrealizedPlPct: -4.55,
+          stage: 4,
+          stageName: 'Stage 4 ขาลงอันตราย (หลุด EMA50)',
+          stageColor: '#f43f5e',
+          trailingStop: null,
+          cutLossPrice: 31.0,
+          action: '🚨 REDUCE / CUT LOSS NOW',
+          actionNote: 'หลุดแนวรับ EMA50 กลายเป็น Stage 4 แนะนำตัดขาดทุนก่อนเสียหายหนัก',
+        },
+      ];
+
+  const cashBalance = isPi ? 150000 : 120000;
+  const totalMarketValue = demoHoldings.reduce((sum, h) => sum + h.marketValue, 0);
+  const totalCostValue = demoHoldings.reduce((sum, h) => sum + h.costValue, 0);
+  const totalUnrealizedPl = totalMarketValue - totalCostValue;
+  const totalUnrealizedPlPct = ((totalUnrealizedPl / totalCostValue) * 100).toFixed(2);
+  const equity = totalMarketValue + cashBalance;
+
+  const thaiStockValue = demoHoldings.filter((h) => h.market === 'THAI').reduce((sum, h) => sum + h.marketValue, 0);
+  const drStockValue = demoHoldings.filter((h) => h.market === 'DR').reduce((sum, h) => sum + h.marketValue, 0);
+
+  const thaiStockPct = ((thaiStockValue / totalMarketValue) * 100).toFixed(1);
+  const drStockPct = ((drStockValue / totalMarketValue) * 100).toFixed(1);
+
+  let healthNumerator = 0;
+  for (const h of demoHoldings) {
+    const factor = h.stage === 2 ? 1.0 : h.stage === 1 ? 0.7 : h.stage === 3 ? 0.3 : 0.0;
+    healthNumerator += h.marketValue * factor;
+  }
+  const healthScore = Math.round((healthNumerator / totalMarketValue) * 100);
+
+  return {
+    success: true,
+    mode: 'DEMO',
+    accountNo: isPi ? 'EQ-003-88912-P' : 'EQ-022-78891-B',
+    brokerId,
+    brokerName,
+    appCode,
+    asOf: new Date().toISOString(),
+    equity,
+    cashBalance,
+    lineAvailable: cashBalance,
+    totalMarketValue,
+    totalCostValue,
+    totalUnrealizedPl,
+    totalUnrealizedPlPct: Number(totalUnrealizedPlPct),
+    allocation: {
+      thaiStockValue,
+      thaiStockPct: Number(thaiStockPct),
+      drStockValue,
+      drStockPct: Number(drStockPct),
+      cashBalance,
+      cashPct: Number(((cashBalance / equity) * 100).toFixed(1)),
+    },
+    health: {
+      score: healthScore,
+      grade: healthScore >= 80 ? 'เกรด A (พอร์ตขาขึ้นแข็งแกร่ง)' : healthScore >= 60 ? 'เกรด B (สมดุลปานกลาง)' : 'เกรด C (ความเสี่ยงสูง)',
+      stage2RatioPct: Number(((demoHoldings.filter((h) => h.stage === 2).reduce((s, h) => s + h.marketValue, 0) / totalMarketValue) * 100).toFixed(1)),
+      stage4DangerRatioPct: Number(((demoHoldings.filter((h) => h.stage === 4).reduce((s, h) => s + h.marketValue, 0) / totalMarketValue) * 100).toFixed(1)),
+    },
+    fxEnvironment: {
+      usdThb: usdThbRate,
+      impactSummary: 'ค่าเงินบาททรงตัว 34.25 บาท/USD ไม่มีความเสี่ยง FX กดดันพอร์ต DR สหรัฐฯ อย่างมีนัยสำคัญ',
+    },
+    holdings: demoHoldings,
+    notice: `เชื่อมต่อผ่านระบบจำลอง Settrade Open API (${appCode} Zero-Custody Sandbox) ไม่มีการจัดเก็บกุญแจในฐานข้อมูล`,
+  };
+}
 
 export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const [data, setData] = useState(null);
@@ -22,6 +350,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all | thai | dr | stage2 | danger
   const [showModal, setShowModal] = useState(false);
+  const [showLeadModal, setShowLeadModal] = useState(false);
 
   // BYOK form states (Pre-configured for Trinity 022)
   const [brokerId, setBrokerId] = useState('022');
@@ -31,30 +360,70 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const [appCode, setAppCode] = useState('ALGO_EQ');
   const [latency, setLatency] = useState(35);
 
+  // Partner Lead Form states
+  const [leadBroker, setLeadBroker] = useState('003'); // default Pi
+  const [leadName, setLeadName] = useState('');
+  const [leadPhone, setLeadPhone] = useState('');
+  const [leadLine, setLeadLine] = useState('');
+  const [leadEmail, setLeadEmail] = useState('');
+  const [leadInterests, setLeadInterests] = useState(['thai', 'dr']);
+  const [leadNotes, setLeadNotes] = useState('');
+  const [leadSubmitting, setLeadSubmitting] = useState(false);
+  const [leadSuccess, setLeadSuccess] = useState(null);
+  const [leadError, setLeadError] = useState(null);
+
   const syncPortfolio = useCallback(
     async (isDemo = true, overrideBrokerId = null) => {
       setLoading(true);
       setError(null);
       const start = performance.now();
-      try {
-        const bId = overrideBrokerId || brokerId;
-        const payload = isDemo
-          ? {
+      const bId = overrideBrokerId || brokerId;
+
+      if (isDemo) {
+        // First try server demo sandbox, fallback gracefully to instant local generator
+        try {
+          const res = await fetch('/api/equity/portfolio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
               brokerId: bId,
-              appId: 'DEMO_SANDBOX_KEY',
-              appSecret: 'DEMO_SANDBOX_SECRET',
-              appCode: 'ALGO_EQ',
-              accountNo: `EQ-${bId}-78891-B`,
               isDemo: true,
+              appCode: 'ALGO_EQ',
+            }),
+          });
+          if (res.ok) {
+            const result = await res.json();
+            if (result.success) {
+              setData(result);
+              if (overrideBrokerId) setBrokerId(overrideBrokerId);
+              setLatency(Math.max(12, Math.round(performance.now() - start)));
+              setLoading(false);
+              return;
             }
-          : {
-              brokerId: bId,
-              accountNo: accountNo.trim(),
-              appId: appId.trim(),
-              appSecret: appSecret.trim(),
-              appCode: appCode.trim() || 'ALGO_EQ',
-              isDemo: false,
-            };
+          }
+        } catch {
+          // Gracefully fallback
+        }
+
+        // Instant local demo generation (zero-error for guests/visitors)
+        const demoData = generateDemoPortfolio(bId, appCode);
+        setData(demoData);
+        if (overrideBrokerId) setBrokerId(overrideBrokerId);
+        setLatency(18);
+        setLoading(false);
+        return;
+      }
+
+      // LIVE REAL BROKER CONNECTION VIA SETTRADE OPEN API
+      try {
+        const payload = {
+          brokerId: bId,
+          accountNo: accountNo.trim(),
+          appId: appId.trim(),
+          appSecret: appSecret.trim(),
+          appCode: appCode.trim() || 'ALGO_EQ',
+          isDemo: false,
+        };
 
         const res = await fetch('/api/equity/portfolio', {
           method: 'POST',
@@ -63,14 +432,18 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
         });
 
         const result = await res.json();
-        setLatency(Math.max(12, Math.round(performance.now() - start)));
+        setLatency(Math.max(15, Math.round(performance.now() - start)));
 
         if (!res.ok || !result.success) {
-          throw new Error(result.message || result.error || 'เชื่อมต่อ Settrade Open API ไม่สำเร็จ');
+          const errCode = result.error?.code || result.error || 'CONNECT_FAILED';
+          const errMsg =
+            errCode === 'OWNER_ONLY' || errCode === 'AUTHENTICATION_REQUIRED' || errCode === 'FORBIDDEN'
+              ? '🔒 การเชื่อมต่อ Settrade Open API พอร์ตสดสงวนสำหรับบัญชีผู้ดูแลระบบ หรือท่านสามารถเปิดพอร์ตใหม่กับพาร์ทเนอร์ Pi หรือ Trinity เพื่อรับสิทธิพิเศษ'
+              : result.message || 'เชื่อมต่อ Settrade Open API ไม่สำเร็จ กรุณาตรวจสอบรหัสบัญชีและกุญแจ API';
+          throw new Error(errMsg);
         }
 
         setData(result);
-        if (overrideBrokerId) setBrokerId(overrideBrokerId);
         setShowModal(false);
       } catch (err) {
         setError(err.message);
@@ -82,9 +455,53 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   );
 
   useEffect(() => {
-    // Initial load: fetch Trinity 022 Demo Sandbox
+    // Initial load: Trinity 022 Demo Sandbox
     syncPortfolio(true, '022');
   }, [syncPortfolio]);
+
+  const handleInterestToggle = (interestId) => {
+    setLeadInterests((prev) =>
+      prev.includes(interestId) ? prev.filter((id) => id !== interestId) : [...prev, interestId]
+    );
+  };
+
+  const handleLeadSubmit = async (e) => {
+    e.preventDefault();
+    setLeadSubmitting(true);
+    setLeadError(null);
+
+    const interestLabels = leadInterests.map((id) => {
+      const match = INTEREST_OPTIONS.find((opt) => opt.id === id);
+      return match ? match.label : id;
+    });
+
+    try {
+      const res = await fetch('/api/equity/partner-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brokerId: leadBroker,
+          fullName: leadName,
+          phone: leadPhone,
+          lineId: leadLine,
+          email: leadEmail,
+          interests: interestLabels,
+          notes: leadNotes,
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok || !result.success) {
+        throw new Error(result.message || 'ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+      }
+
+      setLeadSuccess(result);
+    } catch (err) {
+      setLeadError(err.message);
+    } finally {
+      setLeadSubmitting(false);
+    }
+  };
 
   const holdings = data?.holdings || [];
 
@@ -133,7 +550,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
             </h2>
             <p className={styles.byokDesc}>
               วิเคราะห์เทรนด์ Stage 2 อัตโนมัติ, เฝ้าระวังจุด Trailing Stop / Cut Loss, และตรวจสอบความคุ้มค่า DR
-              ผ่าน API โบรกเกอร์ชั้นนำ (Pi, Trinity, InnovestX, Maybank ฯลฯ)
+              ผ่าน 2 พันธมิตรโบรกเกอร์อย่างเป็นทางการ (บล.พาย Pi Securities &amp; บล.ทรีนีตี้ Trinity Securities)
             </p>
           </div>
 
@@ -144,31 +561,42 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               onClick={() => syncPortfolio(data?.mode === 'DEMO')}
               disabled={loading}
             >
-              {loading ? 'กำลังซิงค์...' : '🔄 ซิงค์พอร์ตสด'}
-            </button>
-            <button
-              type="button"
-              className={styles.byokBtnSecondary}
-              onClick={() => syncPortfolio(true, '022')}
-              disabled={loading}
-            >
-              🌟 ทดลอง Trinity 022
+              {loading ? 'กำลังซิงค์...' : '🔄 ซิงค์พอร์ต'}
             </button>
             <button
               type="button"
               className={styles.byokBtnSecondary}
               onClick={() => syncPortfolio(true, '003')}
               disabled={loading}
+              style={{
+                borderColor: (data?.brokerId || brokerId) === '003' ? '#a855f7' : undefined,
+                background: (data?.brokerId || brokerId) === '003' ? 'rgba(168,85,247,0.2)' : undefined,
+              }}
             >
-              🥧 ทดลอง Pi 003
+              🥧 ทดลอง บล.พาย (003)
             </button>
             <button
               type="button"
               className={styles.byokBtnSecondary}
-              onClick={() => syncPortfolio(true, '032')}
+              onClick={() => syncPortfolio(true, '022')}
               disabled={loading}
+              style={{
+                borderColor: (data?.brokerId || brokerId) === '022' ? '#22d3ee' : undefined,
+                background: (data?.brokerId || brokerId) === '022' ? 'rgba(34,211,238,0.2)' : undefined,
+              }}
             >
-              ⚡ InnovestX 032
+              🌟 ทดลอง บล.ทรีนีตี้ (022)
+            </button>
+            <button
+              type="button"
+              className={styles.partnerBtn}
+              onClick={() => {
+                setLeadSuccess(null);
+                setLeadError(null);
+                setShowLeadModal(true);
+              }}
+            >
+              📝 เปิดพอร์ตใหม่กับพาร์ทเนอร์
             </button>
             <button
               type="button"
@@ -194,24 +622,46 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '8px',
+              flexWrap: 'wrap',
             }}
           >
             <span>⚠️ {error}</span>
-            <button
-              type="button"
-              onClick={() => syncPortfolio(true, '022')}
-              style={{
-                background: 'rgba(255,255,255,0.1)',
-                border: 'none',
-                color: '#fff',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '11px',
-              }}
-            >
-              สลับกลับโหมด Sandbox
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => syncPortfolio(true, '022')}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  color: '#fff',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                }}
+              >
+                สลับกลับโหมด Sandbox
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setShowLeadModal(true);
+                }}
+                style={{
+                  background: 'rgba(16,185,129,0.3)',
+                  border: '1px solid #10b981',
+                  color: '#34d399',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                }}
+              >
+                📝 เปิดพอร์ตใหม่กับพาร์ทเนอร์
+              </button>
+            </div>
           </div>
         )}
 
@@ -572,14 +1022,219 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
         </section>
       )}
 
-      {/* ─── MODAL FOR API KEY SETTINGS (BYOK LIVE + SANDBOX) ─── */}
+      {/* ─── MODAL 1: PARTNER ACCOUNT OPENING (เปิดพอร์ตใหม่กับพาร์ทเนอร์) ─── */}
+      {showLeadModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowLeadModal(false)}>
+          <div className={styles.partnerLeadCard} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div>
+                <h3 className={styles.modalTitle}>
+                  📝 เปิดพอร์ตหุ้น &amp; DR กับโบรกเกอร์พันธมิตร
+                </h3>
+                <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>
+                  บล.พาย (Pi Securities 003) &amp; บล.ทรีนีตี้ (Trinity Securities 022)
+                </span>
+              </div>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setShowLeadModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            {leadSuccess ? (
+              <div className={styles.leadSuccessBox}>
+                <div style={{ fontSize: '32px' }}>🎉</div>
+                <h4 className={styles.leadSuccessTitle}>บันทึกข้อมูลขอเปิดพอร์ตเรียบร้อยแล้ว!</h4>
+                <p className={styles.leadSuccessDesc}>
+                  ข้อมูลของท่านถูกจัดเก็บบนระบบความปลอดภัยเรียบร้อยแล้ว (รหัสอ้างอิง: <code>{leadSuccess.leadId}</code>)
+                  <br />
+                  เจ้าหน้าที่ผู้เชี่ยวชาญจาก <b>{leadSuccess.brokerName}</b> จะติดต่อประสานงานดูแลท่านโดยเร็ว
+                </p>
+
+                <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)', margin: '8px 0' }} />
+
+                <p style={{ fontSize: '12px', color: '#38bdf8', margin: 0, fontWeight: 700 }}>
+                  ท่านสามารถดำเนินการเปิดบัญชีออนไลน์ NDID ได้ทันทีด้วยตนเองผ่านลิงก์ของโบรกเกอร์:
+                </p>
+
+                <a
+                  href={leadSuccess.brokerOpenUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.leadDirectLinkBtn}
+                >
+                  🚀 เปิดพอร์ตออนไลน์กับ {leadSuccess.brokerName} ทันที (NDID E-Open) ↗
+                </a>
+
+                <button
+                  type="button"
+                  className={styles.byokBtnSecondary}
+                  style={{ marginTop: '8px', fontSize: '11px' }}
+                  onClick={() => setShowLeadModal(false)}
+                >
+                  ปิดหน้าต่าง
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleLeadSubmit}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>เลือกโบรกเกอร์ที่ต้องการเปิดบัญชี *</label>
+                  <div className={styles.partnerSelectorGrid}>
+                    {BROKER_OPTIONS.map((b) => (
+                      <div
+                        key={b.id}
+                        className={`${styles.partnerCard} ${leadBroker === b.id ? styles.partnerCardActive : ''}`}
+                        onClick={() => setLeadBroker(b.id)}
+                      >
+                        <span className={styles.partnerBadge}>OFFICIAL PARTNER</span>
+                        <span className={styles.partnerTitle}>{b.badge}</span>
+                        <span style={{ fontSize: '10px', color: '#38bdf8', fontWeight: 700 }}>
+                          รหัส [{b.id}]
+                        </span>
+                        <span className={styles.partnerDesc}>{b.tagline}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>ชื่อ - นามสกุล *</label>
+                    <input
+                      type="text"
+                      required
+                      className={styles.formInput}
+                      placeholder="เช่น สมชาย ใจดี"
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>เบอร์โทรศัพท์มือถือ *</label>
+                    <input
+                      type="tel"
+                      required
+                      className={styles.formInput}
+                      placeholder="เช่น 0812345678"
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>LINE ID (สำหรับรับสิทธิพิเศษ)</label>
+                    <input
+                      type="text"
+                      className={styles.formInput}
+                      placeholder="เช่น @somchai_trader"
+                      value={leadLine}
+                      onChange={(e) => setLeadLine(e.target.value)}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>อีเมล (Email)</label>
+                    <input
+                      type="email"
+                      className={styles.formInput}
+                      placeholder="somchai@example.com"
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>สินทรัพย์และบริการที่ท่านสนใจ</label>
+                  <div className={styles.leadCheckboxGrid}>
+                    {INTEREST_OPTIONS.map((opt) => (
+                      <label key={opt.id} className={styles.leadCheckboxLabel}>
+                        <input
+                          type="checkbox"
+                          checked={leadInterests.includes(opt.id)}
+                          onChange={() => handleInterestToggle(opt.id)}
+                        />
+                        <span>{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>หมายเหตุเพิ่มเติม (ถ้ามี)</label>
+                  <input
+                    type="text"
+                    className={styles.formInput}
+                    placeholder="เช่น สนใจเปิดพอร์ตเพื่อเทรด DR NVDA80 และเชื่อมต่อระบบ AI"
+                    value={leadNotes}
+                    onChange={(e) => setLeadNotes(e.target.value)}
+                  />
+                </div>
+
+                {leadError && (
+                  <div
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid #ef4444',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      color: '#f87171',
+                      fontSize: '12px',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    ⚠️ {leadError}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                  <button
+                    type="submit"
+                    className={styles.partnerBtn}
+                    style={{ flex: 1, justifyContent: 'center', padding: '10px 18px', fontSize: '13px' }}
+                    disabled={leadSubmitting || !leadName.trim() || !leadPhone.trim()}
+                  >
+                    {leadSubmitting ? 'กำลังส่งข้อมูล...' : '🚀 ยืนยันข้อมูลขอเปิดพอร์ต & รับสิทธิพิเศษ'}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.byokBtnSecondary}
+                    onClick={() => setShowLeadModal(false)}
+                  >
+                    ยกเลิก
+                  </button>
+                </div>
+
+                <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                  <small style={{ color: '#94a3b8', fontSize: '10px' }}>
+                    🔒 ข้อมูลของท่านจะถูกจัดเก็บอย่างปลอดภัยในระบบ และแจ้งเตือนทีมงานโบรกเกอร์ทันทีโดยไม่มีการเผยแพร่ภายนอก
+                  </small>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL 2: BYOK SETTRADE OPEN API SETTINGS (REAL MARKET) ─── */}
       {showModal && (
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>
-                🔑 เชื่อมต่อ Settrade Open API (ALGO_EQ หุ้นไทย &amp; DR)
-              </h3>
+              <div>
+                <h3 className={styles.modalTitle}>
+                  🔑 เชื่อมต่อ Settrade Open API (ALGO_EQ หุ้นไทย &amp; DR)
+                </h3>
+                <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700 }}>
+                  รองรับ 2 โบรกเกอร์พันธมิตรอย่างเป็นทางการ: บล.พาย (003) &amp; บล.ทรีนีตี้ (022)
+                </span>
+              </div>
               <button
                 type="button"
                 className={styles.modalClose}
@@ -597,13 +1252,6 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 <button
                   type="button"
                   className={styles.quickDemoBtn}
-                  onClick={() => syncPortfolio(true, '022')}
-                >
-                  🌟 ทดลองด้วย Trinity 022 (บล.ทรีนีตี้)
-                </button>
-                <button
-                  type="button"
-                  className={styles.quickDemoBtn}
                   onClick={() => syncPortfolio(true, '003')}
                 >
                   🥧 ทดลองด้วย Pi 003 (บล.พาย)
@@ -611,22 +1259,15 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 <button
                   type="button"
                   className={styles.quickDemoBtn}
-                  onClick={() => syncPortfolio(true, '032')}
+                  onClick={() => syncPortfolio(true, '022')}
                 >
-                  ⚡ ทดลองด้วย InnovestX 032
-                </button>
-                <button
-                  type="button"
-                  className={styles.quickDemoBtn}
-                  onClick={() => syncPortfolio(true, '011')}
-                >
-                  🏦 ทดลองด้วย Maybank 011
+                  🌟 ทดลองด้วย Trinity 022 (บล.ทรีนีตี้)
                 </button>
               </div>
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.formLabel}>เลือกโบรกเกอร์ (Broker Provider)</label>
+              <label className={styles.formLabel}>เลือกโบรกเกอร์พันธมิตร (Official Broker Partner)</label>
               <div className={styles.brokerGrid}>
                 {BROKER_OPTIONS.map((b) => (
                   <button
@@ -635,12 +1276,47 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                     className={`${styles.brokerCard} ${brokerId === b.id ? styles.brokerCardActive : ''}`}
                     onClick={() => setBrokerId(b.id)}
                   >
-                    <span className={styles.brokerCode}>[{b.id}]</span>
+                    <span className={styles.brokerCode}>[{b.id}] {b.tag}</span>
                     <span className={styles.brokerName}>{b.name}</span>
                     <span className={styles.brokerThaiName}>{b.thaiName}</span>
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* OPEN ACCOUNT PROMPT FOR CUSTOMERS */}
+            <div
+              style={{
+                background: 'rgba(16,185,129,0.12)',
+                border: '1px solid rgba(16,185,129,0.35)',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '11px', color: '#34d399', fontWeight: 800 }}>
+                  💡 ยังไม่มีบัญชีซื้อขายกับ บล.พาย หรือ บล.ทรีนีตี้?
+                </span>
+                <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+                  เปิดพอร์ตออนไลน์ NDID ง่ายใน 5 นาที พร้อมรับสิทธิพิเศษเชื่อมต่อระบบ
+                </div>
+              </div>
+              <button
+                type="button"
+                className={styles.partnerBtn}
+                style={{ fontSize: '10px', padding: '5px 10px', whiteSpace: 'nowrap' }}
+                onClick={() => {
+                  setShowModal(false);
+                  setShowLeadModal(true);
+                }}
+              >
+                เปิดพอร์ตใหม่ ↗
+              </button>
             </div>
 
             <div className={styles.formGroup}>
@@ -649,7 +1325,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 type="text"
                 autoComplete="off"
                 className={styles.formInput}
-                placeholder="เช่น 1234567 หรือ EQ-022-XXXXX (ส่งตรงไปยัง Settrade ไม่บันทึกลง Server)"
+                placeholder="เช่น 99242240 หรือเลขบัญชีที่โบรคเกอร์ออกให้"
                 value={accountNo}
                 onChange={(e) => setAccountNo(e.target.value)}
               />
