@@ -1159,6 +1159,7 @@
   background-size: cover;
   background-attachment: fixed;
   color: #0f172a;
+  font-family: 'Noto Sans Thai', 'Plus Jakarta Sans', system-ui, sans-serif;
   font-family: var(--font-apple);
   padding-bottom: 90px;
 }
@@ -2485,9 +2486,8 @@
   color: #ffffff;
 }
 
-/* Floating Action Button (FAB) - Disabled for cleaner retail UI */
+/* Floating Action Button (FAB) */
 .ng-floating-pro-dock {
-  display: none !important;
   position: fixed;
   bottom: 24px;
   right: 24px;
