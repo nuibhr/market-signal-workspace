@@ -438,42 +438,43 @@ html:not([data-theme='light']) body:not([data-theme='light']) .account-menu butt
 /* ─── 6. Market Navigation Destinations ─── */
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a,
 html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a {
-  background: rgba(17, 28, 51, 0.75) !important;
-  backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: none !important;
   color: #94A3B8 !important;
   border-radius: 9999px !important;
   padding: 8px 16px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a:hover,
 html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a:hover {
-  background: rgba(28, 50, 80, 0.9) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   color: #F1F5F9 !important;
-  border-color: rgba(56, 189, 248, 0.45) !important;
-  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.25) !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.2) !important;
   transform: translateY(-2px) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a[aria-current='page'],
 html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
-  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.7) 0%, rgba(37, 99, 235, 0.7) 100%) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border: none !important;
   border-radius: 9999px !important;
-  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.45), 0 0 14px rgba(56, 189, 248, 0.35) !important;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.3) !important;
   font-weight: 700 !important;
 }
 
 /* ─── 7. Thai Workspace Nav Toolbar ─── */
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) #thai-workspace-navigation,
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='toolbar']:not([class*='us-workspace-nav']) {
-  background: rgba(17, 28, 51, 0.9) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: none !important;
   border-radius: 16px !important;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
 }
@@ -490,8 +491,10 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a,
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a {
-  background: rgba(10, 19, 36, 0.7) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: none !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
   color: #94A3B8 !important;
   border-radius: 14px !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -499,28 +502,29 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a:hover,
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a:hover {
-  background: rgba(28, 50, 80, 0.9) !important;
+  background: rgba(255, 255, 255, 0.09) !important;
   color: #F1F5F9 !important;
-  border-color: rgba(56, 189, 248, 0.45) !important;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.22) !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.18) !important;
   transform: translateY(-2px) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a[aria-current],
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a[aria-current] {
-  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.55) 0%, rgba(37, 99, 235, 0.55) 100%) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  border: none !important;
   border-radius: 14px !important;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4), 0 0 12px rgba(56, 189, 248, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(34, 211, 238, 0.25) !important;
 }
 
 /* ─── 8. Pro Tools Suite Navigation ─── */
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-pro-suite-nav,
 html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-suite-nav {
-  background: rgba(17, 28, 51, 0.88) !important;
-  backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: none !important;
   border-radius: 16px !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
 }
@@ -528,7 +532,7 @@ html:not([data-theme='light']) body:not([data-theme='light']) .ng-pro-suite-nav 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-suite-back-pill,
 html:not([data-theme='light']) body:not([data-theme='light']) .ng-suite-back-pill {
   background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border: none !important;
   color: #cbd5e1 !important;
   border-radius: 9999px !important;
   padding: 6px 14px !important;
@@ -539,7 +543,7 @@ html:not([data-theme='light']) body:not([data-theme='light']) .ng-suite-back-pil
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .ng-suite-back-pill:hover,
 html:not([data-theme='light']) body:not([data-theme='light']) .ng-suite-back-pill:hover {
   background: rgba(2, 132, 199, 0.2) !important;
-  border-color: #38bdf8 !important;
+  border: none !important;
   color: #38bdf8 !important;
   transform: translateX(-2px) !important;
   box-shadow: 0 2px 10px rgba(2, 132, 199, 0.25) !important;

@@ -534,11 +534,11 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 style={{
                   fontSize: '10px',
                   fontWeight: 800,
-                  padding: '2px 8px',
-                  borderRadius: '5px',
-                  background: data?.mode === 'LIVE' ? 'rgba(16,185,129,0.2)' : 'rgba(56,189,248,0.2)',
+                  padding: '3px 9px',
+                  borderRadius: '6px',
+                  background: data?.mode === 'LIVE' ? 'rgba(16,185,129,0.25)' : 'rgba(56,189,248,0.25)',
                   color: data?.mode === 'LIVE' ? '#34d399' : '#38bdf8',
-                  border: `1px solid ${data?.mode === 'LIVE' ? '#10b981' : '#0284c7'}`,
+                  border: 'none',
                 }}
               >
                 {data?.mode === 'LIVE' ? '🟢 LIVE REAL MARKET' : '🧪 DEMO SANDBOX'}
@@ -568,8 +568,9 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               onClick={() => syncPortfolio(true, '003')}
               disabled={loading}
               style={{
-                borderColor: (data?.brokerId || brokerId) === '003' ? '#a855f7' : undefined,
-                background: (data?.brokerId || brokerId) === '003' ? 'rgba(168,85,247,0.2)' : undefined,
+                background: (data?.brokerId || brokerId) === '003' ? 'rgba(168,85,247,0.3)' : undefined,
+                boxShadow: (data?.brokerId || brokerId) === '003' ? '0 0 16px rgba(168,85,247,0.35)' : undefined,
+                color: (data?.brokerId || brokerId) === '003' ? '#ffffff' : undefined,
               }}
             >
               🥧 ทดลอง บล.พาย (003)
@@ -580,8 +581,9 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               onClick={() => syncPortfolio(true, '022')}
               disabled={loading}
               style={{
-                borderColor: (data?.brokerId || brokerId) === '022' ? '#22d3ee' : undefined,
-                background: (data?.brokerId || brokerId) === '022' ? 'rgba(34,211,238,0.2)' : undefined,
+                background: (data?.brokerId || brokerId) === '022' ? 'rgba(34,211,238,0.3)' : undefined,
+                boxShadow: (data?.brokerId || brokerId) === '022' ? '0 0 16px rgba(34,211,238,0.35)' : undefined,
+                color: (data?.brokerId || brokerId) === '022' ? '#ffffff' : undefined,
               }}
             >
               🌟 ทดลอง บล.ทรีนีตี้ (022)
@@ -1463,8 +1465,9 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                     setShowModal(false);
                   }}
                   style={{
-                    borderColor: brokerId === '003' ? '#a855f7' : undefined,
-                    background: brokerId === '003' ? 'rgba(168,85,247,0.15)' : undefined,
+                    background: brokerId === '003' ? 'rgba(168,85,247,0.3)' : undefined,
+                    boxShadow: brokerId === '003' ? '0 0 16px rgba(168,85,247,0.35)' : undefined,
+                    color: brokerId === '003' ? '#ffffff' : undefined,
                   }}
                 >
                   🥧 ทดลองพอร์ต บล.พาย (003 Sandbox)
@@ -1478,8 +1481,9 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                     setShowModal(false);
                   }}
                   style={{
-                    borderColor: brokerId === '022' ? '#06b6d4' : undefined,
-                    background: brokerId === '022' ? 'rgba(6,182,212,0.15)' : undefined,
+                    background: brokerId === '022' ? 'rgba(6,182,212,0.3)' : undefined,
+                    boxShadow: brokerId === '022' ? '0 0 16px rgba(6,182,212,0.35)' : undefined,
+                    color: brokerId === '022' ? '#ffffff' : undefined,
                   }}
                 >
                   🌟 ทดลองพอร์ต บล.ทรีนีตี้ (022 Sandbox)

@@ -11,12 +11,13 @@
 /* ─── TOP COCKPIT BAR (BYOK HUD) ─── */
 .byokBar {
   position: relative;
-  background: linear-gradient(145deg, rgba(13, 23, 48, 0.95) 0%, rgba(15, 23, 42, 0.88) 100%);
-  border: 1px solid rgba(34, 211, 238, 0.35);
+  background: rgba(13, 23, 48, 0.65);
+  border: none;
   border-radius: 16px;
   padding: 18px 22px;
-  backdrop-filter: blur(14px);
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4);
   overflow: hidden;
 }
 
@@ -49,44 +50,44 @@
 
 .byokTag {
   background: rgba(34, 211, 238, 0.15);
-  border: 1px solid rgba(34, 211, 238, 0.4);
+  border: none;
   color: #22d3ee;
   font-size: 10px;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
   letter-spacing: 0.8px;
 }
 
 .byokBrokerBadge {
   background: rgba(168, 85, 247, 0.18);
-  border: 1px solid rgba(168, 85, 247, 0.4);
+  border: none;
   color: #c084fc;
   font-size: 10px;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
   letter-spacing: 0.6px;
 }
 
 .byokEnclaveBadge {
   background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  border: none;
   color: #34d399;
   font-size: 9px;
   font-weight: 800;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 5px;
   letter-spacing: 0.6px;
 }
 
 .byokPingBadge {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
   color: #94a3b8;
   font-size: 9px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 3px 7px;
   border-radius: 5px;
   font-family: ui-monospace, SFMono-Regular, monospace;
 }
@@ -135,26 +136,27 @@
 }
 
 .byokBtnSecondary {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
   color: #f1f5f9;
   border-radius: 10px;
   padding: 9px 13px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: all 0.2s ease;
 }
 
 .byokBtnSecondary:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
   transform: translateY(-1px);
 }
 
 .byokBtnDanger {
   background: rgba(244, 63, 94, 0.12);
-  border: 1px solid rgba(244, 63, 94, 0.3);
+  border: none;
   color: #fb7185;
   border-radius: 10px;
   padding: 9px 13px;
@@ -175,18 +177,20 @@
   gap: 12px;
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: none;
 }
 
 .hudCard {
-  background: rgba(0, 0, 0, 0.32);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
   border-radius: 12px;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .hudCardLabel {
@@ -229,13 +233,15 @@
 
 /* ─── ASSET ALLOCATION & FX BAR ─── */
 .allocationCard {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.55);
+  border: none;
   border-radius: 14px;
   padding: 14px 18px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .allocationTop {
@@ -258,11 +264,12 @@
 .allocationFxAlert {
   font-size: 11px;
   color: #38bdf8;
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  padding: 3px 9px;
+  background: rgba(56, 189, 248, 0.12);
+  border: none;
+  padding: 4px 10px;
   border-radius: 6px;
   font-weight: 600;
+  backdrop-filter: blur(10px);
 }
 
 .allocationBarTrack {
@@ -271,7 +278,7 @@
   border-radius: 999px;
   overflow: hidden;
   display: flex;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
 }
 
 .barThai {
@@ -324,36 +331,40 @@
 }
 
 .filterTabBtn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
   color: #94a3b8;
-  padding: 6px 12px;
+  padding: 7px 13px;
   border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition: all 0.2s ease;
 }
 
 .filterTabBtn:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.09);
   color: #ffffff;
 }
 
 .filterTabBtnActive {
-  background: rgba(34, 211, 238, 0.16);
-  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.2);
+  border: none;
   color: #22d3ee;
-  box-shadow: 0 0 10px rgba(34, 211, 238, 0.25);
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.3);
 }
 
 /* ─── STAGE-DIAGNOSED PORTFOLIO TABLE ─── */
 .tableWrapper {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.6);
+  border: none;
   border-radius: 14px;
   overflow-x: auto;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .portfolioTable {
@@ -408,20 +419,20 @@
 .tagThai {
   font-size: 8px;
   font-weight: 800;
-  background: rgba(6, 182, 212, 0.18);
+  background: rgba(6, 182, 212, 0.2);
   color: #22d3ee;
-  border: 1px solid rgba(6, 182, 212, 0.35);
-  padding: 1px 5px;
+  border: none;
+  padding: 2px 6px;
   border-radius: 4px;
 }
 
 .tagDr {
   font-size: 8px;
   font-weight: 800;
-  background: rgba(168, 85, 247, 0.2);
+  background: rgba(168, 85, 247, 0.22);
   color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  padding: 1px 5px;
+  border: none;
+  padding: 2px 6px;
   border-radius: 4px;
 }
 
@@ -443,20 +454,20 @@
 }
 
 .stage2Badge {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.2);
+  border: none;
   color: #34d399;
 }
 
 .stage1Badge {
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.2);
+  border: none;
   color: #fbbf24;
 }
 
 .stage4Badge {
-  background: rgba(244, 63, 94, 0.18);
-  border: 1px solid rgba(244, 63, 94, 0.45);
+  background: rgba(244, 63, 94, 0.25);
+  border: none;
   color: #fb7185;
   animation: pulseAlert 2s infinite;
 }
@@ -483,20 +494,20 @@
 }
 
 .actionHold {
-  background: rgba(16, 185, 129, 0.2);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.22);
+  border: none;
   color: #34d399;
 }
 
 .actionTakeProfit {
-  background: rgba(6, 182, 212, 0.2);
-  border: 1px solid rgba(6, 182, 212, 0.45);
+  background: rgba(6, 182, 212, 0.22);
+  border: none;
   color: #38bdf8;
 }
 
 .actionCutLoss {
-  background: rgba(244, 63, 94, 0.25);
-  border: 1px solid rgba(244, 63, 94, 0.5);
+  background: rgba(244, 63, 94, 0.28);
+  border: none;
   color: #fb7185;
 }
 
@@ -509,13 +520,15 @@
 
 /* ─── DR ARBITRAGE CARDS ─── */
 .drSection {
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: rgba(15, 23, 42, 0.6);
+  border: none;
   border-radius: 14px;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .drSectionHeader {
@@ -542,13 +555,15 @@
 }
 
 .drCard {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
   border-radius: 12px;
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .drCardTop {
@@ -566,10 +581,10 @@
 .drFairBadge {
   font-size: 10px;
   font-weight: 800;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 5px;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.2);
+  border: none;
   color: #34d399;
 }
 
@@ -630,26 +645,30 @@
 }
 
 .modalCard {
-  background: linear-gradient(160deg, #0d172e 0%, #0a1020 60%, #050b16 100%);
-  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(10, 18, 36, 0.85);
+  border: none;
   border-radius: 22px;
   padding: 26px 28px;
   max-width: 640px;
   width: 100%;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(34, 211, 238, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(34, 211, 238, 0.08);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
   max-height: 92vh;
   overflow-y: auto;
   position: relative;
 }
 
 .partnerLeadCard {
-  background: linear-gradient(160deg, #0d1d2b 0%, #081622 60%, #040d16 100%);
-  border: 1.5px solid rgba(16, 185, 129, 0.45);
+  background: rgba(10, 24, 32, 0.85);
+  border: none;
   border-radius: 22px;
   padding: 26px 28px;
   max-width: 660px;
   width: 100%;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 45px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(16, 185, 129, 0.1);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
   max-height: 92vh;
   overflow-y: auto;
   position: relative;
@@ -660,8 +679,8 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 20px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+  border-bottom: none;
 }
 
 .modalTitleGroup {
@@ -697,8 +716,8 @@
 }
 
 .modalClose {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
   color: #94a3b8;
   font-size: 14px;
   width: 32px;
@@ -713,20 +732,23 @@
 }
 
 .modalClose:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.25);
+  border: none;
   color: #ffffff;
 }
 
 /* ─── SEGMENTED BROKER TAB SWITCHER ─── */
 .brokerSegmentedBar {
   display: flex;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
   border-radius: 12px;
   padding: 4px;
   gap: 6px;
   margin-bottom: 18px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .brokerSegmentedTab {
@@ -752,16 +774,18 @@
 }
 
 .brokerSegmentedTabPiActive {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(139, 92, 246, 0.22) 100%);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(139, 92, 246, 0.2) 100%);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35), inset 0 0 0 1.5px #a855f7;
+  border: none;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.35);
   font-weight: 800;
 }
 
 .brokerSegmentedTabTrinityActive {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(14, 165, 233, 0.22) 100%);
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.35) 0%, rgba(14, 165, 233, 0.2) 100%);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35), inset 0 0 0 1.5px #06b6d4;
+  border: none;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.35);
   font-weight: 800;
 }
 
@@ -774,8 +798,8 @@
 }
 
 .luxuryBrokerCard {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.035);
+  border: none;
   border-radius: 14px;
   padding: 14px 16px;
   cursor: pointer;
@@ -786,42 +810,43 @@
   gap: 8px;
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .luxuryBrokerCard:hover {
-  background: rgba(22, 34, 60, 0.85);
+  background: rgba(255, 255, 255, 0.07);
   transform: translateY(-2px);
 }
 
 .luxuryBrokerCardPi {
-  border-color: rgba(168, 85, 247, 0.25);
+  border: none;
 }
 
 .luxuryBrokerCardPi:hover {
-  border-color: rgba(168, 85, 247, 0.6);
-  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.2);
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.25);
 }
 
 .luxuryBrokerCardSelectedPi {
-  background: radial-gradient(circle at top left, rgba(168, 85, 247, 0.28) 0%, rgba(15, 23, 42, 0.95) 75%);
-  border: 2px solid #a855f7 !important;
-  box-shadow: 0 0 28px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: radial-gradient(circle at top left, rgba(168, 85, 247, 0.3) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+  border: none !important;
+  box-shadow: 0 0 28px rgba(168, 85, 247, 0.4) !important;
   transform: translateY(-2px);
 }
 
 .luxuryBrokerCardTrinity {
-  border-color: rgba(6, 182, 212, 0.25);
+  border: none;
 }
 
 .luxuryBrokerCardTrinity:hover {
-  border-color: rgba(6, 182, 212, 0.6);
-  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.25);
 }
 
 .luxuryBrokerCardSelectedTrinity {
-  background: radial-gradient(circle at top left, rgba(6, 182, 212, 0.28) 0%, rgba(15, 23, 42, 0.95) 75%);
-  border: 2px solid #06b6d4 !important;
-  box-shadow: 0 0 28px rgba(6, 182, 212, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: radial-gradient(circle at top left, rgba(6, 182, 212, 0.3) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+  border: none !important;
+  box-shadow: 0 0 28px rgba(6, 182, 212, 0.4) !important;
   transform: translateY(-2px);
 }
 
@@ -855,12 +880,12 @@
 }
 
 .statusIndicatorActivePi {
-  background: rgba(168, 85, 247, 0.25);
-  border: 1px solid #c084fc;
+  background: rgba(168, 85, 247, 0.28);
+  border: none;
   color: #e9d5ff;
   font-size: 10px;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
@@ -869,12 +894,12 @@
 }
 
 .statusIndicatorActiveTrinity {
-  background: rgba(6, 182, 212, 0.25);
-  border: 1px solid #38bdf8;
+  background: rgba(6, 182, 212, 0.28);
+  border: none;
   color: #e0f2fe;
   font-size: 10px;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
@@ -883,12 +908,12 @@
 }
 
 .statusIndicatorInactive {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
   color: #64748b;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 6px;
 }
 
@@ -928,11 +953,14 @@
 
 /* ─── LUXURY FORM INPUTS ─── */
 .formGlassCard {
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+  border: none;
   border-radius: 14px;
   padding: 16px 18px;
   margin-bottom: 16px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .formGridTwoCol {
@@ -975,8 +1003,8 @@
 
 .formInput {
   width: 100%;
-  background: rgba(10, 16, 30, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.045);
+  border: none;
   border-radius: 10px;
   padding: 10px 12px 10px 36px;
   color: #ffffff;
@@ -984,13 +1012,16 @@
   font-family: inherit;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .formInput:focus {
   outline: none;
-  border-color: #38bdf8;
-  background: rgba(10, 20, 38, 0.95);
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
 }
 
 .toggleSecretBtn {
@@ -1017,8 +1048,8 @@
 }
 
 .interestPillBtn {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  border: none;
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 11px;
@@ -1030,26 +1061,28 @@
   justify-content: space-between;
   transition: all 0.2s ease;
   text-align: left;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .interestPillBtn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
   color: #ffffff;
 }
 
 .interestPillBtnActive {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.15) 100%);
-  border: 1.5px solid #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(6, 182, 212, 0.2) 100%);
+  border: none;
   color: #34d399;
   font-weight: 700;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
 }
 
 /* ─── IB CONCIERGE BANNER ─── */
 .ibConciergeBanner {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.05) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  border: none;
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
@@ -1057,15 +1090,18 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
 }
 
 .ibBadge {
-  background: rgba(245, 158, 11, 0.2);
-  border: 1px solid rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.25);
+  border: none;
   color: #fbbf24;
   font-size: 10px;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 5px;
   letter-spacing: 0.5px;
 }
@@ -1083,8 +1119,8 @@
 
 /* ─── VIP CONFIRMATION SCREEN (NO EXTERNAL LINKS) ─── */
 .vipSuccessCard {
-  background: linear-gradient(160deg, rgba(16, 185, 129, 0.15) 0%, rgba(13, 23, 42, 0.95) 75%);
-  border: 1.5px solid #10b981;
+  background: linear-gradient(160deg, rgba(16, 185, 129, 0.18) 0%, rgba(13, 23, 42, 0.9) 75%);
+  border: none;
   border-radius: 18px;
   padding: 26px 24px;
   text-align: center;
@@ -1092,7 +1128,9 @@
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 40px rgba(16, 185, 129, 0.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .vipCrownIcon {
@@ -1109,8 +1147,8 @@
 }
 
 .vipLeadBadge {
-  background: rgba(16, 185, 129, 0.2);
-  border: 1px solid rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.25);
+  border: none;
   color: #34d399;
   font-size: 11px;
   font-weight: 800;
@@ -1120,8 +1158,8 @@
 }
 
 .vipTimelineBox {
-  background: rgba(10, 16, 30, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
   border-radius: 14px;
   padding: 16px;
   width: 100%;
@@ -1130,6 +1168,8 @@
   flex-direction: column;
   gap: 12px;
   box-sizing: border-box;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .vipTimelineStep {
@@ -1173,7 +1213,7 @@
 
 .vipCloseBtn {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: 1px solid #34d399;
+  border: none;
   color: #ffffff;
   font-size: 13px;
   font-weight: 800;
@@ -1194,11 +1234,11 @@
 /* ─── OFFICIAL PARTNER BROKER BUTTONS ─── */
 .partnerBtn {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: 1px solid rgba(52, 211, 153, 0.5);
+  border: none;
   color: #ffffff;
   font-size: 11px;
   font-weight: 800;
-  padding: 6px 14px;
+  padding: 7px 15px;
   border-radius: 8px;
   cursor: pointer;
   display: inline-flex;
@@ -1216,7 +1256,7 @@
 
 .submitBtnVIP {
   background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-  border: 1.5px solid #34d399;
+  border: none;
   color: #ffffff;
   font-size: 14px;
   font-weight: 800;
