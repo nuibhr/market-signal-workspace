@@ -471,12 +471,12 @@ html:not([data-theme='light']) body:not([data-theme='light']) .market-destinatio
 /* ─── 7. Thai Workspace Nav Toolbar ─── */
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) #thai-workspace-navigation,
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='toolbar']:not([class*='us-workspace-nav']) {
-  background: rgba(15, 23, 42, 0.6) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  background: rgba(15, 23, 42, 0.35) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   border: none !important;
-  border-radius: 16px !important;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) #thai-workspace-navigation h1,
@@ -489,33 +489,83 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
   color: #94A3B8 !important;
 }
 
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  align-items: center !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a,
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a {
-  background: rgba(255, 255, 255, 0.04) !important;
+  background: transparent !important;
   border: none !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   color: #94A3B8 !important;
-  border-radius: 14px !important;
+  border-radius: 9999px !important;
+  box-shadow: none !important;
+  padding: 8px 16px !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a b,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a b {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #cbd5e1 !important;
+  white-space: nowrap !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a small,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a small {
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  color: #64748b !important;
+  white-space: nowrap !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a:hover,
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a:hover {
-  background: rgba(255, 255, 255, 0.09) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
   color: #F1F5F9 !important;
   border: none !important;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.18) !important;
-  transform: translateY(-2px) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a:hover b,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a:hover b {
+  color: #ffffff !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a[aria-current],
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a[aria-current] {
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.55) 0%, rgba(37, 99, 235, 0.55) 100%) !important;
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18) 0%, rgba(59, 130, 246, 0.24) 100%) !important;
   color: #ffffff !important;
   border: none !important;
-  border-radius: 14px !important;
-  box-shadow: 0 4px 20px rgba(34, 211, 238, 0.25) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.25) !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a[aria-current] b,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a[aria-current] b {
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views a[aria-current] small,
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a[aria-current] small {
+  color: #a5f3fc !important;
+  opacity: 0.85 !important;
 }
 
 /* ─── 8. Pro Tools Suite Navigation ─── */
@@ -708,7 +758,7 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='stat'] {
   background: transparent !important;
   border: none !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-right: none !important;
   color: #F1F5F9 !important;
 }
 
@@ -717,8 +767,9 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
 }
 
 html:not([data-theme='light']) thead th {
-  background: rgba(15, 23, 42, 0.8) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: none !important;
   border-top: none !important;
   border-left: none !important;
   border-right: none !important;
