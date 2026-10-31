@@ -15,14 +15,12 @@ const BROKER_CONFIG = {
     id: '003',
     name: 'Pi Securities (บล.พาย)',
     thaiName: 'บล.พาย (มหาชน)',
-    openUrl: 'https://www.pi.financial/open-account',
     tag: 'OFFICIAL PARTNER',
   },
   '022': {
     id: '022',
     name: 'Trinity Securities (บล.ทรีนีตี้)',
     thaiName: 'บล.ทรีนีตี้',
-    openUrl: 'https://www.trinitythai.com/OpenAccount',
     tag: 'OFFICIAL PARTNER',
   },
 };
@@ -129,18 +127,19 @@ export async function POST(request) {
       const dateStr = new Date().toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric' });
       const interestLabels = safeInterests.length > 0 ? safeInterests.join(', ') : 'หุ้นไทย & DR ทั่วไป';
 
-      const alertText = `🔔 <b>มีลูกค้าใหม่ยื่นขอเปิดพอร์ตกับพาร์ทเนอร์!</b>
+      const alertText = `👑 <b>มีลูกค้าใหม่ขอเปิดพอร์ตผ่าน Nugaom Platform (IB Lead)!</b>
 ────────────────────────
-🏛️ <b>โบรกเกอร์:</b> <b>${broker.name}</b>
+🏛️ <b>โบรกเกอร์ที่เลือก:</b> <b>${broker.name}</b> (รหัส ${brokerId})
 👤 <b>ชื่อ-สกุล:</b> ${trimmedName}
 📞 <b>เบอร์โทรติดต่อ:</b> <code>${cleanedPhone}</code>
 💬 <b>LINE ID:</b> <code>${trimmedLineId || '—'}</code>
 📧 <b>อีเมล:</b> <code>${trimmedEmail || '—'}</code>
 🎯 <b>สิ่งที่สนใจ:</b> ${interestLabels}
-${trimmedNotes ? `📝 <b>หมายเหตุ:</b> ${trimmedNotes}\n` : ''}⏱️ <b>เวลาส่งข้อมูล:</b> ${dateStr} เวลา ${timeStr} น.
+${trimmedNotes ? `📝 <b>หมายเหตุ:</b> ${trimmedNotes}\n` : ''}⏱️ <b>เวลายื่นเรื่อง:</b> ${dateStr} เวลา ${timeStr} น.
 ────────────────────────
-💾 <b>จัดเก็บข้อมูลใน:</b> ตารางฐานข้อมูล <code>partner_account_leads</code>
-🚀 <b>ลิงก์ E-Open ของโบรค:</b> <a href="${broker.openUrl}">คลิกไปหน้าเปิดพอร์ต NDID ↗</a>`;
+💾 <b>บันทึกในฐานข้อมูล:</b> ตาราง <code>partner_account_leads</code> (รหัส ${leadId})
+⚡ <b>ขั้นตอนถัดไป (Action Required):</b>
+มาร์เก็ตติ้ง/ผู้ดูแลลูกค้าของโบรกเกอร์ ${broker.name} ประจำพาร์ทเนอร์แพลตฟอร์ม จะโทรติดต่อดูแลและอำนวยความสะดวกให้ลูกค้าโดยตรง`;
 
       sendTelegramMessage({
         token: process.env.TELEGRAM_BOT_TOKEN,
@@ -157,8 +156,7 @@ ${trimmedNotes ? `📝 <b>หมายเหตุ:</b> ${trimmedNotes}\n` : ''}
         leadId,
         brokerId,
         brokerName: broker.name,
-        brokerOpenUrl: broker.openUrl,
-        message: `บันทึกข้อมูลขอเปิดบัญชี ${broker.name} สำเร็จ เจ้าหน้าที่จะติดต่อดูแลโดยเร็ว`,
+        message: `บันทึกข้อมูลขอเปิดบัญชี ${broker.name} สำเร็จ เจ้าหน้าที่การตลาดจะติดต่อประสานงานดูแลท่านโดยเร็ว`,
       },
       { status: 201, headers: NO_STORE }
     );

@@ -36,7 +36,7 @@ test('partner-leads POST validates broker and phone format', async () => {
   assert.equal(data2.error, 'INVALID_PHONE');
 });
 
-test('partner-leads POST successfully saves lead and returns broker openUrl', async () => {
+test('partner-leads POST successfully saves lead and does not expose direct external broker links', async () => {
   const req = new Request('http://localhost:3000/api/equity/partner-leads', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
@@ -56,7 +56,7 @@ test('partner-leads POST successfully saves lead and returns broker openUrl', as
   assert.equal(data.success, true);
   assert.ok(data.leadId.startsWith('lead_'));
   assert.equal(data.brokerId, '003');
-  assert.equal(data.brokerOpenUrl, 'https://www.pi.financial/open-account');
+  assert.equal(data.brokerOpenUrl, undefined);
 });
 
 test('partner-leads GET rejects unauthorized requests', async () => {
@@ -64,3 +64,4 @@ test('partner-leads GET rejects unauthorized requests', async () => {
   const res = await GET(req);
   assert.equal(res.status, 403);
 });
+

@@ -17,3 +17,4 @@ test('admin partner-leads POST denies unauthorized users', async () => {
   const res = await POST(req);
   assert.equal(res.status, 403);
 });
+

@@ -12,8 +12,7 @@ const BROKER_OPTIONS = [
     thaiName: 'บล.พาย (มหาชน)',
     tag: 'OFFICIAL PARTNER',
     badge: '🥧 บล.พาย',
-    tagline: 'แอป Pi Financial ซื้อขายหุ้นไทย & DR ทั่วโลก เปิดพอร์ต NDID อนุมัติไวใน 5 นาที',
-    openUrl: 'https://www.pi.financial/open-account',
+    tagline: 'แอป Pi Financial ซื้อขายหุ้นไทย & DR ทั่วโลก มาร์เก็ตติ้งดูแลส่วนตัวระดับ VIP',
   },
   {
     id: '022',
@@ -22,7 +21,6 @@ const BROKER_OPTIONS = [
     tag: 'OFFICIAL PARTNER',
     badge: '🌟 บล.ทรีนีตี้',
     tagline: 'โบรกเกอร์ชั้นนำ บทวิเคราะห์แม่นยำ พร้อม Settrade Open API เต็มประสิทธิภาพ',
-    openUrl: 'https://www.trinitythai.com/OpenAccount',
   },
 ];
 
@@ -359,6 +357,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const [appSecret, setAppSecret] = useState('AMeylhfYKDRtm2yC+qyN+ivzRXceX23b93zGvMCTe4vF');
   const [appCode, setAppCode] = useState('ALGO_EQ');
   const [latency, setLatency] = useState(35);
+  const [showSecret, setShowSecret] = useState(false);
 
   // Partner Lead Form states
   const [leadBroker, setLeadBroker] = useState('003'); // default Pi
@@ -1022,18 +1021,21 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
         </section>
       )}
 
-      {/* ─── MODAL 1: PARTNER ACCOUNT OPENING (เปิดพอร์ตใหม่กับพาร์ทเนอร์) ─── */}
+      {/* ─── MODAL 1: PARTNER ACCOUNT OPENING (VIP INTRODUCING BROKER FLOW) ─── */}
       {showLeadModal && (
         <div className={styles.modalOverlay} onClick={() => setShowLeadModal(false)}>
           <div className={styles.partnerLeadCard} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <div>
-                <h3 className={styles.modalTitle}>
-                  📝 เปิดพอร์ตหุ้น &amp; DR กับโบรกเกอร์พันธมิตร
-                </h3>
-                <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>
-                  บล.พาย (Pi Securities 003) &amp; บล.ทรีนีตี้ (Trinity Securities 022)
+              <div className={styles.modalTitleGroup}>
+                <span className={styles.modalKicker} style={{ color: '#34d399' }}>
+                  👑 VIP INTRODUCING BROKER (IB) CONCIERGE
                 </span>
+                <h3 className={styles.modalTitle}>
+                  ยื่นขอเปิดพอร์ต VIP กับโบรกเกอร์พันธมิตร
+                </h3>
+                <p className={styles.modalSubtitle}>
+                  บล.พาย (003) &amp; บล.ทรีนีตี้ (022) — มาร์เก็ตติ้งส่วนตัวจะติดต่อดูแลท่านโดยตรง
+                </p>
               </div>
               <button
                 type="button"
@@ -1045,136 +1047,241 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
             </div>
 
             {leadSuccess ? (
-              <div className={styles.leadSuccessBox}>
-                <div style={{ fontSize: '32px' }}>🎉</div>
-                <h4 className={styles.leadSuccessTitle}>บันทึกข้อมูลขอเปิดพอร์ตเรียบร้อยแล้ว!</h4>
-                <p className={styles.leadSuccessDesc}>
-                  ข้อมูลของท่านถูกจัดเก็บบนระบบความปลอดภัยเรียบร้อยแล้ว (รหัสอ้างอิง: <code>{leadSuccess.leadId}</code>)
-                  <br />
-                  เจ้าหน้าที่ผู้เชี่ยวชาญจาก <b>{leadSuccess.brokerName}</b> จะติดต่อประสานงานดูแลท่านโดยเร็ว
+              <div className={styles.vipSuccessCard}>
+                <div className={styles.vipCrownIcon}>👑</div>
+                <h4 className={styles.vipSuccessTitle}>ยื่นคำขอเปิดพอร์ต VIP เรียบร้อยแล้ว!</h4>
+                <span className={styles.vipLeadBadge}>
+                  รหัสคำขออ้างอิง: {leadSuccess.leadId}
+                </span>
+                <p style={{ fontSize: '13px', color: '#cbd5e1', margin: '4px 0 10px 0', lineHeight: 1.5 }}>
+                  ข้อมูลของท่านได้รับการลงทะเบียนในระบบความปลอดภัยเรียบร้อยแล้ว<br />
+                  เจ้าหน้าที่ผู้แนะนำการลงทุน (มาร์เก็ตติ้ง) จาก{' '}
+                  <strong style={{ color: leadSuccess.brokerId === '003' ? '#c084fc' : '#38bdf8' }}>
+                    {leadSuccess.brokerName}
+                  </strong>{' '}
+                  จะติดต่อดูแลท่านเป็นกรณีพิเศษ
                 </p>
 
-                <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)', margin: '8px 0' }} />
-
-                <p style={{ fontSize: '12px', color: '#38bdf8', margin: 0, fontWeight: 700 }}>
-                  ท่านสามารถดำเนินการเปิดบัญชีออนไลน์ NDID ได้ทันทีด้วยตนเองผ่านลิงก์ของโบรกเกอร์:
-                </p>
-
-                <a
-                  href={leadSuccess.brokerOpenUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.leadDirectLinkBtn}
-                >
-                  🚀 เปิดพอร์ตออนไลน์กับ {leadSuccess.brokerName} ทันที (NDID E-Open) ↗
-                </a>
+                <div className={styles.vipTimelineBox}>
+                  <div className={styles.vipTimelineStep}>
+                    <div className={styles.vipStepNum}>1</div>
+                    <div className={styles.vipStepText}>
+                      <span className={styles.vipStepTitle}>รับเรื่องคำขอเปิดพอร์ต VIP สำเร็จ</span>
+                      <span className={styles.vipStepDesc}>
+                        ระบบส่งรายละเอียดของท่านตรงไปยังหัวหน้าทีมมาร์เก็ตติ้ง {leadSuccess.brokerName} เรียบร้อยแล้ว
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.vipTimelineStep}>
+                    <div className={styles.vipStepNum}>2</div>
+                    <div className={styles.vipStepText}>
+                      <span className={styles.vipStepTitle}>มาร์เก็ตติ้งส่วนตัวติดต่อกลับ</span>
+                      <span className={styles.vipStepDesc}>
+                        เจ้าหน้าที่ IC จะติดต่อท่านทางโทรศัพท์หรือ LINE เพื่อแนะนำขั้นตอนการเปิดบัญชีและส่งเอกสารยืนยันตัวตน
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.vipTimelineStep}>
+                    <div className={styles.vipStepNum}>3</div>
+                    <div className={styles.vipStepText}>
+                      <span className={styles.vipStepTitle}>อนุมัติบัญชี &amp; รับสิทธิ์เชื่อมต่อ API ทันที</span>
+                      <span className={styles.vipStepDesc}>
+                        เมื่อบัญชีได้รับการอนุมัติ ท่านจะได้รับสิทธิ์เชื่อมต่อ Settrade Open API พอร์ตสดและสิทธิ์ใช้งานฟีเจอร์พรีเมียม
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
                 <button
                   type="button"
-                  className={styles.byokBtnSecondary}
-                  style={{ marginTop: '8px', fontSize: '11px' }}
+                  className={styles.vipCloseBtn}
                   onClick={() => setShowLeadModal(false)}
                 >
-                  ปิดหน้าต่าง
+                  ✓ รับทราบและปิดหน้าต่าง
                 </button>
               </div>
             ) : (
               <form onSubmit={handleLeadSubmit}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>เลือกโบรกเกอร์ที่ต้องการเปิดบัญชี *</label>
-                  <div className={styles.partnerSelectorGrid}>
-                    {BROKER_OPTIONS.map((b) => (
-                      <div
-                        key={b.id}
-                        className={`${styles.partnerCard} ${leadBroker === b.id ? styles.partnerCardActive : ''}`}
-                        onClick={() => setLeadBroker(b.id)}
-                      >
-                        <span className={styles.partnerBadge}>OFFICIAL PARTNER</span>
-                        <span className={styles.partnerTitle}>{b.badge}</span>
-                        <span style={{ fontSize: '10px', color: '#38bdf8', fontWeight: 700 }}>
-                          รหัส [{b.id}]
-                        </span>
-                        <span className={styles.partnerDesc}>{b.tagline}</span>
-                      </div>
-                    ))}
+                {/* ─── SEGMENTED BROKER TAB SWITCHER ─── */}
+                <div className={styles.brokerSegmentedBar}>
+                  <button
+                    type="button"
+                    className={`${styles.brokerSegmentedTab} ${leadBroker === '003' ? styles.brokerSegmentedTabPiActive : ''}`}
+                    onClick={() => setLeadBroker('003')}
+                  >
+                    <span>🥧</span>
+                    <span>บล.พาย Pi Securities (003)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.brokerSegmentedTab} ${leadBroker === '022' ? styles.brokerSegmentedTabTrinityActive : ''}`}
+                    onClick={() => setLeadBroker('022')}
+                  >
+                    <span>🌟</span>
+                    <span>บล.ทรีนีตี้ Trinity (022)</span>
+                  </button>
+                </div>
+
+                {/* ─── DUAL LUXURY BROKER CARDS ─── */}
+                <div className={styles.dualBrokerGrid}>
+                  {/* PI SECURITIES 003 */}
+                  <div
+                    className={`${styles.luxuryBrokerCard} ${styles.luxuryBrokerCardPi} ${leadBroker === '003' ? styles.luxuryBrokerCardSelectedPi : ''}`}
+                    onClick={() => setLeadBroker('003')}
+                  >
+                    <div className={styles.cardTopRow}>
+                      <span className={styles.brokerEmblemPi}>🥧 บล.พาย (003)</span>
+                      {leadBroker === '003' ? (
+                        <span className={styles.statusIndicatorActivePi}>🟢 ✓ กำลังเลือก</span>
+                      ) : (
+                        <span className={styles.statusIndicatorInactive}>⚪ คลิกเพื่อเลือก</span>
+                      )}
+                    </div>
+                    <h4 className={styles.cardBrokerName}>Pi Securities (มหาชน)</h4>
+                    <p className={styles.cardBrokerSub}>
+                      แอป Pi Financial ซื้อขายหุ้นไทย &amp; DR ทั่วโลก มาร์เก็ตติ้งดูแลส่วนตัว
+                    </p>
+                    <ul className={styles.brokerPerksList}>
+                      <li>✨ มาร์เก็ตติ้งโทร/ไลน์ติดต่อดูแลเอกสารถึงที่</li>
+                      <li>✨ สิทธิ์เข้าห้องซิกแนล &amp; สแกนหุ้น Stage 2 อัจฉริยะ</li>
+                      <li>✨ รองรับ Settrade Open API พอร์ตสด</li>
+                    </ul>
+                  </div>
+
+                  {/* TRINITY SECURITIES 022 */}
+                  <div
+                    className={`${styles.luxuryBrokerCard} ${styles.luxuryBrokerCardTrinity} ${leadBroker === '022' ? styles.luxuryBrokerCardSelectedTrinity : ''}`}
+                    onClick={() => setLeadBroker('022')}
+                  >
+                    <div className={styles.cardTopRow}>
+                      <span className={styles.brokerEmblemTrinity}>🌟 บล.ทรีนีตี้ (022)</span>
+                      {leadBroker === '022' ? (
+                        <span className={styles.statusIndicatorActiveTrinity}>🟢 ✓ กำลังเลือก</span>
+                      ) : (
+                        <span className={styles.statusIndicatorInactive}>⚪ คลิกเพื่อเลือก</span>
+                      )}
+                    </div>
+                    <h4 className={styles.cardBrokerName}>Trinity Securities</h4>
+                    <p className={styles.cardBrokerSub}>
+                      โบรกเกอร์ชั้นนำ บทวิเคราะห์แม่นยำ พร้อม Settrade Open API เต็มประสิทธิภาพ
+                    </p>
+                    <ul className={styles.brokerPerksList}>
+                      <li>✨ ทีมงานมาร์เก็ตติ้งและ Algorithm ดูแลประสานงานตรง</li>
+                      <li>✨ บทวิเคราะห์เจาะลึกทั้งหุ้นไทย บล็อกเทรด TFEX และ DR</li>
+                      <li>✨ สิทธิ์เชื่อมต่อระบบความปลอดภัย Zero-Custody Enclave</li>
+                    </ul>
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>ชื่อ - นามสกุล *</label>
-                    <input
-                      type="text"
-                      required
-                      className={styles.formInput}
-                      placeholder="เช่น สมชาย ใจดี"
-                      value={leadName}
-                      onChange={(e) => setLeadName(e.target.value)}
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>เบอร์โทรศัพท์มือถือ *</label>
-                    <input
-                      type="tel"
-                      required
-                      className={styles.formInput}
-                      placeholder="เช่น 0812345678"
-                      value={leadPhone}
-                      onChange={(e) => setLeadPhone(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>LINE ID (สำหรับรับสิทธิพิเศษ)</label>
-                    <input
-                      type="text"
-                      className={styles.formInput}
-                      placeholder="เช่น @somchai_trader"
-                      value={leadLine}
-                      onChange={(e) => setLeadLine(e.target.value)}
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>อีเมล (Email)</label>
-                    <input
-                      type="email"
-                      className={styles.formInput}
-                      placeholder="somchai@example.com"
-                      value={leadEmail}
-                      onChange={(e) => setLeadEmail(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>สินทรัพย์และบริการที่ท่านสนใจ</label>
-                  <div className={styles.leadCheckboxGrid}>
-                    {INTEREST_OPTIONS.map((opt) => (
-                      <label key={opt.id} className={styles.leadCheckboxLabel}>
-                        <input
-                          type="checkbox"
-                          checked={leadInterests.includes(opt.id)}
-                          onChange={() => handleInterestToggle(opt.id)}
-                        />
-                        <span>{opt.label}</span>
+                {/* ─── FORM FIELDS IN GLASS CARD ─── */}
+                <div className={styles.formGlassCard}>
+                  <div className={styles.formGridTwoCol}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>
+                        <span>ชื่อ - นามสกุล *</span>
                       </label>
-                    ))}
-                  </div>
-                </div>
+                      <div className={styles.formInputBox}>
+                        <span className={styles.inputIcon}>👤</span>
+                        <input
+                          type="text"
+                          required
+                          className={styles.formInput}
+                          placeholder="เช่น สมชาย ใจดี"
+                          value={leadName}
+                          onChange={(e) => setLeadName(e.target.value)}
+                        />
+                      </div>
+                    </div>
 
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>หมายเหตุเพิ่มเติม (ถ้ามี)</label>
-                  <input
-                    type="text"
-                    className={styles.formInput}
-                    placeholder="เช่น สนใจเปิดพอร์ตเพื่อเทรด DR NVDA80 และเชื่อมต่อระบบ AI"
-                    value={leadNotes}
-                    onChange={(e) => setLeadNotes(e.target.value)}
-                  />
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>
+                        <span>เบอร์โทรศัพท์มือถือ *</span>
+                      </label>
+                      <div className={styles.formInputBox}>
+                        <span className={styles.inputIcon}>📞</span>
+                        <input
+                          type="tel"
+                          required
+                          className={styles.formInput}
+                          placeholder="เช่น 0812345678"
+                          value={leadPhone}
+                          onChange={(e) => setLeadPhone(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.formGridTwoCol} style={{ marginTop: '12px' }}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>
+                        <span>LINE ID (สำหรับมาร์เก็ตติ้งติดต่อสะดวก)</span>
+                      </label>
+                      <div className={styles.formInputBox}>
+                        <span className={styles.inputIcon}>💬</span>
+                        <input
+                          type="text"
+                          className={styles.formInput}
+                          placeholder="เช่น somchai_trader"
+                          value={leadLine}
+                          onChange={(e) => setLeadLine(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label className={styles.formLabel}>
+                        <span>อีเมล (Email)</span>
+                      </label>
+                      <div className={styles.formInputBox}>
+                        <span className={styles.inputIcon}>📧</span>
+                        <input
+                          type="email"
+                          className={styles.formInput}
+                          placeholder="somchai@example.com"
+                          value={leadEmail}
+                          onChange={(e) => setLeadEmail(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.formGroup} style={{ marginTop: '12px' }}>
+                    <label className={styles.formLabel}>
+                      <span>สินทรัพย์และบริการที่ท่านสนใจ (เลือกได้หลายข้อ)</span>
+                    </label>
+                    <div className={styles.interestPillsGrid}>
+                      {INTEREST_OPTIONS.map((opt) => {
+                        const isSelected = leadInterests.includes(opt.id);
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            className={`${styles.interestPillBtn} ${isSelected ? styles.interestPillBtnActive : ''}`}
+                            onClick={() => handleInterestToggle(opt.id)}
+                          >
+                            <span>{opt.label}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 800 }}>{isSelected ? '✓' : '+'}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className={styles.formGroup} style={{ marginTop: '12px' }}>
+                    <label className={styles.formLabel}>
+                      <span>หมายเหตุเพิ่มเติมหรือช่วงเวลาที่สะดวกรับสาย</span>
+                    </label>
+                    <div className={styles.formInputBox}>
+                      <span className={styles.inputIcon}>📝</span>
+                      <input
+                        type="text"
+                        className={styles.formInput}
+                        placeholder="เช่น สนใจเปิดพอร์ตเพื่อเทรด DR และรับสิทธิ์เชื่อมต่อ AI โทรช่วงบ่าย"
+                        value={leadNotes}
+                        onChange={(e) => setLeadNotes(e.target.value)}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {leadError && (
@@ -1196,11 +1303,12 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
                   <button
                     type="submit"
-                    className={styles.partnerBtn}
-                    style={{ flex: 1, justifyContent: 'center', padding: '10px 18px', fontSize: '13px' }}
+                    className={styles.submitBtnVIP}
                     disabled={leadSubmitting || !leadName.trim() || !leadPhone.trim()}
                   >
-                    {leadSubmitting ? 'กำลังส่งข้อมูล...' : '🚀 ยืนยันข้อมูลขอเปิดพอร์ต & รับสิทธิพิเศษ'}
+                    {leadSubmitting
+                      ? 'กำลังส่งข้อมูลให้มาร์เก็ตติ้ง...'
+                      : `👑 ยืนยันขอเปิดพอร์ต VIP (${leadBroker === '003' ? 'บล.พาย' : 'บล.ทรีนีตี้'})`}
                   </button>
                   <button
                     type="button"
@@ -1213,7 +1321,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
 
                 <div style={{ textAlign: 'center', marginTop: '10px' }}>
                   <small style={{ color: '#94a3b8', fontSize: '10px' }}>
-                    🔒 ข้อมูลของท่านจะถูกจัดเก็บอย่างปลอดภัยในระบบ และแจ้งเตือนทีมงานโบรกเกอร์ทันทีโดยไม่มีการเผยแพร่ภายนอก
+                    🔒 ข้อมูลของท่านจะถูกส่งตรงไปยังหัวหน้าทีมมาร์เก็ตติ้งของโบรกเกอร์ที่ท่านเลือก เพื่อติดต่อแนะนำการเปิดพอร์ตและอำนวยความสะดวกเป็นกรณีพิเศษ
                   </small>
                 </div>
               </form>
@@ -1222,18 +1330,21 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
         </div>
       )}
 
-      {/* ─── MODAL 2: BYOK SETTRADE OPEN API SETTINGS (REAL MARKET) ─── */}
+      {/* ─── MODAL 2: BYOK SETTRADE OPEN API SETTINGS (ผูกพอร์ตจริง) ─── */}
       {showModal && (
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <div>
-                <h3 className={styles.modalTitle}>
-                  🔑 เชื่อมต่อ Settrade Open API (ALGO_EQ หุ้นไทย &amp; DR)
-                </h3>
-                <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 700 }}>
-                  รองรับ 2 โบรกเกอร์พันธมิตรอย่างเป็นทางการ: บล.พาย (003) &amp; บล.ทรีนีตี้ (022)
+              <div className={styles.modalTitleGroup}>
+                <span className={styles.modalKicker} style={{ color: '#38bdf8' }}>
+                  🛡️ ZERO-CUSTODY SETTRADE OPEN API (ALGO_EQ)
                 </span>
+                <h3 className={styles.modalTitle}>
+                  🔑 ผูกพอร์ตจริงด้วย Settrade Open API
+                </h3>
+                <p className={styles.modalSubtitle}>
+                  เชื่อมต่อตรงกับศูนย์รับส่งคำสั่ง Settrade Open API ไม่มีการจัดเก็บ API Secret ลงฐานข้อมูล
+                </p>
               </div>
               <button
                 type="button"
@@ -1244,139 +1355,230 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
               </button>
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                ทดลองเชื่อมต่อด่วน (One-Click Demo Sandbox)
-              </label>
-              <div className={styles.quickDemoPresetRow}>
-                <button
-                  type="button"
-                  className={styles.quickDemoBtn}
-                  onClick={() => syncPortfolio(true, '003')}
-                >
-                  🥧 ทดลองด้วย Pi 003 (บล.พาย)
-                </button>
-                <button
-                  type="button"
-                  className={styles.quickDemoBtn}
-                  onClick={() => syncPortfolio(true, '022')}
-                >
-                  🌟 ทดลองด้วย Trinity 022 (บล.ทรีนีตี้)
-                </button>
+            {/* ─── SEGMENTED BROKER TAB SWITCHER ─── */}
+            <div className={styles.brokerSegmentedBar}>
+              <button
+                type="button"
+                className={`${styles.brokerSegmentedTab} ${brokerId === '003' ? styles.brokerSegmentedTabPiActive : ''}`}
+                onClick={() => setBrokerId('003')}
+              >
+                <span>🥧</span>
+                <span>บล.พาย Pi Securities (003)</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.brokerSegmentedTab} ${brokerId === '022' ? styles.brokerSegmentedTabTrinityActive : ''}`}
+                onClick={() => setBrokerId('022')}
+              >
+                <span>🌟</span>
+                <span>บล.ทรีนีตี้ Trinity (022)</span>
+              </button>
+            </div>
+
+            {/* ─── DUAL LUXURY BROKER CARDS ─── */}
+            <div className={styles.dualBrokerGrid}>
+              {/* PI SECURITIES 003 */}
+              <div
+                className={`${styles.luxuryBrokerCard} ${styles.luxuryBrokerCardPi} ${brokerId === '003' ? styles.luxuryBrokerCardSelectedPi : ''}`}
+                onClick={() => setBrokerId('003')}
+              >
+                <div className={styles.cardTopRow}>
+                  <span className={styles.brokerEmblemPi}>🥧 บล.พาย (003)</span>
+                  {brokerId === '003' ? (
+                    <span className={styles.statusIndicatorActivePi}>🟢 ✓ กำลังเลือก</span>
+                  ) : (
+                    <span className={styles.statusIndicatorInactive}>⚪ คลิกเพื่อเลือก</span>
+                  )}
+                </div>
+                <h4 className={styles.cardBrokerName}>Pi Securities (มหาชน)</h4>
+                <p className={styles.cardBrokerSub}>
+                  เชื่อมต่อพอร์ต บล.พาย ดึงข้อมูลหุ้นไทย &amp; DR พร้อมวิเคราะห์ Stage 2
+                </p>
+                <ul className={styles.brokerPerksList}>
+                  <li>✓ รองรับ Settrade Open API (ALGO_EQ)</li>
+                  <li>✓ มาร์เก็ตติ้งดูแลระบบส่วนตัว</li>
+                </ul>
+              </div>
+
+              {/* TRINITY SECURITIES 022 */}
+              <div
+                className={`${styles.luxuryBrokerCard} ${styles.luxuryBrokerCardTrinity} ${brokerId === '022' ? styles.luxuryBrokerCardSelectedTrinity : ''}`}
+                onClick={() => setBrokerId('022')}
+              >
+                <div className={styles.cardTopRow}>
+                  <span className={styles.brokerEmblemTrinity}>🌟 บล.ทรีนีตี้ (022)</span>
+                  {brokerId === '022' ? (
+                    <span className={styles.statusIndicatorActiveTrinity}>🟢 ✓ กำลังเลือก</span>
+                  ) : (
+                    <span className={styles.statusIndicatorInactive}>⚪ คลิกเพื่อเลือก</span>
+                  )}
+                </div>
+                <h4 className={styles.cardBrokerName}>Trinity Securities</h4>
+                <p className={styles.cardBrokerSub}>
+                  เชื่อมต่อพอร์ต บล.ทรีนีตี้ พร้อมระบบคำนวณ Trailing Stop &amp; Cut Loss
+                </p>
+                <ul className={styles.brokerPerksList}>
+                  <li>✓ ซัพพอร์ตเต็มประสิทธิภาพผ่าน Settrade Enclave</li>
+                  <li>✓ บทวิเคราะห์เชิงปริมาณและสถิติแม่นยำ</li>
+                </ul>
               </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>เลือกโบรกเกอร์พันธมิตร (Official Broker Partner)</label>
-              <div className={styles.brokerGrid}>
-                {BROKER_OPTIONS.map((b) => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    className={`${styles.brokerCard} ${brokerId === b.id ? styles.brokerCardActive : ''}`}
-                    onClick={() => setBrokerId(b.id)}
-                  >
-                    <span className={styles.brokerCode}>[{b.id}] {b.tag}</span>
-                    <span className={styles.brokerName}>{b.name}</span>
-                    <span className={styles.brokerThaiName}>{b.thaiName}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* OPEN ACCOUNT PROMPT FOR CUSTOMERS */}
-            <div
-              style={{
-                background: 'rgba(16,185,129,0.12)',
-                border: '1px solid rgba(16,185,129,0.35)',
-                borderRadius: '8px',
-                padding: '10px 14px',
-                marginBottom: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '8px',
-              }}
-            >
-              <div>
-                <span style={{ fontSize: '11px', color: '#34d399', fontWeight: 800 }}>
-                  💡 ยังไม่มีบัญชีซื้อขายกับ บล.พาย หรือ บล.ทรีนีตี้?
-                </span>
-                <div style={{ fontSize: '10px', color: '#94a3b8' }}>
-                  เปิดพอร์ตออนไลน์ NDID ง่ายใน 5 นาที พร้อมรับสิทธิพิเศษเชื่อมต่อระบบ
+            {/* ─── IB CONCIERGE BANNER ─── */}
+            <div className={styles.ibConciergeBanner}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '24px' }}>👑</span>
+                <div>
+                  <div className={styles.ibTextTitle}>ยังไม่มีบัญชีซื้อขายกับ บล.พาย หรือ บล.ทรีนีตี้?</div>
+                  <div className={styles.ibTextSub}>
+                    ยื่นขอเปิดพอร์ต VIP กับมาร์เก็ตติ้งโบรกเกอร์พันธมิตร เพื่อรับสิทธิ์เชื่อมต่อ API และฟีเจอร์พรีเมียมฟรี
+                  </div>
                 </div>
               </div>
               <button
                 type="button"
                 className={styles.partnerBtn}
-                style={{ fontSize: '10px', padding: '5px 10px', whiteSpace: 'nowrap' }}
+                style={{ fontSize: '11px', padding: '6px 12px', whiteSpace: 'nowrap' }}
                 onClick={() => {
                   setShowModal(false);
                   setShowLeadModal(true);
                 }}
               >
-                เปิดพอร์ตใหม่ ↗
+                เปิดพอร์ต VIP ↗
               </button>
             </div>
 
+            {/* ─── QUICK DEMO PRESET ROW ─── */}
             <div className={styles.formGroup}>
-              <label className={styles.formLabel}>เลขบัญชีซื้อขายหุ้น (Account Number)</label>
-              <input
-                type="text"
-                autoComplete="off"
-                className={styles.formInput}
-                placeholder="เช่น 99242240 หรือเลขบัญชีที่โบรคเกอร์ออกให้"
-                value={accountNo}
-                onChange={(e) => setAccountNo(e.target.value)}
-              />
+              <label className={styles.formLabel}>
+                <span>ทดลองเชื่อมต่อด่วน (One-Click Demo Sandbox)</span>
+              </label>
+              <div className={styles.quickDemoPresetRow}>
+                <button
+                  type="button"
+                  className={styles.quickDemoBtn}
+                  onClick={() => {
+                    setBrokerId('003');
+                    syncPortfolio(true, '003');
+                    setShowModal(false);
+                  }}
+                  style={{
+                    borderColor: brokerId === '003' ? '#a855f7' : undefined,
+                    background: brokerId === '003' ? 'rgba(168,85,247,0.15)' : undefined,
+                  }}
+                >
+                  🥧 ทดลองพอร์ต บล.พาย (003 Sandbox)
+                </button>
+                <button
+                  type="button"
+                  className={styles.quickDemoBtn}
+                  onClick={() => {
+                    setBrokerId('022');
+                    syncPortfolio(true, '022');
+                    setShowModal(false);
+                  }}
+                  style={{
+                    borderColor: brokerId === '022' ? '#06b6d4' : undefined,
+                    background: brokerId === '022' ? 'rgba(6,182,212,0.15)' : undefined,
+                  }}
+                >
+                  🌟 ทดลองพอร์ต บล.ทรีนีตี้ (022 Sandbox)
+                </button>
+              </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>App ID</label>
-              <input
-                type="text"
-                autoComplete="off"
-                className={styles.formInput}
-                placeholder="กรอก App ID ที่ได้จากโบรคเกอร์"
-                value={appId}
-                onChange={(e) => setAppId(e.target.value)}
-              />
-            </div>
+            {/* ─── LUXURY FORM INPUTS CARD ─── */}
+            <div className={styles.formGlassCard}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
+                  <span>เลขบัญชีซื้อขายหุ้น (Account Number) *</span>
+                </label>
+                <div className={styles.formInputBox}>
+                  <span className={styles.inputIcon}>🏷️</span>
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    className={styles.formInput}
+                    placeholder="เช่น 99242240 หรือเลขบัญชีที่โบรกเกอร์ออกให้"
+                    value={accountNo}
+                    onChange={(e) => setAccountNo(e.target.value)}
+                  />
+                </div>
+              </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>API Secret</label>
-              <input
-                type="password"
-                autoComplete="off"
-                className={styles.formInput}
-                placeholder="กรอก API Secret (ส่งตรงไปยัง Settrade Enclave เท่านั้น ไม่บันทึกลงฐานข้อมูล)"
-                value={appSecret}
-                onChange={(e) => setAppSecret(e.target.value)}
-              />
-            </div>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
+                  <span>App ID (Settrade Open API) *</span>
+                </label>
+                <div className={styles.formInputBox}>
+                  <span className={styles.inputIcon}>🔑</span>
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    className={styles.formInput}
+                    placeholder="กรอก App ID ที่ได้รับจากโบรกเกอร์"
+                    value={appId}
+                    onChange={(e) => setAppId(e.target.value)}
+                  />
+                </div>
+              </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>App Code</label>
-              <input
-                type="text"
-                className={styles.formInput}
-                value={appCode}
-                onChange={(e) => setAppCode(e.target.value)}
-              />
-              <small style={{ color: '#94a3b8', fontSize: '10px' }}>
-                * หุ้นไทยและ DR ใช้ Service Code เริ่มต้นคือ ALGO_EQ หรือรหัสที่โบรกเกอร์ออกให้
-              </small>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
+                  <span>API Secret (เข้ารหัสปลอดภัยใน Enclave) *</span>
+                </label>
+                <div className={styles.formInputBox}>
+                  <span className={styles.inputIcon}>🔒</span>
+                  <input
+                    type={showSecret ? 'text' : 'password'}
+                    autoComplete="off"
+                    className={styles.formInput}
+                    style={{ paddingRight: '40px' }}
+                    placeholder="กรอก API Secret (ส่งตรงไปยัง Settrade Enclave เท่านั้น)"
+                    value={appSecret}
+                    onChange={(e) => setAppSecret(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className={styles.toggleSecretBtn}
+                    onClick={() => setShowSecret(!showSecret)}
+                    title={showSecret ? 'ซ่อนรหัส' : 'แสดงรหัส'}
+                  >
+                    {showSecret ? '👁️‍🗨️' : '👁️'}
+                  </button>
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
+                  <span>App Code (Default: ALGO_EQ)</span>
+                </label>
+                <div className={styles.formInputBox}>
+                  <span className={styles.inputIcon}>⚙️</span>
+                  <input
+                    type="text"
+                    className={styles.formInput}
+                    value={appCode}
+                    onChange={(e) => setAppCode(e.target.value)}
+                  />
+                </div>
+                <small style={{ color: '#94a3b8', fontSize: '10px', marginTop: '4px', display: 'block' }}>
+                  * หุ้นไทยและ DR ใช้ Service Code เริ่มต้นคือ ALGO_EQ หรือรหัสที่โบรกเกอร์กำหนด
+                </small>
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
               <button
                 type="button"
                 className={styles.byokBtnPrimary}
-                style={{ flex: 1 }}
+                style={{ flex: 1, padding: '12px 20px', fontSize: '13px' }}
                 onClick={() => syncPortfolio(false)}
                 disabled={loading || !accountNo || !appId || !appSecret}
               >
-                {loading ? 'กำลังเชื่อมต่อ...' : '🚀 เชื่อมต่อ & ซิงค์พอร์ตจริง'}
+                {loading
+                  ? 'กำลังเชื่อมต่อ...'
+                  : `🚀 เชื่อมต่อ & ซิงค์พอร์ตสด (${brokerId === '003' ? 'บล.พาย' : 'บล.ทรีนีตี้'})`}
               </button>
               <button
                 type="button"
