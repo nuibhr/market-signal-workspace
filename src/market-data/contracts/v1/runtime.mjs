@@ -25,8 +25,8 @@ function calendar(market,now){
  if(market!=='thai')return null; // Other exchange calendars still need approved evidence.
  const day=expectedThaiDailySession(now);return day?{verified:true,closeAt:closeAt(market,day)}:null;
 }
-const thai=['CPALL','BDMS','ADVANC','GULF','PTT','DELTA','KBANK','SCB'];
-const dr=['AAPL80','NVDA80','MSFT80','TSLA80','BABA80','TENCENT80'];
+const thai=['CPALL','PTT','BDMS','ADVANC','GULF','DELTA','KBANK','SCB'];
+const dr=['AAPL80','NVDA80','TSLA80','MSFT80','BABA80','TENCENT80'];
 export function scanAssets(market,universe="default"){
  const preferred=market==='thai'?thai:market==='dr'?dr:market==='us'?(universe==='etf'?US_ROTATION_SYMBOLS:US_FOCUS_SYMBOLS):null;
  return preferred?preferred.map(symbol=>ALL_ASSETS.find(a=>a.id===market&&a.symbol===symbol)??{id:market,symbol,instrumentId:`${market.toUpperCase()}:${symbol}`}):ALL_ASSETS.filter(a=>a.id===market);

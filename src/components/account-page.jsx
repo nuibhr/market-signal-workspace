@@ -8,7 +8,13 @@ import MemberAvatar from './member-avatar.jsx';
 import { AiCreditsPanel } from './ai-credits-panel.jsx';
 
 const NAV = [['overview', 'ภาพรวม', LayoutDashboard], ['ai-credits', 'โควตา AI / เครดิต', Sparkles], ['renewal', 'แพ็กเกจ / ต่ออายุ', CalendarClock], ['profile', 'โปรไฟล์', UserRound]];
-const DEMO_LABELS={onboarding:'สมาชิกใหม่',trial:'ทดลองใช้ฟรี',starter:'Starter',pro:'Pro',ultimate:'Ultimate',expired:'หมดอายุ'};
+const DEMO_LABELS = {
+  trial: '🎁 ทดลองใช้ฟรี 14 วัน (Full Pro)',
+  starter: '🟢 BASIC (159฿/ด.)',
+  pro: '🔥 PRO / VIP (399฿/ด.)',
+  onboarding: '👤 สมาชิกใหม่ (Guest)',
+  expired: '🔒 สิทธิหมดอายุ',
+};
 const MESSAGES = {
   TRIAL_ENROLLMENT_CLOSED:'ยังไม่เปิดรับสิทธิทดลองใหม่ กรุณาตรวจอีกครั้งเมื่อเปิดบริการ',
   TRIAL_ALREADY_USED:'บัญชีนี้เริ่มทดลองไปแล้ว ไม่สามารถเริ่มระยะใหม่ได้',
@@ -90,7 +96,64 @@ export default function AccountPage({initialData=null}) {
       {loading ? <div className="account-card account-skeleton"><span /><span /><span /></div> : <>
         {error && <div className="account-alert error" role="alert"><CircleAlert size={17} />{error}</div>}
         {message && <div className="account-alert success" role="status"><Check size={17} />{message}</div>}
-        {data?.demoEnabled&&<section className="account-card account-demo"><span className="account-kicker">DEMO LOGIN</span><h2>ทดลองสิทธิสมาชิกทุกระดับ</h2><p>เลือกแล้วเข้าใช้งานได้ทันที · session สาธิตมีอายุ 2 ชั่วโมง · แชต AI ใช้ Bigdata จริงตามโควตาระดับที่เลือก</p><div className="account-demo-options">{data.demoRoles.map(role=><button key={role} className={account?.demo?.role===role?'account-primary':'account-secondary'} disabled={busy} aria-pressed={account?.demo?.role===role} onClick={()=>changeDemo(role)}>{DEMO_LABELS[role]}</button>)}</div>{account?.demo&&<><p role="status">กำลังดู Demo {DEMO_LABELS[account.demo.role]} · ใช้ Stripe Test mode ได้ ไม่มีการเรียกเก็บเงินจริง</p><div className="account-actions"><button className="account-secondary" disabled={busy} onClick={()=>changeDemo(null)}>ออกจาก Demo</button>{data.configured&&<a className="account-secondary" href="/api/auth/line/start">เข้าสู่ระบบ LINE จริง</a>}</div></>}</section>}
+        {data?.demoEnabled&&<section className="account-card account-demo">
+          <span className="account-kicker">DEMO LOGIN / สลับทดลองสิทธิสมาชิก</span>
+          <h2>ทดลองสิทธิสมาชิกตามแพ็กเกจจริง (159฿ vs 399฿)</h2>
+          <p>คลิกเลือกเพื่อจำลองสถานะสมาชิกตามระดับราคาจริง · session สาธิตมีอายุ 2 ชั่วโมง · ทดสอบระบบสแกนและ AI ตามสิทธิแต่ละระดับ</p>
+          <div className="account-demo-options">
+            {['trial', 'starter', 'pro', 'onboarding', 'expired'].filter(r=>data.demoRoles.includes(r)).map(role=><button key={role} className={account?.demo?.role===role?'account-primary':'account-secondary'} disabled={busy} aria-pressed={account?.demo?.role===role} onClick={()=>changeDemo(role)}>{DEMO_LABELS[role]}</button>)}
+          </div>
+
+          {/* Active Entitlement Breakdown Box */}
+          <div style={{ marginTop: '14px', padding: '14px 16px', background: 'rgba(15, 23, 42, 0.65)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px' }}>
+            {account?.demo?.role === 'starter' || rights?.planId === 'starter' ? (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <b style={{ color: '#34d399', fontSize: '14px' }}>🟢 สิทธิระดับ BASIC (฿159/เดือน · ฿1,590/ปี)</b>
+                  <span style={{ fontSize: '10px', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>สมาชิกเริ่มต้น</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '6px', fontSize: '11px' }}>
+                  <span style={{ color: '#cbd5e1' }}>✅ สแกนหุ้นไทย EOD (SET100 / mai)</span>
+                  <span style={{ color: '#cbd5e1' }}>✅ สแกนหุ้น DR80 ท็อปเทคโลก (NVIDIA, Apple)</span>
+                  <span style={{ color: '#cbd5e1' }}>✅ จุดเข้า Buy Zone, Stop Loss, Target 2R</span>
+                  <span style={{ color: '#cbd5e1' }}>✅ ถาม AI วิเคราะห์หุ้น 10 คำถาม/วัน</span>
+                  <span style={{ color: '#94a3b8', textDecoration: 'line-through' }}>❌ บอทแจ้งเตือนเสียงสไตล์เพื่อน</span>
+                  <span style={{ color: '#94a3b8', textDecoration: 'line-through' }}>❌ Telegram VIP Bot ส่งการบ้านเช้า</span>
+                  <span style={{ color: '#94a3b8', textDecoration: 'line-through' }}>❌ DR Arbitrage Fair Value Alert</span>
+                  <span style={{ color: '#94a3b8', textDecoration: 'line-through' }}>❌ ตลาดสัญญา TFEX / S50 Options</span>
+                </div>
+              </div>
+            ) : account?.demo?.role === 'pro' || rights?.planId === 'pro' || rights?.tier === 'trial' ? (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <b style={{ color: '#38bdf8', fontSize: '14px' }}>🔥 สิทธิระดับ PRO / VIP (฿399/เดือน · ฿3,990/ปี){rights?.tier === 'trial' ? ' · ช่วงทดลองฟรี 14 วัน' : ''}</b>
+                  <span style={{ fontSize: '10px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>ปลดล็อกครบ 100%</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '6px', fontSize: '11px' }}>
+                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>✅ ปลดล็อกครบ 4 ตลาด (Thai + DR + US + TFEX)</span>
+                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>✅ <b>บอทแจ้งเตือนเสียงสไตล์เพื่อน</b> (Audio Alert)</span>
+                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>✅ <b>Telegram VIP Bot</b> ส่งการบ้านหุ้นเด่นทุกเช้า</span>
+                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>✅ <b>DR Arbitrage Shield</b> ดักจับพรีเมียมแพงเกิน</span>
+                  <span style={{ color: '#cbd5e1' }}>✅ ถาม AI ลึกระดับ Pro 50 คำถาม/วัน</span>
+                  <span style={{ color: '#cbd5e1' }}>✅ Trade Ledger ย้อนหลัง 100 ไม้ + Backtest +42.8%</span>
+                  <span style={{ color: '#cbd5e1' }}>✅ สิทธิ์เข้าห้อง VIP Community ปรึกษาโค้ช</span>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <b style={{ color: '#f59e0b', fontSize: '14px' }}>🔒 สถานะผู้เยี่ยมชม / สิทธิหมดอายุ</b>
+                  <span style={{ fontSize: '10px', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>จำกัดการเข้าถึง</span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#94a3b8' }}>
+                  ยังไม่สามารถเปิดดูกราฟแท่งเทียนสดหรือสัญญาณคัดกรองได้ กรุณาเลือก Demo สมาชิกด้านบน หรือกดรับสิทธิ์ทดลองใช้ฟรี 14 วัน
+                </p>
+              </div>
+            )}
+          </div>
+
+          {account?.demo&&<><p role="status" style={{ marginTop: '10px' }}>กำลังดู Demo {DEMO_LABELS[account.demo.role]} · ใช้ Stripe Test mode ได้ ไม่มีการเรียกเก็บเงินจริง</p><div className="account-actions"><button className="account-secondary" disabled={busy} onClick={()=>changeDemo(null)}>ออกจาก Demo</button>{data.configured&&<a className="account-secondary" href="/api/auth/line/start">เข้าสู่ระบบ LINE จริง</a>}</div></>}
+        </section>}
         {!data?.configured && !account && <div className="account-alert">ยังไม่ได้ตั้งค่า LINE Login สำหรับสภาพแวดล้อมนี้</div>}
         {!account ? <>
           {/* Standard LINE Login Section */}
@@ -100,11 +163,11 @@ export default function AccountPage({initialData=null}) {
             <div className="account-status-header">
               <div>
                 <span className="account-kicker">สถานะบัญชี</span>
-                <h2>{account.demo?'Demo · ':''}{rights.planName??rights.label}</h2>
-                <p>{rights.tier === 'trial' ? `เหลือเวลาทดลองอีก ${daysLeft(rights.expiresAt)} วัน` : rights.tier === 'subscriber' ? `${rights.billingSource==='stripe'?'สิทธิ์ที่ชำระแล้วถึง':'ต่ออายุภายใน'} ${date(rights.expiresAt)}` : rights.tier === 'expired' ? 'หมดระยะทดลองใช้ฟรีแล้ว ต่ออายุเพื่อใช้เครื่องมือสแกนสมาชิก' : rights.tier === 'portfolio-fix' ? 'กรุณาติดต่อผู้ดูแลเพื่อตรวจสถานะสิทธิเดิม' : trial?.enabled ? 'เริ่มทดลอง 14 วันได้หนึ่งครั้งต่อบัญชี LINE' : 'ยังไม่เปิดรับสิทธิทดลองใหม่'}</p>
+                <h2>{account.demo?'Demo · ':''}{rights?.planId==='starter'?'🟢 BASIC (฿159/ด.)':rights?.planId==='pro'?'🔥 PRO / VIP (฿399/ด.)':rights?.tier==='trial'?'🎁 ทดลองใช้ฟรี 14 วัน (Full Pro)':rights?.tier==='expired'?'🔒 สิทธิหมดอายุ':rights?.tier==='onboarding'?'👤 สมาชิกใหม่':rights.planName??rights.label}</h2>
+                <p>{rights.tier === 'trial' ? `เหลือเวลาทดลองอีก ${daysLeft(rights.expiresAt)} วัน · ปลดล็อกครบทุกฟังก์ชันระดับ Pro` : rights.planId === 'starter' ? `สิทธิแพ็กเกจ BASIC ถึง ${date(rights.expiresAt)} · สแกนหุ้นไทยและ DR พร้อมจุดรับ-ต้าน 2R (159 บาท/เดือน)` : rights.planId === 'pro' ? `สิทธิแพ็กเกจ PRO / VIP ถึง ${date(rights.expiresAt)} · ปลดล็อกบอทเสียงเพื่อน, Telegram VIP, DR Fair Value และครบทุกตลาด (399 บาท/เดือน)` : rights.tier === 'expired' ? 'หมดระยะทดลองใช้ฟรีแล้ว ต่ออายุเพื่อใช้เครื่องมือสแกนสมาชิก' : rights.tier === 'portfolio-fix' ? 'กรุณาติดต่อผู้ดูแลเพื่อตรวจสถานะสิทธิเดิม' : trial?.enabled ? 'เริ่มทดลอง 14 วันได้หนึ่งครั้งต่อบัญชี LINE' : 'ยังไม่เปิดรับสิทธิทดลองใหม่'}</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                <span className={`account-tier ${active ? 'active' : ''}`}>{active ? <BadgeCheck size={18} /> : <Clock3 size={18} />}{rights.tier.toUpperCase()}</span>
+                <span className={`account-tier ${active ? 'active' : ''}`}>{active ? <BadgeCheck size={18} /> : <Clock3 size={18} />}{rights?.planId==='starter'?'BASIC':rights?.planId==='pro'?'PRO VIP':rights.tier.toUpperCase()}</span>
               </div>
             </div>
             {rights.expiresAt && <div className="account-expiry"><span>สิทธิสิ้นสุด</span><strong>{date(rights.expiresAt)}</strong></div>}
