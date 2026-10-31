@@ -39,257 +39,239 @@ function generateDemoPortfolio(brokerId = '022', appCode = 'ALGO_EQ') {
   const demoHoldings = isPi
     ? [
         {
-          symbol: 'CPALL',
+          symbol: 'DELTA',
+          name: 'Delta Electronics (Thailand)',
           market: 'THAI',
-          assetType: 'EQUITY',
-          sector: 'COMMERCE',
           section: 'SET50',
-          quantity: 2500,
-          avgCost: 59.5,
-          marketPrice: 65.5,
-          marketValue: 163750,
-          costValue: 148750,
-          unrealizedPl: 15000,
-          unrealizedPlPct: 10.08,
+          sector: 'ELECTRONICS',
+          quantity: 1200,
+          avgCost: 72.5,
+          marketPrice: 84.0,
+          marketValue: 100800,
+          unrealizedPl: 13800,
+          unrealizedPlPct: 15.86,
           stage: 2,
-          stageName: 'Stage 2 ขาขึ้นแข็งแกร่ง (Trend Leader)',
-          stageColor: '#10b981',
-          trailingStop: 63.5,
-          cutLossPrice: 58.0,
-          action: 'HOLD & LET PROFIT RUN',
-          actionNote: 'ราคายก Low ยืนเหนือ EMA20 สวยงาม ถือรันเทรนด์ตามรอบ',
+          stageName: 'Stage 2 (Uptrend Leader)',
+          trailingStop: 79.5,
+          cutLossPrice: 69.5,
+          action: 'HOLD (RUN PROFIT)',
+          actionNote: 'ราคายกไฮยกโลว์เหนือ EMA20 รันกำไรตาม Trailing Stop',
         },
         {
           symbol: 'NVDA80',
+          name: 'NVIDIA DR (US Underlying)',
           market: 'DR',
-          assetType: 'DR_US',
-          sector: 'SEMICONDUCTORS',
-          section: 'DR Global',
-          quantity: 4000,
-          avgCost: 38.0,
-          marketPrice: 44.5,
-          marketValue: 178000,
-          costValue: 152000,
-          unrealizedPl: 26000,
-          unrealizedPlPct: 17.11,
+          section: 'DR-US',
+          sector: 'TECH',
+          quantity: 2500,
+          avgCost: 48.0,
+          marketPrice: 54.5,
+          marketValue: 136250,
+          unrealizedPl: 16250,
+          unrealizedPlPct: 13.54,
           stage: 2,
-          stageName: 'Stage 2 Super Momentum',
-          stageColor: '#10b981',
-          trailingStop: 41.8,
-          cutLossPrice: 36.5,
-          action: 'TAKE PROFIT 50%',
-          actionNote: 'กำไรแตะเป้า 2R (+17%) แบ่งขายล็อคกำไรครึ่งหนึ่งตามวินัย',
+          stageName: 'Stage 2 (Global Tech Leader)',
+          trailingStop: 51.5,
+          cutLossPrice: 46.0,
+          action: 'HOLD (AI MOMENTUM)',
+          actionNote: 'หุ้นแม่สหรัฐฯ ทำ ATH ค่าเงินบาททรงตัว ไม่เสียเปรียบ FX',
           drMeta: {
-            underlying: 'NVDA (NASDAQ)',
-            usPrice: 138.2,
-            fairPrice: 44.1,
-            spreadPct: 0.9,
-            fairStatus: 'FAIR (สอดคล้องราคาแม่)',
-            fxImpact: 'USD/THB 34.25 (ผลกระทบค่าเงิน -0.3%)',
-          },
-        },
-        {
-          symbol: 'TSLA80',
-          market: 'DR',
-          assetType: 'DR_US',
-          sector: 'AUTOMOTIVE',
-          section: 'DR Global',
-          quantity: 3000,
-          avgCost: 32.5,
-          marketPrice: 37.0,
-          marketValue: 111000,
-          costValue: 97500,
-          unrealizedPl: 13500,
-          unrealizedPlPct: 13.85,
-          stage: 2,
-          stageName: 'Stage 2 High Momentum',
-          stageColor: '#10b981',
-          trailingStop: 35.2,
-          cutLossPrice: 31.0,
-          action: 'HOLD & RUN TREND',
-          actionNote: 'แรงซื้อ DR หุ้นแม่ทะลุแนวต้านสำคัญ ถือรันเทรนด์ต่อ',
-          drMeta: {
-            underlying: 'TSLA (NASDAQ)',
-            usPrice: 220.5,
-            fairPrice: 36.8,
-            spreadPct: 0.54,
-            fairStatus: 'FAIR (พรีเมียมต่ำ ปลอดภัย)',
-            fxImpact: 'USD/THB 34.25 (ผลกระทบค่าเงิน -0.2%)',
+            underlying: 'NVDA.US',
+            usPrice: 141.5,
+            fxRate: usdThbRate,
+            fairPrice: 53.8,
+            spreadPct: 1.3,
+            fairStatus: 'FAIR VALUE',
+            fxImpact: 'เสถียร (บาท 34.25)',
           },
         },
         {
           symbol: 'GULF',
+          name: 'Gulf Energy Development',
           market: 'THAI',
-          assetType: 'EQUITY',
-          sector: 'ENERGY',
           section: 'SET50',
-          quantity: 2000,
-          avgCost: 62.0,
-          marketPrice: 63.5,
-          marketValue: 127000,
-          costValue: 124000,
-          unrealizedPl: 3000,
-          unrealizedPlPct: 2.42,
-          stage: 1,
-          stageName: 'Stage 1 สะสมฐาน (Base Building)',
-          stageColor: '#f59e0b',
-          trailingStop: 61.5,
-          cutLossPrice: 59.5,
-          action: 'HOLD BASE',
-          actionNote: 'พักตัวสร้างฐานเหนือแนวรับสำคัญ ถือจับตาจังหวะเบรคเอาท์',
+          sector: 'ENERGY',
+          quantity: 3000,
+          avgCost: 46.0,
+          marketPrice: 48.75,
+          marketValue: 146250,
+          unrealizedPl: 8250,
+          unrealizedPlPct: 5.98,
+          stage: 2,
+          stageName: 'Stage 2 (Base Breakout)',
+          trailingStop: 46.5,
+          cutLossPrice: 44.0,
+          action: 'HOLD (BREAKOUT)',
+          actionNote: 'เบรกแนวต้าน 46.50 พร้อมวอลุ่ม ยืนเหนือ EMA50 แข็งแกร่ง',
         },
         {
-          symbol: 'HANA',
+          symbol: 'SPY80',
+          name: 'SPDR S&P 500 ETF DR',
+          market: 'DR',
+          section: 'DR-US',
+          sector: 'BROAD_MARKET',
+          quantity: 1500,
+          avgCost: 19.5,
+          marketPrice: 20.2,
+          marketValue: 30300,
+          unrealizedPl: 1050,
+          unrealizedPlPct: 3.59,
+          stage: 2,
+          stageName: 'Stage 2 (Steady Up)',
+          trailingStop: 19.4,
+          cutLossPrice: 18.8,
+          action: 'HOLD (CORE GLOBAL)',
+          actionNote: 'สเปรด Fair กระจายความเสี่ยงตลาดโลก',
+          drMeta: {
+            underlying: 'SPY.US',
+            usPrice: 585.0,
+            fxRate: usdThbRate,
+            fairPrice: 20.15,
+            spreadPct: 0.25,
+            fairStatus: 'FAIR VALUE',
+            fxImpact: 'เสถียร (บาท 34.25)',
+          },
+        },
+        {
+          symbol: 'CPALL',
+          name: 'CP ALL Public Company Limited',
           market: 'THAI',
-          assetType: 'EQUITY',
-          sector: 'ELECTRONICS',
-          section: 'SET100',
-          quantity: 2000,
-          avgCost: 40.5,
-          marketPrice: 37.75,
-          marketValue: 75500,
-          costValue: 81000,
-          unrealizedPl: -5500,
-          unrealizedPlPct: -6.79,
+          section: 'SET50',
+          sector: 'COMMERCE',
+          quantity: 3500,
+          avgCost: 65.5,
+          marketPrice: 61.25,
+          marketValue: 214375,
+          unrealizedPl: -14875,
+          unrealizedPlPct: -6.49,
           stage: 4,
-          stageName: 'Stage 4 ขาลงอันตราย (หลุด EMA50)',
-          stageColor: '#f43f5e',
+          stageName: 'Stage 4 (Downtrend Risk)',
           trailingStop: null,
-          cutLossPrice: 37.0,
-          action: '🚨 REDUCE / CUT LOSS NOW',
-          actionNote: 'หลุดแนวรับ EMA50 ขาดทุนเกิน 6% แนะนำตัดขาดทุนก่อนเสียหายหนัก',
+          cutLossPrice: 62.0,
+          action: 'CUT LOSS / REDUCE',
+          actionNote: 'หลุด EMA50 และ EMA200 แนะนำลดพอร์ตเพื่อจำกัด Drawdown',
         },
       ]
     : [
         {
-          symbol: 'DELTA',
+          symbol: 'PTT',
+          name: 'PTT Public Company Limited',
           market: 'THAI',
-          assetType: 'EQUITY',
-          sector: 'ELECTRONICS',
           section: 'SET50',
-          quantity: 1500,
-          avgCost: 110.0,
-          marketPrice: 135.5,
-          marketValue: 203250,
-          costValue: 165000,
-          unrealizedPl: 38250,
-          unrealizedPlPct: 23.18,
-          stage: 2,
-          stageName: 'Stage 2 ขาขึ้นแข็งแกร่ง (Trend Leader)',
-          stageColor: '#10b981',
-          trailingStop: 128.0,
-          cutLossPrice: 121.0,
-          action: 'HOLD & LET PROFIT RUN',
-          actionNote: 'ราคายืนเหนือ EMA20/50 แข็งแกร่ง ถือรันเทรนด์ ห้ามขายหมู',
-        },
-        {
-          symbol: 'NVDA80',
-          market: 'DR',
-          assetType: 'DR_US',
-          sector: 'SEMICONDUCTORS',
-          section: 'DR Global',
+          sector: 'ENERGY',
           quantity: 4000,
-          avgCost: 38.0,
-          marketPrice: 44.5,
-          marketValue: 178000,
-          costValue: 152000,
-          unrealizedPl: 26000,
-          unrealizedPlPct: 17.11,
+          avgCost: 32.5,
+          marketPrice: 34.0,
+          marketValue: 136000,
+          unrealizedPl: 6000,
+          unrealizedPlPct: 4.62,
           stage: 2,
-          stageName: 'Stage 2 Super Momentum',
-          stageColor: '#10b981',
-          trailingStop: 41.8,
-          cutLossPrice: 36.5,
-          action: 'TAKE PROFIT 50%',
-          actionNote: 'กำไรแตะเป้า 2R (+17%) แบ่งขายล็อคกำไรครึ่งหนึ่งตามวินัย',
-          drMeta: {
-            underlying: 'NVDA (NASDAQ)',
-            usPrice: 138.2,
-            fairPrice: 44.1,
-            spreadPct: 0.9,
-            fairStatus: 'FAIR (สอดคล้องราคาแม่)',
-            fxImpact: 'USD/THB 34.25 (ผลกระทบค่าเงิน -0.3%)',
-          },
+          stageName: 'Stage 2 (Accumulation Exit)',
+          trailingStop: 33.25,
+          cutLossPrice: 31.5,
+          action: 'HOLD (RECOVERY)',
+          actionNote: 'ยืนเหนือ EMA50 และยกโลว์ต่อเนื่อง แนวโน้มทดสอบ 35.50',
         },
         {
           symbol: 'AAPL80',
+          name: 'Apple Inc. DR (US Underlying)',
           market: 'DR',
-          assetType: 'DR_US',
-          sector: 'TECHNOLOGY',
-          section: 'DR Global',
-          quantity: 5000,
-          avgCost: 28.2,
-          marketPrice: 31.4,
-          marketValue: 157000,
-          costValue: 141000,
-          unrealizedPl: 16000,
-          unrealizedPlPct: 11.35,
+          section: 'DR-US',
+          sector: 'TECH',
+          quantity: 3500,
+          avgCost: 52.0,
+          marketPrice: 58.5,
+          marketValue: 204750,
+          unrealizedPl: 22750,
+          unrealizedPlPct: 12.5,
           stage: 2,
-          stageName: 'Stage 2 High Conviction',
-          stageColor: '#10b981',
-          trailingStop: 30.1,
-          cutLossPrice: 27.0,
-          action: 'HOLD & RUN TREND',
-          actionNote: 'หุ้นแม่ All-Time High ถือต่อตามแนวเส้น EMA20',
+          stageName: 'Stage 2 (Superperformance)',
+          trailingStop: 56.0,
+          cutLossPrice: 50.0,
+          action: 'HOLD (STRONG TREND)',
+          actionNote: 'Apple Intelligence ไดรฟ์อัปเกรดไซเคิล ทะลุแนวต้านสำคัญ',
           drMeta: {
-            underlying: 'AAPL (NASDAQ)',
-            usPrice: 235.4,
-            fairPrice: 31.25,
-            spreadPct: 0.48,
-            fairStatus: 'FAIR (พรีเมียมต่ำ ปลอดภัย)',
-            fxImpact: 'USD/THB 34.25 (ผลกระทบค่าเงิน -0.2%)',
+            underlying: 'AAPL.US',
+            usPrice: 231.0,
+            fxRate: usdThbRate,
+            fairPrice: 58.1,
+            spreadPct: 0.69,
+            fairStatus: 'FAIR VALUE',
+            fxImpact: 'เสถียร (บาท 34.25)',
           },
         },
         {
-          symbol: 'BDMS',
+          symbol: 'ADVANC',
+          name: 'Advanced Info Service',
           market: 'THAI',
-          assetType: 'EQUITY',
-          sector: 'HEALTHCARE',
-          section: 'SET100',
-          quantity: 6000,
-          avgCost: 28.5,
-          marketPrice: 29.25,
-          marketValue: 175500,
-          costValue: 171000,
-          unrealizedPl: 4500,
-          unrealizedPlPct: 2.63,
-          stage: 1,
-          stageName: 'Stage 1 สะสมฐาน (Base Building)',
-          stageColor: '#f59e0b',
-          trailingStop: 28.25,
-          cutLossPrice: 27.5,
-          action: 'HOLD BASE',
-          actionNote: 'พักตัวสร้างฐานสวย มี Volume สะสม ไม่หลุดแนวรับสำคัญ',
+          section: 'SET50',
+          sector: 'ICT',
+          quantity: 1000,
+          avgCost: 260.0,
+          marketPrice: 282.0,
+          marketValue: 282000,
+          unrealizedPl: 22000,
+          unrealizedPlPct: 8.46,
+          stage: 2,
+          stageName: 'Stage 2 (Leader)',
+          trailingStop: 274.0,
+          cutLossPrice: 255.0,
+          action: 'HOLD (LEADER)',
+          actionNote: 'หุ้นผู้นำกลุ่ม ICT กระแสเงินสดแข็งแกร่ง รันเทรนด์ตาม EMA20',
         },
         {
-          symbol: 'PTT',
+          symbol: 'NDX01',
+          name: 'Nasdaq 100 DR (US Underlying)',
+          market: 'DR',
+          section: 'DR-US',
+          sector: 'BROAD_TECH',
+          quantity: 4000,
+          avgCost: 31.0,
+          marketPrice: 32.5,
+          marketValue: 130000,
+          unrealizedPl: 6000,
+          unrealizedPlPct: 4.84,
+          stage: 2,
+          stageName: 'Stage 2 (Tech Momentum)',
+          trailingStop: 31.5,
+          cutLossPrice: 30.0,
+          action: 'HOLD (TECH CORE)',
+          actionNote: 'สเปรด Fair ไม่มีพรีเมียมเกินจริง',
+          drMeta: {
+            underlying: 'QQQ.US',
+            usPrice: 492.0,
+            fxRate: usdThbRate,
+            fairPrice: 32.4,
+            spreadPct: 0.31,
+            fairStatus: 'FAIR VALUE',
+            fxImpact: 'เสถียร (บาท 34.25)',
+          },
+        },
+        {
+          symbol: 'KCE',
+          name: 'KCE Electronics PCL',
           market: 'THAI',
-          assetType: 'EQUITY',
-          sector: 'ENERGY',
           section: 'SET100',
-          quantity: 3000,
-          avgCost: 33.0,
-          marketPrice: 31.5,
-          marketValue: 94500,
-          costValue: 99000,
-          unrealizedPl: -4500,
-          unrealizedPlPct: -4.55,
+          sector: 'ELECTRONICS',
+          quantity: 2500,
+          avgCost: 41.5,
+          marketPrice: 37.75,
+          marketValue: 94375,
+          unrealizedPl: -9375,
+          unrealizedPlPct: -9.04,
           stage: 4,
-          stageName: 'Stage 4 ขาลงอันตราย (หลุด EMA50)',
-          stageColor: '#f43f5e',
+          stageName: 'Stage 4 (Downtrend Risk)',
           trailingStop: null,
-          cutLossPrice: 31.0,
-          action: '🚨 REDUCE / CUT LOSS NOW',
-          actionNote: 'หลุดแนวรับ EMA50 กลายเป็น Stage 4 แนะนำตัดขาดทุนก่อนเสียหายหนัก',
+          cutLossPrice: 39.0,
+          action: 'CUT LOSS ด่วน',
+          actionNote: 'หลุด Low ก่อนหน้า และหลุด EMA200 แนะนำตัดขาดทุนตามระบบ',
         },
       ];
 
-  const cashBalance = isPi ? 150000 : 120000;
   const totalMarketValue = demoHoldings.reduce((sum, h) => sum + h.marketValue, 0);
-  const totalCostValue = demoHoldings.reduce((sum, h) => sum + h.costValue, 0);
-  const totalUnrealizedPl = totalMarketValue - totalCostValue;
-  const totalUnrealizedPlPct = ((totalUnrealizedPl / totalCostValue) * 100).toFixed(2);
-  const equity = totalMarketValue + cashBalance;
+  const totalCost = demoHoldings.reduce((sum, h) => sum + h.quantity * h.avgCost, 0);
+  const totalUnrealizedPl = totalMarketValue - totalCost;
+  const totalUnrealizedPlPct = ((totalUnrealizedPl / totalCost) * 100).toFixed(2);
 
   const thaiStockValue = demoHoldings.filter((h) => h.market === 'THAI').reduce((sum, h) => sum + h.marketValue, 0);
   const drStockValue = demoHoldings.filter((h) => h.market === 'DR').reduce((sum, h) => sum + h.marketValue, 0);
@@ -297,26 +279,22 @@ function generateDemoPortfolio(brokerId = '022', appCode = 'ALGO_EQ') {
   const thaiStockPct = ((thaiStockValue / totalMarketValue) * 100).toFixed(1);
   const drStockPct = ((drStockValue / totalMarketValue) * 100).toFixed(1);
 
-  let healthNumerator = 0;
-  for (const h of demoHoldings) {
-    const factor = h.stage === 2 ? 1.0 : h.stage === 1 ? 0.7 : h.stage === 3 ? 0.3 : 0.0;
-    healthNumerator += h.marketValue * factor;
-  }
-  const healthScore = Math.round((healthNumerator / totalMarketValue) * 100);
+  const cashBalance = 120000;
+  const equity = totalMarketValue + cashBalance;
+
+  const stage2Count = demoHoldings.filter((h) => h.stage === 2).length;
+  const healthScore = Math.round((stage2Count / demoHoldings.length) * 100);
 
   return {
     success: true,
     mode: 'DEMO',
-    accountNo: isPi ? 'EQ-003-88912-P' : 'EQ-022-78891-B',
     brokerId,
     brokerName,
     appCode,
-    asOf: new Date().toISOString(),
     equity,
-    cashBalance,
-    lineAvailable: cashBalance,
     totalMarketValue,
-    totalCostValue,
+    lineAvailable: cashBalance,
+    cashBalance,
     totalUnrealizedPl,
     totalUnrealizedPlPct: Number(totalUnrealizedPlPct),
     allocation: {
@@ -347,8 +325,10 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all | thai | dr | stage2 | danger
-  const [showModal, setShowModal] = useState(false);
-  const [showLeadModal, setShowLeadModal] = useState(false);
+
+  // Unified Modal Suite State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState('lead'); // 'lead' | 'api' | 'demo'
 
   // BYOK form states (Pre-configured for Trinity 022)
   const [brokerId, setBrokerId] = useState('022');
@@ -356,7 +336,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const [appId, setAppId] = useState('2Ojgos6LlYIEU3n0');
   const [appSecret, setAppSecret] = useState('AMeylhfYKDRtm2yC+qyN+ivzRXceX23b93zGvMCTe4vF');
   const [appCode, setAppCode] = useState('ALGO_EQ');
-  const [latency, setLatency] = useState(35);
+  const [latency, setLatency] = useState(18);
   const [showSecret, setShowSecret] = useState(false);
 
   // Partner Lead Form states
@@ -379,7 +359,6 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
       const bId = overrideBrokerId || brokerId;
 
       if (isDemo) {
-        // First try server demo sandbox, fallback gracefully to instant local generator
         try {
           const res = await fetch('/api/equity/portfolio', {
             method: 'POST',
@@ -401,10 +380,9 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
             }
           }
         } catch {
-          // Gracefully fallback
+          // Fallback to instant generator
         }
 
-        // Instant local demo generation (zero-error for guests/visitors)
         const demoData = generateDemoPortfolio(bId, appCode);
         setData(demoData);
         if (overrideBrokerId) setBrokerId(overrideBrokerId);
@@ -443,7 +421,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
         }
 
         setData(result);
-        setShowModal(false);
+        setModalOpen(false);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -454,7 +432,6 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   );
 
   useEffect(() => {
-    // Initial load: Trinity 022 Demo Sandbox
     syncPortfolio(true, '022');
   }, [syncPortfolio]);
 
@@ -502,6 +479,25 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
     }
   };
 
+  const openLeadModal = (bId = '003') => {
+    setLeadBroker(bId);
+    setModalTab('lead');
+    setLeadSuccess(null);
+    setLeadError(null);
+    setModalOpen(true);
+  };
+
+  const openApiModal = (bId = null) => {
+    if (bId) setBrokerId(bId);
+    setModalTab('api');
+    setModalOpen(true);
+  };
+
+  const openDemoModal = () => {
+    setModalTab('demo');
+    setModalOpen(true);
+  };
+
   const holdings = data?.holdings || [];
 
   const filteredHoldings = useMemo(() => {
@@ -515,46 +511,60 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const drHoldings = useMemo(() => holdings.filter((h) => h.market === 'DR'), [holdings]);
 
   return (
-    <div className={styles.container}>
-      {/* ─── UNIFIED LUXURY FINTECH COCKPIT (BORDERLESS HERO DESK) ─── */}
-      <section className={styles.cockpitHeroDesk}>
-        <div className={styles.cockpitAmbientGlow} />
+    <div className={styles.deskWrapper}>
+      {/* ─── 1. COMMAND DESK HERO SURFACE (PREMIUM FINTECH CANVASES) ─── */}
+      <section className={styles.commandDesk}>
+        <div className={styles.ambientGlow} />
 
-        {/* Cockpit Header with Floating Micro-Pills */}
-        <div className={styles.cockpitHeader}>
-          <div className={styles.cockpitLeft}>
-            <div className={styles.badgeRow}>
-              <span className={styles.gatewayPill}>SETTRADE OPEN API GATEWAY</span>
-              <span className={styles.brokerPill}>
-                [{data?.brokerId || brokerId}] {data?.brokerName || 'บล.ทรีนีตี้'}
+        {/* Top Intelligence Ribbon */}
+        <header className={styles.deskHeader}>
+          <div className={styles.headerLeft}>
+            <div className={styles.liveGatewayStrip}>
+              <span className={styles.gatewayBadge}>
+                <span className={styles.livePulseDot} />
+                SETTRADE OPEN API GATEWAY
               </span>
-              <span className={styles.enclavePill}>
-                🛡️ ZERO-CUSTODY CLIENT ENCLAVE (ALGO_EQ)
+              <span className={styles.enclaveBadge}>
+                🛡️ ZERO-CUSTODY CLIENT ENCLAVE
               </span>
-              <span className={styles.latencyPill}>⚡ {latency}ms</span>
+              <span className={styles.latencyBadge}>⚡ {latency}ms</span>
               <span
-                className={styles.modePill}
-                style={{
-                  background: data?.mode === 'LIVE' ? 'rgba(16,185,129,0.2)' : 'rgba(56,189,248,0.2)',
-                  color: data?.mode === 'LIVE' ? '#34d399' : '#38bdf8',
-                }}
+                className={styles.statusBadge}
+                data-mode={data?.mode || 'DEMO'}
               >
                 {data?.mode === 'LIVE' ? '🟢 LIVE REAL MARKET' : '🧪 DEMO SANDBOX'}
               </span>
             </div>
-            <h2 className={styles.cockpitTitle}>
-              ศูนย์บัญชาการพอร์ตหุ้นไทย &amp; DR อัจฉริยะ (Smart Equity Command Desk)
+
+            <h2 className={styles.heroTitle}>
+              ศูนย์บัญชาการพอร์ตอัจฉริยะ (Smart Equity Desk)
             </h2>
-            <p className={styles.cockpitDesc}>
-              วิเคราะห์เทรนด์ Stage 2 อัตโนมัติ, เฝ้าระวังจุด Trailing Stop / Cut Loss, และตรวจสอบความคุ้มค่า DR
-              ผ่าน 2 พันธมิตรโบรกเกอร์อย่างเป็นทางการ (บล.พาย Pi Securities &amp; บล.ทรีนีตี้ Trinity Securities)
+            <p className={styles.heroSubtitle}>
+              วิเคราะห์เทรนด์ Stage 2 อัตโนมัติ · เฝ้าระวังจุด Trailing Stop เรียลไทม์ · ตรวจสอบความคุ้มค่า DR หุ้นโลก
             </p>
+            <div className={styles.partnerBadgeRow}>
+              <span className={styles.partnerKicker}>พันธมิตรโบรกเกอร์อย่างเป็นทางการ:</span>
+              <button
+                type="button"
+                className={`${styles.partnerChip} ${(data?.brokerId || brokerId) === '003' ? styles.partnerChipActivePi : ''}`}
+                onClick={() => syncPortfolio(true, '003')}
+              >
+                🥧 บล.พาย Pi Securities (003)
+              </button>
+              <button
+                type="button"
+                className={`${styles.partnerChip} ${(data?.brokerId || brokerId) === '022' ? styles.partnerChipActiveTrinity : ''}`}
+                onClick={() => syncPortfolio(true, '022')}
+              >
+                🌟 บล.ทรีนีตี้ Trinity (022)
+              </button>
+            </div>
           </div>
 
-          <div className={styles.cockpitActions}>
+          <div className={styles.headerActions}>
             <button
               type="button"
-              className={styles.actionBtnPrimary}
+              className={styles.btnSync}
               onClick={() => syncPortfolio(data?.mode === 'DEMO')}
               disabled={loading}
             >
@@ -562,1037 +572,846 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
             </button>
             <button
               type="button"
-              className={styles.actionBtnSecondary}
-              onClick={() => syncPortfolio(true, '003')}
-              disabled={loading}
-              style={{
-                background: (data?.brokerId || brokerId) === '003' ? 'rgba(168,85,247,0.25)' : undefined,
-                boxShadow: (data?.brokerId || brokerId) === '003' ? '0 0 16px rgba(168,85,247,0.3)' : undefined,
-                color: (data?.brokerId || brokerId) === '003' ? '#c084fc' : undefined,
-              }}
+              className={styles.btnPrimaryApi}
+              onClick={() => openApiModal()}
             >
-              🥧 ทดลอง บล.พาย (003)
+              ⚡ เชื่อมต่อพอร์ต API
             </button>
             <button
               type="button"
-              className={styles.actionBtnSecondary}
-              onClick={() => syncPortfolio(true, '022')}
-              disabled={loading}
-              style={{
-                background: (data?.brokerId || brokerId) === '022' ? 'rgba(34,211,238,0.25)' : undefined,
-                boxShadow: (data?.brokerId || brokerId) === '022' ? '0 0 16px rgba(34,211,238,0.3)' : undefined,
-                color: (data?.brokerId || brokerId) === '022' ? '#38bdf8' : undefined,
-              }}
+              className={styles.btnVipLead}
+              onClick={() => openLeadModal('003')}
             >
-              🌟 ทดลอง บล.ทรีนีตี้ (022)
-            </button>
-            <button
-              type="button"
-              className={styles.partnerActionBtn}
-              onClick={() => {
-                setLeadSuccess(null);
-                setLeadError(null);
-                setShowLeadModal(true);
-              }}
-            >
-              📝 เปิดพอร์ตใหม่กับพาร์ทเนอร์
-            </button>
-            <button
-              type="button"
-              className={styles.actionBtnSecondary}
-              onClick={() => setShowModal(true)}
-            >
-              ⚙️ ตั้งค่า API พอร์ตจริง
+              👑 เปิดพอร์ต VIP พาร์ทเนอร์
             </button>
           </div>
-        </div>
+        </header>
 
+        {/* Error Notification */}
         {error && (
-          <div
-            style={{
-              background: 'rgba(239, 68, 68, 0.12)',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '12px 18px',
-              color: '#f87171',
-              fontSize: '12px',
-              marginTop: '16px',
-              marginBottom: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              flexWrap: 'wrap',
-              backdropFilter: 'blur(12px)',
-            }}
-          >
+          <div className={styles.errorAlert}>
             <span>⚠️ {error}</span>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className={styles.errorActions}>
               <button
                 type="button"
+                className={styles.errorBtn}
                 onClick={() => syncPortfolio(true, '022')}
-                style={{
-                  background: 'rgba(255,255,255,0.08)',
-                  border: 'none',
-                  color: '#fff',
-                  padding: '5px 12px',
-                  borderRadius: '9999px',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                }}
               >
                 สลับกลับโหมด Sandbox
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setError(null);
-                  setShowLeadModal(true);
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(16,185,129,0.3), rgba(5,150,105,0.35))',
-                  border: 'none',
-                  color: '#34d399',
-                  padding: '5px 12px',
-                  borderRadius: '9999px',
-                  cursor: 'pointer',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                }}
+                className={styles.errorBtnVip}
+                onClick={() => openLeadModal('003')}
               >
-                📝 เปิดพอร์ตใหม่กับพาร์ทเนอร์
+                👑 เปิดพอร์ตใหม่กับพาร์ทเนอร์
               </button>
             </div>
           </div>
         )}
 
-        {/* ─── HERO KPI STRIP (OPEN BORDERLESS METRICS) ─── */}
-        <div className={styles.kpiHeroStrip}>
-          <div className={styles.kpiHeroMetric}>
-            <div className={styles.kpiHeroLabel}>
-              <span>มูลค่าพอร์ตสุทธิ (Net Equity)</span>
-              <span>💰</span>
+        {/* ─── 2. TRIO INTELLIGENCE COCKPIT (3 HIGH-IMPACT GLASS TILES) ─── */}
+        <div className={styles.trioCockpitGrid}>
+          {/* Tile 1: Net Asset Value & Purchasing Power */}
+          <div className={styles.cockpitTile}>
+            <div className={styles.tileHeader}>
+              <span className={styles.tileLabel}>มูลค่าพอร์ตสุทธิ (NET EQUITY)</span>
+              <span className={styles.tileIcon}>💰</span>
             </div>
-            <div className={styles.kpiHeroValue}>
-              {data?.equity?.toLocaleString('th-TH') || '0'} ฿
+            <div className={styles.tileValueRow}>
+              <span className={styles.tileBigValue}>
+                ฿{data?.equity?.toLocaleString('th-TH') || '0'}
+              </span>
+              <span
+                className={`${styles.plBadge} ${
+                  (data?.totalUnrealizedPl || 0) >= 0 ? styles.plPositive : styles.plNegative
+                }`}
+              >
+                {(data?.totalUnrealizedPl || 0) >= 0 ? '+' : ''}
+                ฿{data?.totalUnrealizedPl?.toLocaleString('th-TH')} (
+                {(data?.totalUnrealizedPlPct || 0) >= 0 ? '+' : ''}
+                {data?.totalUnrealizedPlPct}%)
+              </span>
             </div>
-            <div className={styles.kpiHeroSub}>
-              วงเงินพร้อมซื้อ: {data?.lineAvailable?.toLocaleString('th-TH') || '0'} ฿
-            </div>
-          </div>
-
-          <div className={styles.kpiHeroMetric}>
-            <div className={styles.kpiHeroLabel}>
-              <span>กำไร/ขาดทุนรวม (Unrealized P/L)</span>
-              <span>📈</span>
-            </div>
-            <div
-              className={`${styles.kpiHeroValue} ${
-                (data?.totalUnrealizedPl || 0) >= 0 ? styles.positiveText : styles.negativeText
-              }`}
-            >
-              {(data?.totalUnrealizedPl || 0) >= 0 ? '+' : ''}
-              {data?.totalUnrealizedPl?.toLocaleString('th-TH')} ฿ (
-              {(data?.totalUnrealizedPlPct || 0) >= 0 ? '+' : ''}
-              {data?.totalUnrealizedPlPct}%)
-            </div>
-            <div className={styles.kpiHeroSub}>
-              มูลค่าตลาด: {data?.totalMarketValue?.toLocaleString('th-TH')} ฿
+            <div className={styles.tileFooter}>
+              <span>วงเงินพร้อมซื้อ: ฿{data?.lineAvailable?.toLocaleString('th-TH') || '0'}</span>
+              <span>•</span>
+              <span>มูลค่าหุ้นในตลาด: ฿{data?.totalMarketValue?.toLocaleString('th-TH') || '0'}</span>
             </div>
           </div>
 
-          <div className={styles.kpiHeroMetric}>
-            <div className={styles.kpiHeroLabel}>
-              <span>คะแนนสุขภาพพอร์ต (Stage Health)</span>
-              <span>🌟</span>
+          {/* Tile 2: Minervini Stage 2 Health Matrix */}
+          <div className={styles.cockpitTile}>
+            <div className={styles.tileHeader}>
+              <span className={styles.tileLabel}>คะแนนสุขภาพพอร์ต (STAGE HEALTH)</span>
+              <span className={styles.tileIcon}>🌟</span>
             </div>
-            <div className={`${styles.kpiHeroValue} ${styles.positiveText}`}>
-              {data?.health?.score ?? 83} / 100
+            <div className={styles.tileValueRow}>
+              <span className={styles.tileBigValue} style={{ color: '#34d399' }}>
+                {data?.health?.score ?? 82}
+                <small style={{ fontSize: '15px', color: '#94a3b8', fontWeight: 500 }}> / 100</small>
+              </span>
+              <span className={styles.gradeBadge}>
+                {data?.health?.grade || 'เกรด A ขาขึ้นแข็งแกร่ง'}
+              </span>
             </div>
-            <div className={styles.kpiHeroSub}>
-              {data?.health?.grade || 'เกรด A ขาขึ้นแข็งแกร่ง'}
+            <div className={styles.stageBarWrapper}>
+              <div
+                className={styles.stageBarSegmentUp}
+                style={{ width: `${data?.health?.stage2RatioPct ?? 66.6}%` }}
+                title={`Stage 2 ขาขึ้น: ${data?.health?.stage2RatioPct ?? 66.6}%`}
+              />
+              <div
+                className={styles.stageBarSegmentDown}
+                style={{ width: `${data?.health?.stage4DangerRatioPct ?? 11.7}%` }}
+                title={`Stage 4 อันตราย: ${data?.health?.stage4DangerRatioPct ?? 11.7}%`}
+              />
             </div>
-          </div>
-
-          <div className={styles.kpiHeroMetric}>
-            <div className={styles.kpiHeroLabel}>
-              <span>สัดส่วนหุ้นขาขึ้น vs หุ้นอันตราย</span>
-              <span>🛡️</span>
-            </div>
-            <div className={styles.kpiHeroValue} style={{ fontSize: '18px' }}>
-              <span className={styles.positiveText}>Stage 2: {data?.health?.stage2RatioPct ?? 69.4}%</span>
-              {' · '}
-              <span className={styles.negativeText}>Stage 4: {data?.health?.stage4DangerRatioPct ?? 10.7}%</span>
-            </div>
-            <div className={styles.kpiHeroSub}>
-              ระบบกรองและแจ้งเตือนหุ้นหลุดแนวรับเรียลไทม์
-            </div>
-          </div>
-        </div>
-
-        {/* ─── INTEGRATED ALLOCATION RIBBON (SEAMLESS STREAM) ─── */}
-        <div className={styles.allocationRibbon}>
-          <div className={styles.allocationHeader}>
-            <div className={styles.allocationTitle}>
-              <span>📊 สัดส่วนพอร์ตลงทุน (Portfolio Allocation: Thai Stock vs Global DR)</span>
-            </div>
-            <div className={styles.allocationFxPill}>
-              💵 {data?.fxEnvironment?.impactSummary || 'USD/THB 34.25 บาท (ค่าเงินเสถียร ไม่กดดันพอร์ต DR)'}
+            <div className={styles.stageLegendRow}>
+              <span className={styles.stageLegendItemUp}>
+                🟢 Stage 2 ขาขึ้น: {data?.health?.stage2RatioPct ?? 66.6}%
+              </span>
+              <span className={styles.stageLegendItemDown}>
+                🔴 Stage 4 อันตราย: {data?.health?.stage4DangerRatioPct ?? 11.7}%
+              </span>
             </div>
           </div>
 
-          <div className={styles.allocationTrack}>
-            <div
-              className={styles.barThai}
-              style={{ width: `${data?.allocation?.thaiStockPct || 62}%` }}
-              title={`หุ้นไทย ${data?.allocation?.thaiStockPct || 62}%`}
-            />
-            <div
-              className={styles.barDr}
-              style={{ width: `${data?.allocation?.drStockPct || 38}%` }}
-              title={`DR หุ้นโลก ${data?.allocation?.drStockPct || 38}%`}
-            />
-          </div>
-
-          <div className={styles.allocationLegend}>
-            <span>
-              <span className={styles.legendDot} style={{ background: '#06b6d4' }} />
-              🇹🇭 หุ้นไทย SET100: {data?.allocation?.thaiStockPct || 62}% (
-              {data?.allocation?.thaiStockValue?.toLocaleString('th-TH') || '0'} ฿)
-            </span>
-            <span>
-              <span className={styles.legendDot} style={{ background: '#a855f7' }} />
-              🌐 DR หุ้นโลก: {data?.allocation?.drStockPct || 38}% (
-              {data?.allocation?.drStockValue?.toLocaleString('th-TH') || '0'} ฿)
-            </span>
-            <span>
-              <span className={styles.legendDot} style={{ background: '#10b981' }} />
-              💵 เงินสดคงเหลือ: {data?.allocation?.cashBalance?.toLocaleString('th-TH') || '0'} ฿ (
-              {data?.allocation?.cashPct || 12}%)
-            </span>
+          {/* Tile 3: Global Asset Allocation & FX Shield */}
+          <div className={styles.cockpitTile}>
+            <div className={styles.tileHeader}>
+              <span className={styles.tileLabel}>สัดส่วนพอร์ต หุ้นไทย vs DR หุ้นโลก</span>
+              <span className={styles.fxShieldPill}>
+                💵 {data?.fxEnvironment?.usdThb || 34.25} บาท/USD
+              </span>
+            </div>
+            <div className={styles.allocationTrack}>
+              <div
+                className={styles.trackThai}
+                style={{ width: `${data?.allocation?.thaiStockPct || 62}%` }}
+                title={`หุ้นไทย: ${data?.allocation?.thaiStockPct || 62}%`}
+              />
+              <div
+                className={styles.trackDr}
+                style={{ width: `${data?.allocation?.drStockPct || 38}%` }}
+                title={`DR หุ้นโลก: ${data?.allocation?.drStockPct || 38}%`}
+              />
+            </div>
+            <div className={styles.allocationPillRow}>
+              <span className={styles.allocTagThai}>
+                🇹🇭 หุ้นไทย {data?.allocation?.thaiStockPct || 62}% (฿{data?.allocation?.thaiStockValue?.toLocaleString('th-TH') || '0'})
+              </span>
+              <span className={styles.allocTagDr}>
+                🌐 DR หุ้นโลก {data?.allocation?.drStockPct || 38}% (฿{data?.allocation?.drStockValue?.toLocaleString('th-TH') || '0'})
+              </span>
+            </div>
+            <div className={styles.fxNotice}>
+              💡 {data?.fxEnvironment?.impactSummary || 'ค่าเงินเสถียร ไม่มีความเสี่ยง FX กดดันมูลค่า DR'}
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* ─── FILTER TABS & STAGE-DIAGNOSED TABLE ─── */}
-      <div className={styles.tableToolbar}>
-        <div className={styles.filterTabs}>
-          <button
-            type="button"
-            className={`${styles.filterTabBtn} ${filter === 'all' ? styles.filterTabBtnActive : ''}`}
-            onClick={() => setFilter('all')}
-          >
-            ทั้งหมด ({holdings.length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.filterTabBtn} ${filter === 'thai' ? styles.filterTabBtnActive : ''}`}
-            onClick={() => setFilter('thai')}
-          >
-            🇹🇭 หุ้นไทย ({holdings.filter((h) => h.market === 'THAI').length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.filterTabBtn} ${filter === 'dr' ? styles.filterTabBtnActive : ''}`}
-            onClick={() => setFilter('dr')}
-          >
-            🌐 DR หุ้นโลก ({holdings.filter((h) => h.market === 'DR').length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.filterTabBtn} ${filter === 'stage2' ? styles.filterTabBtnActive : ''}`}
-            onClick={() => setFilter('stage2')}
-          >
-            🟢 Stage 2 ขาขึ้น ({holdings.filter((h) => h.stage === 2).length})
-          </button>
-          <button
-            type="button"
-            className={`${styles.filterTabBtn} ${filter === 'danger' ? styles.filterTabBtnActive : ''}`}
-            onClick={() => setFilter('danger')}
-          >
-            🔴 Stage 4 อันตราย ({holdings.filter((h) => h.stage === 4).length})
-          </button>
-        </div>
-      </div>
-
-      <div className={styles.tableWrapper}>
-        <table className={styles.portfolioTable}>
-          <thead>
-            <tr>
-              <th>สินทรัพย์ / สัญลักษณ์</th>
-              <th>จำนวนหุ้น</th>
-              <th>ราคาตลาด / ทุนเฉลี่ย</th>
-              <th>มูลค่าพอร์ต</th>
-              <th>กำไร / ขาดทุน (P/L)</th>
-              <th>วินิจฉัย Stage (1-4)</th>
-              <th>แนว Cut Loss / Trailing</th>
-              <th>ใบสั่งยา AI (Prescription)</th>
-              <th>การกระทำ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredHoldings.map((item) => {
-              const isProfit = (item.unrealizedPl || 0) >= 0;
-              return (
-                <tr key={item.symbol}>
-                  <td>
-                    <div className={styles.symbolCell}>
-                      <InstrumentLogo
-                        asset={{
-                          symbol: item.symbol,
-                          market: item.market === 'DR' ? 'dr' : 'thai',
-                          name: item.symbol,
-                        }}
-                      />
-                      <div className={styles.symbolInfo}>
-                        <span className={styles.symbolName}>
-                          <b>{item.symbol}</b>
-                          {item.market === 'THAI' ? (
-                            <span className={styles.tagThai}>{item.section || 'SET100'}</span>
-                          ) : (
-                            <span className={styles.tagDr}>DR-US</span>
-                          )}
-                        </span>
-                        <span className={styles.symbolSub}>{item.sector || '—'}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 700 }}>
-                    {item.quantity?.toLocaleString('th-TH')} หุ้น
-                  </td>
-                  <td style={{ fontFamily: 'ui-monospace, monospace' }}>
-                    <div>{item.marketPrice ? `${item.marketPrice.toFixed(2)} ฿` : '—'}</div>
-                    <small style={{ color: '#94a3b8' }}>
-                      ทุน {item.avgCost ? `${item.avgCost.toFixed(2)} ฿` : '—'}
-                    </small>
-                  </td>
-                  <td style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 700 }}>
-                    {item.marketValue ? `${item.marketValue.toLocaleString('th-TH')} ฿` : '—'}
-                  </td>
-                  <td>
-                    <div
-                      className={isProfit ? styles.positiveText : styles.negativeText}
-                      style={{ fontFamily: 'ui-monospace, monospace' }}
-                    >
-                      {item.unrealizedPl !== null
-                        ? `${isProfit ? '+' : ''}${item.unrealizedPl.toLocaleString('th-TH')} ฿`
-                        : '—'}
-                    </div>
-                    <small className={isProfit ? styles.positiveText : styles.negativeText}>
-                      {item.unrealizedPlPct !== null
-                        ? `${isProfit ? '+' : ''}${item.unrealizedPlPct.toFixed(2)}%`
-                        : ''}
-                    </small>
-                  </td>
-                  <td>
-                    {item.stage === 2 && (
-                      <span className={`${styles.stageBadge} ${styles.stage2Badge}`}>
-                        🟢 Stage 2 ขาขึ้นแข็งแกร่ง
-                      </span>
-                    )}
-                    {item.stage === 1 && (
-                      <span className={`${styles.stageBadge} ${styles.stage1Badge}`}>
-                        🟡 Stage 1 สร้างฐานสะสม
-                      </span>
-                    )}
-                    {item.stage === 4 && (
-                      <span className={`${styles.stageBadge} ${styles.stage4Badge}`}>
-                        🚨 Stage 4 ขาลงหลุด EMA50
-                      </span>
-                    )}
-                    {!item.stage && (
-                      <span className={`${styles.stageBadge} ${styles.stage1Badge}`}>
-                        {item.stageName || 'รอประเมิน'}
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ fontFamily: 'ui-monospace, monospace' }}>
-                    {item.trailingStop ? (
-                      <div>
-                        <span style={{ color: '#38bdf8', fontWeight: 700 }}>
-                          {item.trailingStop.toFixed(2)} ฿
-                        </span>
-                        <br />
-                        <small style={{ color: '#94a3b8' }}>Trailing Stop</small>
-                      </div>
-                    ) : item.cutLossPrice ? (
-                      <div>
-                        <span style={{ color: '#fb7185', fontWeight: 700 }}>
-                          {item.cutLossPrice.toFixed(2)} ฿
-                        </span>
-                        <br />
-                        <small style={{ color: '#fb7185' }}>Cut Loss ด่วน</small>
-                      </div>
-                    ) : (
-                      <span style={{ color: '#94a3b8' }}>—</span>
-                    )}
-                  </td>
-                  <td>
-                    <div className={styles.actionChip}>
-                      {item.action?.includes('HOLD') && (
-                        <span className={`${styles.actionBadge} ${styles.actionHold}`}>
-                          💎 {item.action}
-                        </span>
-                      )}
-                      {item.action?.includes('TAKE PROFIT') && (
-                        <span className={`${styles.actionBadge} ${styles.actionTakeProfit}`}>
-                          🎯 {item.action}
-                        </span>
-                      )}
-                      {item.action?.includes('CUT') && (
-                        <span className={`${styles.actionBadge} ${styles.actionCutLoss}`}>
-                          🚨 {item.action}
-                        </span>
-                      )}
-                      {!item.action?.includes('HOLD') &&
-                        !item.action?.includes('TAKE PROFIT') &&
-                        !item.action?.includes('CUT') && (
-                          <span className={`${styles.actionBadge} ${styles.actionHold}`}>
-                            {item.action || 'ตรวจแผนจากกราฟ'}
-                          </span>
-                        )}
-                      <span className={styles.actionNote}>{item.actionNote}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      className={styles.filterTabBtn}
-                      style={{ padding: '4px 8px', fontSize: '10px' }}
-                      onClick={() => onSelectSymbol?.(item.symbol)}
-                    >
-                      กราฟ ↗
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ─── DR ARBITRAGE & FAIR VALUE DESK ─── */}
-      {drHoldings.length > 0 && (
-        <section className={styles.drSection}>
-          <div className={styles.drSectionHeader}>
-            <div className={styles.drSectionTitle}>
-              <span>🌐 โต๊ะตรวจสอบความคุ้มค่า DR ต่างประเทศ (DR Arbitrage &amp; Fair Value Guard)</span>
-            </div>
-            <span style={{ fontSize: '11px', color: '#c084fc', fontWeight: 700 }}>
-              คำนวณจากราคาหุ้นแม่สหรัฐฯ สด + อัตราแลกเปลี่ยน USD/THB 34.25
-            </span>
-          </div>
-
-          <div className={styles.drCardsGrid}>
-            {drHoldings.map((dr) => (
-              <div key={dr.symbol} className={styles.drCard}>
-                <div className={styles.drCardTop}>
-                  <div className={styles.drCardSymbol}>
-                    {dr.symbol} ({dr.drMeta?.underlying || 'Global Stock'})
-                  </div>
-                  <span className={styles.drFairBadge}>{dr.drMeta?.fairStatus || 'FAIR VALUE'}</span>
-                </div>
-
-                <div className={styles.drMetricsRow}>
-                  <div className={styles.drMetricItem}>
-                    <span className={styles.drMetricLabel}>หุ้นแม่สหรัฐฯ</span>
-                    <span className={styles.drMetricVal}>
-                      {dr.drMeta?.usPrice ? `$${dr.drMeta.usPrice.toFixed(2)}` : 'Realtime'}
-                    </span>
-                  </div>
-                  <div className={styles.drMetricItem}>
-                    <span className={styles.drMetricLabel}>ราคาเหมาะสม (Fair)</span>
-                    <span className={styles.drMetricVal}>
-                      {dr.drMeta?.fairPrice ? `${dr.drMeta.fairPrice.toFixed(2)} ฿` : '—'}
-                    </span>
-                  </div>
-                  <div className={styles.drMetricItem}>
-                    <span className={styles.drMetricLabel}>สเปรดส่วนต่าง</span>
-                    <span className={styles.drMetricVal} style={{ color: '#34d399' }}>
-                      {dr.drMeta?.spreadPct ? `+${dr.drMeta.spreadPct}%` : 'Fair'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className={styles.drFxLine}>
-                  <span>💡 {dr.drMeta?.fxImpact || 'อัตราแลกเปลี่ยน USD/THB ทรงตัว'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ─── MODAL 1: PARTNER ACCOUNT OPENING (VIP INTRODUCING BROKER FLOW) ─── */}
-      {showLeadModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowLeadModal(false)}>
-          <div className={styles.partnerLeadCard} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <div className={styles.modalTitleGroup}>
-                <span className={styles.modalKicker} style={{ color: '#34d399' }}>
-                  👑 VIP INTRODUCING BROKER (IB) CONCIERGE
-                </span>
-                <h3 className={styles.modalTitle}>
-                  ยื่นขอเปิดพอร์ต VIP กับโบรกเกอร์พันธมิตร
-                </h3>
-                <p className={styles.modalSubtitle}>
-                  บล.พาย (003) &amp; บล.ทรีนีตี้ (022) — มาร์เก็ตติ้งส่วนตัวจะติดต่อดูแลท่านโดยตรง
-                </p>
-              </div>
+        {/* ─── 3. FILTER CAPSULES & HOLDINGS TABLE ─── */}
+        <div className={styles.holdingsSection}>
+          <div className={styles.filterBar}>
+            <div className={styles.filterPillsGroup}>
               <button
                 type="button"
-                className={styles.modalClose}
-                onClick={() => setShowLeadModal(false)}
+                className={`${styles.filterPill} ${filter === 'all' ? styles.filterPillActive : ''}`}
+                onClick={() => setFilter('all')}
               >
-                ✕
+                ทั้งหมด ({holdings.length})
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterPill} ${filter === 'thai' ? styles.filterPillActive : ''}`}
+                onClick={() => setFilter('thai')}
+              >
+                🇹🇭 หุ้นไทย ({holdings.filter((h) => h.market === 'THAI').length})
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterPill} ${filter === 'dr' ? styles.filterPillActive : ''}`}
+                onClick={() => setFilter('dr')}
+              >
+                🌐 DR หุ้นโลก ({holdings.filter((h) => h.market === 'DR').length})
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterPill} ${filter === 'stage2' ? styles.filterPillActive : ''}`}
+                onClick={() => setFilter('stage2')}
+              >
+                🟢 Stage 2 ขาขึ้น ({holdings.filter((h) => h.stage === 2).length})
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterPill} ${filter === 'danger' ? styles.filterPillActive : ''}`}
+                onClick={() => setFilter('danger')}
+              >
+                🔴 Stage 4 อันตราย ({holdings.filter((h) => h.stage === 4).length})
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.tableGlassSurface}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>สินทรัพย์ / สัญลักษณ์</th>
+                  <th>จำนวนหุ้น</th>
+                  <th>ราคาตลาด / ทุนเฉลี่ย</th>
+                  <th>มูลค่าพอร์ต</th>
+                  <th>กำไร / ขาดทุน (P/L)</th>
+                  <th>วินิจฉัย Stage (1-4)</th>
+                  <th>แนว Cut Loss / Trailing</th>
+                  <th>ใบสั่งยา AI (Prescription)</th>
+                  <th>กราฟ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredHoldings.map((item) => {
+                  const isProfit = (item.unrealizedPl || 0) >= 0;
+                  return (
+                    <tr key={item.symbol} className={styles.tableRow}>
+                      <td>
+                        <div className={styles.symbolCell}>
+                          <InstrumentLogo
+                            asset={{
+                              symbol: item.symbol,
+                              market: item.market === 'DR' ? 'dr' : 'thai',
+                              name: item.symbol,
+                            }}
+                          />
+                          <div className={styles.symbolDetails}>
+                            <div className={styles.symbolHeading}>
+                              <span className={styles.symbolCode}>{item.symbol}</span>
+                              {item.market === 'THAI' ? (
+                                <span className={styles.marketBadgeThai}>{item.section || 'SET100'}</span>
+                              ) : (
+                                <span className={styles.marketBadgeDr}>DR-US</span>
+                              )}
+                            </div>
+                            <span className={styles.sectorText}>{item.sector || '—'}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={styles.monoCell}>
+                        {item.quantity?.toLocaleString('th-TH')} หุ้น
+                      </td>
+                      <td className={styles.monoCell}>
+                        <div>{item.marketPrice ? `${item.marketPrice.toFixed(2)} ฿` : '—'}</div>
+                        <small className={styles.costSub}>
+                          ทุน {item.avgCost ? `${item.avgCost.toFixed(2)} ฿` : '—'}
+                        </small>
+                      </td>
+                      <td className={styles.monoCell} style={{ fontWeight: 700 }}>
+                        {item.marketValue ? `฿${item.marketValue.toLocaleString('th-TH')}` : '—'}
+                      </td>
+                      <td className={styles.monoCell}>
+                        <div className={isProfit ? styles.positiveText : styles.negativeText}>
+                          {item.unrealizedPl !== null
+                            ? `${isProfit ? '+' : ''}฿${item.unrealizedPl.toLocaleString('th-TH')}`
+                            : '—'}
+                        </div>
+                        <small className={isProfit ? styles.positiveText : styles.negativeText}>
+                          {item.unrealizedPlPct !== null
+                            ? `${isProfit ? '+' : ''}${item.unrealizedPlPct.toFixed(2)}%`
+                            : ''}
+                        </small>
+                      </td>
+                      <td>
+                        {item.stage === 2 && (
+                          <span className={styles.stageTagStage2}>
+                            🟢 Stage 2 ขาขึ้นแข็งแกร่ง
+                          </span>
+                        )}
+                        {item.stage === 1 && (
+                          <span className={styles.stageTagStage1}>
+                            🟡 Stage 1 สร้างฐานสะสม
+                          </span>
+                        )}
+                        {item.stage === 4 && (
+                          <span className={styles.stageTagStage4}>
+                            🚨 Stage 4 ขาลงหลุดแนวรับ
+                          </span>
+                        )}
+                        {!item.stage && (
+                          <span className={styles.stageTagStage1}>
+                            {item.stageName || 'รอประเมิน'}
+                          </span>
+                        )}
+                      </td>
+                      <td className={styles.monoCell}>
+                        {item.trailingStop ? (
+                          <div>
+                            <span style={{ color: '#38bdf8', fontWeight: 700 }}>
+                              {item.trailingStop.toFixed(2)} ฿
+                            </span>
+                            <br />
+                            <small style={{ color: '#94a3b8' }}>Trailing Stop</small>
+                          </div>
+                        ) : item.cutLossPrice ? (
+                          <div>
+                            <span style={{ color: '#fb7185', fontWeight: 700 }}>
+                              {item.cutLossPrice.toFixed(2)} ฿
+                            </span>
+                            <br />
+                            <small style={{ color: '#fb7185' }}>Cut Loss ด่วน</small>
+                          </div>
+                        ) : (
+                          <span style={{ color: '#94a3b8' }}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className={styles.prescriptionBox}>
+                          {item.action?.includes('HOLD') && (
+                            <span className={styles.rxHold}>💎 {item.action}</span>
+                          )}
+                          {item.action?.includes('TAKE PROFIT') && (
+                            <span className={styles.rxTakeProfit}>🎯 {item.action}</span>
+                          )}
+                          {item.action?.includes('CUT') && (
+                            <span className={styles.rxCutLoss}>🚨 {item.action}</span>
+                          )}
+                          {!item.action?.includes('HOLD') &&
+                            !item.action?.includes('TAKE PROFIT') &&
+                            !item.action?.includes('CUT') && (
+                              <span className={styles.rxHold}>{item.action || 'ตรวจแผนจากกราฟ'}</span>
+                            )}
+                          <span className={styles.rxNote}>{item.actionNote}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className={styles.chartLinkBtn}
+                          onClick={() => onSelectSymbol?.(item.symbol)}
+                        >
+                          ดูกราฟ ↗
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ─── 4. DR ARBITRAGE & FAIR VALUE GUARD ─── */}
+        {drHoldings.length > 0 && (
+          <div className={styles.drGuardSection}>
+            <div className={styles.drGuardHeader}>
+              <div>
+                <h3 className={styles.drGuardTitle}>
+                  🌐 โต๊ะตรวจสอบความคุ้มค่า DR ต่างประเทศ (DR Arbitrage &amp; Fair Value Guard)
+                </h3>
+                <p className={styles.drGuardSub}>
+                  คำนวณเปรียบเทียบจากราคาหุ้นแม่สหรัฐฯ สด + อัตราแลกเปลี่ยน USD/THB 34.25 แบบเรียลไทม์
+                </p>
+              </div>
+            </div>
+
+            <div className={styles.drGrid}>
+              {drHoldings.map((dr) => (
+                <div key={dr.symbol} className={styles.drCard}>
+                  <div className={styles.drCardTop}>
+                    <span className={styles.drSymbolText}>
+                      {dr.symbol} ({dr.drMeta?.underlying || 'Global Stock'})
+                    </span>
+                    <span className={styles.drStatusBadge}>
+                      {dr.drMeta?.fairStatus || 'FAIR VALUE'}
+                    </span>
+                  </div>
+                  <div className={styles.drStatsRow}>
+                    <div className={styles.drStatCol}>
+                      <span className={styles.drStatLabel}>หุ้นแม่สหรัฐฯ</span>
+                      <span className={styles.drStatVal}>
+                        {dr.drMeta?.usPrice ? `$${dr.drMeta.usPrice.toFixed(2)}` : 'Realtime'}
+                      </span>
+                    </div>
+                    <div className={styles.drStatCol}>
+                      <span className={styles.drStatLabel}>ราคาเหมาะสม (Fair)</span>
+                      <span className={styles.drStatVal}>
+                        {dr.drMeta?.fairPrice ? `${dr.drMeta.fairPrice.toFixed(2)} ฿` : '—'}
+                      </span>
+                    </div>
+                    <div className={styles.drStatCol}>
+                      <span className={styles.drStatLabel}>สเปรดส่วนต่าง</span>
+                      <span className={styles.drStatVal} style={{ color: '#34d399' }}>
+                        {dr.drMeta?.spreadPct ? `+${dr.drMeta.spreadPct}%` : 'Fair'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.drCardFooter}>
+                    <span>💡 {dr.drMeta?.fxImpact || 'อัตราแลกเปลี่ยน USD/THB ทรงตัว ไร้ความเสี่ยง FX'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ─── 5. REDESIGNED LUXURY ONBOARDING & CONNECTION SUITE (MODAL) ─── */}
+      {modalOpen && (
+        <div className={styles.modalBackdrop} onClick={() => setModalOpen(false)}>
+          <div className={styles.modalSuite} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className={styles.suiteCloseBtn}
+              onClick={() => setModalOpen(false)}
+            >
+              ✕
+            </button>
+
+            {/* Segmented Modal Navigation */}
+            <div className={styles.suiteNav}>
+              <button
+                type="button"
+                className={`${styles.suiteNavTab} ${modalTab === 'lead' ? styles.suiteNavTabActiveLead : ''}`}
+                onClick={() => setModalTab('lead')}
+              >
+                <span>👑 เปิดพอร์ต VIP พาร์ทเนอร์</span>
+                <span className={styles.recBadge}>แนะนำ</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.suiteNavTab} ${modalTab === 'api' ? styles.suiteNavTabActiveApi : ''}`}
+                onClick={() => setModalTab('api')}
+              >
+                <span>⚡ ผูกพอร์ต Settrade API</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.suiteNavTab} ${modalTab === 'demo' ? styles.suiteNavTabActiveDemo : ''}`}
+                onClick={() => setModalTab('demo')}
+              >
+                <span>🧪 พอร์ตจำลอง Sandbox</span>
               </button>
             </div>
 
-            {leadSuccess ? (
-              <div className={styles.vipSuccessCard}>
-                <div className={styles.vipCrownIcon}>👑</div>
-                <h4 className={styles.vipSuccessTitle}>ยื่นคำขอเปิดพอร์ต VIP เรียบร้อยแล้ว!</h4>
-                <span className={styles.vipLeadBadge}>
-                  รหัสคำขออ้างอิง: {leadSuccess.leadId}
-                </span>
-                <p style={{ fontSize: '13px', color: '#cbd5e1', margin: '4px 0 10px 0', lineHeight: 1.5 }}>
-                  ข้อมูลของท่านได้รับการลงทะเบียนในระบบความปลอดภัยเรียบร้อยแล้ว<br />
-                  เจ้าหน้าที่ผู้แนะนำการลงทุน (มาร์เก็ตติ้ง) จาก{' '}
-                  <strong style={{ color: leadSuccess.brokerId === '003' ? '#c084fc' : '#38bdf8' }}>
-                    {leadSuccess.brokerName}
-                  </strong>{' '}
-                  จะติดต่อดูแลท่านเป็นกรณีพิเศษ
-                </p>
+            {/* TAB CONTENT 1: VIP ACCOUNT OPENING (IB CONCIERGE) */}
+            {modalTab === 'lead' && (
+              <div className={styles.tabContent}>
+                {leadSuccess ? (
+                  <div className={styles.vipSuccessState}>
+                    <div className={styles.vipSuccessIcon}>👑</div>
+                    <h3 className={styles.vipSuccessHeading}>ยื่นคำขอเปิดพอร์ต VIP เรียบร้อยแล้ว!</h3>
+                    <div className={styles.leadIdChip}>รหัสคำขอ: {leadSuccess.leadId}</div>
+                    <p className={styles.vipSuccessDesc}>
+                      ข้อมูลของท่านถูกส่งตรงถึงหัวหน้าทีมมาร์เก็ตติ้งของ{' '}
+                      <strong style={{ color: leadSuccess.brokerId === '003' ? '#c084fc' : '#38bdf8' }}>
+                        {leadSuccess.brokerName}
+                      </strong>{' '}
+                      เรียบร้อยแล้ว เจ้าหน้าที่ IC จะติดต่อท่านเป็นกรณีพิเศษเพื่อดูแลเรื่องเอกสารเปิดพอร์ต
+                    </p>
 
-                <div className={styles.vipTimelineBox}>
-                  <div className={styles.vipTimelineStep}>
-                    <div className={styles.vipStepNum}>1</div>
-                    <div className={styles.vipStepText}>
-                      <span className={styles.vipStepTitle}>รับเรื่องคำขอเปิดพอร์ต VIP สำเร็จ</span>
-                      <span className={styles.vipStepDesc}>
-                        ระบบส่งรายละเอียดของท่านตรงไปยังหัวหน้าทีมมาร์เก็ตติ้ง {leadSuccess.brokerName} เรียบร้อยแล้ว
-                      </span>
+                    <div className={styles.timelineCard}>
+                      <div className={styles.timelineRow}>
+                        <div className={styles.timelineStepNumber}>1</div>
+                        <div className={styles.timelineStepInfo}>
+                          <strong>ระบบส่งข้อมูลตรงถึงโบรคเกอร์</strong>
+                          <span>คำขอเปิดพอร์ต VIP ถูกส่งไปยังทีมมาร์เก็ตติ้งของโบรกเกอร์ทันที</span>
+                        </div>
+                      </div>
+                      <div className={styles.timelineRow}>
+                        <div className={styles.timelineStepNumber}>2</div>
+                        <div className={styles.timelineStepInfo}>
+                          <strong>มาร์เก็ตติ้งส่วนตัวติดต่อกลับ</strong>
+                          <span>เจ้าหน้าที่แนะนำขั้นตอนการเปิดบัญชีและส่งเอกสารยืนยันตัวตนทางโทรศัพท์หรือ LINE</span>
+                        </div>
+                      </div>
+                      <div className={styles.timelineRow}>
+                        <div className={styles.timelineStepNumber}>3</div>
+                        <div className={styles.timelineStepInfo}>
+                          <strong>อนุมัติพอร์ต &amp; เชื่อมต่อระบบ AI ทันที</strong>
+                          <span>เมื่อพอร์ตเปิดสำเร็จ รับสิทธิ์เชื่อมต่อ Settrade Open API พอร์ตสดและสิทธิ์ใช้งานเต็มรูปแบบ</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className={styles.vipTimelineStep}>
-                    <div className={styles.vipStepNum}>2</div>
-                    <div className={styles.vipStepText}>
-                      <span className={styles.vipStepTitle}>มาร์เก็ตติ้งส่วนตัวติดต่อกลับ</span>
-                      <span className={styles.vipStepDesc}>
-                        เจ้าหน้าที่ IC จะติดต่อท่านทางโทรศัพท์หรือ LINE เพื่อแนะนำขั้นตอนการเปิดบัญชีและส่งเอกสารยืนยันตัวตน
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.vipTimelineStep}>
-                    <div className={styles.vipStepNum}>3</div>
-                    <div className={styles.vipStepText}>
-                      <span className={styles.vipStepTitle}>อนุมัติบัญชี &amp; รับสิทธิ์เชื่อมต่อ API ทันที</span>
-                      <span className={styles.vipStepDesc}>
-                        เมื่อบัญชีได้รับการอนุมัติ ท่านจะได้รับสิทธิ์เชื่อมต่อ Settrade Open API พอร์ตสดและสิทธิ์ใช้งานฟีเจอร์พรีเมียม
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
-                <button
-                  type="button"
-                  className={styles.vipCloseBtn}
-                  onClick={() => setShowLeadModal(false)}
-                >
-                  ✓ รับทราบและปิดหน้าต่าง
-                </button>
+                    <button
+                      type="button"
+                      className={styles.btnPrimaryVip}
+                      onClick={() => setModalOpen(false)}
+                      style={{ marginTop: '16px', width: '100%' }}
+                    >
+                      ✓ รับทราบและปิดหน้าต่าง
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleLeadSubmit} className={styles.leadForm}>
+                    <div className={styles.formLeadHeader}>
+                      <h3 className={styles.modalHeading}>
+                        ยื่นขอเปิดพอร์ต VIP กับโบรกเกอร์พันธมิตร
+                      </h3>
+                      <p className={styles.modalSubheading}>
+                        บล.พาย (003) &amp; บล.ทรีนีตี้ (022) — มาร์เก็ตติ้งส่วนตัวจะติดต่อดูแลท่านโดยตรง
+                      </p>
+                    </div>
+
+                    {/* Dual Interactive Broker Cards */}
+                    <div className={styles.brokerPickGrid}>
+                      <div
+                        className={`${styles.brokerPickCard} ${styles.cardPi} ${leadBroker === '003' ? styles.brokerPickCardActivePi : ''}`}
+                        onClick={() => setLeadBroker('003')}
+                      >
+                        <div className={styles.brokerPickHeader}>
+                          <span className={styles.brokerLogoBadgePi}>🥧 บล.พาย (003)</span>
+                          {leadBroker === '003' ? (
+                            <span className={styles.chosenIndicatorPi}>🟢 ✓ กำลังเลือก</span>
+                          ) : (
+                            <span className={styles.unchosenIndicator}>⚪ คลิกเลือก</span>
+                          )}
+                        </div>
+                        <strong className={styles.brokerTitle}>Pi Securities (มหาชน)</strong>
+                        <p className={styles.brokerDesc}>
+                          แอป Pi Financial ซื้อขายหุ้นไทย &amp; DR ทั่วโลก มาร์เก็ตติ้งดูแลส่วนตัวระดับ VIP
+                        </p>
+                        <div className={styles.perkList}>
+                          <span>✓ มาร์เก็ตติ้งโทร/ไลน์ติดต่อดูแลเอกสารเปิดบัญชี</span>
+                          <span>✓ สิทธิ์เข้าห้องสแกนหุ้น Stage 2 อัจฉริยะ</span>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`${styles.brokerPickCard} ${styles.cardTrinity} ${leadBroker === '022' ? styles.brokerPickCardActiveTrinity : ''}`}
+                        onClick={() => setLeadBroker('022')}
+                      >
+                        <div className={styles.brokerPickHeader}>
+                          <span className={styles.brokerLogoBadgeTrinity}>🌟 บล.ทรีนีตี้ (022)</span>
+                          {leadBroker === '022' ? (
+                            <span className={styles.chosenIndicatorTrinity}>🟢 ✓ กำลังเลือก</span>
+                          ) : (
+                            <span className={styles.unchosenIndicator}>⚪ คลิกเลือก</span>
+                          )}
+                        </div>
+                        <strong className={styles.brokerTitle}>Trinity Securities</strong>
+                        <p className={styles.brokerDesc}>
+                          โบรกเกอร์ชั้นนำ บทวิเคราะห์สถิติแม่นยำ พร้อม Settrade Open API เต็มระบบ
+                        </p>
+                        <div className={styles.perkList}>
+                          <span>✓ ทีมงานมาร์เก็ตติ้งและ Algorithm ดูแลประสานงานตรง</span>
+                          <span>✓ สิทธิ์เชื่อมต่อระบบความปลอดภัย Zero-Custody Enclave</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Form Input Fields */}
+                    <div className={styles.formFieldsBox}>
+                      <div className={styles.inputTwoCol}>
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>ชื่อ - นามสกุล *</label>
+                          <div className={styles.inputWrap}>
+                            <span className={styles.inputIcon}>👤</span>
+                            <input
+                              type="text"
+                              required
+                              className={styles.textInput}
+                              placeholder="เช่น สมชาย ใจดี"
+                              value={leadName}
+                              onChange={(e) => setLeadName(e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>เบอร์โทรศัพท์มือถือ *</label>
+                          <div className={styles.inputWrap}>
+                            <span className={styles.inputIcon}>📞</span>
+                            <input
+                              type="tel"
+                              required
+                              className={styles.textInput}
+                              placeholder="เช่น 0812345678"
+                              value={leadPhone}
+                              onChange={(e) => setLeadPhone(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={styles.inputTwoCol} style={{ marginTop: '12px' }}>
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>LINE ID (สำหรับมาร์เก็ตติ้งติดต่อสะดวก)</label>
+                          <div className={styles.inputWrap}>
+                            <span className={styles.inputIcon}>💬</span>
+                            <input
+                              type="text"
+                              className={styles.textInput}
+                              placeholder="เช่น somchai_trader"
+                              value={leadLine}
+                              onChange={(e) => setLeadLine(e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>อีเมล (Email)</label>
+                          <div className={styles.inputWrap}>
+                            <span className={styles.inputIcon}>📧</span>
+                            <input
+                              type="email"
+                              className={styles.textInput}
+                              placeholder="somchai@example.com"
+                              value={leadEmail}
+                              onChange={(e) => setLeadEmail(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={styles.inputGroup} style={{ marginTop: '14px' }}>
+                        <label className={styles.inputLabel}>สินทรัพย์และบริการที่ท่านสนใจ</label>
+                        <div className={styles.interestChipsRow}>
+                          {INTEREST_OPTIONS.map((opt) => {
+                            const isSelected = leadInterests.includes(opt.id);
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                className={`${styles.interestChip} ${isSelected ? styles.interestChipActive : ''}`}
+                                onClick={() => handleInterestToggle(opt.id)}
+                              >
+                                <span>{opt.label}</span>
+                                <b>{isSelected ? '✓' : '+'}</b>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className={styles.inputGroup} style={{ marginTop: '12px' }}>
+                        <label className={styles.inputLabel}>หมายเหตุเพิ่มเติมหรือช่วงเวลาที่สะดวกรับสาย</label>
+                        <div className={styles.inputWrap}>
+                          <span className={styles.inputIcon}>📝</span>
+                          <input
+                            type="text"
+                            className={styles.textInput}
+                            placeholder="เช่น สนใจเปิดพอร์ตเพื่อเทรด DR และรับสิทธิ์เชื่อมต่อ AI โทรช่วงบ่าย"
+                            value={leadNotes}
+                            onChange={(e) => setLeadNotes(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {leadError && (
+                      <div className={styles.leadErrorBar}>
+                        ⚠️ {leadError}
+                      </div>
+                    )}
+
+                    <div className={styles.formFooterRow}>
+                      <button
+                        type="submit"
+                        className={styles.btnPrimaryVip}
+                        disabled={leadSubmitting || !leadName.trim() || !leadPhone.trim()}
+                      >
+                        {leadSubmitting
+                          ? 'กำลังส่งข้อมูลให้มาร์เก็ตติ้ง...'
+                          : `👑 ยืนยันยื่นคำขอเปิดพอร์ต VIP (${leadBroker === '003' ? 'บล.พาย' : 'บล.ทรีนีตี้'})`}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.btnSecondaryCancel}
+                        onClick={() => setModalOpen(false)}
+                      >
+                        ยกเลิก
+                      </button>
+                    </div>
+
+                    <div className={styles.trustDisclaimer}>
+                      🔒 ข้อมูลของท่านจะถูกส่งตรงไปยังหัวหน้าทีมมาร์เก็ตติ้งของโบรกเกอร์ที่ท่านเลือก เพื่อติดต่อแนะนำการเปิดพอร์ตและอำนวยความสะดวกเป็นกรณีพิเศษ
+                    </div>
+                  </form>
+                )}
               </div>
-            ) : (
-              <form onSubmit={handleLeadSubmit}>
-                {/* ─── SEGMENTED BROKER TAB SWITCHER ─── */}
-                <div className={styles.brokerSegmentedBar}>
-                  <button
-                    type="button"
-                    className={`${styles.brokerSegmentedTab} ${leadBroker === '003' ? styles.brokerSegmentedTabPiActive : ''}`}
-                    onClick={() => setLeadBroker('003')}
-                  >
-                    <span>🥧</span>
-                    <span>บล.พาย Pi Securities (003)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.brokerSegmentedTab} ${leadBroker === '022' ? styles.brokerSegmentedTabTrinityActive : ''}`}
-                    onClick={() => setLeadBroker('022')}
-                  >
-                    <span>🌟</span>
-                    <span>บล.ทรีนีตี้ Trinity (022)</span>
-                  </button>
+            )}
+
+            {/* TAB CONTENT 2: REAL SETTRADE OPEN API CONNECTION */}
+            {modalTab === 'api' && (
+              <div className={styles.tabContent}>
+                <div className={styles.formLeadHeader}>
+                  <h3 className={styles.modalHeading}>
+                    ผูกพอร์ตจริงด้วย Settrade Open API
+                  </h3>
+                  <p className={styles.modalSubheading}>
+                    เชื่อมต่อตรงกับศูนย์รับส่งคำสั่ง Settrade Open API โดยไม่มีการจัดเก็บกุญแจในฐานข้อมูล
+                  </p>
                 </div>
 
-                {/* ─── DUAL LUXURY BROKER CARDS ─── */}
-                <div className={styles.dualBrokerGrid}>
-                  {/* PI SECURITIES 003 */}
+                {/* Broker Picker */}
+                <div className={styles.brokerPickGrid}>
                   <div
-                    className={`${styles.luxuryBrokerCard} ${styles.luxuryBrokerCardPi} ${leadBroker === '003' ? styles.luxuryBrokerCardSelectedPi : ''}`}
-                    onClick={() => setLeadBroker('003')}
+                    className={`${styles.brokerPickCard} ${styles.cardPi} ${brokerId === '003' ? styles.brokerPickCardActivePi : ''}`}
+                    onClick={() => setBrokerId('003')}
                   >
-                    <div className={styles.cardTopRow}>
-                      <span className={styles.brokerEmblemPi}>🥧 บล.พาย (003)</span>
-                      {leadBroker === '003' ? (
-                        <span className={styles.statusIndicatorActivePi}>🟢 ✓ กำลังเลือก</span>
+                    <div className={styles.brokerPickHeader}>
+                      <span className={styles.brokerLogoBadgePi}>🥧 บล.พาย (003)</span>
+                      {brokerId === '003' ? (
+                        <span className={styles.chosenIndicatorPi}>🟢 ✓ กำลังเลือก</span>
                       ) : (
-                        <span className={styles.statusIndicatorInactive}>⚪ คลิกเพื่อเลือก</span>
+                        <span className={styles.unchosenIndicator}>⚪ คลิกเลือก</span>
                       )}
                     </div>
-                    <h4 className={styles.cardBrokerName}>Pi Securities (มหาชน)</h4>
-                    <p className={styles.cardBrokerSub}>
-                      แอป Pi Financial ซื้อขายหุ้นไทย &amp; DR ทั่วโลก มาร์เก็ตติ้งดูแลส่วนตัว
-                    </p>
-                    <ul className={styles.brokerPerksList}>
-                      <li>✨ มาร์เก็ตติ้งโทร/ไลน์ติดต่อดูแลเอกสารถึงที่</li>
-                      <li>✨ สิทธิ์เข้าห้องซิกแนล &amp; สแกนหุ้น Stage 2 อัจฉริยะ</li>
-                      <li>✨ รองรับ Settrade Open API พอร์ตสด</li>
-                    </ul>
+                    <strong className={styles.brokerTitle}>Pi Securities (มหาชน)</strong>
+                    <p className={styles.brokerDesc}>เชื่อมต่อพอร์ต บล.พาย ดึงหุ้นไทย &amp; DR พร้อมวิเคราะห์ Stage 2</p>
                   </div>
 
-                  {/* TRINITY SECURITIES 022 */}
                   <div
-                    className={`${styles.luxuryBrokerCard} ${styles.luxuryBrokerCardTrinity} ${leadBroker === '022' ? styles.luxuryBrokerCardSelectedTrinity : ''}`}
-                    onClick={() => setLeadBroker('022')}
+                    className={`${styles.brokerPickCard} ${styles.cardTrinity} ${brokerId === '022' ? styles.brokerPickCardActiveTrinity : ''}`}
+                    onClick={() => setBrokerId('022')}
                   >
-                    <div className={styles.cardTopRow}>
-                      <span className={styles.brokerEmblemTrinity}>🌟 บล.ทรีนีตี้ (022)</span>
-                      {leadBroker === '022' ? (
-                        <span className={styles.statusIndicatorActiveTrinity}>🟢 ✓ กำลังเลือก</span>
+                    <div className={styles.brokerPickHeader}>
+                      <span className={styles.brokerLogoBadgeTrinity}>🌟 บล.ทรีนีตี้ (022)</span>
+                      {brokerId === '022' ? (
+                        <span className={styles.chosenIndicatorTrinity}>🟢 ✓ กำลังเลือก</span>
                       ) : (
-                        <span className={styles.statusIndicatorInactive}>⚪ คลิกเพื่อเลือก</span>
+                        <span className={styles.unchosenIndicator}>⚪ คลิกเลือก</span>
                       )}
                     </div>
-                    <h4 className={styles.cardBrokerName}>Trinity Securities</h4>
-                    <p className={styles.cardBrokerSub}>
-                      โบรกเกอร์ชั้นนำ บทวิเคราะห์แม่นยำ พร้อม Settrade Open API เต็มประสิทธิภาพ
-                    </p>
-                    <ul className={styles.brokerPerksList}>
-                      <li>✨ ทีมงานมาร์เก็ตติ้งและ Algorithm ดูแลประสานงานตรง</li>
-                      <li>✨ บทวิเคราะห์เจาะลึกทั้งหุ้นไทย บล็อกเทรด TFEX และ DR</li>
-                      <li>✨ สิทธิ์เชื่อมต่อระบบความปลอดภัย Zero-Custody Enclave</li>
-                    </ul>
+                    <strong className={styles.brokerTitle}>Trinity Securities</strong>
+                    <p className={styles.brokerDesc}>เชื่อมต่อพอร์ต บล.ทรีนีตี้ พร้อมคำนวณ Trailing Stop &amp; Cut Loss</p>
                   </div>
                 </div>
 
-                {/* ─── FORM FIELDS IN GLASS CARD ─── */}
-                <div className={styles.formGlassCard}>
-                  <div className={styles.formGridTwoCol}>
-                    <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>
-                        <span>ชื่อ - นามสกุล *</span>
-                      </label>
-                      <div className={styles.formInputBox}>
-                        <span className={styles.inputIcon}>👤</span>
-                        <input
-                          type="text"
-                          required
-                          className={styles.formInput}
-                          placeholder="เช่น สมชาย ใจดี"
-                          value={leadName}
-                          onChange={(e) => setLeadName(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>
-                        <span>เบอร์โทรศัพท์มือถือ *</span>
-                      </label>
-                      <div className={styles.formInputBox}>
-                        <span className={styles.inputIcon}>📞</span>
-                        <input
-                          type="tel"
-                          required
-                          className={styles.formInput}
-                          placeholder="เช่น 0812345678"
-                          value={leadPhone}
-                          onChange={(e) => setLeadPhone(e.target.value)}
-                        />
-                      </div>
+                {/* VIP IB Prompt Strip */}
+                <div className={styles.ibConciergeStrip}>
+                  <div className={styles.ibConciergeLeft}>
+                    <span style={{ fontSize: '20px' }}>👑</span>
+                    <div>
+                      <strong>ยังไม่มีบัญชีซื้อขายกับ บล.พาย หรือ บล.ทรีนีตี้?</strong>
+                      <p>ยื่นขอเปิดพอร์ต VIP เพื่อรับสิทธิ์เชื่อมต่อ API และฟีเจอร์พรีเมียมฟรี</p>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    className={styles.ibConciergeLinkBtn}
+                    onClick={() => setModalTab('lead')}
+                  >
+                    เปิดพอร์ต VIP ↗
+                  </button>
+                </div>
 
-                  <div className={styles.formGridTwoCol} style={{ marginTop: '12px' }}>
-                    <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>
-                        <span>LINE ID (สำหรับมาร์เก็ตติ้งติดต่อสะดวก)</span>
-                      </label>
-                      <div className={styles.formInputBox}>
-                        <span className={styles.inputIcon}>💬</span>
-                        <input
-                          type="text"
-                          className={styles.formInput}
-                          placeholder="เช่น somchai_trader"
-                          value={leadLine}
-                          onChange={(e) => setLeadLine(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className={styles.formGroup}>
-                      <label className={styles.formLabel}>
-                        <span>อีเมล (Email)</span>
-                      </label>
-                      <div className={styles.formInputBox}>
-                        <span className={styles.inputIcon}>📧</span>
-                        <input
-                          type="email"
-                          className={styles.formInput}
-                          placeholder="somchai@example.com"
-                          value={leadEmail}
-                          onChange={(e) => setLeadEmail(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={styles.formGroup} style={{ marginTop: '12px' }}>
-                    <label className={styles.formLabel}>
-                      <span>สินทรัพย์และบริการที่ท่านสนใจ (เลือกได้หลายข้อ)</span>
-                    </label>
-                    <div className={styles.interestPillsGrid}>
-                      {INTEREST_OPTIONS.map((opt) => {
-                        const isSelected = leadInterests.includes(opt.id);
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            className={`${styles.interestPillBtn} ${isSelected ? styles.interestPillBtnActive : ''}`}
-                            onClick={() => handleInterestToggle(opt.id)}
-                          >
-                            <span>{opt.label}</span>
-                            <span style={{ fontSize: '13px', fontWeight: 800 }}>{isSelected ? '✓' : '+'}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className={styles.formGroup} style={{ marginTop: '12px' }}>
-                    <label className={styles.formLabel}>
-                      <span>หมายเหตุเพิ่มเติมหรือช่วงเวลาที่สะดวกรับสาย</span>
-                    </label>
-                    <div className={styles.formInputBox}>
-                      <span className={styles.inputIcon}>📝</span>
+                {/* Inputs Box */}
+                <div className={styles.formFieldsBox}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.inputLabel}>เลขบัญชีซื้อขายหุ้น (Account Number) *</label>
+                    <div className={styles.inputWrap}>
+                      <span className={styles.inputIcon}>🏷️</span>
                       <input
                         type="text"
-                        className={styles.formInput}
-                        placeholder="เช่น สนใจเปิดพอร์ตเพื่อเทรด DR และรับสิทธิ์เชื่อมต่อ AI โทรช่วงบ่าย"
-                        value={leadNotes}
-                        onChange={(e) => setLeadNotes(e.target.value)}
+                        autoComplete="off"
+                        className={styles.textInput}
+                        placeholder="เช่น 99242240 หรือเลขบัญชีที่โบรกเกอร์ออกให้"
+                        value={accountNo}
+                        onChange={(e) => setAccountNo(e.target.value)}
                       />
                     </div>
                   </div>
+
+                  <div className={styles.inputGroup} style={{ marginTop: '12px' }}>
+                    <label className={styles.inputLabel}>App ID (Settrade Open API) *</label>
+                    <div className={styles.inputWrap}>
+                      <span className={styles.inputIcon}>🔑</span>
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        className={styles.textInput}
+                        placeholder="กรอก App ID ที่ได้รับจากโบรกเกอร์"
+                        value={appId}
+                        onChange={(e) => setAppId(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.inputGroup} style={{ marginTop: '12px' }}>
+                    <label className={styles.inputLabel}>API Secret (เข้ารหัสปลอดภัยใน Enclave) *</label>
+                    <div className={styles.inputWrap}>
+                      <span className={styles.inputIcon}>🔒</span>
+                      <input
+                        type={showSecret ? 'text' : 'password'}
+                        autoComplete="off"
+                        className={styles.textInput}
+                        style={{ paddingRight: '45px' }}
+                        placeholder="กรอก API Secret (ส่งตรงไปยัง Settrade Enclave เท่านั้น)"
+                        value={appSecret}
+                        onChange={(e) => setAppSecret(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className={styles.eyeBtn}
+                        onClick={() => setShowSecret(!showSecret)}
+                      >
+                        {showSecret ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                {leadError && (
-                  <div
-                    style={{
-                      background: 'rgba(239, 68, 68, 0.2)',
-                      border: '1px solid #ef4444',
-                      borderRadius: '8px',
-                      padding: '8px 12px',
-                      color: '#f87171',
-                      fontSize: '12px',
-                      marginBottom: '12px',
-                    }}
-                  >
-                    ⚠️ {leadError}
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+                <div className={styles.formFooterRow}>
                   <button
-                    type="submit"
-                    className={styles.submitBtnVIP}
-                    disabled={leadSubmitting || !leadName.trim() || !leadPhone.trim()}
+                    type="button"
+                    className={styles.btnPrimaryApiSubmit}
+                    onClick={() => syncPortfolio(false)}
+                    disabled={loading || !accountNo.trim() || !appId.trim() || !appSecret.trim()}
                   >
-                    {leadSubmitting
-                      ? 'กำลังส่งข้อมูลให้มาร์เก็ตติ้ง...'
-                      : `👑 ยืนยันขอเปิดพอร์ต VIP (${leadBroker === '003' ? 'บล.พาย' : 'บล.ทรีนีตี้'})`}
+                    {loading ? 'กำลังเชื่อมต่อ Settrade...' : '⚡ ยืนยันเชื่อมต่อพอร์ตจริง'}
                   </button>
                   <button
                     type="button"
-                    className={styles.byokBtnSecondary}
-                    onClick={() => setShowLeadModal(false)}
+                    className={styles.btnSecondaryCancel}
+                    onClick={() => setModalOpen(false)}
                   >
                     ยกเลิก
                   </button>
                 </div>
-
-                <div style={{ textAlign: 'center', marginTop: '10px' }}>
-                  <small style={{ color: '#94a3b8', fontSize: '10px' }}>
-                    🔒 ข้อมูลของท่านจะถูกส่งตรงไปยังหัวหน้าทีมมาร์เก็ตติ้งของโบรกเกอร์ที่ท่านเลือก เพื่อติดต่อแนะนำการเปิดพอร์ตและอำนวยความสะดวกเป็นกรณีพิเศษ
-                  </small>
-                </div>
-              </form>
+              </div>
             )}
-          </div>
-        </div>
-      )}
 
-      {/* ─── MODAL 2: BYOK SETTRADE OPEN API SETTINGS (ผูกพอร์ตจริง) ─── */}
-      {showModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <div className={styles.modalTitleGroup}>
-                <span className={styles.modalKicker} style={{ color: '#38bdf8' }}>
-                  🛡️ ZERO-CUSTODY SETTRADE OPEN API (ALGO_EQ)
-                </span>
-                <h3 className={styles.modalTitle}>
-                  🔑 ผูกพอร์ตจริงด้วย Settrade Open API
-                </h3>
-                <p className={styles.modalSubtitle}>
-                  เชื่อมต่อตรงกับศูนย์รับส่งคำสั่ง Settrade Open API ไม่มีการจัดเก็บ API Secret ลงฐานข้อมูล
-                </p>
-              </div>
-              <button
-                type="button"
-                className={styles.modalClose}
-                onClick={() => setShowModal(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* ─── SEGMENTED BROKER TAB SWITCHER ─── */}
-            <div className={styles.brokerSegmentedBar}>
-              <button
-                type="button"
-                className={`${styles.brokerSegmentedTab} ${brokerId === '003' ? styles.brokerSegmentedTabPiActive : ''}`}
-                onClick={() => setBrokerId('003')}
-              >
-                <span>🥧</span>
-                <span>บล.พาย Pi Securities (003)</span>
-              </button>
-              <button
-                type="button"
-                className={`${styles.brokerSegmentedTab} ${brokerId === '022' ? styles.brokerSegmentedTabTrinityActive : ''}`}
-                onClick={() => setBrokerId('022')}
-              >
-                <span>🌟</span>
-                <span>บล.ทรีนีตี้ Trinity (022)</span>
-              </button>
-            </div>
-
-            {/* ─── DUAL LUXURY BROKER CARDS ─── */}
-            <div className={styles.dualBrokerGrid}>
-              {/* PI SECURITIES 003 */}
-              <div
-                className={`${styles.luxuryBrokerCard} ${styles.luxuryBrokerCardPi} ${brokerId === '003' ? styles.luxuryBrokerCardSelectedPi : ''}`}
-                onClick={() => setBrokerId('003')}
-              >
-                <div className={styles.cardTopRow}>
-                  <span className={styles.brokerEmblemPi}>🥧 บล.พาย (003)</span>
-                  {brokerId === '003' ? (
-                    <span className={styles.statusIndicatorActivePi}>🟢 ✓ กำลังเลือก</span>
-                  ) : (
-                    <span className={styles.statusIndicatorInactive}>⚪ คลิกเพื่อเลือก</span>
-                  )}
+            {/* TAB CONTENT 3: ONE-CLICK SANDBOX DEMO */}
+            {modalTab === 'demo' && (
+              <div className={styles.tabContent}>
+                <div className={styles.formLeadHeader}>
+                  <h3 className={styles.modalHeading}>
+                    วันคลิก ทดลองโหมด Sandbox (Demo)
+                  </h3>
+                  <p className={styles.modalSubheading}>
+                    สัมผัสประสบการณ์วินิจฉัยพอร์ต Stage 2 และการคำนวณ Trailing Stop ได้ทันทีโดยไม่ต้องกรอกรหัส
+                  </p>
                 </div>
-                <h4 className={styles.cardBrokerName}>Pi Securities (มหาชน)</h4>
-                <p className={styles.cardBrokerSub}>
-                  เชื่อมต่อพอร์ต บล.พาย ดึงข้อมูลหุ้นไทย &amp; DR พร้อมวิเคราะห์ Stage 2
-                </p>
-                <ul className={styles.brokerPerksList}>
-                  <li>✓ รองรับ Settrade Open API (ALGO_EQ)</li>
-                  <li>✓ มาร์เก็ตติ้งดูแลระบบส่วนตัว</li>
-                </ul>
-              </div>
 
-              {/* TRINITY SECURITIES 022 */}
-              <div
-                className={`${styles.luxuryBrokerCard} ${styles.luxuryBrokerCardTrinity} ${brokerId === '022' ? styles.luxuryBrokerCardSelectedTrinity : ''}`}
-                onClick={() => setBrokerId('022')}
-              >
-                <div className={styles.cardTopRow}>
-                  <span className={styles.brokerEmblemTrinity}>🌟 บล.ทรีนีตี้ (022)</span>
-                  {brokerId === '022' ? (
-                    <span className={styles.statusIndicatorActiveTrinity}>🟢 ✓ กำลังเลือก</span>
-                  ) : (
-                    <span className={styles.statusIndicatorInactive}>⚪ คลิกเพื่อเลือก</span>
-                  )}
-                </div>
-                <h4 className={styles.cardBrokerName}>Trinity Securities</h4>
-                <p className={styles.cardBrokerSub}>
-                  เชื่อมต่อพอร์ต บล.ทรีนีตี้ พร้อมระบบคำนวณ Trailing Stop &amp; Cut Loss
-                </p>
-                <ul className={styles.brokerPerksList}>
-                  <li>✓ ซัพพอร์ตเต็มประสิทธิภาพผ่าน Settrade Enclave</li>
-                  <li>✓ บทวิเคราะห์เชิงปริมาณและสถิติแม่นยำ</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* ─── IB CONCIERGE BANNER ─── */}
-            <div className={styles.ibConciergeBanner}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '24px' }}>👑</span>
-                <div>
-                  <div className={styles.ibTextTitle}>ยังไม่มีบัญชีซื้อขายกับ บล.พาย หรือ บล.ทรีนีตี้?</div>
-                  <div className={styles.ibTextSub}>
-                    ยื่นขอเปิดพอร์ต VIP กับมาร์เก็ตติ้งโบรกเกอร์พันธมิตร เพื่อรับสิทธิ์เชื่อมต่อ API และฟีเจอร์พรีเมียมฟรี
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                className={styles.partnerBtn}
-                style={{ fontSize: '11px', padding: '6px 12px', whiteSpace: 'nowrap' }}
-                onClick={() => {
-                  setShowModal(false);
-                  setShowLeadModal(true);
-                }}
-              >
-                เปิดพอร์ต VIP ↗
-              </button>
-            </div>
-
-            {/* ─── QUICK DEMO PRESET ROW ─── */}
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                <span>ทดลองเชื่อมต่อด่วน (One-Click Demo Sandbox)</span>
-              </label>
-              <div className={styles.quickDemoPresetRow}>
-                <button
-                  type="button"
-                  className={styles.quickDemoBtn}
-                  onClick={() => {
-                    setBrokerId('003');
-                    syncPortfolio(true, '003');
-                    setShowModal(false);
-                  }}
-                  style={{
-                    background: brokerId === '003' ? 'rgba(168,85,247,0.3)' : undefined,
-                    boxShadow: brokerId === '003' ? '0 0 16px rgba(168,85,247,0.35)' : undefined,
-                    color: brokerId === '003' ? '#ffffff' : undefined,
-                  }}
-                >
-                  🥧 ทดลองพอร์ต บล.พาย (003 Sandbox)
-                </button>
-                <button
-                  type="button"
-                  className={styles.quickDemoBtn}
-                  onClick={() => {
-                    setBrokerId('022');
-                    syncPortfolio(true, '022');
-                    setShowModal(false);
-                  }}
-                  style={{
-                    background: brokerId === '022' ? 'rgba(6,182,212,0.3)' : undefined,
-                    boxShadow: brokerId === '022' ? '0 0 16px rgba(6,182,212,0.35)' : undefined,
-                    color: brokerId === '022' ? '#ffffff' : undefined,
-                  }}
-                >
-                  🌟 ทดลองพอร์ต บล.ทรีนีตี้ (022 Sandbox)
-                </button>
-              </div>
-            </div>
-
-            {/* ─── LUXURY FORM INPUTS CARD ─── */}
-            <div className={styles.formGlassCard}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  <span>เลขบัญชีซื้อขายหุ้น (Account Number) *</span>
-                </label>
-                <div className={styles.formInputBox}>
-                  <span className={styles.inputIcon}>🏷️</span>
-                  <input
-                    type="text"
-                    autoComplete="off"
-                    className={styles.formInput}
-                    placeholder="เช่น 99242240 หรือเลขบัญชีที่โบรกเกอร์ออกให้"
-                    value={accountNo}
-                    onChange={(e) => setAccountNo(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  <span>App ID (Settrade Open API) *</span>
-                </label>
-                <div className={styles.formInputBox}>
-                  <span className={styles.inputIcon}>🔑</span>
-                  <input
-                    type="text"
-                    autoComplete="off"
-                    className={styles.formInput}
-                    placeholder="กรอก App ID ที่ได้รับจากโบรกเกอร์"
-                    value={appId}
-                    onChange={(e) => setAppId(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  <span>API Secret (เข้ารหัสปลอดภัยใน Enclave) *</span>
-                </label>
-                <div className={styles.formInputBox}>
-                  <span className={styles.inputIcon}>🔒</span>
-                  <input
-                    type={showSecret ? 'text' : 'password'}
-                    autoComplete="off"
-                    className={styles.formInput}
-                    style={{ paddingRight: '40px' }}
-                    placeholder="กรอก API Secret (ส่งตรงไปยัง Settrade Enclave เท่านั้น)"
-                    value={appSecret}
-                    onChange={(e) => setAppSecret(e.target.value)}
-                  />
+                <div className={styles.demoChoiceRow}>
                   <button
                     type="button"
-                    className={styles.toggleSecretBtn}
-                    onClick={() => setShowSecret(!showSecret)}
-                    title={showSecret ? 'ซ่อนรหัส' : 'แสดงรหัส'}
+                    className={styles.demoBigBtnPi}
+                    onClick={() => {
+                      syncPortfolio(true, '003');
+                      setModalOpen(false);
+                    }}
                   >
-                    {showSecret ? '👁️‍🗨️' : '👁️'}
+                    <span className={styles.demoBtnIcon}>🥧</span>
+                    <strong className={styles.demoBtnTitle}>ทดลองพอร์ต บล.พาย (003 Sandbox)</strong>
+                    <span className={styles.demoBtnSub}>จำลองพอร์ตหุ้นไทย SET100 และ DR NVDA80</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={styles.demoBigBtnTrinity}
+                    onClick={() => {
+                      syncPortfolio(true, '022');
+                      setModalOpen(false);
+                    }}
+                  >
+                    <span className={styles.demoBtnIcon}>🌟</span>
+                    <strong className={styles.demoBtnTitle}>ทดลองพอร์ต บล.ทรีนีตี้ (022 Sandbox)</strong>
+                    <span className={styles.demoBtnSub}>จำลองพอร์ตหุ้นไทย Stage 2 และ DR AAPL80</span>
                   </button>
                 </div>
               </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>
-                  <span>App Code (Default: ALGO_EQ)</span>
-                </label>
-                <div className={styles.formInputBox}>
-                  <span className={styles.inputIcon}>⚙️</span>
-                  <input
-                    type="text"
-                    className={styles.formInput}
-                    value={appCode}
-                    onChange={(e) => setAppCode(e.target.value)}
-                  />
-                </div>
-                <small style={{ color: '#94a3b8', fontSize: '10px', marginTop: '4px', display: 'block' }}>
-                  * หุ้นไทยและ DR ใช้ Service Code เริ่มต้นคือ ALGO_EQ หรือรหัสที่โบรกเกอร์กำหนด
-                </small>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
-              <button
-                type="button"
-                className={styles.byokBtnPrimary}
-                style={{ flex: 1, padding: '12px 20px', fontSize: '13px' }}
-                onClick={() => syncPortfolio(false)}
-                disabled={loading || !accountNo || !appId || !appSecret}
-              >
-                {loading
-                  ? 'กำลังเชื่อมต่อ...'
-                  : `🚀 เชื่อมต่อ & ซิงค์พอร์ตสด (${brokerId === '003' ? 'บล.พาย' : 'บล.ทรีนีตี้'})`}
-              </button>
-              <button
-                type="button"
-                className={styles.byokBtnSecondary}
-                onClick={() => setShowModal(false)}
-              >
-                ยกเลิก
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
