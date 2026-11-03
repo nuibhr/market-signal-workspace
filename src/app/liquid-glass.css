@@ -419,21 +419,66 @@
 }
 
 /* ─── 5.1 Market Navigation Destinations in Light Glass ─── */
-.market-workspace.theme-light-glass .market-destinations a,
-[data-theme='light'] .market-destinations a {
-  background: #ffffff !important;
+.market-workspace.theme-light-glass .market-destinations,
+[data-theme='light'] .market-destinations {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06), inset 0 1px 1px #ffffff !important;
   border: none !important;
-  color: #1e293b !important;
-  border-radius: 9999px !important;
-  padding: 8px 16px !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  font-weight: 700 !important;
 }
 
-.market-workspace.theme-light-glass .market-destinations a svg,
-[data-theme='light'] .market-destinations a svg {
-  color: #0284c7 !important;
+.market-workspace.theme-light-glass .market-destinations a,
+[data-theme='light'] .market-destinations a {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border: none !important;
+  color: #334155 !important;
+  border-radius: 9999px !important;
+  padding: 7px 14px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  font-weight: 600 !important;
+}
+
+.market-workspace.theme-light-glass .market-destinations a.is-featured,
+[data-theme='light'] .market-destinations a.is-featured {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+.market-workspace.theme-light-glass .market-destinations a.market-thai,
+[data-theme='light'] .market-destinations a.market-thai {
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+.market-workspace.theme-light-glass .market-destinations a.market-thai:hover,
+[data-theme='light'] .market-destinations a.market-thai:hover {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #059669 !important;
+}
+
+.market-workspace.theme-light-glass .market-destinations a.market-dr,
+[data-theme='light'] .market-destinations a.market-dr {
+  background: rgba(245, 158, 11, 0.08) !important;
+}
+.market-workspace.theme-light-glass .market-destinations a.market-dr:hover,
+[data-theme='light'] .market-destinations a.market-dr:hover {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #d97706 !important;
+}
+
+.market-workspace.theme-light-glass .market-destinations a.market-forex,
+[data-theme='light'] .market-destinations a.market-forex {
+  background: rgba(168, 85, 247, 0.08) !important;
+}
+.market-workspace.theme-light-glass .market-destinations a.market-forex:hover,
+[data-theme='light'] .market-destinations a.market-forex:hover {
+  background: rgba(168, 85, 247, 0.15) !important;
+  color: #7c3aed !important;
+}
+
+.market-workspace.theme-light-glass .market-destinations .market-nav-divider,
+[data-theme='light'] .market-destinations .market-nav-divider {
+  background: rgba(15, 23, 42, 0.1) !important;
 }
 
 .market-workspace.theme-light-glass .market-destinations a:hover,
@@ -441,30 +486,30 @@
   background: #f0f9ff !important;
   color: #0284c7 !important;
   border: none !important;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.18) !important;
-  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.14) !important;
+  transform: translateY(-1px) !important;
 }
 
 .market-workspace.theme-light-glass .market-destinations a[aria-current='page'],
 [data-theme='light'] .market-destinations a[aria-current='page'] {
-  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
-  color: #ffffff !important;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(var(--destination-rgb, 2, 132, 199), 0.22) 0%, rgba(var(--destination-rgb, 2, 132, 199), 0.1) 100%) !important;
+  color: #0369a1 !important;
   border: none !important;
   border-radius: 9999px !important;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.32) !important;
+  box-shadow: 0 2px 12px rgba(var(--destination-rgb, 2, 132, 199), 0.2) !important;
   font-weight: 700 !important;
 }
 
 .market-workspace.theme-light-glass .market-destinations a[aria-current='page'] svg,
 [data-theme='light'] .market-destinations a[aria-current='page'] svg {
-  color: #ffffff !important;
+  color: var(--destination-accent, #0284c7) !important;
 }
 
 .market-workspace.theme-light-glass .market-home-link,
 [data-theme='light'] .market-home-link {
-  background: #ffffff !important;
+  background: rgba(255, 255, 255, 0.8) !important;
   border: none !important;
-  color: #334155 !important;
+  color: #475569 !important;
   border-radius: 9999px !important;
 }
 

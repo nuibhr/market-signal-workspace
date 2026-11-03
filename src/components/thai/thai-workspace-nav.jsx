@@ -1,5 +1,14 @@
 'use client';
+import { TrendingUp, Radar, ShieldCheck, CandlestickChart, Award } from 'lucide-react';
 import styles from './thai-workspace.module.css';
+
+const VIEW_ICONS = {
+  stage2: TrendingUp,
+  radar: Radar,
+  portfolio: ShieldCheck,
+  chart: CandlestickChart,
+  results: Award,
+};
 
 export const THAI_VIEWS = [
   { id: 'stage2', hash: '#section-auto-pick', label: 'สแกนหุ้นขาขึ้น (Stage 2)', note: 'คัดหุ้นเด่น & เช็คแนวรับแนวต้าน' },
@@ -27,21 +36,25 @@ export default function ThaiWorkspaceNav({ view = 'stage2', symbol, onNavigate, 
       </div>
       <div className={styles.row}>
         <nav aria-label="เลือกเครื่องมือหุ้นไทย" className={styles.views}>
-          {THAI_VIEWS.map((v) => (
-            <a
-              key={v.id}
-              href={v.hash}
-              aria-current={view === v.id ? 'location' : undefined}
-              onClick={(event) => {
-                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-                event.preventDefault();
-                onNavigate(v.id);
-              }}
-            >
-              <b>{v.label}</b>
-              <small>{v.note}</small>
-            </a>
-          ))}
+          {THAI_VIEWS.map((v) => {
+            const Icon = VIEW_ICONS[v.id];
+            return (
+              <a
+                key={v.id}
+                href={v.hash}
+                aria-current={view === v.id ? 'location' : undefined}
+                onClick={(event) => {
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                  event.preventDefault();
+                  onNavigate(v.id);
+                }}
+              >
+                {Icon && <Icon size={15} style={{ opacity: 0.85, flexShrink: 0 }} />}
+                <b>{v.label}</b>
+                <small>{v.note}</small>
+              </a>
+            );
+          })}
         </nav>
         <button type="button" className={styles.scan} onClick={onOpenScanner}>
           สแกนตามสไตล์ (Multi-Strategy) ↗

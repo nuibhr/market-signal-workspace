@@ -436,16 +436,24 @@ html:not([data-theme='light']) body:not([data-theme='light']) .account-menu butt
 }
 
 /* ─── 6. Market Navigation Destinations ─── */
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations {
+  background: rgba(15, 23, 42, 0.55) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: none !important;
+  border-radius: 9999px !important;
+}
+
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a,
 html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a {
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
   backdrop-filter: blur(14px) !important;
   -webkit-backdrop-filter: blur(14px) !important;
   border: none !important;
   color: #94A3B8 !important;
   border-radius: 9999px !important;
-  padding: 8px 16px !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  padding: 7px 14px !important;
+  box-shadow: none !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
@@ -454,17 +462,47 @@ html:not([data-theme='light']) body:not([data-theme='light']) .market-destinatio
   background: rgba(255, 255, 255, 0.1) !important;
   color: #F1F5F9 !important;
   border: none !important;
-  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.2) !important;
-  transform: translateY(-2px) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Featured Trio In Magic Dark */
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a.is-featured.market-thai {
+  background: rgba(114, 223, 179, 0.08) !important;
+  color: #e2e8f0 !important;
+}
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a.is-featured.market-thai:hover {
+  background: rgba(114, 223, 179, 0.16) !important;
+  box-shadow: 0 0 20px rgba(114, 223, 179, 0.28) !important;
+  color: #ffffff !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a.is-featured.market-dr {
+  background: rgba(242, 190, 98, 0.08) !important;
+  color: #e2e8f0 !important;
+}
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a.is-featured.market-dr:hover {
+  background: rgba(242, 190, 98, 0.16) !important;
+  box-shadow: 0 0 20px rgba(242, 190, 98, 0.28) !important;
+  color: #ffffff !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a.is-featured.market-forex {
+  background: rgba(188, 155, 255, 0.08) !important;
+  color: #e2e8f0 !important;
+}
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a.is-featured.market-forex:hover {
+  background: rgba(188, 155, 255, 0.16) !important;
+  box-shadow: 0 0 20px rgba(188, 155, 255, 0.28) !important;
+  color: #ffffff !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .market-destinations a[aria-current='page'],
 html:not([data-theme='light']) body:not([data-theme='light']) .market-destinations a[aria-current='page'] {
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.7) 0%, rgba(37, 99, 235, 0.7) 100%) !important;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(var(--destination-rgb, 56, 189, 248), 0.35) 0%, rgba(var(--destination-rgb, 56, 189, 248), 0.14) 100%) !important;
   color: #ffffff !important;
   border: none !important;
   border-radius: 9999px !important;
-  box-shadow: 0 0 20px rgba(56, 189, 248, 0.3) !important;
+  box-shadow: 0 0 24px rgba(var(--destination-rgb, 56, 189, 248), 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
   font-weight: 700 !important;
 }
 

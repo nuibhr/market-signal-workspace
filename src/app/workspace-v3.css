@@ -1,9 +1,9 @@
-.sidebar { background: #070d17; border-right-color: #244052; box-shadow: 7px 0 30px #0002; }
-.brand { border-bottom: 1px solid #1a2d3e; margin-bottom: 19px; padding-bottom: 22px; }
+.sidebar { background: #070d17; border-right: none !important; box-shadow: 7px 0 30px #0002; }
+.brand { border-bottom: none !important; margin-bottom: 19px; padding-bottom: 22px; }
 .side-label { color: #6f8fa1; }
-.nav-item.active { border-left: 2px solid #64d9c9; background: linear-gradient(90deg, #17373a, #11222c); }
-.topbar { position: sticky; top: 0; z-index: 20; gap: 22px; height: 70px; background: #0c1723; border-bottom: 1px solid #284051; box-shadow: 0 7px 24px #0002; }
-.topbar-context { display: flex; align-items: center; gap: 10px; min-width: 155px; padding-right: 17px; border-right: 1px solid #2b4051; white-space: nowrap; }
+.nav-item.active { border-left: none !important; background: linear-gradient(90deg, #17373a, #11222c); border-radius: 9999px; }
+.topbar { position: sticky; top: 0; z-index: 20; gap: 22px; height: 70px; background: rgba(12, 23, 35, 0.75); backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%); border-bottom: none !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); }
+.topbar-context { display: flex; align-items: center; gap: 10px; min-width: 155px; padding-right: 17px; border-right: none !important; white-space: nowrap; }
 .topbar-context small { color: #718da0; font-size: 8px; line-height: 1.4; }
 .topbar-context strong { color: #ebf8f6; font: 700 14px 'DM Mono', monospace; }
 .topbar-context > span { overflow: hidden; max-width: 85px; color: #75b9b1; font-size: 9px; text-overflow: ellipsis; }
