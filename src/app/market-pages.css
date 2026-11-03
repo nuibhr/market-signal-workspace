@@ -507,15 +507,17 @@
   align-items: center;
   gap: 7px;
   text-decoration: none;
-  color: #334155;
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
+  color: #94a3b8;
+  border: none !important;
+  background: rgba(255, 255, 255, 0.05);
   padding: 8px 16px;
   border-radius: 9999px;
   white-space: nowrap;
   font-size: 12px;
   font-weight: 700;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  box-shadow: none !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   transition: all .18s cubic-bezier(0.16, 1, 0.3, 1)
 }
 
@@ -524,17 +526,17 @@
 }
 
 .market-destinations a:hover {
-  color: #0284c7;
-  border-color: #0284c7;
-  background: #f0f9ff;
+  color: #ffffff;
+  border: none !important;
+  background: rgba(255, 255, 255, 0.1);
   transform: translateY(-1px)
 }
 
 .market-destinations a[aria-current=page] {
   color: #ffffff;
-  background: #0284c7;
-  border-color: #0284c7;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25)
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.7) 0%, rgba(37, 99, 235, 0.7) 100%) !important;
+  border: none !important;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.3) !important;
 }
 
 .hub-sidebar .market-destinations {
