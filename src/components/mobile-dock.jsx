@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Compass, Home, Scale, User, Zap } from 'lucide-react';
+import { ArrowLeftRight, CandlestickChart, Globe2, Home, User } from 'lucide-react';
 
 const DOCK_ITEMS = [
   { label: 'หน้าหลัก', href: '/', icon: Home },
-  { label: 'ตลาด', href: '/markets', icon: Compass },
-  { label: 'Daytrade', href: '/daytrade', icon: Zap },
-  { label: 'คุมเสี่ยง', href: '/risk', icon: Scale },
+  { label: 'หุ้นไทย', href: '/thai', icon: CandlestickChart },
+  { label: 'DR', href: '/dr', icon: Globe2 },
+  { label: 'Forex', href: '/forex', icon: ArrowLeftRight },
   { label: 'บัญชี', href: '/account', icon: User },
 ];
 
