@@ -10,8 +10,8 @@ export default async function ThaiDividendPage({ searchParams }) {
   return (
     <Workspace
       key="thai-dividend"
-      marketId="dr"
-      initialSymbol={typeof params.symbol === 'string' ? params.symbol : 'AAPL80'}
+      marketId="thai"
+      initialSymbol={typeof params.symbol === 'string' ? params.symbol : 'PTT'}
     />
   );
 }

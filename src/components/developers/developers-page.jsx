@@ -128,7 +128,7 @@ if (res == 200) {
         </div>
 
         {/* Universal Top Navigation across all markets and tools */}
-        <div className="ng-header-nav-strip" style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+        <div className="ng-header-nav-strip" style={{ marginTop: '12px', borderTop: "none", paddingTop: '10px' }}>
           <MarketNavigation current="developers" />
         </div>
       </header>
@@ -150,7 +150,7 @@ if (res == 200) {
             marginBottom: '16px',
             borderRadius: '12px',
             background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%)',
-            border: '1px solid rgba(124, 58, 237, 0.25)',
+            border: "none",
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -186,7 +186,7 @@ if (res == 200) {
                 fontSize: '11px',
                 fontWeight: '700',
                 textDecoration: 'none',
-                border: '1px solid rgba(168, 85, 247, 0.3)',
+                border: "none",
               }}
             >
               🌍 กราฟ Forex Desk
@@ -204,7 +204,7 @@ if (res == 200) {
                 fontSize: '11px',
                 fontWeight: '700',
                 textDecoration: 'none',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                border: "none",
               }}
             >
               🇹🇭 กราฟหุ้นไทย (SET)
@@ -222,7 +222,7 @@ if (res == 200) {
                 fontSize: '11px',
                 fontWeight: '700',
                 textDecoration: 'none',
-                border: '1px solid rgba(13, 148, 136, 0.3)',
+                border: "none",
               }}
             >
               🛡️ คำนวณขนาดไม้ 2R

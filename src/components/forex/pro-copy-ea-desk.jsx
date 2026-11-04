@@ -337,9 +337,7 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
               background: dispatchStatus.ok
                 ? 'rgba(16, 185, 129, 0.15)'
                 : 'rgba(244, 63, 94, 0.15)',
-              border: `1px solid ${
-                dispatchStatus.ok ? 'rgba(16, 185, 129, 0.35)' : 'rgba(244, 63, 94, 0.35)'
-              }`,
+              border: "none",
               color: dispatchStatus.ok ? '#34d399' : '#fb7185',
               display: 'flex',
               alignItems: 'center',

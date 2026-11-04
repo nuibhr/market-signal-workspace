@@ -207,7 +207,7 @@ export function CalendarPanel({ onOpenGuide }) {
     </>}
     <div className="daily-callout"><CircleHelp size={17} /><span>FRED ให้วันประกาศและค่าที่เผยแพร่แล้ว ไม่ใช่ฟีดพาดหัวข่าว ไม่มีค่า forecast หรือเวลาออกข่าวในข้อมูลชุดนี้ วันประกาศอาจเปลี่ยนได้และข้อมูลอาจถูกปรับย้อนหลัง</span></div>
     <div className="calendar-source-links"><a href="https://www.bot.or.th/en/our-roles/monetary-policy/mpc-meeting.html" target="_blank" rel="noopener noreferrer">ธปท. · กำหนดประชุม กนง. ↗</a><a href="https://www.bls.gov/schedule/" target="_blank" rel="noopener noreferrer">BLS · เวลาออกข่าวสหรัฐฯ ↗</a></div>
-    <div style={{marginTop:'12px',display:'flex',gap:'8px',flexWrap:'wrap'}}><a href="/calendar" className="feature-primary" style={{textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'6px',fontSize:'0.88rem',padding:'8px 14px',borderRadius:'8px',background:'#0284c7',color:'#fff',fontWeight:'600'}}>เปิดปฏิทินเศรษฐกิจ & Macro Intelligence (จัดระดับผลกระทบ + ข้อควรระวัง AI) ↗</a><button className="feature-primary" onClick={onOpenGuide} style={{background:'transparent',border:'1px solid #cbd5e1',color:'#334155'}}>อ่านวิธีใช้ข่าวประกอบกราฟ ↗</button></div>
+    <div style={{marginTop:'12px',display:'flex',gap:'8px',flexWrap:'wrap'}}><a href="/calendar" className="feature-primary" style={{textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'6px',fontSize:'0.88rem',padding:'8px 14px',borderRadius:'8px',background:'#0284c7',color:'#fff',fontWeight:'600'}}>เปิดปฏิทินเศรษฐกิจ & Macro Intelligence (จัดระดับผลกระทบ + ข้อควรระวัง AI) ↗</a><button className="feature-primary" onClick={onOpenGuide} style={{background:'transparent',border: "none",color:'#334155'}}>อ่านวิธีใช้ข่าวประกอบกราฟ ↗</button></div>
   </div>;
 }
 

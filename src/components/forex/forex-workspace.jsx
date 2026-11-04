@@ -204,6 +204,7 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
         </nav>
         <nav className={styles.memberLinks} aria-label="พื้นที่สมาชิก">
           <Link href="/account">{viewer ? 'บัญชีของฉัน' : 'เข้าสู่ระบบด้วย LINE'}</Link>
+          <Link href="/coaches">พอร์ตโค้ช &amp; ผลงานทีม</Link>
           <Link href="/community">ห้องสมาชิกและคุยกับทีม</Link>
         </nav>
         <div className={styles.sidebarFoot}>

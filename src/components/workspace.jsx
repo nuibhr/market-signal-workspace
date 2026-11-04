@@ -286,11 +286,18 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   }
 
   function selectAsset(item, frame = '1d') {
-    if (item.id !== marketId) {
-      router.push(`${marketHref(item.id, item.symbol)}#chart-panel`);
+    if (!item) return;
+    if (typeof item === 'string') {
+      const resolved = ALL_ASSETS.find(a => a.symbol === item && a.id === marketId) ?? ALL_ASSETS.find(a => a.symbol === item);
+      if (resolved) return selectAsset(resolved, frame);
       return;
     }
-    const fullAsset = ALL_ASSETS.find(a => a.symbol === item.symbol && a.id === item.id) ?? item;
+    const targetMarket = item.id || (item.market ? String(item.market).toLowerCase() : marketId);
+    if (targetMarket !== marketId) {
+      router.push(`${marketHref(targetMarket, item.symbol)}#chart-panel`);
+      return;
+    }
+    const fullAsset = ALL_ASSETS.find(a => a.symbol === item.symbol && a.id === targetMarket) ?? { ...item, id: targetMarket };
     setActiveMarket(fullAsset.id);
     setSelectedAsset(fullAsset);
     setTimeframe(fullAsset.id === 'us' ? '1d' : frame);
@@ -588,8 +595,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
                 justifyContent: 'space-between',
                 gap: '12px',
                 background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.12) 0%, rgba(168, 85, 247, 0.15) 100%)',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                borderRadius: '12px',
+                border: 'none',
+                boxShadow: 'inset 0 1px 1px rgba(56, 189, 248, 0.28)',
+                borderRadius: '14px',
                 padding: '12px 18px',
                 margin: '12px 0 16px',
                 flexWrap: 'wrap',

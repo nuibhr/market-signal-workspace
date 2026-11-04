@@ -504,7 +504,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
           {selectedStrategy && (
             <div style={{
               background: 'rgba(34, 211, 238, 0.15)',
-              border: '1px solid #22d3ee',
+              border: "none",
               borderRadius: '10px',
               padding: '10px 16px',
               display: 'flex',
@@ -660,7 +660,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   </div>
 
                   {/* Position 1: S50 Index Futures */}
-                  <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: "none", borderRadius: '10px', padding: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <strong style={{ fontSize: '12px', color: '#22d3ee' }}>1. SET50 Futures (S50Z26)</strong>
                       <span style={{ fontSize: '10px', color: '#94a3b8' }}>IM: {(whatIfS50Contracts * TFEX_SPECS.S50.im).toLocaleString('en-US')} ฿</span>
@@ -703,7 +703,7 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
                   </div>
 
                   {/* Position 2: Gold Online Futures */}
-                  <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+                  <div style={{ background: 'rgba(15, 23, 42, 0.7)', border: "none", borderRadius: '10px', padding: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <strong style={{ fontSize: '12px', color: '#fbbf24' }}>2. Gold Online Futures (GOZ26)</strong>
                       <span style={{ fontSize: '10px', color: '#94a3b8' }}>IM: {(whatIfGoContracts * TFEX_SPECS.GO.im).toLocaleString('en-US')} ฿</span>

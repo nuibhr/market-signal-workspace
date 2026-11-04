@@ -70,7 +70,7 @@ export default function AdminConsole(){
                 return <article key={lead.id}>
                   <div>
                     <div style={{display:'flex',gap:'8px',alignItems:'center'}}>
-                      <span style={{background:lead.broker_id==='003'?'rgba(168,85,247,0.2)':'rgba(34,211,238,0.2)',color:lead.broker_id==='003'?'#c084fc':'#38bdf8',border:`1px solid ${lead.broker_id==='003'?'#a855f7':'#22d3ee'}`,fontSize:'10px',fontWeight:800,padding:'2px 6px',borderRadius:'4px'}}>
+                      <span style={{background:lead.broker_id==='003'?'rgba(168,85,247,0.2)':'rgba(34,211,238,0.2)',color:lead.broker_id==='003'?'#c084fc':'#38bdf8',border: "none",fontSize:'10px',fontWeight:800,padding:'2px 6px',borderRadius:'4px'}}>
                         [{lead.broker_id}] {lead.broker_name}
                       </span>
                       <strong>{lead.full_name}</strong>

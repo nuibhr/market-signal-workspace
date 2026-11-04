@@ -258,17 +258,17 @@ export default function SwarmReactor({
   ]);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "310px", background: "radial-gradient(circle at center, #0c2633 0%, #06141c 70%, #040d12 100%)", borderRadius: "14px", overflow: "hidden", border: "1px solid #1c4756" }}>
+    <div style={{ position: "relative", width: "100%", height: "310px", background: "radial-gradient(circle at center, #0c2633 0%, #06141c 70%, #040d12 100%)", borderRadius: "14px", overflow: "hidden", border: "none" }}>
       <canvas
         ref={canvasRef}
         style={{ width: "100%", height: "100%", display: "block", cursor: "pointer" }}
       />
       {/* HUD OVERLAY BADGES */}
       <div style={{ position: "absolute", top: "12px", left: "14px", display: "flex", gap: "8px", alignItems: "center" }}>
-        <span style={{ fontSize: "10px", fontWeight: 800, padding: "3px 8px", borderRadius: "6px", background: "#0f3642", color: "#65e5c7", border: "1px solid #236577", letterSpacing: "0.5px" }}>
+        <span style={{ fontSize: "10px", fontWeight: 800, padding: "3px 8px", borderRadius: "6px", background: "#0f3642", color: "#65e5c7", border: "none", letterSpacing: "0.5px" }}>
           THE REACTOR · 6 AGENTS SWARM
         </span>
-        <span style={{ fontSize: "10px", fontWeight: 700, padding: "3px 8px", borderRadius: "6px", background: consensus === "BUY" ? "#064e3b" : consensus === "SELL" ? "#881337" : "#78350f", color: "#e6fff7", border: "1px solid rgba(255,255,255,0.15)" }}>
+        <span style={{ fontSize: "10px", fontWeight: 700, padding: "3px 8px", borderRadius: "6px", background: consensus === "BUY" ? "#064e3b" : consensus === "SELL" ? "#881337" : "#78350f", color: "#e6fff7", border: "none" }}>
           GRADE {grade} ({confidence}%)
         </span>
       </div>

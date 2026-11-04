@@ -91,9 +91,7 @@ export default function SwarmDebate({
                 gap: "3px",
                 padding: "8px 10px",
                 borderRadius: "8px",
-                border: `1px solid ${
-                  isSpeaking ? agent.color : isSelected ? "#3a6d7c" : "#173642"
-                }`,
+                border: "none",
                 background: isSpeaking
                   ? "rgba(20, 60, 75, 0.9)"
                   : isSelected
@@ -136,7 +134,7 @@ export default function SwarmDebate({
       <div
         style={{
           background: "#071720",
-          border: "1px solid #1c3e4d",
+          border: "none",
           borderRadius: "10px",
           padding: "12px",
           display: "grid",
@@ -148,7 +146,7 @@ export default function SwarmDebate({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            borderBottom: "1px solid #183340",
+            borderBottom: "none",
             paddingBottom: "8px",
           }}
         >
@@ -187,7 +185,7 @@ export default function SwarmDebate({
               padding: "4px 10px",
               borderRadius: "6px",
               background: "linear-gradient(90deg, #1b5b5c, #13424d)",
-              border: "1px solid #3ca596",
+              border: "none",
               color: "#e6fff9",
               fontSize: "11px",
               fontWeight: 700,
@@ -255,13 +253,7 @@ export default function SwarmDebate({
       <div
         style={{
           background: "linear-gradient(90deg, #0d2c38, #0a212c)",
-          border: `1px solid ${
-            consensus === "BUY"
-              ? "#2d8b74"
-              : consensus === "SELL"
-                ? "#94384a"
-                : "#355b6a"
-          }`,
+          border: "none",
           borderRadius: "10px",
           padding: "14px",
           display: "grid",
@@ -320,7 +312,7 @@ export default function SwarmDebate({
                 background: "#081822",
                 padding: "4px 8px",
                 borderRadius: "6px",
-                border: "1px solid #204b5a",
+                border: "none",
               }}
             >
               Lot แนะนำ: <strong>{debateData?.metrics?.recommendedLot || "0.03"}</strong>
@@ -375,7 +367,7 @@ export default function SwarmDebate({
               justifyContent: "center",
               gap: "7px",
               background: "#196860",
-              border: "1px solid #48b8a5",
+              border: "none",
               borderRadius: "8px",
               color: "#ffffff",
               fontSize: "11px",
@@ -396,7 +388,7 @@ export default function SwarmDebate({
               justifyContent: "center",
               gap: "7px",
               background: "#102d38",
-              border: "1px solid #355d6e",
+              border: "none",
               borderRadius: "8px",
               color: "#c2e5eb",
               fontSize: "11px",
@@ -418,7 +410,7 @@ export default function SwarmDebate({
               justifyContent: "center",
               gap: "7px",
               background: "linear-gradient(90deg, #581c87, #3b0764)",
-              border: "1px solid #a855f7",
+              border: "none",
               borderRadius: "8px",
               color: "#f3e8ff",
               fontSize: "11px",
@@ -450,7 +442,7 @@ export default function SwarmDebate({
           <div
             style={{
               background: "#0a1f29",
-              border: "1px solid #4da090",
+              border: "none",
               borderRadius: "14px",
               padding: "24px",
               maxWidth: "460px",

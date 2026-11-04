@@ -65,7 +65,7 @@
   width: 185px;
   padding: 22px 12px 12px;
   background: linear-gradient(180deg, #071722, #04121a);
-  border-right: 1px solid #143643;
+  border-right: none;
   display: flex;
   flex-direction: column;
   z-index: 4;
@@ -119,7 +119,7 @@
   font-size: 10px;
   gap: 9px;
   background: transparent;
-  border: 1px solid transparent;
+  border: none;
   color: #9cb3c2;
 }
 .sidebar :global(.market-destinations a svg) {
@@ -154,7 +154,7 @@
   padding: 8px 9px;
   border-radius: 6px;
   background: none;
-  border: 1px solid transparent;
+  border: none;
   color: #839fb1;
   font-size: 10px;
   position: relative;
@@ -182,7 +182,7 @@
   gap: 8px;
   padding: 11px 8px;
   margin-top: auto;
-  border: 1px solid #183843;
+  border: none;
   background: #08202a;
   border-radius: 8px;
 }
@@ -220,7 +220,7 @@
   flex-shrink: 0;
   width: 31px;
   height: 31px;
-  border: 1px solid #ba9e3655;
+  border: none;
   border-radius: 50%;
   background: linear-gradient(145deg, #cbac40, #71530b);
   color: #fff5b2;
@@ -235,7 +235,7 @@
 .topbar {
   height: 57px;
   padding: 0 20px;
-  border-bottom: 1px solid #163343;
+  border-bottom: none;
   display: flex;
   align-items: center;
   gap: 17px;
@@ -247,7 +247,7 @@
   gap: 7px;
   padding: 0 9px;
   flex: 0 1 165px;
-  border: 1px solid #163949;
+  border: none;
   background: #04101b;
   border-radius: 6px;
   color: #588394;
@@ -302,7 +302,7 @@
   width: 27px;
   height: 27px;
   background: #183541;
-  border: 1px solid #306471;
+  border: none;
   color: #a7c6cf;
   font-weight: 750;
 }
@@ -321,7 +321,7 @@
   min-width: 28px;
   min-height: 28px;
   background: none;
-  border: 1px solid transparent;
+  border: none;
   padding: 4px;
   border-radius: 5px;
   color: #7d9fae;
@@ -343,7 +343,7 @@
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 13px;
-  border: 1px solid #1d4e5845;
+  border: none;
   background: #091c25;
   border-radius: 6px;
   padding: 8px 11px;
@@ -412,7 +412,7 @@
   align-items: center;
   gap: 17px;
   min-height: 135px;
-  border: 1px solid #1b5364;
+  border: none;
   border-radius: 9px;
   overflow: hidden;
   padding: 19px 21px;
@@ -433,7 +433,7 @@
   position: absolute;
   width: 100px;
   height: 100px;
-  border: 1px solid #0aafc63f;
+  border: none;
   border-radius: 50%;
   box-shadow:
     0 0 0 9px #0bbec30b,
@@ -443,7 +443,7 @@
   position: absolute;
   width: 120px;
   height: 50px;
-  border: 1px solid #159cba70;
+  border: none;
   border-radius: 50%;
   transform: rotate(-24deg);
 }
@@ -510,7 +510,7 @@
   min-width: 213px;
   flex: 0 0 213px;
   padding: 14px;
-  border: 1px solid #164954;
+  border: none;
   border-radius: 7px;
   background: #031722bb;
 }
@@ -562,7 +562,7 @@
 .metrics > div {
   padding: 10px 12px;
   background: linear-gradient(135deg, #09202d, #051723);
-  border: 1px solid #174151;
+  border: none;
   border-radius: 7px;
   min-width: 0;
 }
@@ -596,7 +596,7 @@
   display: inline-flex;
   align-items: center;
   padding: 2px 5px;
-  border: 1px solid #176c683b;
+  border: none;
   border-radius: 4px;
   background: #0c3f3d40;
   color: #51ada4;
@@ -608,7 +608,7 @@
 }
 .panel {
   min-width: 0;
-  border: 1px solid #173b4a;
+  border: none;
   border-radius: 8px;
   padding: 14px;
   background: linear-gradient(130deg, #061b27, #04141e);
@@ -651,7 +651,7 @@
   align-items: center;
   gap: 3px;
   background: none;
-  border: 1px solid #1d4654;
+  border: none;
   border-radius: 4px;
   color: #8facbc;
   padding: 2px 5px;
@@ -673,7 +673,7 @@
   gap: 8px;
   padding: 11px 9px;
   background: linear-gradient(145deg, #0b2430, #071923);
-  border: 1px solid #1b4655;
+  border: none;
   border-radius: 7px;
   text-align: left;
   min-width: 0;
@@ -687,7 +687,7 @@
   flex: 0 0 32px;
   height: 32px;
   border-radius: 50%;
-  border: 1px solid #086895;
+  border: none;
   background: linear-gradient(145deg, #1778ba, #074058);
   color: #d4f1ff;
   font-size: 22px;
@@ -747,8 +747,8 @@
   gap: 8px;
   padding: 7px 10px;
   background: #061926;
-  border-top: 1px solid #12313f;
-  border-bottom: 1px solid #12313f;
+  border-top: none;
+  border-bottom: none;
 }
 .chartToolbar select {
   background: #071b29;
@@ -766,7 +766,7 @@
 }
 .timeframes button {
   background: none;
-  border: 1px solid transparent;
+  border: none;
   border-radius: 4px;
   padding: 4px 7px;
   color: #7399aa;
@@ -819,7 +819,7 @@
   gap: 12px;
   padding: 6px 13px;
   position: relative;
-  border-top: 1px solid #15313f;
+  border-top: none;
   background:
     repeating-linear-gradient(
       0deg,
@@ -880,7 +880,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  border-top: 1px solid #12313f;
+  border-top: none;
   padding: 6px 12px;
   color: #658794;
   font-size: 7px;
@@ -896,7 +896,7 @@
   align-items: center;
   gap: 15px;
   padding: 14px 8px 18px;
-  border-bottom: 1px solid #164233;
+  border-bottom: none;
 }
 .scoreRing {
   width: 63px;
@@ -971,7 +971,7 @@
   color: #78aaa3;
 }
 .tradePlan {
-  border: 1px solid #086d5540;
+  border: none;
   border-radius: 6px;
   background: linear-gradient(130deg, #07402e55, #052c2b44);
   padding: 11px;
@@ -994,7 +994,7 @@
   justify-content: space-between;
   font-size: 9px;
   padding: 8px 0;
-  border-top: 1px solid #0f554735;
+  border-top: none;
   color: #93b9be;
 }
 .tradePlan b {
@@ -1029,7 +1029,7 @@
   display: grid;
   text-align: left;
   border-radius: 5px;
-  border: 1px solid #06876888;
+  border: none;
   background: linear-gradient(140deg, #09624966, #06443032);
   padding: 8px 6px;
   min-width: 0;
@@ -1102,7 +1102,7 @@
   font-size: 7px;
   color: #688c9a;
   margin-top: 13px;
-  border-top: 1px solid #143442;
+  border-top: none;
   padding-top: 10px;
 }
 .volatility strong {
@@ -1124,7 +1124,7 @@
 .table th,
 .table td {
   padding: 9px 7px;
-  border-bottom: 1px solid #10303c;
+  border-bottom: none;
   color: #9ab8c7;
   font-size: 9px;
   font-weight: 400;
@@ -1160,7 +1160,7 @@
   border-radius: 4px;
   color: #f9a09c;
   background: #762b254e;
-  border: 1px solid #a53d3240;
+  border: none;
   font-size: 6px;
   line-height: 1.3;
 }
@@ -1181,7 +1181,7 @@
   padding: 0 9px;
   flex: 1;
   min-width: 0;
-  border: 1px solid #194555;
+  border: none;
   border-radius: 5px;
   background: #041621;
   color: #669aaf;
@@ -1204,7 +1204,7 @@
   justify-content: center;
   gap: 6px;
   background: #09212f;
-  border: 1px solid #1a4a5b;
+  border: none;
   border-radius: 5px;
   padding: 7px 10px;
   color: #8aaec0;
@@ -1228,7 +1228,7 @@
   align-items: center;
   gap: 5px;
   background: #041722;
-  border: 1px solid #183e50;
+  border: none;
   border-radius: 5px;
   padding: 5px 8px;
   color: #7fabbc;
@@ -1285,7 +1285,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #0ba77443;
+  border: none;
   border-radius: 4px;
   background: #05634255;
   color: #1ddeb0;
@@ -1327,7 +1327,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid #1c4051;
+  border: none;
   background: #071f2c;
   border-radius: 6px;
   padding: 12px;
@@ -1354,7 +1354,7 @@
   gap: 7px;
   background: linear-gradient(110deg, #11bdb6, #087dcc);
   color: #d8f6ff;
-  border: 1px solid #149daf;
+  border: none;
   border-radius: 5px;
   padding: 8px 13px;
   font-size: 9px !important;
@@ -1380,7 +1380,7 @@
   justify-content: space-between;
   gap: 9px;
   padding: 11px 0;
-  border-bottom: 1px solid #143442;
+  border-bottom: none;
   font-size: 9px;
 }
 .connectionFacts dt {
@@ -1398,7 +1398,7 @@
   color: #79b1a8;
   font-size: 9px;
   padding: 12px 0 0;
-  border-top: 1px solid #143442;
+  border-top: none;
 }
 .readOnly svg {
   color: #15bb9e;
@@ -1468,7 +1468,7 @@
   font-size: 9px;
   margin: 17px 0 10px !important;
   padding-top: 14px;
-  border-top: 1px solid #183e49;
+  border-top: none;
   color: #a8c9d5;
 }
 .riskForm {
@@ -1488,7 +1488,7 @@
 .journalForm select {
   width: 100%;
   background: #041722;
-  border: 1px solid #194b61;
+  border: none;
   border-radius: 5px;
   padding: 9px;
   color: #bddaea;
@@ -1504,7 +1504,7 @@
   margin-top: 16px;
   padding: 12px;
   background: #06453d22;
-  border: 1px solid #125247;
+  border: none;
   border-radius: 6px;
   color: #7ba69f;
   font-size: 9px;
@@ -1532,7 +1532,7 @@
 .journalEntries article {
   padding: 14px;
   background: #092a344d;
-  border: 1px solid #204d5559;
+  border: none;
   border-radius: 6px;
 }
 .journalEntries article > span {
@@ -1593,7 +1593,7 @@
   align-items: center;
   gap: 9px;
   padding: 11px 0;
-  border-bottom: 1px solid #123440;
+  border-bottom: none;
 }
 .alertIcon {
   display: grid;
@@ -1602,7 +1602,7 @@
   height: 28px;
   color: #56a6b5;
   background: #12384250;
-  border: 1px solid #26566345;
+  border: none;
   border-radius: 6px;
 }
 .alertRows strong {
@@ -1685,7 +1685,7 @@
   gap: 5px;
   margin-bottom: 19px;
   padding: 0 0 10px;
-  border-bottom: 1px solid #133440;
+  border-bottom: none;
   overflow-x: auto;
   scrollbar-width: thin;
 }
@@ -1694,7 +1694,7 @@
   align-items: center;
   gap: 5px;
   background: none;
-  border: 1px solid #123a46;
+  border: none;
   border-radius: 5px;
   padding: 6px 9px;
   white-space: nowrap;
@@ -1720,7 +1720,7 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 12px;
-  border-top: 1px solid #143442;
+  border-top: none;
   padding-top: 14px;
   color: #4e7a8d;
   font-size: 7px;
@@ -1880,7 +1880,7 @@
     width: auto;
     padding: 13px 15px;
     border-right: 0;
-    border-bottom: 1px solid #194451;
+    border-bottom: none;
     overflow: visible;
   }
   .brand {
@@ -1960,7 +1960,7 @@
   .mobileNavigation select {
     padding: 7px 10px;
     background: #082d3b;
-    border: 1px solid #1b6570;
+    border: none;
     border-radius: 5px;
     color: #c1e9e8;
   }
@@ -2327,7 +2327,7 @@
 .pairingKey input {
   width: 100%;
   min-width: 0;
-  border: 1px solid #22475b;
+  border: none;
   border-radius: 6px;
   background: #071723;
   color: #d7eaf4;
@@ -2357,7 +2357,7 @@
   overflow-wrap: anywhere;
 }
 .pairingKey {
-  border: 1px solid #148776;
+  border: none;
   background: #07251f;
   padding: 16px;
   border-radius: 8px;
@@ -2390,7 +2390,7 @@
   padding: 6px 12px;
   border-radius: 9999px;
   background: rgba(14, 165, 233, 0.08);
-  border: 1px solid rgba(14, 165, 233, 0.22);
+  border: none;
   color: #38bdf8;
   font-size: 11px;
   font-weight: 500;
@@ -2403,7 +2403,7 @@
   background: rgba(255, 255, 255, 0.03);
   padding: 4px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
@@ -2438,7 +2438,7 @@
   font-weight: 600;
   color: #38bdf8;
   background: rgba(14, 165, 233, 0.15);
-  border: 1px solid rgba(14, 165, 233, 0.35);
+  border: none;
   cursor: pointer;
 }
 
@@ -2447,7 +2447,7 @@
   flex-direction: column;
   gap: 12px;
   background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(56, 189, 248, 0.18);
+  border: none;
   border-radius: 10px;
   padding: 14px;
   margin-bottom: 16px;
@@ -2464,7 +2464,7 @@
   display: inline-flex;
   align-items: center;
   background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  border: none;
   color: #10b981;
   font-size: 10px;
   font-weight: 600;
@@ -2494,7 +2494,7 @@
 
 .textInput {
   background: rgba(3, 7, 18, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: none;
   border-radius: 6px;
   padding: 8px 12px;
   color: #f8fafc;
@@ -2522,7 +2522,7 @@
   gap: 8px;
   background: linear-gradient(135deg, #0284c7, #0369a1);
   color: #ffffff;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  border: none;
   padding: 8px 14px;
   border-radius: 6px;
   font-size: 12px;
@@ -2543,7 +2543,7 @@
 
 .guideToggle {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: none;
   color: #94a3b8;
   padding: 8px 12px;
   border-radius: 6px;
@@ -2564,7 +2564,7 @@
   padding: 10px 12px;
   border-radius: 6px;
   background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: none;
   color: #34d399;
   font-size: 11px;
   font-weight: 500;
@@ -2577,7 +2577,7 @@
   padding: 10px 12px;
   border-radius: 6px;
   background: rgba(244, 63, 94, 0.12);
-  border: 1px solid rgba(244, 63, 94, 0.3);
+  border: none;
   color: #fb7185;
   font-size: 11px;
   font-weight: 500;
@@ -2585,7 +2585,7 @@
 
 .guideBox {
   background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 6px;
   padding: 12px 14px;
   font-size: 11px;
@@ -2613,7 +2613,7 @@
 
 .previewCard {
   background: rgba(3, 7, 18, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 6px;
   padding: 10px 12px;
 }
@@ -2637,7 +2637,7 @@
 
 .voiceBox {
   background: rgba(14, 165, 233, 0.05);
-  border: 1px solid rgba(14, 165, 233, 0.2);
+  border: none;
   border-radius: 8px;
   padding: 14px;
   margin-bottom: 16px;
@@ -2695,7 +2695,7 @@
 
 .lineBox {
   background: rgba(34, 197, 94, 0.05);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  border: none;
   border-radius: 8px;
   padding: 14px;
   margin-bottom: 16px;

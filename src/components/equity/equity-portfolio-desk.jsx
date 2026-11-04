@@ -330,11 +330,11 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState('lead'); // 'lead' | 'api' | 'demo'
 
-  // BYOK form states (Pre-configured for Trinity 022)
+  // BYOK form states (Zero-Custody: never pre-populate live credentials in client bundle)
   const [brokerId, setBrokerId] = useState('022');
-  const [accountNo, setAccountNo] = useState('99242240');
-  const [appId, setAppId] = useState('2Ojgos6LlYIEU3n0');
-  const [appSecret, setAppSecret] = useState('AMeylhfYKDRtm2yC+qyN+ivzRXceX23b93zGvMCTe4vF');
+  const [accountNo, setAccountNo] = useState('');
+  const [appId, setAppId] = useState('');
+  const [appSecret, setAppSecret] = useState('');
   const [appCode, setAppCode] = useState('ALGO_EQ');
   const [latency, setLatency] = useState(18);
   const [showSecret, setShowSecret] = useState(false);
@@ -359,34 +359,10 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
       const bId = overrideBrokerId || brokerId;
 
       if (isDemo) {
-        try {
-          const res = await fetch('/api/equity/portfolio', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              brokerId: bId,
-              isDemo: true,
-              appCode: 'ALGO_EQ',
-            }),
-          });
-          if (res.ok) {
-            const result = await res.json();
-            if (result.success) {
-              setData(result);
-              if (overrideBrokerId) setBrokerId(overrideBrokerId);
-              setLatency(Math.max(12, Math.round(performance.now() - start)));
-              setLoading(false);
-              return;
-            }
-          }
-        } catch {
-          // Fallback to instant generator
-        }
-
         const demoData = generateDemoPortfolio(bId, appCode);
         setData(demoData);
         if (overrideBrokerId) setBrokerId(overrideBrokerId);
-        setLatency(18);
+        setLatency(Math.max(12, Math.round(performance.now() - start)));
         setLoading(false);
         return;
       }
@@ -885,7 +861,13 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                         <button
                           type="button"
                           className={styles.chartLinkBtn}
-                          onClick={() => onSelectSymbol?.(item.symbol)}
+                          onClick={() =>
+                            onSelectSymbol?.({
+                              symbol: item.symbol,
+                              id: item.market === 'DR' ? 'dr' : 'thai',
+                              name: item.name || item.symbol,
+                            })
+                          }
                         >
                           ดูกราฟ ↗
                         </button>

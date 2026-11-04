@@ -105,7 +105,7 @@ export default function AccountPage({initialData=null}) {
           </div>
 
           {/* Active Entitlement Breakdown Box */}
-          <div style={{ marginTop: '14px', padding: '14px 16px', background: 'rgba(15, 23, 42, 0.65)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '12px' }}>
+          <div style={{ marginTop: '14px', padding: '14px 16px', background: 'rgba(15, 23, 42, 0.65)', border: "none", borderRadius: '12px' }}>
             {account?.demo?.role === 'starter' || rights?.planId === 'starter' ? (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
