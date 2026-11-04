@@ -458,7 +458,11 @@ function speakThai(text) {
 
 export default function ForexStudio() {
   const [timeframe, setTimeframe] = useState("1h");
-  const candles = useMemo(() => demoBars(initialInstrument, timeframe), [timeframe]);
+  const [liveCandles, setLiveCandles] = useState(null);
+  const candles = useMemo(
+    () => (Array.isArray(liveCandles) && liveCandles.length >= 25 ? liveCandles : demoBars(initialInstrument, timeframe)),
+    [liveCandles, timeframe],
+  );
 
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -482,6 +486,41 @@ export default function ForexStudio() {
   useEffect(() => {
     setPlans(readPracticePlans());
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof fetch !== "function") return;
+    const controller = new AbortController();
+    fetch(`/api/forex/studio/plans?candles=1&symbol=XAU/USD&timeframe=${encodeURIComponent(timeframe)}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (controller.signal.aborted || !data || !Array.isArray(data.bars) || data.bars.length < 25) return;
+        setLiveCandles(data.bars);
+        setVisible(data.bars.length);
+        if (Number.isFinite(data.price)) {
+          setLiveTick({ symbol: "XAU/USD", price: data.price, status: "live_market" });
+        }
+        if (data.plan?.entry && data.plan?.stop && data.plan?.target) {
+          setPlan((current) => ({
+            ...current,
+            title: data.plan.title || current.title,
+            side: data.plan.side || current.side,
+            entry: String(data.plan.entry),
+            stop: String(data.plan.stop),
+            target: String(data.plan.target),
+            condition: data.plan.condition || current.condition,
+          }));
+          setCoachPlanMeta({
+            coach: data.plan.coach || "น้องนักออม AI · Yahoo Finance Live",
+            syncedAt: data.plan.updatedAt || data.asOf || new Date().toISOString(),
+          });
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [timeframe]);
 
   // EventSource Live Feed Connection
   useEffect(() => {

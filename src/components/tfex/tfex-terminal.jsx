@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useDeskResource } from '../use-desk-resource.jsx';
 import { buildTfexContracts } from '../../markets/tfex-contracts.mjs';
 const valueText=(v,d=2)=>Number.isFinite(v)?v.toLocaleString('th-TH',{maximumFractionDigits:d}):'—';
@@ -134,6 +134,12 @@ export default function TfexTerminal({ selectedSymbol = 'S50Z26', onSelect }) {
   const [marginContracts, setMarginContracts] = useState(5);
   const [marginSide, setMarginSide] = useState('LONG');
   const [marginEntry, setMarginEntry] = useState(894.2);
+  useEffect(() => {
+    const livePrice = TFEX_SPECS[marginProduct]?.futuresPrice;
+    if (Number.isFinite(livePrice) && livePrice > 0) {
+      setMarginEntry(Number(livePrice.toFixed(2)));
+    }
+  }, [marginProduct, quoteFeed.data]);
 
   // ─── TFEX WHAT-IF SIMULATOR STATE (Multi-Asset Portfolio Stress Testing) ───
   const [riskSubMode, setRiskSubMode] = useState('whatif'); // 'whatif' | 'single'

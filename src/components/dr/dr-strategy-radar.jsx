@@ -409,7 +409,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     };
     const stop=pollAfterCompletion(loadFeed,{intervalMs:DISCOVERY_INTERVAL_MS});
     return ()=>{mounted=false;controller.abort();stop();};
-  }, [visible,workspaceView]);
+  }, [visible,workspaceView,signalAccess,currentMarket]);
 
   useEffect(()=>{
     if(liveData?.updatedAt)setLastScanTime(new Date(liveData.updatedAt).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'})+' น.');
@@ -431,20 +431,20 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
   const activeDrDoctor = useMemo(() => {
     const sym = (drDoctorActiveSymbol || 'NVDA80').toUpperCase().trim();
-    const live = (scoredDRs || []).find((d) => d.symbol === sym);
+    const live = (scoredDRs || []).find((d) => d.symbol === sym) || scoredDRs?.[0];
     if (live) {
-      const curP = live.currentDrPrice ?? live.price ?? 44.50;
+      const curP = live.currentDrPrice ?? live.price ?? 0;
       const fairP = live.bridge?.fairPriceThb ?? curP;
       const spread = live.bridge?.diffPct ?? 0;
       const entry = live.scored?.entry ?? curP;
       const sl = live.scored?.sl ?? (entry * 0.94);
-      const tp1 = live.scored?.tp1 ?? (entry * 1.11);
-      const rr = live.scored?.riskReward ? `1 : ${live.scored.riskReward}` : '1 : 2.8';
-      const spreadStatus = spread < -0.5 ? '🟢 DISCOUNT (ถูกกว่าหุ้นแม่ มีแต้มต่อ)' : spread > 2.0 ? '⚠️ HIGH PREMIUM (ระวังไล่ราคา)' : '⚖️ FAIR (สเปรดต่ำ ปลอดภัย)';
+      const tp1 = live.scored?.tp1 ?? (entry * 1.08);
+      const rr = live.scored?.riskReward ? `1 : ${live.scored.riskReward}` : '1 : 2.5';
+      const spreadStatus = spread < -0.5 ? '🟢 DISCOUNT (ถูกกว่าหุ้นแม่ มีแต้มต่อ)' : spread > 2.0 ? '⚠️ HIGH PREMIUM (ระวังไล่ราคา)' : '⚖️ FAIR (ราคาปิดจริง Settrade EOD)';
       return {
-        symbol: sym,
-        name: live.name || `${sym} Depositary Receipt`,
-        underlyingUsd: live.underlyingUsd || 138.20,
+        symbol: live.symbol,
+        name: live.name || `${live.symbol} Depositary Receipt`,
+        underlyingUsd: live.underlyingUsd ?? null,
         drPrice: curP,
         fairPrice: fairP,
         diffPct: spread,
@@ -453,23 +453,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         sl: Number(sl).toFixed(2),
         tp1: Number(tp1).toFixed(2),
         riskReward: rr,
-        diagnosis: live.scored?.label || `สแกนพบโครงสร้างแนวโน้มขาขึ้น Stage 2 สอดคล้องราคาหุ้นแม่ที่สหรัฐฯ วาง Stop Loss ที่ ${Number(sl).toFixed(2)} ฿ เพื่อล็อคความเสี่ยงไม่เกิน 6%`,
+        diagnosis: live.scored?.reason || `ราคาปิดจริง ${curP.toFixed(2)} ฿ (${live.dataAsOf?.slice(0,10) || 'ล่าสุด'}) · วาง Stop Loss ที่ ${Number(sl).toFixed(2)} ฿ เป้าหมาย ${Number(tp1).toFixed(2)} ฿`,
       };
     }
-    return DR_DOCTOR_MASTER[sym] || {
-      symbol: sym,
-      name: `${sym} Global Tech DR`,
-      underlyingUsd: 150.00,
-      drPrice: 35.00,
-      fairPrice: 34.80,
-      diffPct: 0.57,
-      status: '⚖️ FAIR (ราคาเหมาะสม)',
-      buyZone: '34.20 - 35.00 ฿',
-      sl: '32.80',
-      tp1: '39.20',
-      riskReward: '1 : 2.7',
-      diagnosis: 'โครงสร้างแนวโน้มขาขึ้นต่อเนื่อง แนะนำวางแผนสะสมในกรอบ Buy Zone และตั้ง Stop Loss เสมอ',
-    };
+    return null;
   }, [drDoctorActiveSymbol, scoredDRs]);
 
   const topMorningThai = useMemo(() => {
@@ -930,53 +917,30 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
           <div className={styles.recentWinnersBox}>
             <div className={styles.recentWinnersTitle}>
-              <span>⚡ ไม้เด่น DR80 ล่าสุดที่เพิ่งปิดทำกำไร (Recent 2R Wins)</span>
+              <span>⚡ DR80 หุ้นโลกพร้อมแผน 2R จากราคาปิดจริงล่าสุด (Live Settrade EOD)</span>
             </div>
             <div className={styles.winnerCardsGrid}>
-              <div className={styles.winnerCard}>
-                <div className={styles.winnerCardHead}>
-                  <InstrumentLogo asset={{ market: 'dr', symbol: 'NVDA80' }} />
-                  <div>
-                    <strong>NVDA80</strong>
-                    <small>NVIDIA Corp · NASDAQ: NVDA</small>
+              {(topDrFocus.length ? topDrFocus : scoredDRs).slice(0, 3).map((item) => {
+                const entry = item.scored?.entry ?? item.currentDrPrice;
+                const tp1 = item.scored?.tp1 ?? Number((entry * 1.06).toFixed(2));
+                const gainPct = entry > 0 ? (((tp1 - entry) / entry) * 100).toFixed(1) : '6.0';
+                return (
+                  <div key={item.symbol} className={styles.winnerCard} onClick={() => handleGoToChart(item)} style={{ cursor: 'pointer' }}>
+                    <div className={styles.winnerCardHead}>
+                      <InstrumentLogo asset={{ market: 'dr', symbol: item.symbol }} />
+                      <div>
+                        <strong>{item.symbol} · ฿{item.currentDrPrice?.toFixed(2)}</strong>
+                        <small>{item.name} · หุ้นแม่ {item.underlying || 'Global'}</small>
+                      </div>
+                      <span className={styles.winnerBadge}>เป้า +{gainPct}% 🎯</span>
+                    </div>
+                    <div className={styles.winnerDetails}>
+                      <span>แผนรับ ฿{entry?.toFixed(2)} ➔ เป้า 2R ฿{tp1?.toFixed(2)}</span>
+                      <small>ราคาปิดจริง · {item.dataAsOf?.slice(0, 10) || 'ล่าสุด'}</small>
+                    </div>
                   </div>
-                  <span className={styles.winnerBadge}>+16.5% 🎯</span>
-                </div>
-                <div className={styles.winnerDetails}>
-                  <span>เข้า ฿38.20 ➔ ปิดเป้า ฿44.50</span>
-                  <small>ปิดทำกำไรครบไม้ · 29 ต.ค.</small>
-                </div>
-              </div>
-
-              <div className={styles.winnerCard}>
-                <div className={styles.winnerCardHead}>
-                  <InstrumentLogo asset={{ market: 'dr', symbol: 'AAPL80' }} />
-                  <div>
-                    <strong>AAPL80</strong>
-                    <small>Apple Inc · NASDAQ: AAPL</small>
-                  </div>
-                  <span className={styles.winnerBadge}>+10.2% 🎯</span>
-                </div>
-                <div className={styles.winnerDetails}>
-                  <span>เข้า ฿28.50 ➔ ปิดเป้า ฿31.40</span>
-                  <small>ปิดทำกำไรครบไม้ · 27 ต.ค.</small>
-                </div>
-              </div>
-
-              <div className={styles.winnerCard}>
-                <div className={styles.winnerCardHead}>
-                  <InstrumentLogo asset={{ market: 'dr', symbol: 'TSLA80' }} />
-                  <div>
-                    <strong>TSLA80</strong>
-                    <small>Tesla Inc · NASDAQ: TSLA</small>
-                  </div>
-                  <span className={styles.winnerBadge}>+18.0% 🎯</span>
-                </div>
-                <div className={styles.winnerDetails}>
-                  <span>เข้า ฿12.80 ➔ ปิดเป้า ฿15.10</span>
-                  <small>ปิดทำกำไรครบไม้ · 24 ต.ค.</small>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -1022,7 +986,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
             <div className={styles.doctorQuickPills}>
               <span>DR ยอดนิยม:</span>
-              {['NVDA80', 'AAPL80', 'TSLA80', 'MSFT80', 'BABA80', 'GOOG80'].map((sym) => (
+              {['NVDA80', 'AAPL80', 'TSLA80', 'MSFT80', 'BABA80', 'TENCENT80'].map((sym) => (
                 <button
                   key={sym}
                   type="button"
@@ -1051,7 +1015,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                   <div>
                     <strong>{activeDrDoctor.symbol}</strong>
                     <small>
-                      {activeDrDoctor.name} · หุ้นแม่ ${activeDrDoctor.underlyingUsd?.toFixed(2)}
+                      {activeDrDoctor.name}{Number.isFinite(activeDrDoctor.underlyingUsd) ? ` · หุ้นแม่ $${activeDrDoctor.underlyingUsd.toFixed(2)}` : ' · กระดาน SET DR80'}
                     </small>
                   </div>
                 </div>

@@ -504,11 +504,12 @@ export default function UsStage2Desk({
   const feedView=['focus','rotation','screener'].includes(activeTab)?activeTab:'focus';
   const feed=useDeskResource('/api/us/desk?'+new URLSearchParams({view:feedView,q:searchQuery,page:String(feedPage)}));
   const diagnostic=useDeskResource('/api/us/desk?'+new URLSearchParams({view:'diagnostic',symbol:selectedDiagTicker}),{enabled:activeTab==='focus'});
-  const fxFeed=useDeskResource('/api/us/desk?view=fx',{interval:300000});
+  const fxFeed=useDeskResource('/api/forex/studio/plans?candles=1&symbol=USD/THB&timeframe=1h',{interval:300000});
   const US_STAGE2_FOCUS_PICKS=(feed.data?.rows||[]).filter(row=>Number.isFinite(row.price)).map(row=>({...row,stage:row.stageLabel,rvol:row.rvol??'—',rsRating:row.rsRating??'—'}));
   const THEMATIC_ETF_DATA=(feed.data?.rows||[]).filter(row=>Number.isFinite(row.price));
   const emptyDiag=symbol=>({symbol,name:symbol,stage:null,healthScore:'—',stageLabel:'รอข้อมูล',trendSummary:'กำลังอ่านข้อมูลจากผู้ให้บริการ',actionPlan:'รอแท่งราคาครบก่อนประเมิน',caution:'ยังไม่มีผลประเมิน',rsRating:'—'});
-  const US_AI_STAGE_DIAGNOSTICS=Object.fromEntries(['NVDA','PLTR','AAPL','TSLA','INTC','NKE','BA','BABA','SMCI'].map(s=>[s,diagnostic.data?.rows?.find(r=>r.symbol===s)||emptyDiag(s)]));
+  const diagSourceRows=(feed.data?.rows?.length?feed.data.rows:(diagnostic.data?.rows||[]));
+  const US_AI_STAGE_DIAGNOSTICS=Object.fromEntries(['NVDA','PLTR','AAPL','MSFT','META','AMZN','AVGO','TSLA'].map(s=>[s,diagSourceRows.find(r=>r.symbol===s)||diagnostic.data?.rows?.find(r=>r.symbol===s)||emptyDiag(s)]));
   const sizingLoaded=useRef(null);
   useEffect(()=>setFeedPage(1),[searchQuery]);
 
@@ -909,7 +910,7 @@ export default function UsStage2Desk({
 
             <div className={styles.diagTickerPills}>
               <span className={styles.diagTickerLabel}>หุ้นยอดนิยมของนักลงทุนไทย:</span>
-              {['NVDA', 'PLTR', 'AAPL', 'TSLA', 'INTC', 'NKE', 'BA', 'BABA', 'SMCI'].map(sym => {
+              {['NVDA', 'PLTR', 'AAPL', 'MSFT', 'META', 'AMZN', 'AVGO', 'TSLA'].map(sym => {
                 const diag = US_AI_STAGE_DIAGNOSTICS[sym];
                 const isSelected = selectedDiagTicker === sym;
                 return (

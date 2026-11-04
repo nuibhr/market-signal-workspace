@@ -225,53 +225,30 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
 
    <div className={styles.recentWinnersBox}>
     <div className={styles.recentWinnersTitle}>
-     <span>⚡ ไม้เด่นล่าสุดที่เพิ่งปิดทำกำไร (Recent 2R Wins)</span>
+     <span>⚡ หุ้นไทยเด่นพร้อมแผน 2R จากราคาปิดจริงล่าสุด (Live Settrade EOD)</span>
     </div>
     <div className={styles.winnerCardsGrid}>
-     <div className={styles.winnerCard}>
-      <div className={styles.winnerCardHead}>
-       <InstrumentLogo asset={{market:'thai',symbol:'DELTA'}}/>
-       <div>
-        <strong>DELTA</strong>
-        <small>ชิ้นส่วนอิเล็กทรอนิกส์ · SET50</small>
+     {(topFocus.length ? topFocus : rows.filter(r => r.price > 0)).slice(0, 3).map(item => {
+      const entry = item.plan?.entry ?? Number((item.price * 0.985).toFixed(2));
+      const tp1 = item.plan?.minimumTarget ?? Number((entry * 1.06).toFixed(2));
+      const gainPct = entry > 0 ? (((tp1 - entry) / entry) * 100).toFixed(1) : '6.0';
+      return (
+       <div key={item.symbol} className={styles.winnerCard} onClick={() => onSelect?.(item.symbol)} style={{ cursor: 'pointer' }}>
+        <div className={styles.winnerCardHead}>
+         <InstrumentLogo asset={{market:'thai',symbol:item.symbol}}/>
+         <div>
+          <strong>{item.symbol} · ฿{n(item.price)}</strong>
+          <small>{item.name} · {item.section==='SET100'?'SET100':'SET'}</small>
+         </div>
+         <span className={styles.winnerBadge}>เป้า +{gainPct}% 🎯</span>
+        </div>
+        <div className={styles.winnerDetails}>
+         <span>แผนรับ ฿{n(entry)} ➔ เป้า 2R ฿{n(tp1)}</span>
+         <small>ราคาปิดจริง · {item.priceDay ?? 'ล่าสุด'}</small>
+        </div>
        </div>
-       <span className={styles.winnerBadge}>+13.9% 🎯</span>
-      </div>
-      <div className={styles.winnerDetails}>
-       <span>เข้า ฿82.50 ➔ ปิดเป้า ฿94.00</span>
-       <small>ปิดทำกำไรครบไม้ · 28 ต.ค.</small>
-      </div>
-     </div>
-
-     <div className={styles.winnerCard}>
-      <div className={styles.winnerCardHead}>
-       <InstrumentLogo asset={{market:'thai',symbol:'BH'}}/>
-       <div>
-        <strong>BH</strong>
-        <small>การแพทย์ &amp; โรงพยาบาล · SET50</small>
-       </div>
-       <span className={styles.winnerBadge}>+7.4% 🎯</span>
-      </div>
-      <div className={styles.winnerDetails}>
-       <span>เข้า ฿242.00 ➔ ปิดเป้า ฿260.00</span>
-       <small>ปิดทำกำไรครบไม้ · 25 ต.ค.</small>
-      </div>
-     </div>
-
-     <div className={styles.winnerCard}>
-      <div className={styles.winnerCardHead}>
-       <InstrumentLogo asset={{market:'thai',symbol:'HANA'}}/>
-       <div>
-        <strong>HANA</strong>
-        <small>เทคโนโลยี &amp; ชิ้นส่วน · SET100</small>
-       </div>
-       <span className={styles.winnerBadge}>+8.5% 🎯</span>
-      </div>
-      <div className={styles.winnerDetails}>
-       <span>เข้า ฿38.25 ➔ ปิดเป้า ฿41.50</span>
-       <small>ปิดทำกำไรครบไม้ · 23 ต.ค.</small>
-      </div>
-     </div>
+      );
+     })}
     </div>
    </div>
   </section>
@@ -313,7 +290,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
     </div>
     <div className={styles.doctorQuickPills}>
      <span>หุ้นยอดนิยม:</span>
-     {['DELTA','AOT','GULF','CPALL','BDMS','KBANK','PTT'].map(sym=>(
+     {['DELTA','ADVANC','GULF','CPALL','BDMS','KBANK','PTT','SCB'].map(sym=>(
       <button
        key={sym}
        type="button"

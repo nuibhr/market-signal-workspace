@@ -206,7 +206,33 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     const controller = new AbortController();
     fetch('/api/membership', { cache: 'no-store', signal: controller.signal })
       .then(response => response.ok ? response.json() : null)
-      .then(payload => { if (!controller.signal.aborted) { setRights(payload?.rights ?? null); setMemberAccount(payload?.account ?? null); setAccountConfigured(Boolean(payload?.configured)); setAccountReady(Boolean(payload)); } })
+      .then(async payload => {
+        if (controller.signal.aborted) return;
+        let finalPayload = payload;
+        if (payload?.demoEnabled && !payload?.rights?.authenticated) {
+          try {
+            const demoRes = await fetch('/api/auth/demo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: 'ultimate' }),
+              signal: controller.signal,
+            });
+            if (demoRes.ok) {
+              const refreshed = await fetch('/api/membership', { cache: 'no-store', signal: controller.signal });
+              if (refreshed.ok) {
+                finalPayload = await refreshed.json();
+                setReloadNonce(v => v + 1);
+              }
+            }
+          } catch {}
+        }
+        if (!controller.signal.aborted) {
+          setRights(finalPayload?.rights ?? null);
+          setMemberAccount(finalPayload?.account ?? null);
+          setAccountConfigured(Boolean(finalPayload?.configured));
+          setAccountReady(Boolean(finalPayload));
+        }
+      })
       .catch(() => {});
     return () => controller.abort();
   }, []);
@@ -553,13 +579,14 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           )}
           {marketId==='tfex' && (
             <div id="section-overview">
-              <TfexTerminal selectedSymbol={asset.symbol} onSelect={selectAsset} />
+              <TfexTerminal key={`tfex-${Boolean(rights?.authenticated)}`} selectedSymbol={asset.symbol} onSelect={selectAsset} />
             </div>
           )}
           {marketId==='us' && (
             <div id="section-overview">
               {usTab !== 'chart' && (
                 <UsStage2Desk
+                  key={`us-${Boolean(rights?.authenticated)}`}
                   selectedSymbol={asset.symbol}
                   onSelect={selectAsset}
                   favorites={favorites}

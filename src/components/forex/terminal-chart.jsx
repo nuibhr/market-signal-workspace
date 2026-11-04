@@ -90,7 +90,8 @@ export default function TerminalChart({
   const frame = controlledFrame ?? localFrame;
   const setFrame = onFrame ?? setLocalFrame;
   const realBars =
-    chart?.broker_symbol === instrument.broker_symbol &&
+    (chart?.broker_symbol === instrument.broker_symbol ||
+      (instrument.canonical_symbol && chart?.canonical_symbol === instrument.canonical_symbol)) &&
     chart?.timeframe === frame
       ? chart.bars
       : null;

@@ -100,6 +100,8 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
   );
   const bridge = useMt5Connection(selection.broker_symbol, frame, {enabled:viewer?.dataOwner===true});
   const [ownerPreview,setOwnerPreview]=useState(false);
+  const [publicQuotes,setPublicQuotes]=useState({});
+  const [publicChart,setPublicChart]=useState(null);
   useEffect(()=>{const c=new AbortController();fetch('/api/owner-preview/status',{cache:'no-store',signal:c.signal}).then(r=>r.json()).then(v=>{if(!c.signal.aborted)setOwnerPreview(v.active===true);}).catch(()=>{});return()=>c.abort();},[]);
   const hasMt5 = Boolean(bridge.snapshot?.instruments.length);
   const universe = (hasMt5 ? bridge.snapshot.instruments : STARTER_UNIVERSE).filter(i => CORE_FOREX.includes(i.canonical_symbol));
@@ -115,6 +117,32 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
   useEffect(() => {
     if (hasMt5 && selection.id !== selected.id) setSelected(selected);
   }, [hasMt5, selection.id, selected]);
+  useEffect(() => {
+    if (hasMt5 || typeof window === "undefined" || typeof fetch !== "function") return;
+    const controller = new AbortController();
+    const sym = selected.display_symbol || selected.canonical_symbol || "XAU/USD";
+    fetch(`/api/forex/studio/plans?candles=1&tickers=1&symbol=${encodeURIComponent(sym)}&timeframe=${encodeURIComponent(frame)}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (controller.signal.aborted || !data) return;
+        if (data.quotes && typeof data.quotes === "object") {
+          setPublicQuotes((prev) => ({ ...prev, ...data.quotes }));
+        }
+        if (Array.isArray(data.bars) && data.bars.length > 0) {
+          setPublicChart({
+            broker_symbol: selected.broker_symbol,
+            canonical_symbol: selected.canonical_symbol,
+            timeframe: frame,
+            bars: data.bars,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [hasMt5, selected.canonical_symbol, selected.display_symbol, selected.broker_symbol, frame]);
   const [entries, setEntries] = useState([]);
   const [alertSettings, setAlertSettings] = useState({
     Price: false,
@@ -140,6 +168,7 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
     setSection("chart");
   };
   const current = SECTIONS.find((item) => item.id === section);
+  const mergedQuotes = hasMt5 ? bridge.quotes : { ...publicQuotes, ...bridge.quotes };
   const scannerProps = {
     instruments: universe,
     visible,
@@ -154,7 +183,7 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
     favoritesOnly,
     onFavoritesOnly: setFavoritesOnly,
     preview,
-    quotes: bridge.quotes,
+    quotes: mergedQuotes,
     mt5: hasMt5,
     onNavigate: setSection,
   };
@@ -165,10 +194,12 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
     preview,
     frame,
     onFrame: setFrame,
-    quote: Object.hasOwn(bridge.quotes, selected.broker_symbol)
-      ? bridge.quotes[selected.broker_symbol]
-      : null,
-    chart: bridge.chart,
+    quote: Object.hasOwn(mergedQuotes, selected.broker_symbol)
+      ? mergedQuotes[selected.broker_symbol]
+      : Object.hasOwn(mergedQuotes, selected.canonical_symbol)
+        ? mergedQuotes[selected.canonical_symbol]
+        : null,
+    chart: hasMt5 ? bridge.chart : publicChart ?? bridge.chart,
     mt5: hasMt5,
     favorites,
     onFavorite: toggleFavorite,
@@ -242,9 +273,11 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
                 quote = item
                   ? preview
                     ? demoQuote(item)
-                    : Object.hasOwn(bridge.quotes, item.broker_symbol)
-                      ? bridge.quotes[item.broker_symbol]
-                      : null
+                    : Object.hasOwn(mergedQuotes, item.broker_symbol)
+                      ? mergedQuotes[item.broker_symbol]
+                      : Object.hasOwn(mergedQuotes, item.canonical_symbol)
+                        ? mergedQuotes[item.canonical_symbol]
+                        : null
                   : null;
               if (!item) return null;
               return (
