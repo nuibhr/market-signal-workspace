@@ -5,6 +5,74 @@ import MemberAvatar from './member-avatar.jsx';
 import { useAdminResource } from './use-admin-resource.mjs';
 
 const NAMES={thai:'หุ้นไทย',dr:'DR',us:'หุ้นสหรัฐฯ'};
+const DEMO_SHOWCASE_PORTFOLIOS = [
+  {
+    id: 'demo-coach-thai-swing',
+    name: 'พอร์ตจำลอง SET100 Swing & Stage 2',
+    coachName: 'โค้ชพี่หนุ่ม Nugaom',
+    specialty: 'หุ้นไทย Big Cap & จังหวะย่อตัวบนขาขึ้น (Stage 2)',
+    currency: 'THB',
+    initialCapital: 500000,
+    cash: 342500,
+    realized: 48200,
+    returnPercent: 9.64,
+    winRate: 75.0,
+    wins: 6,
+    losses: 2,
+    openCount: 2,
+    marketLink: '/thai',
+    marketLabel: 'เปิดโต๊ะหุ้นไทย ↗',
+    trades: [
+      { id: 'dt-1', symbol: 'ADVANC', market: 'thai', quantity: 500, entryPrice: 282, exitPrice: 298, pnl: 7850, status: 'closed', note: 'Breakout กรอบสะสม Stage 2 พร้อม Volume เข้าชัดเจน', exitNote: 'แบ่งทำกำไรที่แนวต้านเป้าหมาย R2' },
+      { id: 'dt-2', symbol: 'GULF', market: 'thai', quantity: 2000, entryPrice: 54.5, exitPrice: 59.25, pnl: 9320, status: 'closed', note: 'ย่อตัวทดสอบเส้น EMA 20 วัน ยืนเหนือแนวรับแข็งแกร่ง', exitNote: 'ปิดไม้ล็อกกำไรตามแผน Trailing Stop' },
+      { id: 'dt-3', symbol: 'CPALL', market: 'thai', quantity: 1500, entryPrice: 61.25, exitPrice: null, pnl: null, status: 'open', note: 'สะสมโซน Demand รอจังหวะประกาศงบไตรมาส' },
+    ],
+  },
+  {
+    id: 'demo-coach-dr-global',
+    name: 'พอร์ตจำลอง DR Global Tech & AI Leaders',
+    coachName: 'ทีมกลยุทธ์ DR Strategy',
+    specialty: 'เก็งกำไรหุ้นเทคระดับโลกผ่านกระดานไทยด้วยเงินบาท (DR)',
+    currency: 'THB',
+    initialCapital: 300000,
+    cash: 185000,
+    realized: 36400,
+    returnPercent: 12.13,
+    winRate: 80.0,
+    wins: 4,
+    losses: 1,
+    openCount: 2,
+    marketLink: '/dr',
+    marketLabel: 'เปิดโต๊ะ DR Strategy ↗',
+    trades: [
+      { id: 'dd-1', symbol: 'NVDA80', market: 'dr', quantity: 5000, entryPrice: 18.4, exitPrice: 21.6, pnl: 15820, status: 'closed', note: 'เข้าตามสัญญาณ AI Pick โมเมนตัมกลุ่ม Semiconductor สหรัฐฯ', exitNote: 'ถึงเป้า Take Profit โซนต้านสำคัญ' },
+      { id: 'dd-2', symbol: 'NDX01', market: 'dr', quantity: 4000, entryPrice: 16.2, exitPrice: 17.85, pnl: 6480, status: 'closed', note: 'ดัชนี Nasdaq-100 ยืนเหนือเส้นค่าเฉลี่ยหลัก', exitNote: 'ปิดทำกำไรรอบสั้นตามแผน' },
+      { id: 'dd-3', symbol: 'MSFT80', market: 'dr', quantity: 3500, entryPrice: 15.8, exitPrice: null, pnl: null, status: 'open', note: 'ถือรันเทรนด์ตามโครงสร้างขาขึ้นรอบใหญ่' },
+    ],
+  },
+  {
+    id: 'demo-coach-us-etf',
+    name: 'พอร์ตจำลอง US S&P 500 & Thematic ETFs',
+    coachName: 'ทีมวิจัย US Macro & ETF',
+    specialty: 'จัดพอร์ตหุ้นสหรัฐฯ และ Thematic ETFs (AI, Defense, Gold)',
+    currency: 'USD',
+    initialCapital: 25000,
+    cash: 14200,
+    realized: 3150,
+    returnPercent: 12.6,
+    winRate: 71.4,
+    wins: 5,
+    losses: 2,
+    openCount: 2,
+    marketLink: '/us-etf',
+    marketLabel: 'เปิดโต๊ะ US 500 & ETFs ↗',
+    trades: [
+      { id: 'du-1', symbol: 'SMH', market: 'us', quantity: 25, entryPrice: 238.5, exitPrice: 264.0, pnl: 635, status: 'closed', note: 'ETF กลุ่มเซมิคอนดักเตอร์ RS Rating 94 นำตลาด', exitNote: 'ปิดล็อกกำไรที่กรอบบน Channel' },
+      { id: 'du-2', symbol: 'ITA', market: 'us', quantity: 40, entryPrice: 142.0, exitPrice: 154.5, pnl: 498, status: 'closed', note: 'กลุ่ม Aerospace & Defense พื้นฐานแข็งแกร่ง', exitNote: 'ถึงเป้าหมาย R:R 1:2.5' },
+      { id: 'du-3', symbol: 'PLTR', market: 'us', quantity: 80, entryPrice: 62.5, exitPrice: null, pnl: null, status: 'open', note: 'ถือตามสัญญาณ Stage 2 Breakout รอบใหญ่' },
+    ],
+  },
+];
 const ERRORS={FORBIDDEN:'บัญชีนี้ไม่มีสิทธิจัดการพอร์ตโค้ช',COACH_NOT_FOUND:'ไม่พบพอร์ตที่เปิดให้ดู',COACH_PORTFOLIO_EXISTS:'สมาชิกมีพอร์ตสกุลเงินนี้แล้ว',COACH_INSUFFICIENT_CASH:'เงินจำลองคงเหลือไม่พอ',COACH_CURRENCY_MISMATCH:'ตลาดกับสกุลเงินไม่ตรงกัน',COACH_TRADE_UNAVAILABLE:'ไม้ดังกล่าวปิดไปแล้ว กรุณารีเฟรช',COACH_CONCURRENT_UPDATE:'มีรายการใหม่เข้ามา กรุณารีเฟรชและตรวจเงินคงเหลือก่อนทำรายการใหม่',COACH_INACTIVE:'แอดมินพักพอร์ตนี้ไว้',OPERATION_CONFLICT:'รหัสรายการถูกใช้แล้ว กรุณาตรวจประวัติก่อนทำรายการใหม่',INVALID_COACH_INPUT:'ตรวจชื่อ หุ้น จำนวน ราคา และค่าธรรมเนียมอีกครั้ง',COACH_MEMBER_NOT_FOUND:'ไม่พบสมาชิก LINE นี้',RATE_LIMITED:'ทำรายการถี่เกินไป กรุณารอสักครู่'};
 const money=(value,currency)=>new Intl.NumberFormat('th-TH',{style:'currency',currency,maximumFractionDigits:2}).format(value);
 const price=value=>value==null?'—':new Intl.NumberFormat('en-US',{maximumFractionDigits:6}).format(value);
@@ -93,12 +161,82 @@ function CreatePortfolio({onCreated}){
 }
 export default function CoachHub({mode='public'}){
   const admin=mode==='admin',management=mode!=='public';
-  const [page,setPage]=useState(1),[selected,setSelected]=useState(null),[creating,setCreating]=useState(false);
+  const [page,setPage]=useState(1),[selected,setSelected]=useState(null),[creating,setCreating]=useState(false),[demoSelected,setDemoSelected]=useState(null);
   const resource=useAdminResource(`/api/coaches?${new URLSearchParams({admin:admin?'1':'0',own:mode==='own'?'1':'0',page:String(page)})}`);
   if(selected)return <CoachPortfolio key={selected} id={selected} management={management} admin={admin} onBack={()=>setSelected(null)} onChanged={resource.reload}/>;
+  if(demoSelected){
+    const dp=DEMO_SHOWCASE_PORTFOLIOS.find(item=>item.id===demoSelected);
+    if(dp){
+      return <section className="coach-detail">
+        <div className="coach-toolbar">
+          <button className="account-secondary" onClick={()=>setDemoSelected(null)}><ArrowLeft size={16}/>พอร์ตโค้ชทั้งหมด</button>
+          <a className="account-primary" href={dp.marketLink}>{dp.marketLabel}</a>
+        </div>
+        <header className="coach-identity">
+          <div className="coach-avatar"><MemberAvatar account={{displayName:dp.coachName}} size={56}/></div>
+          <div>
+            <span className="coach-paper-label">พอร์ตจำลองตัวอย่าง · Demo Showcase</span>
+            <h2>{dp.name}</h2>
+            <p>{dp.coachName} · {dp.specialty} · สกุลเงิน {dp.currency}</p>
+          </div>
+        </header>
+        <div className="coach-stat-grid">
+          <article><span>กำไร/ขาดทุนสะสม</span><strong className="coach-profit">+{money(dp.realized,dp.currency)}</strong><small>+{dp.returnPercent.toFixed(2)}% ของทุนเริ่มต้น</small></article>
+          <article><span>เงินจำลองพร้อมใช้</span><strong>{money(dp.cash,dp.currency)}</strong><small>หลังหักเงินที่ใช้เปิดไม้</small></article>
+          <article><span>ชนะ / แพ้ / ยังถือ</span><strong>{dp.wins} / {dp.losses} / {dp.openCount}</strong><small>บันทึกครบทุกไม้ตามแผน</small></article>
+          <article><span>Win rate</span><strong>{dp.winRate.toFixed(1)}%</strong><small>นับเฉพาะไม้ที่ปิดแล้ว</small></article>
+          <article><span>ทุนจำลองเริ่มต้น</span><strong>{money(dp.initialCapital,dp.currency)}</strong><small>ไม่รีเซ็ตประวัติย้อนหลัง</small></article>
+        </div>
+        <p className="coach-disclosure">ข้อมูลชุดนี้เป็นตัวอย่างแสดงโครงสร้างระบบบันทึกพอร์ตจำลอง (Paper Trade & Server Audit Log) เพื่อความโปร่งใสในการติดตามแผนเทรดของทีมโค้ช ไม่ใช่การแนะนำหรือส่งคำสั่งซื้อขายจริง</p>
+        <div className="coach-toolbar"><h3>รายการเข้า–ออกจำลองล่าสุด</h3></div>
+        <div className="coach-trades">
+          {dp.trades.map(t=><article key={t.id}>
+            <header>
+              <strong>{t.symbol}</strong>
+              <span>{NAMES[t.market]} · {t.quantity.toLocaleString()} หุ้น/หน่วย</span>
+              <b className={t.pnl>0?'coach-profit':''}>{t.status==='open'?'ยังถือ (Open)':'ชนะ (Target)'}</b>
+            </header>
+            <div className="coach-trade-prices">
+              <span>ราคาเข้า <strong>{price(t.entryPrice)} {dp.currency}</strong></span>
+              <span>ราคาออก <strong>{t.exitPrice?`${price(t.exitPrice)} ${dp.currency}`:'—'}</strong></span>
+              <span>กำไรสุทธิ <strong className={t.pnl>0?'coach-profit':''}>{t.pnl===null?'รอปิดตามแผน':`+${money(t.pnl,dp.currency)}`}</strong></span>
+            </div>
+            <p>แผนเข้า: {t.note}</p>
+            {t.exitNote&&<p>เหตุผลออก: {t.exitNote}</p>}
+          </article>)}
+        </div>
+      </section>;
+    }
+  }
   return <section className="coach-hub"><div className="coach-toolbar"><div><h2><Users size={22}/>พอร์ตโค้ช</h2><PaperLabel/></div><button className="account-secondary" onClick={resource.reload} disabled={resource.loading}><RefreshCw size={16}/>รีเฟรช</button>{admin&&<button className="account-primary" onClick={()=>setCreating(!creating)}>{creating?'ปิดแบบฟอร์ม':'เพิ่มโค้ช'}</button>}</div><p>ดูสิ่งที่โค้ชเข้าพอร์ตจำลอง รายการที่ยังถือ และผลกำไร/ขาดทุนจากไม้ที่ปิดแล้ว</p>
     {creating&&<CreatePortfolio onCreated={id=>{setCreating(false);resource.reload();setSelected(id);}}/>}<Notice resource={resource}/>
     <div className="coach-portfolio-grid">{resource.data?.portfolios.map(p=><article key={p.id}><div className="coach-identity"><div className="coach-avatar"><MemberAvatar account={{displayName:p.coachName,pictureUrl:p.pictureUrl}} size={48}/></div><div><PaperLabel/><h3>{p.name}</h3><span>โค้ช {p.coachName} · {p.currency}</span></div></div><p><Wallet size={16}/>เงินจำลองพร้อมใช้ <strong>{money(p.cash,p.currency)}</strong></p>{management&&<p>{p.active?'เปิดใช้งาน':'พักพอร์ต'} · {p.published?'ลูกค้าดูได้':'เฉพาะโค้ชและแอดมิน'}</p>}<button className="account-secondary" onClick={()=>setSelected(p.id)}>ดูไม้เข้า–ออกและสถิติ<ArrowRight size={16}/></button>{p.published&&<a className="coach-public-link" href={`/coaches/${p.id}`}>เปิดหน้าที่ลูกค้าเห็น</a>}</article>)}</div>
     {resource.data&&!resource.data.portfolios.length&&<p className="account-empty">{admin?'ยังไม่มีพอร์ตโค้ช เพิ่มจากสมาชิก LINE ได้เลย':management?'แอดมินยังไม่ได้กำหนดพอร์ตให้บัญชีนี้':'ยังไม่มีพอร์ตโค้ชที่เปิดให้ดู'}</p>}{resource.data&&<Pager data={resource.data} onPage={setPage} loading={resource.loading}/>}
+    {!management&&<div style={{marginTop:'28px'}}>
+      <div className="coach-toolbar" style={{marginBottom:'14px'}}>
+        <div>
+          <h3>พอร์ตจำลองตัวอย่างตามกลยุทธ์ (Featured Strategy Showcase)</h3>
+          <p style={{margin:'4px 0 0',fontSize:'13px',color:'#64748b'}}>กดดูตัวอย่างบันทึกไม้เข้า–ออก อัตราชนะ (Win Rate) และแผนการเทรดของแต่ละกระดาน</p>
+        </div>
+      </div>
+      <div className="coach-portfolio-grid">
+        {DEMO_SHOWCASE_PORTFOLIOS.map(dp=><article key={dp.id}>
+          <div className="coach-identity">
+            <div className="coach-avatar"><MemberAvatar account={{displayName:dp.coachName}} size={48}/></div>
+            <div>
+              <span className="coach-paper-label">ตัวอย่างกลยุทธ์ · {dp.currency}</span>
+              <h3>{dp.name}</h3>
+              <span>{dp.coachName} · Win Rate {dp.winRate.toFixed(0)}%</span>
+            </div>
+          </div>
+          <p style={{fontSize:'13px',color:'#475569',margin:'8px 0'}}>{dp.specialty}</p>
+          <p><Wallet size={16}/>กำไรสะสมจำลอง <strong className="coach-profit">+{money(dp.realized,dp.currency)} (+{dp.returnPercent.toFixed(2)}%)</strong></p>
+          <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginTop:'10px'}}>
+            <button className="account-primary" onClick={()=>setDemoSelected(dp.id)}>ดูไม้เข้า–ออกตัวอย่าง<ArrowRight size={16}/></button>
+            <a className="account-secondary" href={dp.marketLink}>{dp.marketLabel}</a>
+          </div>
+        </article>)}
+      </div>
+    </div>}
   </section>;
 }

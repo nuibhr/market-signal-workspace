@@ -71,16 +71,16 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
       <p className="package-savings-note">✨ จ่าย 10 เดือน ได้ใช้ 12 เดือน (ประหยัด 318 บาท)</p>
      )}
     </div>
-    <span className="package-ai-quota">โควตาถาม AI: 15 คำถาม / วัน</span>
+    <span className="package-ai-quota">โควตาถาม AI: 10 คำถาม / วัน</span>
     <ul className="package-feature-list">
-     <li><Check size={16} className="feat-icon-ok"/> สแกนหุ้นขาขึ้น Stage 2 (หุ้น SET100)</li>
-     <li><Check size={16} className="feat-icon-ok"/> ค้นหาแนวรับ-แนวต้านด่วน 10 ตัว / วัน</li>
+     <li><Check size={16} className="feat-icon-ok"/> สแกนหุ้นขาขึ้น Stage 2 (SET100 &amp; DR พื้นฐาน 3 หุ้น/รอบ)</li>
+     <li><Check size={16} className="feat-icon-ok"/> ค้นหาแนวรับ-แนวต้านด่วน (Stock Doctor)</li>
      <li><Check size={16} className="feat-icon-ok"/> โต๊ะคำนวณไม้ 2R Position Sizing พื้นฐาน</li>
      <li><Check size={16} className="feat-icon-ok"/> ดูกราฟเทคนิค &amp; อินดิเคเตอร์ D1/4H</li>
      <li className="is-disabled"><X size={16} className="feat-icon-no"/> การบ้านหุ้นเด่นส่งเข้า Telegram VIP</li>
-     <li className="is-disabled"><X size={16} className="feat-icon-no"/> ปลดล็อก DR80, หุ้นสหรัฐฯ, TFEX</li>
-     <li className="is-disabled"><X size={16} className="feat-icon-no"/> เสียงแจ้งเตือน Real-Time ทันที</li>
-     <li className="is-disabled"><X size={16} className="feat-icon-no"/> สิทธิ์เข้ากลุ่มปิด VIP Community</li>
+     <li className="is-disabled"><X size={16} className="feat-icon-no"/> DR Arbitrage Fair Value Alert เต็มระบบ</li>
+     <li className="is-disabled"><X size={16} className="feat-icon-no"/> เสียงแจ้งเตือนน้องนักออม AI ทันที</li>
+     <li className="is-disabled"><X size={16} className="feat-icon-no"/> สิทธิ์ปลดล็อกโควตา AI 50 คำถาม/วัน</li>
     </ul>
     {!account?<a href="/api/auth/line/start" className="account-secondary">เข้าสู่ระบบ LINE</a>:<button className="account-secondary" disabled={Boolean(busy)||!catalog?.configured} onClick={()=>go(managed?'portal':'checkout',starterPlan.id)}>{busy===starterPlan.id?'กำลังเปิด…':rights?.planId==='starter'?'แพ็กเกจปัจจุบัน':managed?'เปลี่ยนเป็น BASIC':'สมัครแพ็กเกจ BASIC'} <ArrowUpRight size={15}/></button>}
    </article>
@@ -101,19 +101,29 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
       <p className="package-savings-note">🔥 ฟรี 2 เดือนเต็ม! (ประหยัดทันที 798 บาท · เฉลี่ย ฿332/ด.)</p>
      )}
     </div>
-    <span className="package-ai-quota">โควตาถาม AI: 60 คำถาม / วัน</span>
+    <span className="package-ai-quota">โควตาถาม AI: 50 คำถาม / วัน</span>
     <ul className="package-feature-list">
-     <li><Check size={16} className="feat-icon-ok"/> <b>ปลดล็อกครบทุกตลาด:</b> หุ้นไทย + DR80 + US + TFEX</li>
+     <li><Check size={16} className="feat-icon-ok"/> <b>ปลดล็อกครบทุกตลาด:</b> หุ้นไทย + DR80 + Forex + TFEX + US</li>
      <li><Check size={16} className="feat-icon-ok"/> <b>การบ้านหุ้นเด่นส่งเข้า Telegram VIP ทุกเย็น 17:00 น.</b></li>
      <li><Check size={16} className="feat-icon-ok"/> <b>ค้นหาแนวรับ-แนวต้านด่วน ไม่จำกัดตัว</b></li>
-     <li><Check size={16} className="feat-icon-ok"/> <b>เสียงแจ้งเตือนสไตล์เพื่อนกัน Real-Time ทันที</b></li>
+     <li><Check size={16} className="feat-icon-ok"/> <b>เสียงแจ้งเตือนน้องนักออม AI ภาษาไทยสดทันที</b></li>
      <li><Check size={16} className="feat-icon-ok"/> โต๊ะคำนวณไม้ 2R Full Option คุมความเสี่ยง</li>
      <li><Check size={16} className="feat-icon-ok"/> ระบบเกราะคุ้มครองเงินต้น (เตือนหุ้นดอย Stage 4)</li>
-     <li><Check size={16} className="feat-icon-ok"/> <b>สิทธิ์เข้ากลุ่มปิด VIP Telegram Community</b></li>
-     <li><Check size={16} className="feat-icon-ok"/> สิทธิ์ขอเพิ่มฟีเจอร์ก่อนใคร</li>
+     <li><Check size={16} className="feat-icon-ok"/> <b>สิทธิ์เข้าห้องพูดคุยโค้ช VIP Community</b></li>
+     <li><Check size={16} className="feat-icon-ok"/> โควตาถาม AI ลึกระดับ Pro 50 คำถาม/วัน</li>
     </ul>
     {!account?<a href="/api/auth/line/start" className="account-primary">เข้าสู่ระบบ LINE</a>:<button className="account-primary" disabled={Boolean(busy)||!catalog?.configured} onClick={()=>go(managed?'portal':'checkout',proPlan.id)}>{busy===proPlan.id?'กำลังเปิด…':rights?.planId==='pro'?'แพ็กเกจปัจจุบัน':managed?'อัปเกรดเป็น PRO VIP':'สมัคร PRO VIP'} <ArrowUpRight size={15}/></button>}
    </article>
+  </div>
+
+  {/* ── Partner Broker VIP Privilege Strip (Pi 003 & Trinity 022) ── */}
+  <div style={{ margin: '18px 0 24px', padding: '18px 22px', borderRadius: '18px', background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(56, 189, 248, 0.14) 100%)', boxShadow: 'inset 0 1px 1px rgba(114, 223, 179, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+   <div>
+    <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399', letterSpacing: '0.8px', display: 'block', marginBottom: '4px' }}>🏛️ PARTNER BROKER VIP PRIVILEGE</span>
+    <strong style={{ color: '#ffffff', fontSize: '15px', display: 'block' }}>เปิดพอร์ตหุ้นไทย &amp; DR กับพันธมิตร บล.พาย (003) หรือ บล.ทรีนีตี้ (022) รับโค้ด VIP ฟรี!</strong>
+    <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: '#cbd5e1' }}>ลูกค้าที่เปิดบัญชีผ่านแพลตฟอร์มจะได้รับโค้ดรายเดือน (NUG-...) จากทีมงานเพื่อปลดล็อกสิทธิ์ 30 วัน พร้อมเชื่อมต่อ Settrade Open API</p>
+   </div>
+   <a href="/thai#section-portfolio" className="account-secondary" style={{ whiteSpace: 'nowrap' }}>ยื่นเปิดพอร์ต VIP พาร์ทเนอร์ ↗</a>
   </div>
 
   {/* ── Clear Feature Comparison Matrix Table ── */}
@@ -133,13 +143,13 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
      </thead>
      <tbody>
       <tr>
-       <td><b>จักรวาลหุ้นที่สแกนได้</b></td>
-       <td className="col-basic">เฉพาะ SET100</td>
-       <td className="col-vip">SET100 + mai + DR80 + หุ้นนอก</td>
+       <td><b>จักรวาลสินทรัพย์และโควตาสแกน</b></td>
+       <td className="col-basic">3 หุ้นเด่น / รอบสแกน</td>
+       <td className="col-vip">ครบทุกตลาด (สูงสุด 8 หุ้น/รอบ)</td>
       </tr>
       <tr>
        <td><b>เช็คแนวรับ-แนวต้านด่วน (Stock Doctor)</b></td>
-       <td className="col-basic">จำกัด 10 ตัว / วัน</td>
+       <td className="col-basic"><span className="check-yes"><Check size={14}/> ปลดล็อก</span></td>
        <td className="col-vip"><span className="check-yes"><Check size={14}/> ไม่จำกัดตัว</span></td>
       </tr>
       <tr>
@@ -148,9 +158,9 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
        <td className="col-vip"><span className="check-yes"><Check size={14}/> ส่งทุกเย็น 17:00 น.</span></td>
       </tr>
       <tr>
-       <td><b>เสียงแจ้งเตือนจุดซื้อ/เป้าขาย (Real-Time)</b></td>
-       <td className="col-basic">ฟีดหน่วง 15 นาที</td>
-       <td className="col-vip"><span className="check-yes"><Check size={14}/> แจ้งเตือนสดทันที</span></td>
+       <td><b>เสียงแจ้งเตือนจุดซื้อ/เป้าขาย (น้องนักออม AI)</b></td>
+       <td className="col-basic">แจ้งเตือนมาตรฐาน</td>
+       <td className="col-vip"><span className="check-yes"><Check size={14}/> เสียงพากย์สดทันที</span></td>
       </tr>
       <tr>
        <td><b>โต๊ะคำนวณไม้ 2R Position Sizing</b></td>
@@ -164,18 +174,18 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
       </tr>
       <tr>
        <td><b>โควตาถามคำถามน้องนักออม AI</b></td>
-       <td className="col-basic">15 คำถาม / วัน</td>
-       <td className="col-vip">60 คำถาม / วัน</td>
+       <td className="col-basic">10 คำถาม / วัน</td>
+       <td className="col-vip">50 คำถาม / วัน</td>
       </tr>
       <tr>
-       <td><b>สิทธิ์เข้าถึงตลาด DR, หุ้นสหรัฐฯ, TFEX</b></td>
-       <td className="col-basic"><span className="cross-no"><X size={14}/> ไม่ได้รับ</span></td>
+       <td><b>สิทธิ์เข้าถึงตลาด DR, Forex, TFEX, หุ้นสหรัฐฯ</b></td>
+       <td className="col-basic">พื้นฐาน</td>
        <td className="col-vip"><span className="check-yes"><Check size={14}/> ปลดล็อกครบทุกตลาด</span></td>
       </tr>
       <tr>
-       <td><b>สิทธิ์เข้ากลุ่มปิด VIP Telegram Community</b></td>
-       <td className="col-basic"><span className="cross-no"><X size={14}/> ไม่ได้รับ</span></td>
-       <td className="col-vip"><span className="check-yes"><Check size={14}/> สิทธิ์เข้ากลุ่มทันที</span></td>
+       <td><b>สิทธิ์เข้าห้องพูดคุยโค้ช VIP Community</b></td>
+       <td className="col-basic">ดูข้อมูลพื้นฐาน</td>
+       <td className="col-vip"><span className="check-yes"><Check size={14}/> สิทธิ์พูดคุยเต็มรูปแบบ</span></td>
       </tr>
      </tbody>
     </table>

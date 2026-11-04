@@ -335,7 +335,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
      </div>
     </div>
     <a href="/account" className={styles.quotaUpgradeBtn}>
-     สมัคร PRO VIP เพียง 390 บ./เดือน ↗
+     สมัคร PRO VIP เพียง 399 บ./เดือน ↗
     </a>
    </div>}
 

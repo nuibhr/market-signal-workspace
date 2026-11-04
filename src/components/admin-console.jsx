@@ -86,6 +86,12 @@ export default function AdminConsole(){
                     <Status value={lead.status==='account_opened'?'subscriber':lead.status==='contacted'?'trial':'pending'}>
                       {lead.status==='new'?'รอติดต่อ':lead.status==='contacted'?'ติดต่อแล้ว':lead.status==='account_opened'?'เปิดพอร์ตแล้ว':lead.status}
                     </Status>
+                    <button className="account-secondary" onClick={async()=>{try{await navigator.clipboard.writeText(`${lead.full_name} | โทร: ${lead.phone}${lead.line_id?` | LINE: ${lead.line_id}`:''}`);setMessage(`คัดลอกข้อมูลติดต่อของ ${lead.full_name} แล้ว`);}catch{}}}>
+                      <Copy size={14}/> คัดลอกติดต่อ
+                    </button>
+                    <button className="account-secondary" onClick={()=>{setTab('members');setFilter('all');setQuery(lead.full_name||'');setSearch((lead.full_name||'').trim());setPage(1);}}>
+                      ค้นหาสมาชิก & ออกโค้ด VIP
+                    </button>
                     {lead.status==='new'&&<button className="account-primary" onClick={async()=>{await fetch('/api/admin/partner-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:lead.id,status:'contacted'})});partnerLeads.reload();}}>ทำเครื่องหมาย: ติดต่อแล้ว</button>}
                     {lead.status==='contacted'&&<button className="account-primary" onClick={async()=>{await fetch('/api/admin/partner-leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:lead.id,status:'account_opened'})});partnerLeads.reload();}}>ทำเครื่องหมาย: เปิดพอร์ตสำเร็จ</button>}
                   </div>
