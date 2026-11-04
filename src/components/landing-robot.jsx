@@ -65,7 +65,6 @@ export default function LandingRobot() {
         </Link>
         <Link href="/tfex">📈 TFEX</Link>
         <Link href="/us">🇺🇸 หุ้นสหรัฐฯ &amp; ETFs</Link>
-        <Link href="/coaches">🏆 พอร์ตโค้ช &amp; ผลงาน</Link>
       </div>
       <div className="ng-robot-caption"><ScanLine size={15} /><span>สแกนตามเงื่อนไขจริง · เชื่อมพอร์ต บล.พาย &amp; ทรีนีตี้ · คุณเป็นผู้ตัดสินใจ</span></div>
     </div>

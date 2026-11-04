@@ -1,6 +1,6 @@
 import {rateLimit} from '../../../security/request-guard.mjs';
 import {createSettradeClient,createTfexClient} from '../../settrade.mjs';
-import {getFmpDailyBars} from '../../fmp-us.mjs';
+import {getUsDailyBars} from '../../us-eod.mjs';
 import {sharedDaily} from '../../shared-policy.mjs';
 import {createNativeSource,emptyNativeInput} from './native-source.mjs';
 import {storage} from '../../../storage/database.mjs';
@@ -33,10 +33,10 @@ export function scanAssets(market,universe="default"){
 }
 const unavailable=(market,universe)=>scanAssets(market,universe).map(a=>emptyNativeInput(a,market));
 export const nativeSource=createNativeSource({assets:scanAssets,createSettrade:()=>createSettradeClient(),createTfex:()=>createTfexClient(),
- getUsBars:(symbol,now)=>getFmpDailyBars(symbol,{now,fetcher:(...args)=>fetch(...args)})});
+ getUsBars:(symbol,now,asset)=>getUsDailyBars(symbol,{now,assetKind:asset?.sectionId==='US_ETFS'?'etf':'stock',allowedProviders:['fmp','yahoo'].filter(p=>displayRights(rightsEvidence(),'us',p,now)==='CONFIRMED')})});
 async function loadInputs(market,{now,evidence,universe}){
  if(market==='forex')return loadForex({now,evidence});
- const providers=sharedDaily()?(market==='tfex'?['settrade']:market==='us'?['fmp','yahoo']:['settrade','yahoo']):[market==='us'?'fmp':'settrade'];
+ const providers=sharedDaily()?(market==='tfex'?['settrade']:market==='us'?['fmp','yahoo']:['settrade','yahoo']):(market==='us'?['fmp','yahoo']:['settrade']);
  if(!providers.some(provider=>displayRights(evidence,market,provider,now)==='CONFIRMED'))return unavailable(market,universe);
  return nativeSource(market,{universe});
 }

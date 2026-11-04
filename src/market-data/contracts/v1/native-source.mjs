@@ -26,17 +26,18 @@ export function createNativeSource({assets,createSettrade,createTfex,getUsBars,c
    if(!['thai','dr','us','tfex'].includes(market))return emptyNativeInput(asset,market);
    let series;
    if(shared)series=await readShared(asset,'1d');
-   else if(market==='us')series=await getUsBars(asset.symbol,now);
+   else if(market==='us')series=await getUsBars(asset.symbol,now,asset);
    else{const client=createSettrade();if(!client.configuration.configured)return emptyNativeInput(asset,market);series=await client.getDailyCandles(asset.symbol,300);}
    if(series.symbol!==asset.symbol||series.timeframe!=='1d'||!Array.isArray(series.bars)||(shared&&series.instrumentId!==asset.instrumentId))return base;
    const providerId=providerFor(series.source);
    const allowed=market==='tfex'?['settrade']:market==='us'?['fmp','yahoo']:['settrade','yahoo'];
-   if(shared&&!allowed.includes(providerId)||!shared&&providerId!=='unknown'&&providerId!==base.providerId)return base;
+   if(shared&&!allowed.includes(providerId)||!shared&&providerId!=='unknown'&&providerId!==base.providerId&&!(market==='us'&&providerId==='yahoo'))return base;
    const bars=(market==='us'?series.bars.filter(b=>candleClosedAt(b,'1d','us')<=now):closedThaiChartBars(series.bars,'1d',now,market));
    if(!bars.length||bars.some((b,i)=>!validDaily(b)||(i>0&&b.time<=bars[i-1].time)))return base;
    const last=bars.at(-1),previous=bars.at(-2),closed=candleClosedAt(last,'1d',market);
    if(!Number.isFinite(closed)||closed>now)return base;
-   return {...base,providerId:shared?providerId:base.providerId,fallback:shared||series.fallback===true||series.chartOnly===true,dataMode:'EOD',dataKind:market==='tfex'?'CANDLE':base.dataKind,providerState:'READY',available:true,closed:true,failureCode:null,dataAsOf:new Date(closed).toISOString(),observedAt:null,receivedAt:stamp(series.receivedAt),
+   const resolvedProvider=shared||providerId!=='unknown'?providerId:base.providerId;
+   return {...base,providerId:resolvedProvider,fallback:shared||series.fallback===true||series.chartOnly===true||(market==='us'&&resolvedProvider==='yahoo'),dataMode:'EOD',dataKind:market==='tfex'?'CANDLE':base.dataKind,providerState:'READY',available:true,closed:true,failureCode:null,dataAsOf:new Date(closed).toISOString(),observedAt:null,receivedAt:stamp(series.receivedAt),
     data:{price:last.close,changePct:previous?.close>0?(last.close/previous.close-1)*100:null,bars:bars.slice(-300).map(b=>({time:b.time,open:b.open,high:b.high,low:b.low,close:b.close,volume:b.volume})),timeframe:'1d'}};
   }catch(error){return {...base,failureCode:['AUTH_FAILED','PLAN_REQUIRED','RATE_LIMITED','SOURCE_NOT_CONFIGURED','NETWORK_UNAVAILABLE','MARKET_DATA_UNAVAILABLE'].includes(error?.code)?error.code:'SOURCE_UNAVAILABLE'};}
  }

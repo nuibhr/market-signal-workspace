@@ -201,10 +201,6 @@ export default function HomeLanding() {
           <a href="#products-suite" className="ng-nav-link">
             <span>ผลิตภัณฑ์</span>
           </a>
-          <Link href="/coaches" className="ng-nav-link">
-            <Users size={15} />
-            <span>พอร์ตโค้ช</span>
-          </Link>
           <a href="#official-channels" className="ng-nav-link">
             <Globe size={15} />
             <span>ติดต่อเรา</span>
@@ -393,7 +389,7 @@ export default function HomeLanding() {
               </div>
               <ArrowUpRight size={18} className="ng-feat-arrow" />
             </Link>
-            <Link href="/coaches" className="ng-feature-card-link">
+            <Link href="/thai" className="ng-feature-card-link">
               <span className="ng-feature-icon"><ChartNoAxesCombined /></span>
               <div>
                 <h3>สถิติจริง โปร่งใส ตรวจสอบได้ 100%</h3>
@@ -594,7 +590,6 @@ export default function HomeLanding() {
             <Link href="/risk">Risk &amp; Position Calculator</Link>
             <Link href="/calendar">ปฏิทินเศรษฐกิจ &amp; ข่าวมหภาค</Link>
             <Link href="/developers">Structure API &amp; Playground</Link>
-            <Link href="/coaches">พอร์ตโค้ช &amp; บันทึกผลงาน</Link>
           </div>
 
           <div className="ng-footer-col">

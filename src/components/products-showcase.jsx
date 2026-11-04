@@ -109,7 +109,7 @@ export const CORE_PRODUCTS = [
     accent: '#f472b6',
     rgb: '244, 114, 182',
     icon: Volume2,
-    targetUrl: '/coaches',
+    targetUrl: '/thai',
     visualType: 'voice-wave',
     metrics: ['เสียงพากย์ไทย AI', 'บันทึกผล 100 ไม้', 'โปร่งใส 100%'],
   },
@@ -163,12 +163,12 @@ export const PRO_ANALYSIS_TOOLS = [
   },
   {
     id: 'ledger-telemetry',
-    title: 'พอร์ตโค้ช & สถิติย้อนหลัง',
+    title: 'บันทึกผลงานสัญญาณย้อนหลัง',
     dimension: '06',
     desc: 'ตรวจสอบประวัติเข้า-ออกจริง ไม่มีการแต่งตัวเลข',
     icon: LineChart,
     accent: '#f472b6',
-    link: '/coaches',
+    link: '/thai',
   },
 ];
 

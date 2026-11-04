@@ -210,7 +210,14 @@ export function NewsFeedState({ onOpenGuide, onOpenCalendar }) {
     const controller = new AbortController();
     setState(current => ({ ...current, status: 'loading' }));
     fetch('/api/news', { signal: controller.signal })
-      .then(async response => response.json())
+      .then(async response => {
+        const data = await response.json();
+        if (response.status === 503 && ['DISPLAY_RIGHTS_UNCONFIRMED', 'MARKETDX_NOT_CONFIGURED'].includes(data?.code)) {
+          const fallbackRes = await fetch('/api/news?alerts=1', { signal: controller.signal });
+          return fallbackRes.json();
+        }
+        return data;
+      })
       .then(payload => { if (!controller.signal.aborted) setState(payload); })
       .catch(() => { if (!controller.signal.aborted) setState({ status: 'unavailable', code: 'NETWORK_ERROR', markets: [] }); });
     return () => controller.abort();

@@ -64,7 +64,7 @@ const DEMO_SHOWCASE_PORTFOLIOS = [
     wins: 5,
     losses: 2,
     openCount: 2,
-    marketLink: '/us-etf',
+    marketLink: '/us',
     marketLabel: 'เปิดโต๊ะ US 500 & ETFs ↗',
     trades: [
       { id: 'du-1', symbol: 'SMH', market: 'us', quantity: 25, entryPrice: 238.5, exitPrice: 264.0, pnl: 635, status: 'closed', note: 'ETF กลุ่มเซมิคอนดักเตอร์ RS Rating 94 นำตลาด', exitNote: 'ปิดล็อกกำไรที่กรอบบน Channel' },
