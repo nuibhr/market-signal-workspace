@@ -32,10 +32,10 @@ const markets = [
     id: 'thai',
     number: '01',
     name: 'หุ้นไทย (SET100 & mai)',
-    en: 'THAI EQUITY COMMAND DESK',
-    badge: 'ยอดนิยม · SETTRADE API',
-    detail: 'สแกนหุ้นขาขึ้น Stage 2 เรดาร์สัญญาณสด และเชื่อมต่อพอร์ตพันธมิตร บล.พาย (003) & บล.ทรีนีตี้ (022)',
-    tags: 'Stage 2 Screener · Settrade API · หุ้นปันผล SETHD · บันทึกผลงาน 100 ไม้',
+    en: 'THAI EQUITY DESK',
+    badge: 'ยอดนิยม · SETTRADE',
+    detail: 'สแกนหุ้นขาขึ้น Stage 2 เรดาร์สด และเชื่อมพอร์ต บล.พาย (003) & ทรีนีตี้ (022)',
+    tags: 'Stage 2 Screener · Settrade API · ปันผล SETHD',
     tone: '#72dfb3',
     rgb: '114, 223, 179',
     glyph: 'TH',
@@ -45,10 +45,10 @@ const markets = [
     id: 'dr',
     number: '02',
     name: 'DR หุ้นโลกกระดานไทย',
-    en: 'GLOBAL DR STRATEGY TRACKER',
-    badge: 'GLOBAL · AI SCORE 16',
-    detail: 'ลงทุนหุ้นเทคโนโลยีระดับโลกผ่านกระดานไทยด้วยเงินบาท พร้อมระบบคำนวณ Indicative Arbitrage สด',
-    tags: 'DR80 / DR23 · Camarilla 8 Levels · EMA 25/50/75 · Fair Value Bridge',
+    en: 'GLOBAL DR TRACKER',
+    badge: 'GLOBAL · AI 16/16',
+    detail: 'เทรดหุ้นเทคฯ โลกด้วยเงินบาท พร้อมคำนวณ Fair Value เทียบหุ้นแม่แบบสดๆ',
+    tags: 'DR80 / DR23 · Camarilla 8 จุด · Arbitrage Spread',
     tone: '#f2be62',
     rgb: '242, 190, 98',
     glyph: 'DR',
@@ -58,10 +58,10 @@ const markets = [
     id: 'forex',
     number: '03',
     name: 'Forex & Gold CFD',
-    en: 'VANTAGE MT5 COMMAND CENTER',
-    badge: '24H LIVE · MT5 BRIDGE',
-    detail: 'สแกนคู่เงินหลักและทองคำ (XAUUSD) ตลอด 24 ชั่วโมง เชื่อมต่อข้อมูล MT5 แบบ Read-Only ปลอดภัย 100%',
-    tags: '24H Currency & Gold Scanner · MT5 Telemetry · Dynamic 2R Sizing',
+    en: 'MT5 COMMAND CENTER',
+    badge: '24H LIVE · MT5',
+    detail: 'สแกนคู่เงินหลักและทองคำ XAUUSD ตลอด 24 ชม. เชื่อมต่อ MT5 Read-Only ปลอดภัย 100%',
+    tags: 'XAUUSD Scanner · MT5 Bridge · 2R Risk Sizing',
     tone: '#bc9bff',
     rgb: '188, 155, 255',
     glyph: 'FX',
@@ -71,10 +71,10 @@ const markets = [
     id: 'tfex',
     number: '04',
     name: 'TFEX Derivatives',
-    en: 'FUTURES & OPTIONS WORKSPACE',
-    badge: 'DERIVATIVES DESK',
-    detail: 'อ่านโครงสร้างสัญญา SET50 Index Futures, Gold Online และ Silver แยกซีรีส์เดือนสัญญาชัดเจน',
-    tags: 'S50 / GO / SVF · กราฟเทคนิค · ซีรีส์สัญญา · คำนวณหลักประกัน',
+    en: 'FUTURES WORKSPACE',
+    badge: 'S50 & GOLD',
+    detail: 'วิเคราะห์กราฟและแยกซีรีส์สัญญา SET50 Index Futures, Gold Online และ Silver',
+    tags: 'S50 / GO / SVF · ซีรีส์สัญญา · คำนวณ Margin',
     tone: '#ff9970',
     rgb: '255, 153, 112',
     glyph: 'TF',
@@ -83,10 +83,10 @@ const markets = [
     id: 'us',
     number: '05',
     name: 'หุ้นสหรัฐฯ & Global ETFs',
-    en: 'WALL STREET STAGE 2 DESK',
+    en: 'WALL STREET DESK',
     badge: 'S&P 500 & ETFS',
-    detail: 'เกาะติดหุ้นผู้นำตลาดสหรัฐฯ S&P 500, Nasdaq และ Thematic ETFs พร้อมตัวคำนวณความเสี่ยงค่าเงิน USD/THB',
-    tags: 'Stage 2 Leaderboard · Sector Rotation · USD/THB FX Hedge',
+    detail: 'สแกนหุ้นผู้นำ S&P 500 Stage 2, Sector Rotation และคำนวณความเสี่ยงค่าเงิน USD/THB',
+    tags: 'Stage 2 Leaders · Thematic ETFs · FX Hedge',
     tone: '#38bdf8',
     rgb: '56, 189, 248',
     glyph: 'US',
@@ -98,52 +98,52 @@ const OFFICIAL_CHANNELS = [
     id: 'youtube',
     name: 'YouTube Official',
     handle: '@Noomnugaom',
-    role: 'VIDEO RESEARCH & LIVE TRADING',
-    desc: 'คลังวิดีโอเจาะลึกกราฟเทคนิค สอนใช้งานระบบสแกนหุ้นไทย DR Forex และไลฟ์วิเคราะห์จังหวะตลาดแบบเจาะลึกทุกสัปดาห์',
+    role: 'VIDEO & LIVE TRADING',
+    desc: 'คลิปเจาะลึกกราฟเทคนิค สอนใช้เครื่องมือสแกน และไลฟ์วิเคราะห์ตลาดทุกสัปดาห์',
     href: 'https://www.youtube.com/@Noomnugaom',
     accent: '#ff3355',
     rgb: '255, 51, 85',
-    badge: 'YOUTUBE CHANNEL',
-    cta: 'เปิดช่อง YouTube @Noomnugaom',
+    badge: 'YOUTUBE',
+    cta: 'ดูคลิปใน YouTube',
     icon: Play,
   },
   {
     id: 'tiktok',
     name: 'TikTok Official',
     handle: '@noomnugaom',
-    role: 'SHORT-FORM MARKET INSIGHTS',
-    desc: 'สรุปจังหวะตลาดหุ้นไทย DR และเทคนิคอ่านกราฟไวภายใน 1 นาที อัปเดตเทรนด์การลงทุนและไอเดียเทรดสดใหม่ทุกวัน',
+    role: '1-MIN MARKET INSIGHTS',
+    desc: 'สรุปจังหวะหุ้นไทย DR และเทคนิคอ่านกราฟไวเข้าใจง่ายใน 1 นาที',
     href: 'https://www.tiktok.com/@noomnugaom',
     accent: '#00f2fe',
     rgb: '0, 242, 254',
-    badge: 'TIKTOK CREATOR',
-    cta: 'ติดตาม TikTok @noomnugaom',
+    badge: 'TIKTOK',
+    cta: 'ดูคลิปสั้น TikTok',
     icon: Video,
   },
   {
     id: 'facebook',
-    name: 'Facebook Official Page',
-    handle: 'facebook.com/noomnugaom',
-    role: 'DAILY MARKET UPDATES & COMMUNITY',
-    desc: 'เพจหลักสำหรับติดตามบทวิเคราะห์ตลาดรายวัน สรุปข่าวเศรษฐกิจมหภาค และพูดคุยแลกเปลี่ยนมุมมองกับเพื่อนนักลงทุน',
+    name: 'Facebook Page',
+    handle: 'fb.com/noomnugaom',
+    role: 'DAILY MARKET BRIEF',
+    desc: 'อัปเดตบทวิเคราะห์รายวัน สรุปข่าวเศรษฐกิจ และพูดคุยกับคอมมูนิตี้',
     href: 'https://www.facebook.com/noomnugaom/',
     accent: '#38bdf8',
     rgb: '56, 189, 248',
-    badge: 'FACEBOOK PAGE',
-    cta: 'ไปที่เพจ Facebook Noom Nugaom',
+    badge: 'FACEBOOK',
+    cta: 'ไปที่เพจ Facebook',
     icon: MessageCircle,
   },
   {
     id: 'instagram',
     name: 'Instagram Official',
     handle: '@nnugaom',
-    role: 'VISUAL CHARTS & INFOGUIDES',
-    desc: 'อินโฟกราฟิกสรุปความรู้การเทรด แผนผังหุ้นขาขึ้น Stage 2 สรุปงบการเงินเข้าใจง่าย และไลฟ์สไตล์การลงทุนยุคใหม่',
+    role: 'VISUAL INFOGUIDES',
+    desc: 'อินโฟกราฟิกสรุปหุ้นเด่น แผนผัง Stage 2 และไอเดียจัดพอร์ตเข้าใจง่าย',
     href: 'https://www.instagram.com/nnugaom',
     accent: '#f472b6',
     rgb: '244, 114, 182',
-    badge: 'INSTAGRAM FEED',
-    cta: 'ติดตาม Instagram @nnugaom',
+    badge: 'INSTAGRAM',
+    cta: 'เปิดดู Instagram',
     icon: Compass,
   },
 ];
@@ -201,14 +201,14 @@ export default function HomeLanding() {
           <a href="#products-suite" className="ng-nav-link">
             <span>ผลิตภัณฑ์</span>
           </a>
+          <Link href="/coaches" className="ng-nav-link">
+            <Users size={15} />
+            <span>พอร์ตโค้ช</span>
+          </Link>
           <a href="#official-channels" className="ng-nav-link">
             <Globe size={15} />
-            <span>ช่องทางติดต่อ</span>
+            <span>ติดต่อเรา</span>
           </a>
-          <Link href="/community" className="ng-nav-link">
-            <Users size={15} />
-            <span>ชุมชน</span>
-          </Link>
         </nav>
 
         <div className="ng-header-actions">
@@ -239,7 +239,7 @@ export default function HomeLanding() {
               LIVE ECOSYSTEM
             </span>
             <p className="ng-spotlight-text">
-              ยกระดับศูนย์บัญชาการ <b>หุ้นไทย (Settrade API · บล.พาย &amp; ทรีนีตี้)</b> · <b>DR หุ้นโลก</b> · <b>Forex MT5</b> พร้อมระบบสแกนครบวงจร!
+              พร้อมใช้งานเต็มรูปแบบ: <b>หุ้นไทย (Settrade API · บล.พาย &amp; ทรีนีตี้)</b> · <b>DR หุ้นโลก</b> · <b>Forex MT5</b>
             </p>
           </div>
           <div className="ng-spotlight-actions">
@@ -258,10 +258,10 @@ export default function HomeLanding() {
 
       {/* Core Principles Bar */}
       <div className="ng-principles">
-        <span><ScanLine size={16} /> เห็นเงื่อนไขชัดเจนก่อนตัดสินใจ</span>
-        <span><BellRing size={16} /> เสียงแจ้งเตือนน้องนักออม AI ผ่านเว็บ</span>
-        <span><ShieldCheck size={16} /> เชื่อมพอร์ตปลอดภัย · บันทึกผลงานโปร่งใส</span>
-        <span><Globe size={16} /> ครบทุกตลาด: หุ้นไทย · DR · Forex · TFEX · US</span>
+        <span><ScanLine size={16} /> คัดหุ้นเข้าเงื่อนไขจริง</span>
+        <span><BellRing size={16} /> เสียงพากย์เตือนผ่านเว็บ</span>
+        <span><ShieldCheck size={16} /> เชื่อมพอร์ตปลอดภัย · โปร่งใส 100%</span>
+        <span><Globe size={16} /> หุ้นไทย · DR · Forex · TFEX · US</span>
       </div>
 
       {/* Section 01: Flagship Markets Bento Grid */}
@@ -275,8 +275,7 @@ export default function HomeLanding() {
             </h2>
           </div>
           <p>
-            โฟกัส 3 ตลาดเรือธง <b>หุ้นไทย · DR · Forex</b> และขยายสู่อนุพันธ์ TFEX กับหุ้นสหรัฐฯ
-            ทุกกระดานเชื่อมต่อด้วยบัญชี LINE เดียวกัน
+            โดดเด่นด้วย 3 ตลาดหลัก <b>หุ้นไทย · DR · Forex</b> พร้อมขยายสู่ TFEX และหุ้นสหรัฐฯ ในบัญชีเดียว
           </p>
         </div>
 
@@ -310,63 +309,59 @@ export default function HomeLanding() {
             </Link>
           ))}
         </div>
-
-        <p className="ng-data-note">
-          ความสามารถและความถี่ข้อมูลออกแบบตามมาตรฐานแต่ละตลาด · กระดานหุ้นไทยรองรับการเชื่อมต่อพอร์ต Settrade Open API และบริการเปิดพอร์ตพันธมิตร (บล.พาย 003 &amp; บล.ทรีนีตี้ 022) · ระบบเป็นเครื่องมือวิเคราะห์และช่วยตัดสินใจ ไม่มีการส่งคำสั่งซื้อขายอัตโนมัติแทนผู้ใช้งาน
-        </p>
       </section>
 
-      {/* Section 02: Products & Analysis Suite */}
+      {/* Section 02: Visual Products & Analysis Suite */}
       <ProductsShowcase />
 
-      {/* Section 03: Signal Journey */}
+      {/* Section 03: Signal Journey (Concise & Actionable) */}
       <section id="how-it-works" className="ng-section ng-process" tabIndex={-1} aria-labelledby="ng-process-title">
         <div className="ng-section-heading">
           <div>
-            <span className="ng-kicker">03 / FROM SIGNAL TO STORY</span>
+            <span className="ng-kicker">03 / SIGNAL WORKFLOW</span>
             <h2 id="ng-process-title">
-              ไม่จบแค่สัญญาณ<br />
-              <span>เห็นเส้นทางของทุกจังหวะ</span>
+              3 ขั้นตอนอัจฉริยะ<br />
+              <span>จากเรดาร์สแกน สู่การตัดสินใจ</span>
             </h2>
           </div>
-          <Link href="/thai#section-auto-pick" className="ng-text-link">
-            เปิดกระดานสัญญาณหุ้นไทย <ArrowUpRight size={18} />
+          <Link href="/thai" className="ng-text-link">
+            ทดลองสแกนหุ้นไทยสด <ArrowUpRight size={18} />
           </Link>
         </div>
 
         <div className="ng-process-grid">
-          <div className="ng-signal-preview" aria-label="ภาพอธิบายขั้นตอนสัญญาณ ไม่ใช่รายการซื้อขายจริง">
+          <div className="ng-signal-preview" aria-label="ภาพอธิบายขั้นตอนสัญญาณ">
             <div className="ng-preview-head">
-              <span><i /> SIGNAL JOURNEY</span>
-              <small>ระบบติดตามสถานะอัตโนมัติ</small>
+              <span><i /> LIVE SIGNAL JOURNEY</span>
+              <small>ระบบติดตามอัตโนมัติ</small>
             </div>
             <div className="ng-orbit" aria-hidden="true">
               <div className="ng-orbit-ring" />
               <div className="ng-orbit-ring ng-orbit-ring-two" />
-              <Image src="/nugaom-mascot.png" width={138} height={138} alt="" />
+              <Image src="/nugaom-mascot.png" width={132} height={132} alt="" />
               <span className="ng-orbit-tag">น้องนักออม AI</span>
             </div>
             <ol className="ng-journey">
               <li>
                 <span>01</span>
                 <div>
-                  <b>รอเข้า (Watch / Pending)</b>
-                  <small>พบแผนที่เข้าเงื่อนไขสแกน พร้อมกรอบราคาที่ชัดเจน</small>
+                  <b>สแกนพบจังหวะ (Watch)</b>
+                  <small>คัดหุ้นเข้าเงื่อนไขพร้อมแนวรับ-แนวต้าน</small>
                 </div>
               </li>
               <li>
                 <span>02</span>
                 <div>
-                  <b>เข้าเงื่อนไข (Triggered / Active)</b>
-                  <small>บันทึกราคาและเวลาเข้าสัญญาณตามแท่งเทียนจริง</small>
+                  <b>เข้าแผนเทรด (Active 2R)</b>
+                  <small>แจ้งเตือนเสียงพร้อมจุด Entry / Target / Stop</small>
                 </div>
                 <BellRing size={18} />
               </li>
               <li>
                 <span>03</span>
                 <div>
-                  <b>ปิดผลลัพธ์ (Target / Stop / Expired)</b>
-                  <small>บันทึกสถิติลงสมุดบัญชี Immutable Ledger โปร่งใส 100%</small>
+                  <b>บันทึกผลโปร่งใส (Ledger)</b>
+                  <small>สรุปสถิติจริงลงสมุดบัญชี ตรวจสอบย้อนหลังได้</small>
                 </div>
                 <Check size={18} />
               </li>
@@ -374,35 +369,38 @@ export default function HomeLanding() {
           </div>
 
           <div className="ng-features">
-            <article>
+            <Link href="/thai" className="ng-feature-card-link">
               <span className="ng-feature-icon"><ScanLine /></span>
               <div>
-                <h3>ให้ระบบช่วยคัด ให้คุณตัดสินใจ</h3>
-                <p>ติดตามจังหวะที่เข้าเงื่อนไข พร้อมจุดเข้า เป้าหมาย 2R และจุดตัดขาดทุน เปิดกราฟดูบริบทก่อนตัดสินใจด้วยตัวเอง</p>
+                <h3>สแกนไว เห็นแผนครบในคลิกเดียว</h3>
+                <p>บอกจุดเข้า เป้าทำกำไร 2R และจุดตัดขาดทุนชัดเจนก่อนตัดสินใจ</p>
               </div>
-            </article>
-            <article>
+              <ArrowUpRight size={18} className="ng-feat-arrow" />
+            </Link>
+            <Link href="/thai#section-radar" className="ng-feature-card-link">
               <span className="ng-feature-icon"><BellRing /></span>
               <div>
-                <h3>จังหวะสำคัญ มีเสียงน้องนักออมบอก</h3>
-                <p>แจ้งเตือนผ่านหน้าเว็บเมื่อสัญญาณเปลี่ยนสถานะ เปิดเสียงในแอปเพื่อให้น้องนักออมช่วยอ่านเหตุการณ์ให้ฟังแบบไม่ต้องเฝ้าจอ</p>
-                <small>รองรับการเปิดหน้าเว็บและอนุญาตเสียง การแจ้งเตือนอ้างอิงตามข้อมูลที่ระบบได้รับ</small>
+                <h3>มีเสียงน้องนักออม AI ช่วยพากย์</h3>
+                <p>อ่านสัญญาณและข่าวด่วนภาษาไทยให้ฟังอัตโนมัติ ไม่ต้องเฝ้าหน้าจอ</p>
               </div>
-            </article>
-            <article>
-              <span className="ng-feature-icon"><ChartNoAxesCombined /></span>
-              <div>
-                <h3>เปิดดูผลงานได้ทั้งฝั่งชนะและแพ้</h3>
-                <p>ทบทวนผลจากราคาเข้า–ออกที่ระบบบันทึกจริง ไม่มี Synthetic Win แยกสัญญาณที่ยังรอเข้า และแยกผลจำลองย้อนหลังชัดเจน</p>
-              </div>
-            </article>
-            <article>
+              <ArrowUpRight size={18} className="ng-feat-arrow" />
+            </Link>
+            <Link href="/thai#section-portfolio" className="ng-feature-card-link">
               <span className="ng-feature-icon"><Bookmark /></span>
               <div>
-                <h3>เชื่อมพอร์ตหุ้นไทย &amp; พันธมิตรโบรกเกอร์</h3>
-                <p>ตรวจสุขภาพพอร์ต Stage 2 เฝ้าระวังจุด Trailing Stop และลงทะเบียนเปิดพอร์ตใหม่กับพันธมิตร บล.พาย (003) และ บล.ทรีนีตี้ (022)</p>
+                <h3>เชื่อมพอร์ตจริง &amp; พันธมิตรโบรกเกอร์</h3>
+                <p>ซิงค์พอร์ต Settrade API และเปิดบัญชีใหม่กับ บล.พาย (003) &amp; ทรีนีตี้ (022)</p>
               </div>
-            </article>
+              <ArrowUpRight size={18} className="ng-feat-arrow" />
+            </Link>
+            <Link href="/coaches" className="ng-feature-card-link">
+              <span className="ng-feature-icon"><ChartNoAxesCombined /></span>
+              <div>
+                <h3>สถิติจริง โปร่งใส ตรวจสอบได้ 100%</h3>
+                <p>แสดงผลทั้งไม้ชนะและแพ้ตามราคาปิดแท่งเทียนจริง ไม่มีแต่งตัวเลข</p>
+              </div>
+              <ArrowUpRight size={18} className="ng-feat-arrow" />
+            </Link>
           </div>
         </div>
       </section>
@@ -411,15 +409,14 @@ export default function HomeLanding() {
       <section id="official-channels" className="ng-section ng-channels-section" tabIndex={-1} aria-labelledby="ng-channels-title">
         <div className="ng-section-heading">
           <div>
-            <span className="ng-kicker">04 / OFFICIAL ECOSYSTEM &amp; SOCIAL CHANNELS</span>
+            <span className="ng-kicker">04 / OFFICIAL CHANNELS &amp; COMMUNITY</span>
             <h2 id="ng-channels-title">
-              เชื่อมต่อทุกช่องทางระดับโลก<br />
-              <span>กับ Noom Nugaom Official</span>
+              ช่องทางติดต่อและโซเชียลทางการ<br />
+              <span>Noom Nugaom Official</span>
             </h2>
           </div>
           <p>
-            ติดตามบทวิเคราะห์ตลาด คลิปสอนเทคนิคการเทรด อินโฟกราฟิกหุ้นเด่น
-            และอัปเดตเครื่องมือใหม่ล่าสุดผ่านช่องทางอย่างเป็นทางการทั้งหมดของเรา
+            คลิกเชื่อมต่อเว็บไซต์หลักและโซเชียลมีเดียทุกแพลตฟอร์ม เพื่อรับบทวิเคราะห์และเทคนิคการเทรดรายวัน
           </p>
         </div>
 
@@ -434,19 +431,18 @@ export default function HomeLanding() {
           <div className="ng-portal-card-left">
             <div className="ng-portal-badge-row">
               <span className="ng-portal-live-pill">
-                <Radio size={13} /> OFFICIAL WEB PORTAL
+                <Radio size={13} /> OFFICIAL WEBSITE
               </span>
               <span className="ng-portal-domain">https://noomnugaom.pages.dev/</span>
             </div>
-            <h3>Noom Nugaom Official Website &amp; Knowledge Hub</h3>
+            <h3>Noom Nugaom Official Portal &amp; Knowledge Hub</h3>
             <p>
-              ศูนย์กลางข้อมูลอย่างเป็นทางการ รวบรวมบทความวิจัยกลยุทธ์ คู่มือการลงทุนหุ้นไทย DR Forex
-              คลังความรู้การอ่านกราฟ Stage 2 และทางเข้าใช้งานระบบนิเวศ Nugaom ทั้งหมดในที่เดียว
+              ศูนย์รวมบทความกลยุทธ์ คลังความรู้การลงทุนหุ้นไทย DR Forex และอัปเดตระบบนิเวศทั้งหมด
             </p>
           </div>
           <div className="ng-portal-card-right">
             <span className="ng-portal-launch-btn">
-              <span>เข้าสู่เว็บไซต์หลัก</span>
+              <span>เปิดเว็บไซต์หลัก</span>
               <ArrowUpRight size={18} />
             </span>
           </div>
@@ -490,17 +486,17 @@ export default function HomeLanding() {
         <div className="ng-concierge-strip">
           <div className="ng-concierge-info">
             <span className="ng-concierge-tag">VIP PARTNER CONCIERGE</span>
-            <h4>ต้องการเปิดพอร์ตหุ้นไทย/DR กับพันธมิตร หรือปรึกษาทีมงานโดยตรง?</h4>
+            <h4>เปิดพอร์ตหุ้นไทย/DR กับพันธมิตร บล.พาย (003) &amp; บล.ทรีนีตี้ (022)</h4>
             <p>
-              เรามีทีมผู้แนะนำการลงทุนมืออาชีพจาก <b>บล.พาย (Pi Securities 003)</b> และ <b>บล.ทรีนีตี้ (Trinity Securities 022)</b> พร้อมดูแลและเชื่อมต่อระบบวิเคราะห์พอร์ตให้ครบวงจร
+              ลงทะเบียนเพื่อให้ทีมผู้ดูแลพอร์ตติดต่อกลับโดยตรง พร้อมรับสิทธิ์ใช้งานเครื่องมือสแกนและวิเคราะห์พอร์ตครบวงจร
             </p>
           </div>
           <div className="ng-concierge-actions">
             <Link href="/thai#section-portfolio" className="ng-concierge-primary">
               เปิดพอร์ตพันธมิตร / เชื่อมพอร์ต ↗
             </Link>
-            <Link href="/community" className="ng-concierge-secondary">
-              เข้าห้องคอมมูนิตี้สมาชิก →
+            <Link href="/account" className="ng-concierge-secondary">
+              เข้าสู่ระบบด้วย LINE →
             </Link>
           </div>
         </div>
@@ -509,21 +505,21 @@ export default function HomeLanding() {
       {/* Section 05: CTA Banner */}
       <section className="ng-section ng-start" aria-labelledby="ng-start-title">
         <div>
-          <span className="ng-kicker">05 / MAKE IT YOUR COMMAND DESK</span>
+          <span className="ng-kicker">05 / GET STARTED NOW</span>
           <h2 id="ng-start-title">
-            เปิดมุมมองใหม่<br />
-            ให้การลงทุนของคุณวันนี้
+            พร้อมยกระดับ<br />
+            การเทรดของคุณหรือยัง?
           </h2>
           <p>
-            เริ่มต้นใช้งานง่ายๆ ด้วยบัญชี LINE ของคุณ<br />
-            เลือกกระดานหุ้นไทย DR หรือ Forex แล้วให้ข้อมูลนำทางการตัดสินใจ
+            เชื่อมต่อบัญชี LINE เพื่อเริ่มทดลองใช้งานฟรี 14 วัน<br />
+            หรือกดเข้ากระดานหุ้นไทย DR และ Forex ได้ทันที
           </p>
           <div className="ng-actions">
             <Link href="/account" className="ng-button ng-button-dark">
               เริ่มต้นด้วย LINE (ทดลอง 14 วัน) <ArrowUpRight size={20} />
             </Link>
             <Link href="/thai" className="ng-text-link">
-              เข้าสู่กระดานหุ้นไทยทันที →
+              เข้ากระดานหุ้นไทยทันที →
             </Link>
           </div>
         </div>
@@ -538,28 +534,24 @@ export default function HomeLanding() {
         </div>
       </section>
 
-      {/* Section 06: FAQ */}
+      {/* Section 06: Concise FAQ */}
       <section className="ng-section ng-faq" aria-labelledby="ng-faq-title">
         <div>
-          <span className="ng-kicker">GOOD TO KNOW</span>
-          <h2 id="ng-faq-title">คำถามที่พบบ่อยก่อนเริ่มใช้งาน</h2>
+          <span className="ng-kicker">FAQ</span>
+          <h2 id="ng-faq-title">คำถามที่พบบ่อย</h2>
         </div>
         <div>
           <details>
-            <summary>ระบบส่งคำสั่งซื้อขายให้หรือไม่?</summary>
-            <p>แอปนี้ใช้สแกน วิเคราะห์ ตรวจสุขภาพพอร์ต และแจ้งเตือนเท่านั้น ไม่มีการส่งคำสั่งซื้อขายแทนคุณ สัญญาณทั้งหมดเป็นข้อมูลประกอบการตัดสินใจ</p>
+            <summary>ระบบส่งคำสั่งซื้อขายแทนเราหรือไม่?</summary>
+            <p>ไม่ส่งคำสั่งแทนครับ ระบบทำหน้าที่สแกนหาจังหวะ วางแผน 2R และแจ้งเตือนเพื่อให้คุณตัดสินใจด้วยตัวเอง 100%</p>
           </details>
           <details>
-            <summary>สามารถเชื่อมต่อพอร์ตหรือเปิดพอร์ตหุ้นไทยกับโบรกเกอร์ใดได้บ้าง?</summary>
-            <p>หน้าหุ้นไทยรองรับการเชื่อมต่อผ่าน Settrade Open API และสามารถลงทะเบียนเปิดพอร์ตใหม่กับ 2 พันธมิตรหลักของเรา ได้แก่ บล.พาย (Pi Securities 003) และ บล.ทรีนีตี้ (Trinity Securities 022) เพื่อให้เจ้าหน้าที่ผู้ดูแลติดต่อกลับโดยตรง</p>
+            <summary>เชื่อมต่อหรือเปิดพอร์ตกับโบรกเกอร์ใดได้บ้าง?</summary>
+            <p>รองรับพอร์ตหุ้นไทยผ่าน Settrade Open API และลงทะเบียนเปิดพอร์ตใหม่กับพันธมิตร บล.พาย (003) และ บล.ทรีนีตี้ (022) ได้ที่หน้าหุ้นไทย</p>
           </details>
           <details>
-            <summary>ราคาที่เห็นเป็นเรียลไทม์ทุกตลาดไหม?</summary>
-            <p>แต่ละตลาดใช้แหล่งข้อมูลและช่วงเวลาต่างกัน ตรวจแหล่งข้อมูล เวลาอัปเดต และกรอบเวลาที่แสดงในหน้าตลาดก่อนใช้งาน ความถี่สแกนไม่ได้ทำให้ข้อมูลล่าช้ากลายเป็นข้อมูลเรียลไทม์</p>
-          </details>
-          <details>
-            <summary>ติดตามข่าวสารและคลิปสอนใช้งานได้ที่ไหน?</summary>
-            <p>สามารถติดตามได้ผ่านเว็บไซต์หลัก noomnugaom.pages.dev รวมถึงช่อง YouTube (@Noomnugaom), TikTok (@noomnugaom), Facebook (noomnugaom) และ Instagram (@nnugaom)</p>
+            <summary>เริ่มต้นทดลองใช้งานฟรี 14 วันอย่างไร?</summary>
+            <p>กดปุ่ม “เข้าใช้ด้วย LINE” ด้านบนสุดเพื่อยืนยันตัวตนและเปิดสิทธิ์ทดลองใช้งานได้ทันทีครับ</p>
           </details>
         </div>
       </section>
@@ -576,7 +568,7 @@ export default function HomeLanding() {
               </div>
             </Link>
             <p className="ng-footer-mission">
-              แพลตฟอร์มสแกนตลาดและวิเคราะห์สัญญาณการลงทุนอัจฉริยะ ครอบคลุมหุ้นไทย SET100, DR หุ้นโลก, Forex MT5, TFEX และหุ้นสหรัฐฯ ออกแบบด้วยสถาปัตยกรรมที่โปร่งใสและปลอดภัยสูงสุด
+              แพลตฟอร์มสแกนตลาดและวิเคราะห์สัญญาณการลงทุนอัจฉริยะ ครอบคลุมหุ้นไทย SET100, DR หุ้นโลก, Forex MT5, TFEX และหุ้นสหรัฐฯ
             </p>
             <div className="ng-footer-social-pills">
               <a href="https://noomnugaom.pages.dev/" target="_blank" rel="noopener noreferrer">🌐 Website</a>
@@ -599,20 +591,20 @@ export default function HomeLanding() {
           <div className="ng-footer-col">
             <h4>เครื่องมือระดับโปร</h4>
             <Link href="/thai#section-portfolio">เชื่อมพอร์ตหุ้นไทย (Pi &amp; Trinity)</Link>
-            <Link href="/dr-strategy">DR80 Strategy &amp; Arbitrage</Link>
             <Link href="/risk">Risk &amp; Position Calculator</Link>
             <Link href="/calendar">ปฏิทินเศรษฐกิจ &amp; ข่าวมหภาค</Link>
             <Link href="/developers">Structure API &amp; Playground</Link>
+            <Link href="/coaches">พอร์ตโค้ช &amp; บันทึกผลงาน</Link>
           </div>
 
           <div className="ng-footer-col">
-            <h4>ช่องทางติดต่อ &amp; คอมมูนิตี้</h4>
+            <h4>ช่องทางติดต่อ &amp; โซเชียล</h4>
             <a href="https://noomnugaom.pages.dev/" target="_blank" rel="noopener noreferrer">noomnugaom.pages.dev ↗</a>
             <a href="https://www.youtube.com/@Noomnugaom" target="_blank" rel="noopener noreferrer">YouTube: @Noomnugaom ↗</a>
             <a href="https://www.tiktok.com/@noomnugaom" target="_blank" rel="noopener noreferrer">TikTok: @noomnugaom ↗</a>
             <a href="https://www.facebook.com/noomnugaom/" target="_blank" rel="noopener noreferrer">Facebook: noomnugaom ↗</a>
             <a href="https://www.instagram.com/nnugaom" target="_blank" rel="noopener noreferrer">Instagram: @nnugaom ↗</a>
-            <Link href="/community">ห้องสมาชิก &amp; ทีมโค้ช</Link>
+            <Link href="/account">เข้าสู่ระบบ / บัญชีสมาชิก</Link>
           </div>
         </div>
 
