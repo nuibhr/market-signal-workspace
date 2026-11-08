@@ -2,7 +2,7 @@ import YahooFinance from "yahoo-finance2";
 import { cookies } from "next/headers.js";
 import { currentMember } from "../../../../../membership/server.mjs";
 import { isAdmin, isConfigured } from "../../../../../membership/store.mjs";
-import { detectChartSetup } from "../../../../../components/forex/studio-plan.mjs";
+import { detectChartSetup, replayForexBars2R } from "../../../../../components/forex/studio-plan.mjs";
 import { studioBroadcaster } from "../broadcaster.mjs";
 
 export const runtime = "nodejs";
@@ -63,6 +63,7 @@ async function fetchLiveForexPayload(symbol = "XAU/USD", timeframe = "1h") {
   if (bars.length >= 25) {
     setup = detectChartSetup(bars, tf === "15m" ? "15m" : "1h");
   }
+  const backtest = replayForexBars2R(rawBars, info.display);
 
   const value = {
     symbol: info.display,
@@ -74,6 +75,7 @@ async function fetchLiveForexPayload(symbol = "XAU/USD", timeframe = "1h") {
     asOf: last ? new Date(last.time * 1000).toISOString() : new Date().toISOString(),
     bars,
     setup,
+    backtest,
   };
   liveCache.set(key, { value, expires: Date.now() + 60000 });
   return value;
@@ -157,6 +159,7 @@ export async function GET(request = null) {
             bars: live.bars,
             quotes: tickerQuotes,
             plan: livePlan,
+            backtest: live.backtest,
             syncedAt: new Date().toISOString(),
           },
           { headers: NO_CACHE_HEADERS },

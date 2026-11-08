@@ -137,24 +137,28 @@ export function detectChartSetup(bars, timeframe = "1h") {
   const last = bars.at(-1);
   const slice = bars.slice(-25);
   const closes = slice.map(b => b.close);
-  const highest = Math.max(...slice.map(b => b.high));
-  const lowest = Math.min(...slice.map(b => b.low));
   const atr = computeATR(bars, 14);
   const ema20 = computeEMA(closes, 20) ?? last.close;
 
   const isDaytrade = timeframe === "15m";
+  const swingWindow = bars.slice(isDaytrade ? -6 : -10);
+  const highest = Math.max(...swingWindow.map(b => b.high));
+  const lowest = Math.min(...swingWindow.map(b => b.low));
   const trend = last.close >= ema20 ? "up" : "down";
 
   if (trend === "up") {
     const entry = Math.round(last.close * 10) / 10;
     // Structural stop buffer based on timeframe and ATR
     const buffer = isDaytrade ? Math.max(1.5, Math.round(atr * 0.45 * 10) / 10) : Math.max(2.5, Math.round(atr * 0.75 * 10) / 10);
+    const maxStopDist = entry > 200 ? Math.max(6.0, Math.min(25.0, atr * 2.0)) : Math.max(0.002, atr * 2.0);
+    const minStopDist = entry > 200 ? 2.5 : Math.max(0.0008, atr * 0.8);
     const candidateStop = isDaytrade
       ? Math.max(lowest, last.low - buffer)
-      : lowest - buffer;
-    const stop = Math.round(Math.min(entry - 2.0, candidateStop) * 10) / 10;
-    const distance = Math.max(2.5, entry - stop);
-    const target = Math.round((entry + distance * 2.0) * 10) / 10;
+      : Math.max(lowest - buffer, entry - maxStopDist);
+    const rawStop = Math.max(entry - maxStopDist, Math.min(entry - minStopDist, candidateStop));
+    const stop = entry > 200 ? Math.round(rawStop * 10) / 10 : Number(rawStop.toFixed(4));
+    const distance = Math.max(minStopDist, entry - stop);
+    const target = entry > 200 ? Math.round((entry + distance * 2.0) * 10) / 10 : Number((entry + distance * 2.0).toFixed(4));
 
     return {
       title: isDaytrade
@@ -178,12 +182,15 @@ export function detectChartSetup(bars, timeframe = "1h") {
   } else {
     const entry = Math.round(last.close * 10) / 10;
     const buffer = isDaytrade ? Math.max(1.5, Math.round(atr * 0.45 * 10) / 10) : Math.max(2.5, Math.round(atr * 0.75 * 10) / 10);
+    const maxStopDist = entry > 200 ? Math.max(6.0, Math.min(25.0, atr * 2.0)) : Math.max(0.002, atr * 2.0);
+    const minStopDist = entry > 200 ? 2.5 : Math.max(0.0008, atr * 0.8);
     const candidateStop = isDaytrade
       ? Math.min(highest, last.high + buffer)
-      : highest + buffer;
-    const stop = Math.round(Math.max(entry + 2.0, candidateStop) * 10) / 10;
-    const distance = Math.max(2.5, stop - entry);
-    const target = Math.round((entry - distance * 2.0) * 10) / 10;
+      : Math.min(highest + buffer, entry + maxStopDist);
+    const rawStop = Math.min(entry + maxStopDist, Math.max(entry + minStopDist, candidateStop));
+    const stop = entry > 200 ? Math.round(rawStop * 10) / 10 : Number(rawStop.toFixed(4));
+    const distance = Math.max(minStopDist, stop - entry);
+    const target = entry > 200 ? Math.round((entry - distance * 2.0) * 10) / 10 : Number((entry - distance * 2.0).toFixed(4));
 
     return {
       title: isDaytrade
@@ -235,4 +242,105 @@ export function checkPlanHit(plan, bar) {
   const tpHit = plan.side === "buy" ? bar.high >= target : bar.low <= target;
   const slHit = plan.side === "buy" ? bar.low <= stop : bar.high >= stop;
   return { entryHit, tpHit, slHit };
+}
+
+// Strict in-sample replay over the loaded bars (not a track record):
+// decision at close of bar i, fill at open of bar i+1, raised stops apply from the next bar,
+// stop assumed first when a bar touches both, spread/slippage deducted. `validated` stays false.
+export function replayForexBars2R(bars, symbol = "XAU/USD") {
+  if (!Array.isArray(bars) || bars.length < 40) return null;
+  const closes = bars.map((b) => Number(b.close));
+  const isGold = String(symbol).toUpperCase().includes("XAU");
+  const trades = [];
+  for (let i = 30; i < bars.length - 3; i++) {
+    const bar = bars[i];
+    const prev = bars[i - 1];
+    const fill = bars[i + 1];
+    const ema20 = computeEMA(closes.slice(Math.max(0, i - 25), i + 1), 20);
+    const ema20Prev = computeEMA(closes.slice(Math.max(0, i - 28), i - 1), 20);
+    const ema50 = computeEMA(closes.slice(Math.max(0, i - 55), i + 1), 50);
+    const atr = computeATR(bars.slice(Math.max(0, i - 30), i + 1), 14);
+    if (!ema20 || !ema20Prev || !ema50 || !atr || !fill) continue;
+    const range = Math.max(1e-9, bar.high - bar.low);
+    const up = bar.close > ema20 && ema20 > ema50 && ema20 >= ema20Prev;
+    const down = bar.close < ema20 && ema20 < ema50 && ema20 <= ema20Prev;
+    let side = null;
+    if (up && bar.close > bar.open && (bar.close - bar.low) / range >= 0.6 && (bar.low <= ema20 + atr * 0.45 || bar.close > prev.high)) side = "BUY";
+    else if (down && bar.close < bar.open && (bar.high - bar.close) / range >= 0.6 && (bar.high >= ema20 - atr * 0.45 || bar.close < prev.low)) side = "SELL";
+    if (!side) continue;
+    const digits = fill.open > 200 ? 2 : 4;
+    const entry = Number(fill.open.toFixed(digits));
+    const swingLow = Math.min(...bars.slice(i - 5, i + 1).map((b) => b.low));
+    const swingHigh = Math.max(...bars.slice(i - 5, i + 1).map((b) => b.high));
+    const rawRisk = side === "BUY" ? Math.max(atr * 1.15, entry - swingLow) : Math.max(atr * 1.15, swingHigh - entry);
+    const risk = isGold ? Math.max(4.0, Math.min(20.0, rawRisk)) : Math.max(atr * 0.8, Math.min(atr * 2.2, rawRisk));
+    const cost = isGold ? 0.5 : entry * 0.00012; // spread + slippage in price units
+    const dir = side === "BUY" ? 1 : -1;
+    const stop = Number((entry - dir * risk).toFixed(digits));
+    const tp1 = entry + dir * risk * 1.4;
+    const target = Number((entry + dir * risk * 2.0).toFixed(digits));
+    let stopNow = stop, hitTp1 = false, locked = false, exitPrice = null, stage = "TIME_EXIT", exitIdx = i + 1;
+    for (let j = i + 1; j < Math.min(bars.length, i + 20); j++) {
+      const fb = bars[j];
+      exitIdx = j;
+      const stopHit = side === "BUY" ? fb.low <= stopNow : fb.high >= stopNow;
+      if (stopHit) {
+        exitPrice = side === "BUY" ? Math.min(stopNow, fb.open) : Math.max(stopNow, fb.open);
+        stage = hitTp1 ? "TP1_RUNNER" : locked ? "BE_LOCKED" : "SL_HIT";
+        break;
+      }
+      if (side === "BUY" ? fb.high >= target : fb.low <= target) { exitPrice = target; stage = "FULL_TP"; break; }
+      if (side === "BUY" ? fb.high >= tp1 : fb.low <= tp1) hitTp1 = true;
+      if (side === "BUY" ? fb.high >= entry + risk * 0.65 : fb.low <= entry - risk * 0.65) locked = true;
+      stopNow = hitTp1 ? entry + dir * risk * 1.2 : locked ? entry + dir * risk * 0.5 : stop;
+    }
+    if (exitPrice == null) exitPrice = bars[exitIdx].close;
+    exitPrice = Number(exitPrice.toFixed(digits));
+    const rMult = Number(((dir * (exitPrice - entry) - cost) / risk).toFixed(2));
+    const dt = new Date((bars[exitIdx]?.time || bar.time) * 1000);
+    trades.push({
+      id: `BT-${trades.length + 1}`,
+      time: dt.toLocaleDateString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
+      symbol: String(symbol).replace("/", ""),
+      strategy: "Backtest 2R (จำลอง)",
+      side,
+      entry,
+      exit: exitPrice,
+      sl: stop,
+      status: rMult > 0 ? "WIN" : "LOSS",
+      stage,
+      netR: `${rMult >= 0 ? "+" : ""}${rMult.toFixed(2)} R`,
+      rValue: rMult,
+      pl: "—",
+      reason: stage === "FULL_TP" ? "ชนเป้า 2R" : stage === "TP1_RUNNER" ? "ผ่าน TP1 แล้วโดน trailing stop" : stage === "BE_LOCKED" ? "ล็อกทุนแล้วโดนย่อกลับ" : stage === "SL_HIT" ? "ชน Stop Loss" : "หมดเวลาถือ ปิดที่ราคาปิด",
+    });
+    i = exitIdx;
+  }
+  const wins = trades.filter((t) => t.rValue > 0).length;
+  const closed = trades.length;
+  const grossWin = trades.filter((t) => t.rValue > 0).reduce((s, t) => s + t.rValue, 0);
+  const grossLoss = Math.abs(trades.filter((t) => t.rValue <= 0).reduce((s, t) => s + t.rValue, 0));
+  let peak = 0, eq = 0, maxDd = 0;
+  for (const t of trades) { eq += t.rValue; peak = Math.max(peak, eq); maxDd = Math.max(maxDd, peak - eq); }
+  const recent24 = bars.slice(-24);
+  const low24 = Math.min(...recent24.map((b) => b.low));
+  const high24 = Math.max(...recent24.map((b) => b.high));
+  const atrNow = computeATR(bars.slice(-25), 14);
+  const d = (bars.at(-1)?.close ?? 2000) > 200 ? 2 : 4;
+  return {
+    basis: "backtest-in-sample",
+    validated: false,
+    closed,
+    wins,
+    losses: closed - wins,
+    winRate: closed ? Number(((wins / closed) * 100).toFixed(1)) : 0,
+    netR: Number((grossWin - grossLoss).toFixed(2)),
+    expectancyR: closed ? Number(((grossWin - grossLoss) / closed).toFixed(3)) : 0,
+    profitFactor: grossLoss > 0 ? Number((grossWin / grossLoss).toFixed(2)) : null,
+    maxDrawdownR: Number(maxDd.toFixed(2)),
+    recentTrades: trades.slice(-6).reverse(),
+    // 24-bar range levels: descriptive key levels, not a performance claim.
+    buyZone: `$${low24.toFixed(d)} - $${(low24 + atrNow * 0.45).toFixed(d)}`,
+    sellZone: `$${(high24 - atrNow * 0.45).toFixed(d)} - $${high24.toFixed(d)}`,
+  };
 }

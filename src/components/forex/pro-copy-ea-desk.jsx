@@ -33,9 +33,6 @@ const STRATEGIES = [
     title: 'Gold London/NY Session Trend',
     symbol: 'XAUUSD (Spot Gold)',
     badge: 'กลยุทธ์ทำเงินสูงสุด',
-    winRate: '80.0%',
-    pf: '2.35',
-    maxDd: '1.8 R',
     session: 'London 14:00 - NY 23:00',
     timeframe: '15m',
     defaultPlan: { entry: 2724.5, stop: 2712.0, lock: 2728.5, tp1: 2742.0, tp2: 2758.0 },
@@ -51,9 +48,6 @@ const STRATEGIES = [
     title: 'FX Major Dynamic Envelope',
     symbol: 'EURUSD / GBPUSD',
     badge: 'เสถียรภาพสูงสุด',
-    winRate: '75.0%',
-    pf: '2.15',
-    maxDd: '1.5 R',
     session: 'Regular 13:00 - 22:00',
     timeframe: '15m',
     defaultPlan: { entry: 1.0825, stop: 1.0805, lock: 1.0841, tp1: 1.0858, tp2: 1.0885 },
@@ -69,9 +63,6 @@ const STRATEGIES = [
     title: 'Asian Range Liquidity Sweep',
     symbol: 'USDJPY / AUDUSD',
     badge: 'เทรดกรอบเช้า',
-    winRate: '72.0%',
-    pf: '2.05',
-    maxDd: '1.6 R',
     session: 'Asia 06:00 - 11:00',
     timeframe: '15m',
     defaultPlan: { entry: 152.4, stop: 151.9, lock: 152.65, tp1: 153.0, tp2: 153.6 },
@@ -84,89 +75,12 @@ const STRATEGIES = [
   },
 ];
 
-const RECENT_TRADES = [
-  {
-    id: 'T-8091',
-    time: '24 ต.ค. 09:15',
-    symbol: 'XAUUSD',
-    strategy: 'Gold Trend',
-    side: 'BUY',
-    entry: 2720.5,
-    exit: 2750.1,
-    sl: 2704.0,
-    status: 'WIN',
-    stage: 'TP1_RUNNER',
-    netR: '+1.80 R',
-    pl: '+$360.00',
-    reason: 'ปิด TP1 50% @ 1.8R + รันเนอร์ชน Trailing Stop',
-  },
-  {
-    id: 'T-8090',
-    time: '23 ต.ค. 14:30',
-    symbol: 'EURUSD',
-    strategy: 'FX Envelope',
-    side: 'BUY',
-    entry: 1.0825,
-    exit: 1.0858,
-    sl: 1.0805,
-    status: 'WIN',
-    stage: 'TP1_CLOSED',
-    netR: '+1.65 R',
-    pl: '+$165.00',
-    reason: 'ปิดเต็มตามเป้าหมาย TP1',
-  },
-  {
-    id: 'T-8089',
-    time: '23 ต.ค. 11:45',
-    symbol: 'XAUUSD',
-    strategy: 'Gold Trend',
-    side: 'BUY',
-    entry: 2710.2,
-    exit: 2712.5,
-    sl: 2695.0,
-    status: 'WIN',
-    stage: 'BE_LOCKED',
-    netR: '+0.15 R',
-    pl: '+$30.00',
-    reason: '🛡️ เลื่อน SL บังทุน +0.5R แล้วโดนย่อชน Breakeven (กำไรเล็กน้อย)',
-  },
-  {
-    id: 'T-8088',
-    time: '22 ต.ค. 20:30',
-    symbol: 'GBPUSD',
-    strategy: 'FX Envelope',
-    side: 'SELL',
-    entry: 1.298,
-    exit: 1.3,
-    sl: 1.3,
-    status: 'LOSS',
-    stage: 'SL_HIT',
-    netR: '-1.00 R',
-    pl: '-$100.00',
-    reason: '🛑 ชนจุดตัดขาดทุน Stop Loss ตามวินัย ไม่ลากพอร์ต',
-  },
-  {
-    id: 'T-8087',
-    time: '22 ต.ค. 16:00',
-    symbol: 'XAUUSD',
-    strategy: 'Gold Trend',
-    side: 'BUY',
-    entry: 2698.0,
-    exit: 2730.0,
-    sl: 2682.0,
-    status: 'WIN',
-    stage: 'FULL_TP',
-    netR: '+2.00 R',
-    pl: '+$400.00',
-    reason: '🎯 ชนเป้าหมาย 2R เต็มไม้ รับกำไรก้อนใหญ่ตามแผน',
-  },
-];
-
 export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
   const [selectedStrategy, setSelectedStrategy] = useState('gold-trend');
   const [personalTelegram, setPersonalTelegram] = useState(null);
   const [dispatchStatus, setDispatchStatus] = useState(null);
   const [sendingTelegram, setSendingTelegram] = useState(false);
+  const [publicFeed, setPublicFeed] = useState(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -183,6 +97,24 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
       : selectedStrategy === 'fx-envelope'
       ? ['EURUSD', 'GBPUSD']
       : ['USDJPY', 'AUDUSD'];
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof fetch !== 'function') return;
+    const controller = new AbortController();
+    const sym = selectedStrategy === 'gold-trend' ? 'XAU/USD' : selectedStrategy === 'fx-envelope' ? 'EUR/USD' : 'USD/JPY';
+    fetch(`/api/forex/studio/plans?candles=1&tickers=1&symbol=${encodeURIComponent(sym)}&timeframe=15m`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!controller.signal.aborted && data) {
+          setPublicFeed(data);
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [selectedStrategy]);
 
   const universe = live.data?.universe?.length
     ? live.data.universe
@@ -203,17 +135,37 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
     (t) => relevant.some((r) => r.symbol === t.symbol) && t.plan?.entry > 0
   );
 
-  const summary = live.data?.summary;
+  // Results come only from the recorded signal ledger; the in-sample backtest is never shown as performance.
+  const summary = live.data?.summary?.closed > 0 ? live.data.summary : null;
   const n = (v, d = 2) =>
     Number.isFinite(v) ? v.toLocaleString('th-TH', { maximumFractionDigits: d }) : '—';
 
-  const currentPlan = liveTrade?.plan || {
+  const digits = selectedStrategy === 'gold-trend' ? 2 : selectedStrategy === 'fx-envelope' ? 4 : 3;
+  const publicPlan = publicFeed?.plan?.entry
+    ? {
+        entry: Number(publicFeed.plan.entry),
+        stop: Number(publicFeed.plan.stop),
+        target: Number(publicFeed.plan.target),
+        side: String(publicFeed.plan.side || 'buy').toUpperCase(),
+      }
+    : null;
+  const riskDist = publicPlan ? Math.abs(publicPlan.entry - publicPlan.stop) : Math.abs(activeStrategy.defaultPlan.entry - activeStrategy.defaultPlan.stop);
+  const isSellPlan = (liveTrade?.side || publicPlan?.side || 'BUY') === 'SELL';
+
+  const currentPlan = liveTrade?.plan || publicPlan || {
     entry: activeStrategy.defaultPlan.entry,
     stop: activeStrategy.defaultPlan.stop,
     target: activeStrategy.defaultPlan.tp1,
   };
+  const lockPrice = publicPlan
+    ? Number((isSellPlan ? currentPlan.entry - riskDist * 0.5 : currentPlan.entry + riskDist * 0.5).toFixed(digits))
+    : activeStrategy.defaultPlan.lock;
+  const tp2Price = publicPlan
+    ? Number((isSellPlan ? currentPlan.entry - riskDist * 3.0 : currentPlan.entry + riskDist * 3.0).toFixed(digits))
+    : activeStrategy.defaultPlan.tp2;
   const activeSymbol = liveTrade?.symbol || symbols[0];
-  const activeSide = liveTrade?.side || 'BUY';
+  const activeSide = liveTrade?.side || publicPlan?.side || 'BUY';
+  const displayedTrades = Array.isArray(live.data?.recentTrades) && live.data?.summary?.closed > 0 ? live.data.recentTrades : [];
 
   async function handleBroadcastTelegram() {
     setSendingTelegram(true);
@@ -249,9 +201,9 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
             strategyName: activeStrategy.title,
             entry: currentPlan.entry,
             stopLoss: currentPlan.stop,
-            lockBuffer: activeStrategy.defaultPlan.lock,
+            lockBuffer: lockPrice,
             tp1: currentPlan.target,
-            tp2: activeStrategy.defaultPlan.tp2,
+            tp2: tp2Price,
             recommendedLot: '0.04 Lot',
           },
         }),
@@ -354,45 +306,47 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>Win Rate (30 วัน)</div>
             <div className={`${styles.metricVal} ${styles.positive}`}>
-              {summary?.winRate ? `${n(summary.winRate, 1)}%` : '80.0%'}
+              {summary ? `${n(summary.winRate, 1)}%` : '—'}
             </div>
             <div className={styles.metricSub}>
-              {summary?.closed ? `${summary.closed} ไม้ในบันทึกจริง` : '24W - 6L ในรอบ 30 วัน'}
+              {summary ? `${summary.closed} ไม้ปิดจริง (${summary.wins ?? 0}W - ${summary.losses ?? 0}L)` : 'ยังไม่มีไม้ปิดจริงในบันทึก'}
             </div>
           </div>
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>Profit Factor</div>
             <div className={`${styles.metricVal} ${styles.accent}`}>
-              {summary?.profitFactor ? n(summary.profitFactor) : '2.35'}
+              {summary?.profitFactor ? n(summary.profitFactor) : '—'}
             </div>
             <div className={styles.metricSub}>อัตรากำไรต่อขาดทุน</div>
           </div>
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>Max Drawdown</div>
             <div className={styles.metricVal}>
-              {summary?.maxDrawdownR ? `${n(summary.maxDrawdownR)} R` : '1.8 R'}
+              {summary ? `${n(summary.maxDrawdownR)} R` : '—'}
             </div>
             <div className={styles.metricSub}>ปลอดภัย ไร้ความเสี่ยงล้างพอร์ต</div>
           </div>
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>Net Gain รวม</div>
             <div className={`${styles.metricVal} ${styles.positive}`}>
-              {summary?.netR ? `${n(summary.netR)} R` : '+38.5 R'}
+              {summary ? `${summary.netR >= 0 ? '+' : ''}${n(summary.netR)} R` : '—'}
             </div>
             <div className={styles.metricSub}>ผลกำไรสุทธิสะสม</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricLabel}>สถิติวันนี้ (Today)</div>
-            <div className={`${styles.metricVal} ${styles.positive}`}>2 ไม้ WIN</div>
+            <div className={styles.metricLabel}>ราคาล่าสุด ({activeSymbol})</div>
+            <div className={`${styles.metricVal} ${styles.positive}`}>
+              {publicFeed?.price ? n(publicFeed.price, digits) : '—'}
+            </div>
             <div className={styles.metricSub}>สภาวะตลาดเป็นไปตามแผน</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricLabel}>สถานะฟีด MT5</div>
+            <div className={styles.metricLabel}>สถานะฟีดข้อมูล</div>
             <div className={styles.metricVal} style={{ fontSize: '14px', color: '#38bdf8' }}>
-              {live.data?.connection || bridge?.status || 'MT5 LIVE FEED'}
+              {live.data?.connection || bridge?.status || (publicFeed?.price ? 'YAHOO LIVE 15M' : 'MT5 LIVE FEED')}
             </div>
             <div className={styles.metricSub}>
-              {live.data?.coverage?.ready ? `${live.data.coverage.ready} สินทรัพย์พร้อม` : 'ฟีดปิดจริง 15m'}
+              {live.data?.coverage?.ready ? `${live.data.coverage.ready} สินทรัพย์พร้อม` : publicFeed?.quotes ? `${Object.keys(publicFeed.quotes).length} สินทรัพย์พร้อม` : 'ฟีดปิดจริง 15m'}
             </div>
           </div>
         </div>
@@ -446,7 +400,7 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                       <span className={styles.eaSymbol}>{strat.symbol}</span>
                     </div>
                   </div>
-                  <span className={styles.eaWinRateBadge}>{strat.winRate} Win</span>
+                  <span className={styles.eaWinRateBadge}>{strat.timeframe} · รอผลจริง</span>
                 </div>
 
                 <div className={styles.eaRulePills}>
@@ -463,7 +417,7 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                     ช่วงเวลา: <strong>{strat.session}</strong>
                   </span>
                   <span>
-                    PF: <strong>{strat.pf}</strong>
+                    กรอบเวลา: <strong>{strat.timeframe}</strong>
                   </span>
                   {rows.length > 0 && (
                     <div style={{ width: '100%', marginTop: '6px', fontSize: '11px', color: '#38bdf8' }}>
@@ -496,7 +450,7 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
           </div>
           <span className={styles.statusPillLocked}>
             <Lock size={12} />
-            🛡️ ล็อคกำไรแล้ว (+0.5R) · ปลอดภัย 100%
+            🛡️ แผนล็อกกำไร: เลื่อน SL บังทุนเมื่อบวก +0.65R
           </span>
         </div>
 
@@ -522,13 +476,13 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
           <div className={styles.stepperGrid}>
             <div className={`${styles.stepBox} ${styles.passed}`}>
               <div className={styles.stepTitle}>Step 1: Entry เข้าไม้</div>
-              <div className={styles.stepPrice}>{n(currentPlan.entry)}</div>
+              <div className={styles.stepPrice}>{n(currentPlan.entry, digits)}</div>
               <div className={styles.stepNote}>✅ เข้าไม้เมื่อแท่ง 15m ปิด</div>
             </div>
 
             <div className={`${styles.stepBox} ${styles.passed}`}>
               <div className={styles.stepTitle}>Step 2: Stop Loss เดิม</div>
-              <div className={styles.stepPrice}>{n(currentPlan.stop)}</div>
+              <div className={styles.stepPrice}>{n(currentPlan.stop, digits)}</div>
               <div className={styles.stepNote}>ระยะเสี่ยง 1.5 ATR โครงสร้าง</div>
             </div>
 
@@ -537,20 +491,20 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                 Step 3: 🛡️ เลื่อนบังทุน
               </div>
               <div className={styles.stepPrice} style={{ color: '#38bdf8' }}>
-                {n(activeStrategy.defaultPlan.lock)}
+                {n(lockPrice, digits)}
               </div>
-              <div className={styles.stepNote}>🔒 เลื่อน SL ล็อคกำไร +0.5R แล้ว!</div>
+              <div className={styles.stepNote}>🔒 เลื่อน SL ขึ้น +0.5R เมื่อราคาบวก +0.65R</div>
             </div>
 
             <div className={styles.stepBox}>
               <div className={styles.stepTitle}>Step 4: เป้าหมาย TP1 (50%)</div>
-              <div className={styles.stepPrice}>{n(currentPlan.target)}</div>
+              <div className={styles.stepPrice}>{n(currentPlan.target, digits)}</div>
               <div className={styles.stepNote}>ปิดทำกำไร 50% แรก (+1.8 R)</div>
             </div>
 
             <div className={styles.stepBox}>
               <div className={styles.stepTitle}>Step 5: เป้าหมาย TP2 (Runner)</div>
-              <div className={styles.stepPrice}>{n(activeStrategy.defaultPlan.tp2)}</div>
+              <div className={styles.stepPrice}>{n(tp2Price, digits)}</div>
               <div className={styles.stepNote}>ปล่อย 50% ที่เหลือรันเทรนด์ (+3.0 R)</div>
             </div>
           </div>
@@ -563,7 +517,10 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
               📑 Trade Ledger · บันทึกผลงานและสถิติรายไม้ (Win / Loss Journal)
             </span>
             <span className={styles.ledgerSubtitle}>
-              แสดง 5 ไม้ล่าสุด · รวมกำไรสุทธิ <strong>+$815.00 (+4.60 R)</strong>
+              {displayedTrades.length ? `แสดง ${displayedTrades.length} ไม้ปิดจริงล่าสุด · รวมกำไรสุทธิ ` : 'ยังไม่มีไม้ปิดจริง — ระบบจะบันทึกทุกสัญญาณตั้งแต่เวลาที่ส่ง (forward)'}
+              <strong>
+                {summary ? `${summary.netR >= 0 ? '+' : ''}${n(summary.netR)} R` : ''}
+              </strong>
             </span>
           </div>
 
@@ -584,7 +541,14 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                 </tr>
               </thead>
               <tbody>
-                {RECENT_TRADES.map((trade) => {
+                {!displayedTrades.length && (
+                  <tr>
+                    <td colSpan={9} style={{ textAlign: 'center', color: '#94a3b8', padding: '18px' }}>
+                      ยังไม่มีไม้ปิดจริงในบันทึก
+                    </td>
+                  </tr>
+                )}
+                {displayedTrades.map((trade) => {
                   const isWin = trade.status === 'WIN';
                   return (
                     <tr key={trade.id}>
@@ -603,8 +567,8 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
                           <span className={styles.sideBadgeShort}>SELL</span>
                         )}
                       </td>
-                      <td style={{ fontFamily: 'var(--font-apple-mono)', fontFeatureSettings: '"tnum" 1' }}>{n(trade.entry)}</td>
-                      <td style={{ fontFamily: 'var(--font-apple-mono)', fontFeatureSettings: '"tnum" 1' }}>{n(trade.exit)}</td>
+                      <td style={{ fontFamily: 'var(--font-apple-mono)', fontFeatureSettings: '"tnum" 1' }}>{n(trade.entry, digits)}</td>
+                      <td style={{ fontFamily: 'var(--font-apple-mono)', fontFeatureSettings: '"tnum" 1' }}>{n(trade.exit, digits)}</td>
                       <td>
                         {isWin ? (
                           <span className={styles.winBadge}>
@@ -628,7 +592,7 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
 
           {/* Mobile Cards Feed (Thumb-friendly, no side scrolling!) */}
           <div className={styles.mobileLedgerCards}>
-            {RECENT_TRADES.map((trade) => {
+            {displayedTrades.map((trade) => {
               const isWin = trade.status === 'WIN';
               return (
                 <div key={trade.id} className={styles.mobileTradeCard}>

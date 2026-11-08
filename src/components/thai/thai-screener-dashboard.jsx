@@ -195,7 +195,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
       ✈️ รับการบ้านหุ้นเข้า Telegram VIP ↗
      </a>
      <button type="button" className={styles.ledgerButton} onClick={()=>{if(onResults)onResults();}}>
-      📑 ดูประวัติ Trade Ledger (100 ไม้) ↗
+      📑 ดูบันทึกผลจริง Trade Ledger ↗
      </button>
     </div>
    </div>
@@ -203,23 +203,23 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    <div className={styles.scoreboardMetrics}>
     <div className={styles.scoreMetricCard} data-accent="green">
      <span className={styles.scoreMetricLabel}>🎯 Win Rate อัตราการชนะ</span>
-     <strong className={styles.scoreMetricValue}>76.5%</strong>
-     <small className={styles.scoreMetricSub}>ชนะ 13 ไม้ / แพ้ 4 ไม้ (30 วันล่าสุด)</small>
+     <strong className={styles.scoreMetricValue}>{stats?.trackRecord?.validated?`${stats.trackRecord.winRate.toFixed(1)}%`:'—'}</strong>
+     <small className={styles.scoreMetricSub}>{stats?.trackRecord?.validated?`ชนะ ${stats.trackRecord.wins} ไม้ / แพ้ ${stats.trackRecord.losses} ไม้ (${stats.trackRecord.closed} ไม้จากกราฟจริง)`:'ยังไม่มีไม้ปิดจริงในบันทึก · เริ่มบันทึกแบบ forward'}</small>
     </div>
     <div className={styles.scoreMetricCard} data-accent="cyan">
      <span className={styles.scoreMetricLabel}>💰 กำไรเฉลี่ยเมื่อชนเป้า 2R</span>
-     <strong className={styles.scoreMetricValue}>+8.4%</strong>
-     <small className={styles.scoreMetricSub}>ขายทำกำไร 50% แล้วยก Stop</small>
+     <strong className={styles.scoreMetricValue}>{stats?.trackRecord?.validated?`+${stats.trackRecord.avgWinPct.toFixed(2)}%`:'—'}</strong>
+     <small className={styles.scoreMetricSub}>บวก 1R ยก Stop บังทุน · ขายทำกำไรที่ 2R</small>
     </div>
     <div className={styles.scoreMetricCard} data-accent="red">
      <span className={styles.scoreMetricLabel}>🛡️ ขาดทุนเฉลี่ยเมื่อคัท (SL)</span>
-     <strong className={styles.scoreMetricValue}>-3.1%</strong>
-     <small className={styles.scoreMetricSub}>คัทตามวินัย ไม่ปล่อยดอย</small>
+     <strong className={styles.scoreMetricValue}>{stats?.trackRecord?.validated?`-${Math.abs(stats.trackRecord.avgLossPct).toFixed(2)}%`:'—'}</strong>
+     <small className={styles.scoreMetricSub}>คัทตามโครงสร้าง ATR + แนวรับ (≤ 7.8%)</small>
     </div>
     <div className={styles.scoreMetricCard} data-accent="gold">
      <span className={styles.scoreMetricLabel}>⚖️ Risk : Reward สุทธิ</span>
-     <strong className={styles.scoreMetricValue}>1 : 2.7</strong>
-     <small className={styles.scoreMetricSub}>กำไรคุ้มกว่าเสี่ยงเกือบ 3 เท่า</small>
+     <strong className={styles.scoreMetricValue}>{stats?.trackRecord?.validated?`1 : ${stats.trackRecord.netRr.toFixed(1)}`:'—'}</strong>
+     <small className={styles.scoreMetricSub}>{stats?.trackRecord?.validated?`Profit Factor ${stats.trackRecord.profitFactor.toFixed(2)} · Net +${stats.trackRecord.netReturnR}R`:'แสดงเมื่อมีไม้ปิดจริงอย่างน้อย 30 ไม้'}</small>
     </div>
    </div>
 

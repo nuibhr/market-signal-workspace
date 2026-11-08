@@ -1,8 +1,8 @@
-.account-page{min-height:100vh;background:radial-gradient(ellipse at 78% 9%,#143c44 0,transparent 33%),radial-gradient(ellipse at 14% 0,#1b2643 0,transparent 29%),#080e19;color:#eef5f7;font-family:var(--font-apple)}
+.account-page{min-height:100vh;background:#050914;color:#f8fafc;font-family:var(--font-apple);position:relative;overflow-x:hidden}
 .account-page *{box-sizing:border-box}.account-page button,.account-page input{font:inherit}.account-page button{cursor:pointer}.account-page button:disabled{cursor:not-allowed;opacity:.48}.account-page a{text-decoration:none}
-.account-topbar{height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px;max-width:1290px;margin:auto;padding:0 28px;border-bottom: none}.account-brand{display:flex;align-items:center;gap:12px;color:#f0f7f8}.account-brand>span:first-child{display:grid;place-items:center;width:45px;height:45px;border: none;border-radius:13px;background:#142536}.account-brand strong,.account-brand small{display:block}.account-brand strong{font-size:16px;letter-spacing:.2px}.account-brand small{color:#6b9da9;font:700 9px 'DM Mono',monospace;letter-spacing:2px}.account-back,.account-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;border: none;border-radius:10px;background:#142234;color:#d8e8ec;padding:10px 15px;font-size:12px;font-weight:700}.account-back:hover,.account-secondary:hover{border-color:#4ad9cd;color:#fff;background:#1b3444}
-.account-hero{border-bottom: none;background:linear-gradient(105deg,#101a2b,#122739 59%,#14353c);position:relative;overflow:hidden}.account-hero:after{content:'';position:absolute;right:6%;top:-80px;width:390px;height:390px;border-radius:50%;border: none;box-shadow:0 0 0 35px #50cbbc0a,0 0 0 95px #50cbbc09;pointer-events:none}.account-hero-inner{max-width:1290px;margin:auto;padding:44px 28px 40px;position:relative;z-index:1}.account-kicker{display:block;color:#70c8c4;font:700 10px 'DM Mono',monospace;letter-spacing:1.6px;text-transform:uppercase}.account-hero h1{margin:9px 0 5px;font-size:34px;letter-spacing:-1px}.account-hero h1 em{color:#65dfce;font-style:normal}.account-hero p{margin:0;color:#a8bfca;font-size:13px}
-.account-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:32px;max-width:1290px;min-height:670px;margin:auto;padding:30px 28px 70px}.account-nav{display:flex;flex-direction:column;gap:5px}.account-nav-label{margin:6px 11px 13px;color:#70899b;font:700 10px 'DM Mono',monospace;letter-spacing:1.3px}.account-nav button{display:flex;align-items:center;gap:12px;width:100%;min-height:43px;border:0;border-radius:9px;background:transparent;padding:0 13px;color:#a9bdca;text-align:left;font-size:12px;font-weight:700}.account-nav button svg{color:#7897a9}.account-nav button:hover,.account-nav button.selected{background:#15323d;color:#63e3d1}.account-nav button.selected{box-shadow:inset 3px 0 #33d9c7}.account-nav button.selected svg{color:#50dfcf}.account-nav button i{margin-left:auto;display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#743a43;color:#fff;font-style:normal}.account-nav-help{display:flex;align-items:flex-start;gap:9px;margin:25px 8px 0;padding:13px;border: none;border-radius:10px;background:#122331;color:#8da9b4;font-size:10px;line-height:1.5}.account-nav-help svg{flex:none;color:#57d6c7}.account-main{min-width:0;display:flex;flex-direction:column;gap:18px}.account-card{border: none;border-radius:17px;background:linear-gradient(145deg,#172333,#121c2b);box-shadow:0 24px 60px #0003;padding:29px 32px}.account-card h2{margin:5px 0 7px;font-size:24px;line-height:1.35}.account-card h3{margin:4px 0 8px;font-size:17px}.account-card p{color:#a9bbc8;font-size:12px;line-height:1.7}.account-alert{display:flex;align-items:center;gap:10px;border: none;border-radius:11px;background:#322a1c;color:#efd08b;padding:12px 16px;font-size:12px}.account-alert.error{border-color:#8b4255;background:#38212c;color:#ffabb4}.account-alert.success{border-color:#317a68;background:#14392f;color:#88f2d6}.account-skeleton span{display:block;height:19px;margin:17px 0;border-radius:6px;background:linear-gradient(90deg,#273a4d,#365066,#273a4d);background-size:200% 100%;animation:account-shimmer 1.4s linear infinite}.account-skeleton span:first-child{width:40%}.account-skeleton span:nth-child(2){width:70%}.account-skeleton span:last-child{width:55%}@keyframes account-shimmer{to{background-position:-200% 0}}
+.account-topbar{height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px;max-width:1290px;margin:auto;padding:0 28px;border-bottom: none;position:relative;z-index:2}.account-brand{display:flex;align-items:center;gap:12px;color:#f0f7f8}.account-brand>span:first-child{display:grid;place-items:center;width:45px;height:45px;border: none;border-radius:13px;background:rgba(30,41,59,0.6);backdrop-filter:blur(10px)}.account-brand strong,.account-brand small{display:block}.account-brand strong{font-size:16px;letter-spacing:.2px;color:#f8fafc}.account-brand small{color:#38bdf8;font:700 9px 'DM Mono',monospace;letter-spacing:2px}.account-back,.account-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;border: none;border-radius:10px;background:rgba(30,41,59,0.65);backdrop-filter:blur(10px);color:#e2e8f0;padding:10px 15px;font-size:12px;font-weight:700;transition:all .2s ease}.account-back:hover,.account-secondary:hover{color:#fff;background:rgba(56,189,248,0.2);box-shadow:0 0 15px rgba(56,189,248,0.25)}
+.account-hero{border-bottom: none;background:transparent;position:relative;overflow:hidden;z-index:2}.account-hero:after{display:none}.account-hero-inner{max-width:1290px;margin:auto;padding:44px 28px 24px;position:relative;z-index:1}.account-kicker{display:block;color:#38bdf8;font:700 11px 'DM Mono',monospace;letter-spacing:1.6px;text-transform:uppercase}.account-hero h1{margin:9px 0 5px;font-size:34px;letter-spacing:-1px;color:#f8fafc}.account-hero h1 em{color:#38bdf8;font-style:normal}.account-hero p{margin:0;color:#94a3b8;font-size:13px}
+.account-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:32px;max-width:1290px;min-height:670px;margin:auto;padding:20px 28px 70px;position:relative;z-index:2}.account-nav{display:flex;flex-direction:column;gap:5px}.account-nav-label{margin:6px 11px 13px;color:#64748b;font:700 10px 'DM Mono',monospace;letter-spacing:1.3px}.account-nav button{display:flex;align-items:center;gap:12px;width:100%;min-height:43px;border:0;border-radius:12px;background:transparent;padding:0 14px;color:#94a3b8;text-align:left;font-size:12.5px;font-weight:700;transition:all .2s ease}.account-nav button svg{color:#64748b}.account-nav button:hover,.account-nav button.selected{background:rgba(56,189,248,0.12);color:#38bdf8}.account-nav button.selected{box-shadow:inset 3px 0 #38bdf8}.account-nav button.selected svg{color:#38bdf8}.account-nav button i{margin-left:auto;display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#ef4444;color:#fff;font-style:normal}.account-nav-help{display:flex;align-items:flex-start;gap:9px;margin:25px 8px 0;padding:14px;border: none;border-radius:12px;background:rgba(15,23,42,0.65);backdrop-filter:blur(15px);color:#94a3b8;font-size:11px;line-height:1.5}.account-nav-help svg{flex:none;color:#38bdf8}.account-main{min-width:0;display:flex;flex-direction:column;gap:20px}.account-card{border: none;border-radius:20px;background:rgba(15,23,42,0.65);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 20px 50px rgba(0,0,0,0.35);padding:29px 32px}.account-card h2{margin:5px 0 7px;font-size:24px;line-height:1.35;color:#f8fafc}.account-card h3{margin:4px 0 8px;font-size:17px;color:#f8fafc}.account-card p{color:#94a3b8;font-size:12.5px;line-height:1.7}.account-alert{display:flex;align-items:center;gap:10px;border: none;border-radius:12px;background:rgba(245,158,11,0.15);color:#fbbf24;padding:12px 16px;font-size:12px}.account-alert.error{background:rgba(239,68,68,0.15);color:#fca5a5}.account-alert.success{background:rgba(16,185,129,0.15);color:#6ee7b7}.account-skeleton span{display:block;height:19px;margin:17px 0;border-radius:6px;background:linear-gradient(90deg,#1e293b,#334155,#1e293b);background-size:200% 100%;animation:account-shimmer 1.4s linear infinite}.account-skeleton span:first-child{width:40%}.account-skeleton span:nth-child(2){width:70%}.account-skeleton span:last-child{width:55%}@keyframes account-shimmer{to{background-position:-200% 0}}
 .account-status-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.account-status-header h2{font-size:29px}.account-status-header p{margin:0;color:#6ed9c6}.account-tier{display:inline-flex;align-items:center;gap:7px;border: none;border-radius:99px;background:#263341;color:#b8c9d0;padding:8px 11px;font:700 10px 'DM Mono',monospace;white-space:nowrap}.account-tier.active{border-color:#307e71;background:#163c39;color:#64e8d1}.account-expiry{display:flex;justify-content:space-between;gap:15px;margin-top:20px;padding:11px 14px;border-radius:10px;background:#233347;color:#a9bdca;font-size:12px}.account-expiry strong{color:#eaf5f4}.account-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:21px}.account-metrics>div{display:grid;gap:5px;padding:17px;border: none;border-radius:12px;background:#111e2e}.account-metrics span{color:#809eae;font-size:11px}.account-metrics strong{font-size:17px}.account-metrics small{color:#6bd3c5;font-size:10px}.account-actions{display:flex;gap:10px;align-items:center;margin-top:22px}.account-primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:10px;background:linear-gradient(110deg,#35ceb4,#26b9d1);color:#061b24;padding:11px 16px;font-size:12px;font-weight:800;box-shadow:0 10px 28px #2bc6b72b}.account-primary:hover{filter:brightness(1.1)}.account-primary.disabled{pointer-events:none;opacity:.5}.account-primary.line{background:linear-gradient(100deg,#45dc81,#2ccb73)}.account-icon{display:grid;place-items:center;flex:none;width:51px;height:51px;border-radius:14px}.account-icon.green{background:#145335;color:#5fe599}.account-icon.cyan{background:#174960;color:#61d6f4}.account-icon.gold{background:#594125;color:#ffd484}.account-login{max-width:710px;display:grid;justify-items:start;gap:8px;padding:40px}.account-login .account-icon{margin-bottom:10px}.account-login .account-primary{margin:14px 0 4px}.account-login small{color:#7e98a8;font-size:10px}
 .account-steps>div{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}.account-steps article{display:grid;gap:6px;padding:15px;border: none;border-radius:11px;background:#111e2e}.account-steps article span{color:#5fd7c7;font:700 16px 'DM Mono',monospace}.account-steps article strong{font-size:12px}.account-steps article small{color:#8fa4b2;font-size:10px}.account-section-heading{display:flex;align-items:center;gap:14px;margin-bottom:24px}.account-section-heading h2{margin:3px 0}.account-section-heading p{margin:0}.account-form{display:grid;gap:17px;max-width:520px}.account-form label{display:grid;gap:7px;color:#b4c8d2;font-size:11px;font-weight:700}.account-page input{min-height:44px;width:100%;border: none;border-radius:9px;background:#0b1726;color:#eef8fa;padding:10px 12px;outline:none}.account-page input:focus{border-color:#4edeca;box-shadow:0 0 0 3px #41dbc023}.account-page input::placeholder{color:#647e90}.account-form .account-primary{justify-self:start}.account-fineprint{margin:20px 0 0;padding-top:17px;border-top: none;color:#829eab!important;font-size:10px!important}.account-record{display:flex;align-items:center;gap:12px;padding:17px;border: none;border-radius:11px;background:#122a34;color:#59d9ca}.account-record div{display:grid;gap:3px}.account-record strong{color:#e8f4f4;font-size:14px}.account-record span{color:#9fc1c8;font-size:11px}.account-renewal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.account-renewal-option{display:flex;flex-direction:column;align-items:flex-start;min-height:220px;padding:20px;border: none;border-radius:13px;background:#101d2d}.account-renewal-option p{flex:1;margin:3px 0 17px}.account-renewal-option form{display:flex;gap:8px;width:100%}.account-renewal-option form input{min-width:0;flex:1}.account-profile{display:flex;align-items:center;gap:15px;margin-bottom:20px}.account-profile-avatar{display:grid;place-items:center;width:62px;height:62px;border-radius:16px;background:#213746}.account-profile div{display:grid;gap:3px}.account-profile strong{font-size:18px}.account-profile span:last-child{color:#64d7c4;font-size:11px}.account-profile+.account-record{margin-bottom:20px}
 .account-admin-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:24px 0 10px}.account-admin-head h3{margin:0}.account-admin-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 0;border-bottom: none}.account-admin-row>div{display:grid;gap:4px}.account-admin-row strong{font-size:12px}.account-admin-row span{color:#94aebc;font-size:10px}.account-admin-row form{display:flex;gap:8px;max-width:330px}.account-admin-row .account-primary,.account-admin-row .account-secondary{font-size:10px;white-space:nowrap}.account-admin-row input{min-width:0}.account-issued{display:grid;gap:6px;margin-top:17px;padding:18px;border: none;border-radius:10px;background:#17372e}.account-issued strong{font-size:11px}.account-issued code{font:700 16px 'DM Mono',monospace;color:#98f3c7;overflow-wrap:anywhere}.account-issued span,.account-empty{color:#8daab6;font-size:11px}.account-footer{display:flex;justify-content:space-between;gap:15px;max-width:1290px;margin:auto;padding:20px 28px 30px;border-top: none;color:#6f8998;font-size:10px}
@@ -247,14 +247,17 @@
   padding: 24px;
   border-radius: 20px;
   border: none;
-  background: #f8fcfa;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
   transition: all 0.25s ease;
   position: relative;
 }
 .package-card.highlight {
-  border: 2px solid #0284c7;
-  background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
-  box-shadow: 0 8px 30px rgba(2, 132, 199, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.12) 0%, rgba(15, 23, 42, 0.75) 100%);
+  box-shadow: 0 20px 50px rgba(2, 132, 199, 0.25);
 }
 .package-badge-popular {
   position: absolute;
@@ -275,12 +278,12 @@
   margin: 0 0 4px;
   font-size: 22px;
   font-weight: 800;
-  color: #0f172a;
+  color: #f8fafc;
 }
 .package-subtitle {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: #94a3b8;
 }
 .package-price-wrap {
   margin: 14px 0;
@@ -288,18 +291,18 @@
 .package-price-num {
   font-size: 38px;
   font-weight: 850;
-  color: #0f172a;
+  color: #f8fafc;
   letter-spacing: -0.5px;
 }
 .package-price-num small {
   font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: #94a3b8;
   margin-left: 4px;
 }
 .package-savings-note {
   font-size: 11px;
-  color: #059669;
+  color: #34d399;
   font-weight: 700;
   margin-top: 4px;
 }
@@ -307,7 +310,7 @@
   display: block;
   font-size: 13px;
   font-weight: 700;
-  color: #0284c7;
+  color: #38bdf8;
   margin-bottom: 14px;
 }
 .package-feature-list {
@@ -323,19 +326,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #334155;
+  color: #cbd5e1;
 }
 .feat-icon-ok {
   color: #10b981;
   flex-shrink: 0;
 }
 .feat-icon-no {
-  color: #94a3b8;
+  color: #64748b;
   flex-shrink: 0;
   opacity: 0.6;
 }
 .package-feature-list li.is-disabled {
-  color: #94a3b8;
+  color: #64748b;
   text-decoration: line-through;
 }
 
@@ -352,36 +355,39 @@
 .comparison-heading h3 {
   font-size: 20px;
   font-weight: 800;
-  color: #0f172a;
+  color: #f8fafc;
   margin: 0 0 4px;
 }
 .comparison-heading p {
   font-size: 12px;
-  color: #64748b;
+  color: #94a3b8;
   margin: 0;
 }
 .comparison-table-wrap {
   overflow-x: auto;
   border: none;
   border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 }
 .comparison-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
   text-align: left;
-  background: #ffffff;
+  background: transparent;
 }
 .comparison-table th, .comparison-table td {
   padding: 12px 16px;
-  border-bottom: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 .comparison-table thead th {
-  background: #f8fafc;
+  background: rgba(30, 41, 59, 0.5);
   font-size: 13px;
   font-weight: 800;
-  color: #0f172a;
+  color: #f8fafc;
 }
 .comparison-table thead th:nth-child(2),
 .comparison-table thead th:nth-child(3) {
@@ -392,13 +398,13 @@
   text-align: center;
 }
 .col-basic {
-  color: #334155;
+  color: #cbd5e1;
   font-weight: 600;
 }
 .col-vip {
-  color: #0284c7;
+  color: #38bdf8;
   font-weight: 700;
-  background: #f0f9ff44;
+  background: rgba(56, 189, 248, 0.06);
 }
 .check-yes {
   color: #10b981;
@@ -408,7 +414,7 @@
   gap: 4px;
 }
 .cross-no {
-  color: #ef4444;
+  color: #f87171;
   font-weight: 700;
   display: inline-flex;
   align-items: center;

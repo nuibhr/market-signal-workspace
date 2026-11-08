@@ -299,7 +299,9 @@ test("ForexStudio renders server-side with accessible structure and demo notices
 
   // Conversion & Trust boosters
   assert.match(markup, /สถิติมติสภา AI SWARM/);
-  assert.match(markup, /80\.0%/);
+  // Unbacked performance claims must not be rendered as a default (audit 2026-11-05)
+  assert.ok(!markup.includes("80.0%"), "Must not contain a hardcoded 80.0% win rate");
+  assert.ok(!markup.includes("24W - 6L"), "Must not contain a hardcoded W/L record");
   assert.match(markup, /TODAY&#x27;S GOLD BATTLE PLAN/);
   assert.match(markup, /ไม่พลาดไม้ทองคำ/);
   assert.match(markup, /ปลดล็อก LINE VIP/);

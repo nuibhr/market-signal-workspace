@@ -171,12 +171,21 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const hasCandleConnection = hasSettradeConnection || hasTfexConnection || asset.id === 'us' || asset.id === 'forex';
   const hasRealQuote = hasQuoteConnection && quoteState === 'available' && marketQuote?.instrumentId === asset.instrumentId;
   const hasRealBars = hasCandleConnection && liveState === 'available' && liveSeries?.instrumentId === asset.instrumentId && liveSeries?.timeframe === timeframe && (liveSeries?.bars?.length ?? 0) > 0;
+  const barChangePercent = hasRealBars && liveSeries.bars.length >= 2 && liveSeries.bars.at(-2)?.close > 0
+    ? ((liveSeries.bars.at(-1).close - liveSeries.bars.at(-2).close) / liveSeries.bars.at(-2).close) * 100
+    : null;
   const displayedPrice = hasSettradeConnection
     ? hasRealBars ? displayNumber(liveSeries.quote?.price ?? liveSeries.bars.at(-1).close) : '—'
-    : hasQuoteConnection ? hasRealQuote ? formatQuotePrice(marketQuote.price, asset) : hasRealBars ? formatQuotePrice(liveSeries.bars.at(-1).close, asset) : '—' : '—';
-  const displayedChange = hasSettradeConnection
-    ? hasRealBars && typeof liveSeries.quote?.changePercent === 'number' ? `${liveSeries.quote.changePercent >= 0 ? '+' : ''}${displayNumber(liveSeries.quote.changePercent)}%` : '—'
-    : hasQuoteConnection ? hasRealQuote && typeof marketQuote.changePercent === 'number' ? `${marketQuote.changePercent >= 0 ? '+' : ''}${displayNumber(marketQuote.changePercent)}%` : '—' : '—';
+    : hasQuoteConnection ? hasRealQuote ? formatQuotePrice(marketQuote.price, asset) : hasRealBars ? formatQuotePrice(liveSeries.bars.at(-1).close, asset) : '—'
+    : hasRealBars ? formatQuotePrice(liveSeries.bars.at(-1).close, asset) : '—';
+  const resolvedChangePercent = hasSettradeConnection
+    ? (typeof liveSeries?.quote?.changePercent === 'number' ? liveSeries.quote.changePercent : barChangePercent)
+    : hasQuoteConnection && hasRealQuote && typeof marketQuote?.changePercent === 'number'
+      ? marketQuote.changePercent
+      : barChangePercent;
+  const displayedChange = typeof resolvedChangePercent === 'number' && Number.isFinite(resolvedChangePercent)
+    ? `${resolvedChangePercent >= 0 ? '+' : ''}${displayNumber(resolvedChangePercent)}%`
+    : '—';
   const displayBars = hasRealBars ? liveSeries.bars : null;
   const latestBar = hasRealBars ? liveSeries.bars.at(-1) : null;
   const latestBarLabel = hasRealBars ? formatLatestBar(liveSeries) : '—';

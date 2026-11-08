@@ -80,14 +80,6 @@ const SECTIONS = [
 export default function ForexWorkspace({ initialSymbol = null, initialSection = "studio", viewer = null }) {
   const performance=useDeskResource('/api/daytrade?market=forex&compact=1',{interval:30000});
   const fmt=v=>Number.isFinite(v)?v.toFixed(2):'—';
-  const METRICS=[
-    ['Win rate',fmt(performance.data?.summary?.winRate)+'%',String(performance.data?.summary?.closed??0)+' ไม้ปิด','positive'],
-    ['Profit Factor',fmt(performance.data?.summary?.profitFactor),'จากบันทึกสัญญาณ','positive'],
-    ['Max Drawdown',fmt(performance.data?.summary?.maxDrawdownR)+' R','จากบันทึกสัญญาณ',''],
-    ['Net Return',fmt(performance.data?.summary?.netR)+' R','ผลสัญญาณอ้างอิง','positive'],
-    ['สินทรัพย์พร้อม',String(performance.data?.coverage?.ready??0),'จาก MT5',''],
-    ['ระบบสแกน 15m',performance.data?.connection||'รอเชื่อม',performance.data?.generatedAt||performance.error||'กำลังโหลด','']
-  ];
   const [section, setSection] = useState(initialSection);
   const [demoPreview, setPreview] = useState(false);
   const [frame, setFrame] = useState("1h");
@@ -102,6 +94,20 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
   const [ownerPreview,setOwnerPreview]=useState(false);
   const [publicQuotes,setPublicQuotes]=useState({});
   const [publicChart,setPublicChart]=useState(null);
+  const [publicBacktest,setPublicBacktest]=useState(null);
+  // Performance metrics come only from the recorded signal ledger. The in-sample
+  // backtest (publicBacktest) is kept for research views and is never shown as results.
+  const ledgerClosed = performance.data?.summary?.closed > 0;
+  const activeSummary = ledgerClosed ? performance.data.summary : null;
+  const readyAssetsCount = performance.data?.coverage?.ready > 0 ? performance.data.coverage.ready : Object.keys(publicQuotes).length;
+  const METRICS=[
+    ['Win rate',ledgerClosed?fmt(activeSummary.winRate)+'%':'—',ledgerClosed?`${activeSummary.closed} ไม้ปิดจริง`:'ยังไม่มีไม้ปิดจริง','positive'],
+    ['Profit Factor',ledgerClosed?fmt(activeSummary.profitFactor):'—','จากบันทึกสัญญาณจริง','positive'],
+    ['Max Drawdown',ledgerClosed?fmt(activeSummary.maxDrawdownR)+' R':'—','จากบันทึกสัญญาณจริง',''],
+    ['Net Return',ledgerClosed?fmt(activeSummary.netR)+' R':'—','จากบันทึกสัญญาณจริง','positive'],
+    ['สินทรัพย์พร้อม',String(readyAssetsCount),performance.data?.coverage?.ready > 0 ? 'จาก MT5' : 'ราคา Yahoo Finance',''],
+    ['ระบบสแกน 15m',performance.data?.connection||'รอเชื่อม MT5',performance.data?.generatedAt||performance.error||'กำลังโหลด','']
+  ];
   useEffect(()=>{const c=new AbortController();fetch('/api/owner-preview/status',{cache:'no-store',signal:c.signal}).then(r=>r.json()).then(v=>{if(!c.signal.aborted)setOwnerPreview(v.active===true);}).catch(()=>{});return()=>c.abort();},[]);
   const hasMt5 = Boolean(bridge.snapshot?.instruments.length);
   const universe = (hasMt5 ? bridge.snapshot.instruments : STARTER_UNIVERSE).filter(i => CORE_FOREX.includes(i.canonical_symbol));
@@ -130,6 +136,9 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
         if (controller.signal.aborted || !data) return;
         if (data.quotes && typeof data.quotes === "object") {
           setPublicQuotes((prev) => ({ ...prev, ...data.quotes }));
+        }
+        if (data.backtest && typeof data.backtest === "object") {
+          setPublicBacktest(data.backtest);
         }
         if (Array.isArray(data.bars) && data.bars.length > 0) {
           setPublicChart({

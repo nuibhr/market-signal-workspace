@@ -585,9 +585,9 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   }, [liveData]);
 
   const resultKpis=(scan,snapshot)=>{
-    const summary=snapshot?.status==='available'?snapshot.summary:null;
-    return {active:scan?.active??'—',hitTp:summary?.wins??'—',hitSl:summary?.losses??'—',nearTp:summary?.flat??'—',
-      winRate:summary?.closed?`${summary.winRate.toFixed(1)}%`:'—',avgReturn:summary?.closed?`${summary.averageReturnPercent>=0?'+':''}${summary.averageReturnPercent.toFixed(2)}%`:'—'};
+    const summary=snapshot?.status==='available'&&snapshot.summary?.closed?snapshot.summary:null;
+    return {active:scan?.active??'—',hitTp:summary?summary.wins:(scan?.hitTp??'—'),hitSl:summary?summary.losses:(scan?.hitSl??'—'),nearTp:summary?summary.flat:(scan?.nearTp??'—'),
+      winRate:summary?`${summary.winRate.toFixed(1)}%`:(scan?.winRate??'—'),avgReturn:summary?`${summary.averageReturnPercent>=0?'+':''}${summary.averageReturnPercent.toFixed(2)}%`:(scan?.avgReturn??'—')};
   };
   const drKpis=resultKpis(liveData?.drKpis,resultSnapshots.dr);
   const thaiKpis=resultKpis(liveData?.thaiKpis,resultSnapshots.thai);
@@ -887,7 +887,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                   setActiveTab('workflow');
                 }}
               >
-                📑 ดูประวัติ DR Trade Ledger (100 ไม้) ↗
+                📑 ดูบันทึกผลจริง DR Trade Ledger ↗
               </button>
             </div>
           </div>
@@ -895,23 +895,23 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           <div className={styles.scoreboardMetrics}>
             <div className={styles.scoreMetricCard} data-accent="green">
               <span className={styles.scoreMetricLabel}>🎯 Win Rate อัตราการชนะ</span>
-              <strong className={styles.scoreMetricValue}>78.6%</strong>
-              <small className={styles.scoreMetricSub}>ชนะ 11 ไม้ / แพ้ 3 ไม้ (30 วันล่าสุด)</small>
+              <strong className={styles.scoreMetricValue}>{liveData?.trackRecord?.validated?`${liveData.trackRecord.winRate.toFixed(1)}%`:'—'}</strong>
+              <small className={styles.scoreMetricSub}>{liveData?.trackRecord?.validated?`ชนะ ${liveData.trackRecord.wins} ไม้ / แพ้ ${liveData.trackRecord.losses} ไม้ (${liveData.trackRecord.closed} ไม้จากกราฟจริง)`:'ยังไม่มีไม้ปิดจริงในบันทึก · เริ่มบันทึกแบบ forward'}</small>
             </div>
             <div className={styles.scoreMetricCard} data-accent="cyan">
               <span className={styles.scoreMetricLabel}>💰 กำไรเฉลี่ยเมื่อชนเป้า 2R</span>
-              <strong className={styles.scoreMetricValue}>+11.2%</strong>
-              <small className={styles.scoreMetricSub}>ขายทำกำไร 50% แล้วยก Stop บังทุน</small>
+              <strong className={styles.scoreMetricValue}>{liveData?.trackRecord?.validated?`+${liveData.trackRecord.avgWinPct.toFixed(2)}%`:'—'}</strong>
+              <small className={styles.scoreMetricSub}>บวก 1R ยก Stop บังทุน · ขายทำกำไรที่ 2R</small>
             </div>
             <div className={styles.scoreMetricCard} data-accent="red">
               <span className={styles.scoreMetricLabel}>🛡️ ขาดทุนเฉลี่ยเมื่อคัท (SL)</span>
-              <strong className={styles.scoreMetricValue}>-3.4%</strong>
-              <small className={styles.scoreMetricSub}>คัทแคบตามวินัย ไม่ปล่อยดอย</small>
+              <strong className={styles.scoreMetricValue}>{liveData?.trackRecord?.validated?`-${Math.abs(liveData.trackRecord.avgLossPct).toFixed(2)}%`:'—'}</strong>
+              <small className={styles.scoreMetricSub}>คัทตามโครงสร้าง ATR + Camarilla S4</small>
             </div>
             <div className={styles.scoreMetricCard} data-accent="gold">
-              <span className={styles.scoreMetricLabel}>📈 ผลตอบแทน Backtest 1 ปี</span>
-              <strong className={styles.scoreMetricValue}>+42.8%</strong>
-              <small className={styles.scoreMetricSub}>Max Drawdown -5.8% · Profit Factor 2.65</small>
+              <span className={styles.scoreMetricLabel}>📈 ผลตอบแทนสะสม (ไม้ปิดจริง)</span>
+              <strong className={styles.scoreMetricValue}>{liveData?.trackRecord?.validated?`${liveData.trackRecord.netReturnPct>=0?'+':''}${liveData.trackRecord.netReturnPct.toFixed(1)}%`:'—'}</strong>
+              <small className={styles.scoreMetricSub}>{liveData?.trackRecord?.validated?`Max DD -${liveData.trackRecord.maxDrawdownPct}% · Profit Factor ${liveData.trackRecord.profitFactor.toFixed(2)}`:'แสดงเมื่อมีไม้ปิดจริงอย่างน้อย 30 ไม้'}</small>
             </div>
           </div>
 

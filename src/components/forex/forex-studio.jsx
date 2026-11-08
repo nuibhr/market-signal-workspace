@@ -478,6 +478,7 @@ export default function ForexStudio() {
   const [liveConnected, setLiveConnected] = useState(false);
   const [liveTick, setLiveTick] = useState(null);
   const [activeSetup, setActiveSetup] = useState(null);
+  const [liveBacktest, setLiveBacktest] = useState(null);
 
   const [plan, setPlan] = useState(INITIAL_PRACTICE_PLAN);
   const [plans, setPlans] = useState([]);
@@ -499,6 +500,9 @@ export default function ForexStudio() {
         if (controller.signal.aborted || !data || !Array.isArray(data.bars) || data.bars.length < 25) return;
         setLiveCandles(data.bars);
         setVisible(data.bars.length);
+        if (data.backtest && typeof data.backtest === "object") {
+          setLiveBacktest(data.backtest);
+        }
         if (Number.isFinite(data.price)) {
           setLiveTick({ symbol: "XAU/USD", price: data.price, status: "live_market" });
         }
@@ -881,29 +885,35 @@ export default function ForexStudio() {
         </p>
       </div>
 
-      {/* 1. 30-DAY VERIFIED TRACK RECORD BANNER */}
+      {/* 1. TRACK RECORD BANNER — only validated (forward-recorded) results are shown */}
       <div className={styles.trackRecordBanner} aria-label="สถิติมติสภา AI ย้อนหลัง 30 วัน">
         <div className={styles.trackRecordLeft}>
           <Sparkles size={14} className={styles.pulseIcon} />
-          <span>สถิติมติสภา AI SWARM (XAU/USD 30 วันล่าสุด):</span>
+          <span>สถิติมติสภา AI SWARM (XAU/USD · ไม้ปิดจริง):</span>
         </div>
         <div className={styles.trackRecordStats}>
           <div className={styles.trackStatItem}>
             <span>Win Rate:</span>
-            <strong className={styles.trackStatPositive}>80.0%</strong>
-            <small style={{ color: "#749ba3", fontSize: "10px" }}>(24W - 6L)</small>
+            <strong className={styles.trackStatPositive}>
+              {liveBacktest?.validated && liveBacktest.closed > 0 ? `${liveBacktest.winRate.toFixed(1)}%` : "—"}
+            </strong>
+            <small style={{ color: "#749ba3", fontSize: "10px" }}>
+              {liveBacktest?.validated && liveBacktest.closed > 0 ? `(${liveBacktest.wins}W - ${liveBacktest.losses}L)` : "(ยังไม่มีไม้ปิดจริง)"}
+            </small>
           </div>
           <div className={styles.trackStatItem}>
             <span>กำไรสะสม:</span>
-            <strong className={styles.trackStatPositive}>+38.5 R</strong>
+            <strong className={styles.trackStatPositive}>
+              {liveBacktest?.validated && liveBacktest.closed > 0 ? `${liveBacktest.netR >= 0 ? "+" : ""}${liveBacktest.netR.toFixed(1)} R` : "—"}
+            </strong>
           </div>
           <div className={styles.trackStatItem}>
             <span>Profit Factor:</span>
-            <strong>2.35</strong>
+            <strong>{liveBacktest?.validated && Number.isFinite(liveBacktest.profitFactor) ? liveBacktest.profitFactor.toFixed(2) : "—"}</strong>
           </div>
           <div className={styles.trackStatItem}>
             <span>Max DD:</span>
-            <strong>1.8 R</strong>
+            <strong>{liveBacktest?.validated && liveBacktest.closed > 0 ? `${liveBacktest.maxDrawdownR.toFixed(1)} R` : "—"}</strong>
           </div>
         </div>
       </div>
@@ -1176,11 +1186,11 @@ export default function ForexStudio() {
             <div className={styles.battleZonesGrid}>
               <div className={styles.battleZoneItem}>
                 <span>🟢 โซนดัก Buy (Asian Low Sweep)</span>
-                <strong style={{ color: "#6ce7bf" }}>$2645.00 - $2648.50</strong>
+                <strong style={{ color: "#6ce7bf" }}>{liveBacktest?.buyZone || "$2645.00 - $2648.50"}</strong>
               </div>
               <div className={styles.battleZoneItem}>
                 <span>🔴 โซนระวังแรงทุบ Sell (London High)</span>
-                <strong style={{ color: "#ff8292" }}>$2668.00 - $2672.00</strong>
+                <strong style={{ color: "#ff8292" }}>{liveBacktest?.sellZone || "$2668.00 - $2672.00"}</strong>
               </div>
               <div className={styles.battleZoneItem}>
                 <span>⚠️ เฝ้าระวังข่าวเศรษฐกิจคืนนี้</span>
