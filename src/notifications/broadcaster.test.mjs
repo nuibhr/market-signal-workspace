@@ -6,6 +6,9 @@ import {
   formatTelegramAdminAnnouncement,
   sendTelegramMessage,
   verifyTelegramBot,
+  createTelegramInviteLink,
+  kickTelegramChatMember,
+  unbanTelegramChatMember,
   sendLineBroadcast
 } from './broadcaster.mjs';
 
@@ -145,4 +148,96 @@ test('sendLineBroadcast sends broadcast message to LINE API', async () => {
 
   assert.equal(res.success, true);
   assert.equal(calledHeaders.Authorization, 'Bearer line_token_123');
+});
+
+test('createTelegramInviteLink creates a one-time invite link with member_limit 1', async () => {
+  let calledUrl = '';
+  let calledBody = null;
+  const mockFetcher = async (url, options) => {
+    calledUrl = url;
+    calledBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      json: async () => ({
+        ok: true,
+        result: {
+          invite_link: 'https://t.me/+AbCdEfGh123',
+          name: 'VIP - Member 01',
+          member_limit: 1,
+        }
+      })
+    };
+  };
+
+  const res = await createTelegramInviteLink({
+    token: 'test_token',
+    chatId: '-100987654',
+    name: 'VIP - Member 01',
+    memberLimit: 1,
+    fetcher: mockFetcher,
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(res.inviteLink, 'https://t.me/+AbCdEfGh123');
+  assert.equal(calledUrl, 'https://api.telegram.org/bottest_token/createChatInviteLink');
+  assert.equal(calledBody.chat_id, '-100987654');
+  assert.equal(calledBody.name, 'VIP - Member 01');
+  assert.equal(calledBody.member_limit, 1);
+});
+
+test('kickTelegramChatMember bans and unbans to kick user out without permanent ban', async () => {
+  const calls = [];
+  const mockFetcher = async (url, options) => {
+    calls.push({ url, body: JSON.parse(options.body) });
+    return {
+      ok: true,
+      json: async () => ({ ok: true, result: true })
+    };
+  };
+
+  const res = await kickTelegramChatMember({
+    token: 'test_token',
+    chatId: '-100987654',
+    userId: '123456789',
+    fetcher: mockFetcher,
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(res.kicked, true);
+  assert.equal(calls.length, 2);
+  // Call 1: banChatMember
+  assert.equal(calls[0].url, 'https://api.telegram.org/bottest_token/banChatMember');
+  assert.equal(calls[0].body.chat_id, '-100987654');
+  assert.equal(calls[0].body.user_id, '123456789');
+  // Call 2: unbanChatMember with only_if_banned: true
+  assert.equal(calls[1].url, 'https://api.telegram.org/bottest_token/unbanChatMember');
+  assert.equal(calls[1].body.chat_id, '-100987654');
+  assert.equal(calls[1].body.user_id, '123456789');
+  assert.equal(calls[1].body.only_if_banned, true);
+});
+
+test('unbanTelegramChatMember unbans user', async () => {
+  let calledUrl = '';
+  let calledBody = null;
+  const mockFetcher = async (url, options) => {
+    calledUrl = url;
+    calledBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      json: async () => ({ ok: true, result: true })
+    };
+  };
+
+  const res = await unbanTelegramChatMember({
+    token: 'test_token',
+    chatId: '-100987654',
+    userId: '123456789',
+    fetcher: mockFetcher,
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(res.unbanned, true);
+  assert.equal(calledUrl, 'https://api.telegram.org/bottest_token/unbanChatMember');
+  assert.equal(calledBody.user_id, '123456789');
+  assert.equal(calledBody.only_if_banned, true);
 });

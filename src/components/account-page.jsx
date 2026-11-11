@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, BadgeCheck, BarChart3, CalendarClock, Check, CircleAlert, Clock3, Fingerprint, LayoutDashboard, LockKeyhole, LogOut, ShieldCheck, Sparkles, UserRound, Users } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BadgeCheck, BarChart3, CalendarClock, Check, CircleAlert, Clock3, Fingerprint, LayoutDashboard, LockKeyhole, LogOut, ShieldCheck, Sparkles, UserRound, Users, Radio, ExternalLink, Copy } from 'lucide-react';
 import BillingPanel from './billing-panel.jsx';
 import MemberAvatar from './member-avatar.jsx';
 import AmbientLiquidGlass from './ambient-liquid-glass.jsx';
@@ -41,6 +41,36 @@ export default function AccountPage({initialData=null}) {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [code, setCode] = useState('');
+  const [telegramInvite, setTelegramInvite] = useState('');
+  const [copiedInvite, setCopiedInvite] = useState(false);
+  const [telegramLoading, setTelegramLoading] = useState(false);
+
+  const requestTelegramInvite = async () => {
+    if (telegramLoading) return;
+    setTelegramLoading(true);
+    setError('');
+    setMessage('');
+    try {
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create-invite' }),
+      });
+      const resData = await res.json();
+      if (resData.ok && resData.inviteLink) {
+        setTelegramInvite(resData.inviteLink);
+        setMessage('สร้างลิงก์เข้ากลุ่ม Telegram VIP เฉพาะคุณสำเร็จแล้ว (1 สิทธิ์)');
+      } else if (resData.error === 'MEMBERSHIP_REQUIRED') {
+        setError('สิทธิ์สมาชิกหมดอายุแล้ว กรุณาต่ออายุแพ็กเกจเพื่อรับลิงก์');
+      } else {
+        setError(resData.error || 'ขอลิงก์เข้ากลุ่มไม่สำเร็จ');
+      }
+    } catch {
+      setError('เชื่อมต่อระบบขอลิงก์ไม่สำเร็จ');
+    } finally {
+      setTelegramLoading(false);
+    }
+  };
   const refresh = useCallback(async () => {
     const response = await fetch('/api/account', { cache: 'no-store' });
     const payload = await response.json();
@@ -209,6 +239,68 @@ export default function AccountPage({initialData=null}) {
                   <span>🚀 Daytrade Desk 15m (TFEX / หุ้นนอก)</span>
                 </a>
               </div>
+            </div>
+
+            {/* Telegram VIP Access Card */}
+            <div className="account-record" style={{ marginTop: '18px', background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.75))', padding: '18px 20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '15px', flexWrap: 'wrap', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ display: 'grid', placeItems: 'center', width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8' }}>
+                    <Radio size={22} />
+                  </span>
+                  <div>
+                    <strong style={{ fontSize: '15px', color: '#f8fafc', display: 'block' }}>ห้องสัญญาณเทรดสด Telegram VIP</strong>
+                    <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>
+                      {active ? 'สิทธิ์สำหรับสมาชิก: รับสัญญาณสด XAUUSD, หุ้นไทย, และแจ้งเตือนจุดล็อคกำไร' : 'สงวนสิทธิ์เฉพาะสมาชิกที่กำลังใช้งาน (ต่ออายุแพ็กเกจเพื่อรับสิทธิ์)'}
+                    </span>
+                  </div>
+                </div>
+                {active ? (
+                  <button
+                    className="account-primary"
+                    style={{ background: 'linear-gradient(100deg, #38bdf8, #0284c7)', color: '#031726', fontWeight: 800 }}
+                    disabled={telegramLoading}
+                    onClick={requestTelegramInvite}
+                  >
+                    <ExternalLink size={15} /> {telegramLoading ? 'กำลังสร้างลิงก์…' : telegramInvite ? 'ขอลิงก์ใหม่' : 'รับลิงก์เข้ากลุ่ม VIP (1 สิทธิ์)'}
+                  </button>
+                ) : (
+                  <button className="account-secondary" onClick={() => setSection('renewal')}>
+                    ต่ออายุเพื่อเข้ากลุ่ม <ArrowRight size={14} />
+                  </button>
+                )}
+              </div>
+              {telegramInvite && (
+                <div style={{ marginTop: '6px', padding: '12px 14px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', width: '100%' }}>
+                  <div style={{ wordBreak: 'break-all' }}>
+                    <span style={{ fontSize: '11px', color: '#6ee7b7', display: 'block', fontWeight: 700 }}>🎉 ลิงก์เข้ากลุ่มเฉพาะคุณ (ใช้ได้ 1 ครั้ง):</span>
+                    <code style={{ fontSize: '13px', color: '#38bdf8' }}>{telegramInvite}</code>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      className="account-secondary"
+                      style={{ padding: '6px 12px', fontSize: '11px' }}
+                      onClick={() => {
+                        navigator.clipboard?.writeText(telegramInvite);
+                        setCopiedInvite(true);
+                        setTimeout(() => setCopiedInvite(false), 2000);
+                      }}
+                    >
+                      {copiedInvite ? <Check size={14} /> : <Copy size={14} />} {copiedInvite ? 'คัดลอกแล้ว' : 'คัดลอก'}
+                    </button>
+                    <a
+                      href={telegramInvite}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="account-primary"
+                      style={{ padding: '6px 14px', fontSize: '11px', textDecoration: 'none' }}
+                    >
+                      เข้ากลุ่มทันที ↗
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="account-record" style={{marginTop:'18px'}}><div><span className="account-kicker">NEXT ACTION</span><strong>{active?'เปิดดูข้อมูลตามสิทธิสมาชิก':'ตรวจสถานะสิทธิสมาชิกกับผู้ดูแล'}</strong><span>อ่านข้อมูลตลาดตามแหล่งที่พร้อมและสิทธิที่ยืนยันแล้ว ไม่ต้องกรอกข้อมูลเชื่อมต่อโบรกเกอร์</span></div></div><div className="account-actions"><button className="account-primary" onClick={()=>setSection('renewal')}>จัดการสมาชิก <ArrowRight size={16}/></button><a className="account-secondary" href="/thai">เปิดโต๊ะสแกนหุ้นไทย</a><a className="account-secondary" href="/dr">โต๊ะ DR Strategy</a></div></section><section className="account-card account-steps"><span className="account-kicker">MEMBER JOURNEY</span><h3>ขั้นตอนการใช้งาน</h3><div><article><span>01</span><strong>เข้าสู่ระบบ LINE</strong><small>ระบุตัวตนในทุกอุปกรณ์</small></article><article><span>02</span><strong>ตรวจสิทธิสมาชิก</strong><small>กดเริ่มทดลองได้เมื่อเปิดรับสิทธิใหม่</small></article><article><span>03</span><strong>เปิดข้อมูลตลาด</strong><small>อ่านตามสิทธิและแหล่งข้อมูลที่พร้อม</small></article></div></section></>}

@@ -16,6 +16,10 @@ import {
   Lock,
   Target,
   ExternalLink,
+  UserMinus,
+  UserPlus,
+  Copy,
+  Check,
 } from 'lucide-react';
 import styles from './admin-telegram-vip.module.css';
 
@@ -100,10 +104,120 @@ export default function AdminTelegramVip() {
   const [announcementTitle, setAnnouncementTitle] = useState(ANNOUNCEMENT_TEMPLATES[0].title);
   const [announcementBody, setAnnouncementBody] = useState(ANNOUNCEMENT_TEMPLATES[0].body);
 
+  // Member Management & Auto-Kick State
+  const [inviteMemberName, setInviteMemberName] = useState('');
+  const [createdInviteLink, setCreatedInviteLink] = useState(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+
+  const [kickUserId, setKickUserId] = useState('');
+  const [kickingMember, setKickingMember] = useState(false);
+
+  const [batchKickInput, setBatchKickInput] = useState('');
+  const [batchKicking, setBatchKicking] = useState(false);
+
   // Dispatching state
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState(null);
   const [historyLogs, setHistoryLogs] = useState([]);
+
+  async function handleGenerateInvite() {
+    if (generatingInvite) return;
+    setGeneratingInvite(true);
+    setToast(null);
+    try {
+      const payload = {
+        action: 'create-invite',
+        memberName: inviteMemberName.trim() || 'VIP Member',
+        memberLimit: 1,
+        ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
+      };
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.ok && data.inviteLink) {
+        setCreatedInviteLink(data.inviteLink);
+        setToast({ type: 'ok', msg: `🎉 สร้าง One-Time Invite Link 1 สิทธิ์สำเร็จ: ${data.inviteLink}` });
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: data.error || 'สร้างลิงก์ไม่สำเร็จ' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setGeneratingInvite(false);
+    }
+  }
+
+  async function handleKickMember() {
+    if (kickingMember || !kickUserId.trim()) return;
+    if (!confirm(`ยืนยันการเตะ Telegram User ID: ${kickUserId} ออกจากกลุ่ม VIP? (บอทจะสั่งเตะออก แต่ไม่แบนถาวร)`)) return;
+    setKickingMember(true);
+    setToast(null);
+    try {
+      const payload = {
+        action: 'kick-member',
+        userId: kickUserId.trim(),
+        ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
+      };
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setToast({ type: 'ok', msg: `✅ เตะสมาชิก User ID: ${kickUserId} ออกจากกลุ่ม VIP เรียบร้อยแล้ว (ไม่แบนถาวร)` });
+        setKickUserId('');
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: data.error || 'เตะสมาชิกไม่สำเร็จ' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setKickingMember(false);
+    }
+  }
+
+  async function handleBatchKick() {
+    if (batchKicking) return;
+    const userIds = batchKickInput.split(/[\n, ]+/).map(s => s.trim()).filter(Boolean);
+    if (!userIds.length) {
+      setToast({ type: 'err', msg: 'กรุณาระบุ Telegram User ID อย่างน้อย 1 รายการ' });
+      return;
+    }
+    if (!confirm(`ยืนยันการเตะสมาชิกหมดโปร ${userIds.length} คนออกจากกลุ่ม VIP?`)) return;
+    setBatchKicking(true);
+    setToast(null);
+    try {
+      const payload = {
+        action: 'auto-kick-expired',
+        userIds,
+        ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
+      };
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setToast({ type: 'ok', msg: `✅ สั่งบอทเตะสมาชิกหมดโปรสำเร็จ ${data.kickedCount} / ${userIds.length} คน` });
+        setBatchKickInput('');
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: data.error || 'ทำรายการไม่สำเร็จ' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setBatchKicking(false);
+    }
+  }
 
   useEffect(() => {
     const cfg=readTelegramSettings(window.localStorage);setTelegramConfig(cfg);fetchBotStatus(cfg);
@@ -273,6 +387,12 @@ export default function AdminTelegramVip() {
           onClick={() => { setActiveTab('announcements'); setToast(null); }}
         >
           <Megaphone size={16} /> บรอดแคสต์ประกาศสำคัญ VIP
+        </button>
+        <button
+          className={`${styles.segmentBtn} ${activeTab === 'members' ? styles.segmentBtnActive : ''}`}
+          onClick={() => { setActiveTab('members'); setToast(null); }}
+        >
+          <UserMinus size={16} /> สมาชิก VIP &amp; ระบบเตะคนหมดโปร (Auto-Kick)
         </button>
         <button
           className={`${styles.segmentBtn} ${activeTab === 'logs' ? styles.segmentBtnActive : ''}`}
@@ -469,7 +589,164 @@ ${stage === 'ENTRY' ? '1. เปิดแอป MT4/MT5 กรอก Entry, SL, 
         </div>
       )}
 
-      {/* Tab 3: History Logs */}
+      {/* Tab: VIP Membership Access & Auto-Kick */}
+      {activeTab === 'members' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Card 1: Generate 1-Time VIP Invite Link */}
+          <div className={styles.dispatchCard}>
+            <div className={styles.cardHead}>
+              <div>
+                <h3 className={styles.cardTitle}>
+                  <UserPlus size={18} color="#22d3ee" /> สร้างลิงก์เข้ากลุ่ม VIP เฉพาะคน (One-Time Invite Link)
+                </h3>
+                <p className={styles.cardSub}>
+                  สร้างลิงก์เชิญเข้ากลุ่มแบบจำกัด 1 สิทธิ์ (Member Limit: 1) ลิงก์จะหมดอายุทันทีเมื่อมีคนกดเข้า 1 คน ป้องกันการแอบนำไปแชร์ต่อ
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ flex: '1', minWidth: '240px' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: '6px', fontWeight: 600 }}>
+                  ชื่อสมาชิก / รหัสลูกค้า / หมายเหตุ
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น สมชาย ใจดี (Pro 399฿)"
+                  value={inviteMemberName}
+                  onChange={e => setInviteMemberName(e.target.value)}
+                  className={styles.inputField}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <button
+                type="button"
+                className={styles.dispatchBtn}
+                style={{ background: 'linear-gradient(135deg, #0284c7, #0369a1)', padding: '10px 18px' }}
+                disabled={generatingInvite || !botStatus.configured}
+                onClick={handleGenerateInvite}
+              >
+                <UserPlus size={16} /> {generatingInvite ? 'กำลังสร้างลิงก์…' : 'สร้างลิงก์ 1 สิทธิ์'}
+              </button>
+            </div>
+
+            {createdInviteLink && (
+              <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#6ee7b7', fontWeight: 700, textTransform: 'uppercase' }}>
+                    🎉 ONE-TIME INVITE LINK พร้อมใช้งาน:
+                  </span>
+                  <code style={{ fontSize: '0.9rem', color: '#38bdf8', wordBreak: 'break-all' }}>{createdInviteLink}</code>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className={styles.dispatchBtn}
+                    style={{ padding: '6px 12px', fontSize: '0.75rem', background: copiedLink ? '#059669' : '#334155' }}
+                    onClick={() => {
+                      navigator.clipboard?.writeText(createdInviteLink);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                  >
+                    {copiedLink ? <Check size={14} /> : <Copy size={14} />} {copiedLink ? 'คัดลอกแล้ว' : 'คัดลอกลิงก์'}
+                  </button>
+                  <a
+                    href={createdInviteLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.dispatchBtn}
+                    style={{ padding: '6px 12px', fontSize: '0.75rem', background: '#0284c7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <ExternalLink size={14} /> เปิด Telegram
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Card 2: Auto-Kick Expired Member */}
+          <div className={styles.dispatchCard}>
+            <div className={styles.cardHead}>
+              <div>
+                <h3 className={styles.cardTitle}>
+                  <UserMinus size={18} color="#f43f5e" /> สั่งบอทเตะสมาชิกหมดโปร (Auto-Kick Desk)
+                </h3>
+                <p className={styles.cardSub}>
+                  เตะสมาชิกที่ขาดต่ออายุออกจากกลุ่ม VIP ทันที โดยใช้ระบบ <code>banChatMember</code> และ <code>unbanChatMember</code> เพื่อไม่ให้เป็นการแบนถาวร (สมาชิกสามารถกลับเข้ากลุ่มได้เมื่อต่ออายุใหม่)
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ flex: '1', minWidth: '240px' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: '6px', fontWeight: 600 }}>
+                  Telegram User ID ของสมาชิกที่ต้องการเตะ
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น 123456789 (ตัวเลข User ID ของ Telegram)"
+                  value={kickUserId}
+                  onChange={e => setKickUserId(e.target.value)}
+                  className={styles.inputField}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <button
+                type="button"
+                className={styles.dispatchBtn}
+                style={{ background: 'linear-gradient(135deg, #e11d48, #be123c)', padding: '10px 18px' }}
+                disabled={kickingMember || !kickUserId.trim() || !botStatus.configured}
+                onClick={handleKickMember}
+              >
+                <UserMinus size={16} /> {kickingMember ? 'กำลังเตะ…' : 'เตะออกจากกลุ่ม VIP'}
+              </button>
+            </div>
+
+            <div style={{ marginTop: '14px', padding: '12px', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.45)', fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.6 }}>
+              💡 <strong>หลักการทำงานของบอท:</strong> บอทจะทำการแบนและปลดแบนในเสี้ยววินาที ทำให้สมาชิกหลุดออกจากกลุ่ม VIP ทันที แต่จะไม่ติด Blacklist ในกลุ่ม ทำให้สามารถใช้ลิงก์ใหม่กลับเข้ามาได้ทันทีเมื่อชำระเงินต่ออายุในรอบถัดไป
+            </div>
+          </div>
+
+          {/* Card 3: Batch Kick Expired Members */}
+          <div className={styles.dispatchCard}>
+            <div className={styles.cardHead}>
+              <div>
+                <h3 className={styles.cardTitle}>
+                  <UserMinus size={18} color="#f59e0b" /> เตะสมาชิกหมดโปรแบบชุด (Batch Auto-Kick)
+                </h3>
+                <p className={styles.cardSub}>
+                  วางรายการ Telegram User ID ของสมาชิกที่หมดโปรหลายคนพร้อมกัน (คั่นด้วยบรรทัดใหม่หรือเครื่องหมายจุลภาค)
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <textarea
+                rows={3}
+                placeholder="100123456&#10;100654321&#10;100987654"
+                value={batchKickInput}
+                onChange={e => setBatchKickInput(e.target.value)}
+                className={styles.inputField}
+                style={{ width: '100%', fontFamily: 'monospace' }}
+              />
+              <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className={styles.dispatchBtn}
+                  style={{ background: 'linear-gradient(135deg, #d97706, #b45309)', padding: '10px 18px' }}
+                  disabled={batchKicking || !batchKickInput.trim() || !botStatus.configured}
+                  onClick={handleBatchKick}
+                >
+                  <UserMinus size={16} /> {batchKicking ? 'กำลังเตะเป็นชุด…' : 'เตะสมาชิกที่หมดโปรทั้งหมด'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: History Logs */}
       {activeTab === 'logs' && (
         <div className={styles.dispatchCard}>
           <div className={styles.cardHead}>

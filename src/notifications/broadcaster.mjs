@@ -137,6 +137,110 @@ export async function verifyTelegramBot({ token, fetcher = fetch } = {}) {
   }
 }
 
+export async function createTelegramInviteLink({
+  token,
+  chatId,
+  name,
+  expireDate,
+  memberLimit = 1,
+  createsJoinRequest = false,
+  fetcher = fetch
+} = {}) {
+  if (!token || !chatId) {
+    throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  }
+
+  const url = `https://api.telegram.org/bot${token}/createChatInviteLink`;
+  const body = {
+    chat_id: chatId,
+    creates_join_request: Boolean(createsJoinRequest),
+  };
+  if (name) body.name = String(name).slice(0, 32);
+  if (Number.isFinite(memberLimit) && memberLimit > 0) body.member_limit = memberLimit;
+  if (Number.isFinite(expireDate) && expireDate > 0) body.expire_date = Math.floor(expireDate / 1000);
+
+  const response = await fetcher(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.ok) {
+    const errorMsg = data.description || `HTTP_${response.status}`;
+    throw Object.assign(new Error(errorMsg), { code: 'TELEGRAM_INVITE_FAILED', details: data });
+  }
+
+  return {
+    success: true,
+    inviteLink: data.result?.invite_link,
+    name: data.result?.name,
+    memberLimit: data.result?.member_limit,
+    expireDate: data.result?.expire_date,
+  };
+}
+
+export async function kickTelegramChatMember({ token, chatId, userId, fetcher = fetch } = {}) {
+  if (!token || !chatId) {
+    throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  }
+  if (!userId) {
+    throw Object.assign(new Error('TELEGRAM_USER_ID_REQUIRED'), { code: 'TELEGRAM_USER_ID_REQUIRED' });
+  }
+
+  // Step 1: Ban the member to kick them out immediately
+  const banUrl = `https://api.telegram.org/bot${token}/banChatMember`;
+  const banResponse = await fetcher(banUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, user_id: userId }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  const banData = await banResponse.json().catch(() => ({}));
+  if (!banResponse.ok || !banData.ok) {
+    const errorMsg = banData.description || `HTTP_${banResponse.status}`;
+    throw Object.assign(new Error(errorMsg), { code: 'TELEGRAM_KICK_FAILED', details: banData });
+  }
+
+  // Step 2: Unban immediately with only_if_banned: true so they can rejoin in the future when renewed!
+  const unbanUrl = `https://api.telegram.org/bot${token}/unbanChatMember`;
+  await fetcher(unbanUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, user_id: userId, only_if_banned: true }),
+    signal: AbortSignal.timeout(8000),
+  }).catch(() => {});
+
+  return { success: true, kicked: true, userId };
+}
+
+export async function unbanTelegramChatMember({ token, chatId, userId, fetcher = fetch } = {}) {
+  if (!token || !chatId) {
+    throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  }
+  if (!userId) {
+    throw Object.assign(new Error('TELEGRAM_USER_ID_REQUIRED'), { code: 'TELEGRAM_USER_ID_REQUIRED' });
+  }
+
+  const unbanUrl = `https://api.telegram.org/bot${token}/unbanChatMember`;
+  const response = await fetcher(unbanUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, user_id: userId, only_if_banned: true }),
+    signal: AbortSignal.timeout(8000),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.ok) {
+    const errorMsg = data.description || `HTTP_${response.status}`;
+    throw Object.assign(new Error(errorMsg), { code: 'TELEGRAM_UNBAN_FAILED', details: data });
+  }
+
+  return { success: true, unbanned: true, userId };
+}
+
 export async function sendLineBroadcast({ channelAccessToken, text, fetcher = fetch } = {}) {
   if (!channelAccessToken) {
     throw Object.assign(new Error('LINE_TOKEN_REQUIRED'), { code: 'LINE_TOKEN_REQUIRED' });
