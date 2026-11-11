@@ -2,6 +2,7 @@
 import {SoundControl,AlertHistory} from "../monitor/monitor-provider.jsx";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Bell,
@@ -9,13 +10,23 @@ import {
   Cable,
   CalendarDays,
   CandlestickChart as ChartIcon,
+  ChevronDown,
+  CircleHelp,
+  Compass,
+  Gauge,
   Globe2,
+  LayoutDashboard,
   ListFilter,
+  Radar,
   Search,
   ShieldCheck,
   Sparkles,
+  Users,
+  Wallet,
 } from "lucide-react";
 import MarketNavigation from "../market-navigation.jsx";
+import AmbientLiquidGlass from "../ambient-liquid-glass.jsx";
+import { AmbientDepth } from "../workspace-features.jsx";
 import DaytradePanel from "../daytrade/daytrade-panel.jsx";
 import ForexStudio from "./forex-studio.jsx";
 import ProCopyEaDesk from "./pro-copy-ea-desk.jsx";
@@ -45,36 +56,36 @@ const SECTIONS = [
     id: "studio",
     label: "Forex Live Studio",
     icon: Bot,
-    badge: "DEMO",
+    badge: "ห้องวางแผน & จำลองเทรด",
     description: "ห้องวางแผนและฝึกอ่านกราฟด้วยข้อมูลจำลอง",
   },
   {
     id: "pro",
     label: "Pro Suite EA",
     icon: ShieldCheck,
-    badge: "PRO",
-    description: "ถอดรหัสกลยุทธ์ EA สายเสถียร · แผนล็อคกำไร & สถิติ Win/Loss",
+    badge: "แผนล็อคกำไร 3 สเต็ป",
+    description: "ระบบแผน EA สายเสถียร · แผนล็อคกำไร & สถิติ Win/Loss",
   },
   {
     id: "scanner",
     label: "สแกนเนอร์สัญญาณ 15m",
     icon: ListFilter,
-    badge: "MT5",
-    description: "เรดาร์แท่งเทียนปิด 15 นาทีจาก MT5 · ทองคำและคู่เงินตามสัญลักษณ์ของโบรกเกอร์",
+    badge: "เรดาร์แท่งปิด 15 นาที",
+    description: "เรดาร์แท่งเทียนปิด 15 นาที · ทองคำและคู่เงินหลัก",
   },
   {
     id: "chart",
     label: "กราฟเทคนิค & แผนเทรด",
     icon: ChartIcon,
-    badge: "Chart",
+    badge: "Entry · SL · TP 2R",
     description: "กราฟแท่งเทียนความละเอียดสูง พร้อมพิกัดเข้า Entry, SL, TP 2R และบริบท AI",
   },
   {
     id: "alerts",
     label: "แจ้งเตือน Telegram & เสียง",
     icon: Bell,
-    badge: "Free",
-    description: "รับสัญญาณสดเข้ามือถือผ่าน Telegram VIP (ฟรี 100%) และเสียงน้องนักออมภาษาไทย",
+    badge: "ห้อง VIP & น้องนักออม",
+    description: "รับสัญญาณสดเข้ามือถือผ่านห้อง Telegram VIP ส่วนกลาง และเสียงน้องนักออมภาษาไทย",
   },
 ];
 export default function ForexWorkspace({ initialSymbol = null, initialSection = "studio", viewer = null }) {
@@ -214,274 +225,425 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
     onFavorite: toggleFavorite,
   };
   const tickerSymbols = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY"];
+  const [sidebarGroups, setSidebarGroups] = useState(["forex-core", "forex-more"]);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+  const toggleSidebarGroup = (id) =>
+    setSidebarGroups((curr) =>
+      curr.includes(id) ? curr.filter((x) => x !== id) : [...curr, id]
+    );
+  const hasLiveFeed = hasMt5 || Object.keys(publicQuotes).length > 0;
+
   return (
-    <div className={styles.workspace}>
+    <div
+      className={`app-frame market-workspace monitor-workspace market-forex ${styles.workspace}`}
+      data-theme="dark"
+      style={{ "--market-accent": "#bc9bff", "--market-rgb": "188, 155, 255" }}
+    >
+      <AmbientLiquidGlass isLight={false} />
+      <AmbientDepth />
       <a className={styles.skipLink} href="#forex-content">
         ข้ามไปยังเนื้อหา
       </a>
-      <aside className={styles.sidebar}>
-        <Link href="/" className={styles.brand}>
-          <span className={styles.brandMark}>N</span>
-          <span>
-            NUGAOM<small>MARKET INTELLIGENCE</small>
-          </span>
-        </Link>
-        <span className={styles.sidebarLabel}>YOUR MARKETS</span>
-        <MarketNavigation current="forex" />
-        <span className={styles.sidebarLabel}>FOREX COMMAND CENTER</span>
-        <nav className={styles.subnavigation} aria-label="Forex Command Center">
-          {SECTIONS.map((item) => (
-            <button
-              key={item.id}
-              aria-current={section === item.id ? "page" : undefined}
-              onClick={() => setSection(item.id)}
-            >
-              <item.icon size={16} />
-              <span>{item.label}</span>
-              {section === item.id && <i />}
-            </button>
-          ))}
-        </nav>
-        <nav className={styles.memberLinks} aria-label="พื้นที่สมาชิก">
-          <Link href="/account">{viewer ? 'บัญชีของฉัน' : 'เข้าสู่ระบบด้วย LINE'}</Link>
-          <Link href="/community">ห้องสมาชิกและคุยกับทีม</Link>
-        </nav>
-        <div className={styles.sidebarFoot}>
-          <span className={styles.brokerLogo}>✦</span>
-          <div>
-            <strong>Zero-Custody</strong>
-            <small>
-              {hasMt5
-                ? `MT5 Bridge · ${universe.length} symbols`
-                : "ใช้ได้กับทุกโบรกเกอร์ (Exness, XM, IC Markets)"}
-            </small>
-          </div>
-          <span className={styles.dot} />
-        </div>
-        <span className={styles.sidebarCopyright}>FOREX &amp; GOLD · PRO RADAR</span>
-      </aside>
-      <main id="forex-content" className={styles.main} tabIndex={-1}>
-        <header className={styles.topbar}>
-          <label className={styles.topSearch}>
-            <Search size={14} />
-            <input
-              aria-label="ค้นหาตลาดจากแถบด้านบน"
-              placeholder="Search symbol…"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setSection("scanner");
-              }}
-            />
-          </label>
-          <div className={styles.ticker}>
-            {tickerSymbols.map((symbol) => {
-              const item = universe.find(
-                  (asset) => asset.canonical_symbol === symbol,
-                ),
-                quote = item
-                  ? preview
-                    ? demoQuote(item)
-                    : Object.hasOwn(mergedQuotes, item.broker_symbol)
-                      ? mergedQuotes[item.broker_symbol]
-                      : Object.hasOwn(mergedQuotes, item.canonical_symbol)
-                        ? mergedQuotes[item.canonical_symbol]
-                        : null
-                  : null;
-              if (!item) return null;
-              return (
-                <button key={symbol} onClick={() => focusAsset(item)}>
-                  <strong>{symbol}</strong>
-                  <span>
-                    {hasMt5 && quote
-                      ? quote.price.toFixed(item.digits ?? 5)
-                      : formatDemoPrice(item, quote?.price)}
-                  </span>
-                  <b
-                    className={
-                      quote?.change < 0 ? styles.negative : styles.positive
-                    }
-                  >
-                    {quote?.change !== undefined
-                      ? `${quote.change >= 0 ? "+" : ""}${quote.change.toFixed(2)}%`
-                      : "—"}
-                  </b>
-                </button>
-              );
-            })}
-          </div>
-          <div className={styles.topActions}><SoundControl/>
-            {hasMt5 ? (
-              <span className={styles.demoBadge}>MT5 / READ ONLY</span>
-            ) : (
-              <DemoBadge enabled={preview} />
-            )}
-            <button
-              className={styles.iconButton}
-              aria-label="เปิดการแจ้งเตือน Forex"
-              onClick={() => setSection("alerts")}
-            >
-              <Bell size={16} />
-            </button>
-            <Link href="/account" className={styles.memberProfile}>
-              <span className={styles.guestAvatar}>{viewer ? <MemberAvatar account={viewer} size={28}/> : 'G'}</span>
-              <span className={styles.guestName}>
-                {viewer?.displayName || 'Guest'}<small>{viewer ? 'บัญชี LINE ของคุณ' : 'เข้าสู่ระบบด้วย LINE'}</small>
-              </span>
-            </Link>
-          </div>
-        </header>
-        <div className={styles.content}>
-          <div className={styles.modeBar}>
-            <span>
-              <i className={styles.dot} />
-              <strong>
-                {hasMt5 ? `Vantage MT5 · ${bridge.status}` : "แหล่งข้อมูลยังไม่พร้อม"}
-              </strong>{" "}
-              ·{" "}
-              {hasMt5
-                ? `${universe.length} สินทรัพย์จาก ${bridge.server} · ราคาบางตัวอาจขาดช่วง · ยังไม่มีข้อมูลพอร์ตหรือ AI จริง`
-                : preview
-                  ? "ข้อมูลตัวอย่างสำหรับทดลองหน้าจอ ไม่มีราคา บัญชี หรือสัญญาณจริง"
-                  : "Guest mode · รายการหลัก 9 สัญลักษณ์ ไม่มีฟีดราคา"}
+
+      {/* Unified Left Sidebar matching Thai / DR / TFEX / US */}
+      <aside className="sidebar hub-sidebar">
+        <div className="hub-sidebar-scroll">
+          <Link href="/" className="brand" aria-label="Nugaom กลับเลือกตลาด">
+            <div className="brand-mark">
+              <Image
+                src="/nugaom-mascot.png"
+                width={52}
+                height={52}
+                alt="มาสคอต Nugaom AI Pick"
+              />
+            </div>
+            <div>
+              <strong>Nugaom</strong>
+              <small>AI PICK · พื้นที่ดูตลาด</small>
+            </div>
+          </Link>
+
+          <Link className="hub-account-card" href="/account">
+            <span className="hub-account-avatar">
+              <MemberAvatar account={viewer} size={40} />
             </span>
-            <button
-              aria-pressed={preview}
-              disabled={hasMt5 || process.env.NODE_ENV !== "development"}
-              onClick={() => setPreview((value) => !value)}
-            >
-              {hasMt5
-                ? "MT5 / READ ONLY"
-                : preview
-                  ? "DEMO PREVIEW"
-                  : "GUEST / NO FEED"}{" "}
-              <span className={styles.modeToggle}>
-                <i />
-              </span>
-            </button>
-          </div>
-          <label className={styles.mobileNavigation}>
-            FOREX TOOLS
-            <select
-              aria-label="หน้าเครื่องมือ Forex"
-              value={section}
-              onChange={(event) => setSection(event.target.value)}
-            >
-              {SECTIONS.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {section !== "studio" && <section className={styles.hero}>
-            <div className={styles.heroGlobe}>
-              <Globe2 size={110} strokeWidth={0.75} />
-              <i />
-              <b />
-            </div>
-            <div className={styles.heroCopy}>
-              <span className={styles.eyebrow}>
-                FOREX &amp; GOLD WORKSPACE
-              </span>
-              <h1>FOREX &amp; GOLD INTELLIGENCE DESK</h1>
-              <p>
-                เครื่องมือดูกราฟและศึกษาตลาด พร้อมสถานะข้อมูลที่ตรวจสอบได้
-              </p>
-              <div>
-                <span>
-                  <i className={styles.greenDot} />
-                  Zero-Custody (ทุกโบรกเกอร์)
-                </span>
-                <span>กราฟและแผนการศึกษา</span>
-                <span>ไม่มีการส่งคำสั่งซื้อขาย</span>
-              </div>
-            </div>
-            <svg
-              className={styles.heroCandles}
-              viewBox="0 0 400 150"
-              aria-hidden="true"
-            >
-              {Array.from({ length: 28 }, (_, index) => (
-                <g
-                  key={index}
-                  stroke={index % 5 === 0 ? "#e15c76" : "#14d5b0"}
-                  fill={index % 5 === 0 ? "#e15c76" : "#14d5b0"}
-                  opacity=".45"
-                >
-                  <line
-                    x1={index * 14}
-                    x2={index * 14}
-                    y1={110 - index * 2 - Math.sin(index) * 16}
-                    y2={140 - index * 2 - Math.sin(index) * 16}
-                  />
-                  <rect
-                    x={index * 14 - 3}
-                    y={120 - index * 2 - Math.sin(index) * 16}
-                    width="6"
-                    height="13"
-                  />
-                </g>
-              ))}
-            </svg>
-            <div className={styles.heroSession}>
-              <span>
-                CONNECTION STATUS <span className={styles.demoBadge}>{bridge.status === "ready" ? "MT5 CONNECTED" : "DATA UNAVAILABLE"}</span>
-              </span>
+            <span>
               <strong>
-                {bridge.status === "ready" ? "ฟีดจากเจ้าของข้อมูล" : "รอแหล่งข้อมูลเจ้าของ"}
+                {viewer ? viewer.displayName || "มุมสมาชิกของฉัน" : "เริ่มด้วย LINE"}
               </strong>
               <small>
-                {hasMt5
-                  ? `เชื่อมต่อฟีด MT5 (${universe.length} สัญลักษณ์)`
-                  : "ยังไม่มีแท่งราคาจริงสำหรับสร้างสัญญาณ"}
+                {viewer
+                  ? "สมาชิก Nugaom · จัดการสิทธิ์"
+                  : "เข้าสู่ระบบ · ตรวจสิทธิสมาชิก"}
               </small>
-              <i>
-                <b style={{ width: bridge.status === "ready" ? "100%" : "0%" }} />
-              </i>
+            </span>
+            <span className="hub-account-arrow">↗</span>
+          </Link>
+
+          <MarketNavigation current="forex" />
+
+          <div className="hub-sidebar-caption">เครื่องมือประจำตลาด</div>
+          <nav className="hub-group-list" aria-label="Forex Command Center">
+            <section className="hub-menu-group">
+              <button
+                type="button"
+                className="hub-group-toggle"
+                aria-expanded={sidebarGroups.includes("forex-core")}
+                onClick={() => toggleSidebarGroup("forex-core")}
+              >
+                <span className="hub-group-index">01</span>
+                <span className="hub-nav-glyph">
+                  <Compass size={17} strokeWidth={1.9} />
+                </span>
+                <span>ศูนย์กลยุทธ์ Forex &amp; Gold</span>
+                <ChevronDown
+                  size={14}
+                  className={
+                    sidebarGroups.includes("forex-core")
+                      ? "hub-chevron open"
+                      : "hub-chevron"
+                  }
+                />
+              </button>
+              {sidebarGroups.includes("forex-core") && (
+                <div className="hub-group-items">
+                  {SECTIONS.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={
+                        section === item.id ? "hub-subnav active" : "hub-subnav"
+                      }
+                      aria-current={section === item.id ? "page" : undefined}
+                      onClick={() => setSection(item.id)}
+                    >
+                      <item.icon size={15} strokeWidth={1.9} />
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="hub-menu-group">
+              <button
+                type="button"
+                className="hub-group-toggle"
+                aria-expanded={sidebarGroups.includes("forex-more")}
+                onClick={() => toggleSidebarGroup("forex-more")}
+              >
+                <span className="hub-group-index">02</span>
+                <span className="hub-nav-glyph">
+                  <CircleHelp size={17} strokeWidth={1.9} />
+                </span>
+                <span>สมาชิก &amp; เครื่องมือเสริม</span>
+                <ChevronDown
+                  size={14}
+                  className={
+                    sidebarGroups.includes("forex-more")
+                      ? "hub-chevron open"
+                      : "hub-chevron"
+                  }
+                />
+              </button>
+              {sidebarGroups.includes("forex-more") && (
+                <div className="hub-group-items">
+                  <Link href="/risk" className="hub-subnav">
+                    <Gauge size={15} strokeWidth={1.9} />
+                    <span>คำนวณ Position &amp; 2R Risk</span>
+                  </Link>
+                  <Link href="/calendar" className="hub-subnav">
+                    <CalendarDays size={15} strokeWidth={1.9} />
+                    <span>ปฏิทินเศรษฐกิจโลก</span>
+                  </Link>
+                  <Link href="/account" className="hub-subnav">
+                    <Wallet size={15} strokeWidth={1.9} />
+                    <span>โปรไฟล์สมาชิก &amp; จัดการสิทธิ์</span>
+                  </Link>
+                  <Link href="/community" className="hub-subnav">
+                    <Users size={15} strokeWidth={1.9} />
+                    <span>ห้องสมาชิกและคุยกับทีม</span>
+                  </Link>
+                </div>
+              )}
+            </section>
+          </nav>
+
+          <div className="engine-card">
+            <div className="engine-heading">
+              สถานะข้อมูล{" "}
+              <span className={hasLiveFeed ? "real-pill" : "demo-pill"}>
+                {hasMt5 ? "MT5 จริง" : hasLiveFeed ? "ราคาสด" : "รอฟีด"}
+              </span>
+            </div>
+            <p>
+              Zero-Custody ใช้ได้กับทุกโบรกเกอร์ (Exness, XM, IC Markets, Vantage)
+              แสดงราคาและแผนเทรดโดยไม่มีการส่งคำสั่งซื้อขายแทนลูกค้า
+            </p>
+          </div>
+        </div>
+        <div className="sidebar-foot">
+          NUGAOM <span>ทุกวัน เริ่มจากข้อมูล</span>
+        </div>
+      </aside>
+
+      {/* Mobile Bottom Dock & Sheet matching WorkspaceSidebar */}
+      <nav className="hub-mobile-dock" aria-label="เมนูมือถือ">
+        <button
+          type="button"
+          className={section === "studio" ? "active" : ""}
+          onClick={() => setSection("studio")}
+        >
+          <LayoutDashboard size={20} />
+          <span>Studio</span>
+        </button>
+        <button
+          type="button"
+          className={section === "pro" ? "active" : ""}
+          onClick={() => setSection("pro")}
+        >
+          <ShieldCheck size={20} />
+          <span>Pro EA</span>
+        </button>
+        <button
+          type="button"
+          className={section === "scanner" ? "active" : ""}
+          onClick={() => setSection("scanner")}
+        >
+          <Radar size={20} />
+          <span>สแกน 15m</span>
+        </button>
+        <button
+          type="button"
+          className={section === "alerts" ? "active" : ""}
+          onClick={() => setSection("alerts")}
+        >
+          <Bell size={20} />
+          <span>แจ้งเตือน</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileSheetOpen(true)}
+          aria-expanded={mobileSheetOpen}
+        >
+          <Compass size={20} />
+          <span>ทั้งหมด</span>
+        </button>
+      </nav>
+
+      {mobileSheetOpen && (
+        <div
+          className="hub-mobile-scrim"
+          onClick={() => setMobileSheetOpen(false)}
+        >
+          <div
+            className="hub-mobile-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="เครื่องมือทั้งหมดของ Nugaom"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="hub-mobile-sheet-head">
+              <strong>เครื่องมือทั้งหมด</strong>
+              <button
+                type="button"
+                onClick={() => setMobileSheetOpen(false)}
+                aria-label="ปิดเมนู"
+              >
+                ×
+              </button>
+            </div>
+            <Link className="hub-mobile-membership" href="/account">
+              <span className="hub-line-icon">LINE</span>
+              <span>
+                {viewer
+                  ? `มุมสมาชิก · ${viewer.displayName || "VIP"}`
+                  : "เข้าสู่ระบบด้วย LINE · ตรวจสิทธิสมาชิก"}
+              </span>
+              <span>↗</span>
+            </Link>
+            <MarketNavigation current="forex" />
+            <div className="hub-mobile-group">
+              <strong>01 / ศูนย์กลยุทธ์ Forex &amp; Gold</strong>
               <div>
-                <span>Sydney</span>
-                <span>Tokyo</span>
-                <span style={{ color: "#22d3ee", fontWeight: 700 }}>London</span>
-                <span style={{ color: "#22d3ee", fontWeight: 700 }}>New York</span>
+                {SECTIONS.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={section === item.id ? "active" : ""}
+                    onClick={() => {
+                      setMobileSheetOpen(false);
+                      setSection(item.id);
+                    }}
+                  >
+                    <item.icon size={18} />
+                    {item.label}
+                  </button>
+                ))}
               </div>
             </div>
-          </section>}
+          </div>
+        </div>
+      )}
 
-          {section !== "studio" && <div className={styles.metrics}>
-            {METRICS.map(([label, value, note, tone]) => (
-              <div key={label}>
-                <span>
-                  {label}
-                </span>
-                <strong
-                  className={
-                    tone === "positive"
-                      ? styles.positive
-                      : tone === "negative"
-                        ? styles.negative
-                        : ""
-                  }
-                >
-                  {value}
-                </strong>
-                <small>{note}</small>
+      {/* Unified Main Area & Topbar matching Thai / DR / TFEX / US */}
+      <main id="forex-content" className="main-area" tabIndex={-1}>
+        <header className="topbar">
+          <div className="topbar-context">
+            <small>กำลังดู / CURRENT SYMBOL</small>
+            <strong>{selected.display_symbol || selected.canonical_symbol}</strong>
+            <span>Forex &amp; Gold</span>
+          </div>
+
+          <div className="topbar-search-area" style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
+            <label className={styles.topSearch}>
+              <Search size={15} />
+              <input
+                aria-label="ค้นหาตลาดจากแถบด้านบน"
+                placeholder="ค้นหาคู่เงิน / ทองคำ เช่น XAUUSD, EURUSD…"
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setSection("scanner");
+                }}
+              />
+            </label>
+            <div className={styles.ticker}>
+              {tickerSymbols.map((symbol) => {
+                const item = universe.find(
+                    (asset) => asset.canonical_symbol === symbol
+                  ),
+                  quote = item
+                    ? preview
+                      ? demoQuote(item)
+                      : Object.hasOwn(mergedQuotes, item.broker_symbol)
+                        ? mergedQuotes[item.broker_symbol]
+                        : Object.hasOwn(mergedQuotes, item.canonical_symbol)
+                          ? mergedQuotes[item.canonical_symbol]
+                          : null
+                    : null;
+                if (!item) return null;
+                return (
+                  <button key={symbol} type="button" onClick={() => focusAsset(item)}>
+                    <strong>{symbol}</strong>
+                    <span>
+                      {hasMt5 && quote
+                        ? quote.price.toFixed(item.digits ?? 5)
+                        : formatDemoPrice(item, quote?.price)}
+                    </span>
+                    <b
+                      className={
+                        quote?.change < 0 ? styles.negative : styles.positive
+                      }
+                    >
+                      {quote?.change !== undefined
+                        ? `${quote.change >= 0 ? "+" : ""}${quote.change.toFixed(2)}%`
+                        : "—"}
+                    </b>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="topbar-actions">
+            <Link className="monitor-account" href="/account">
+              บัญชีสมาชิก ↗
+            </Link>
+            <SoundControl />
+            <div className="market-clock">
+              <i
+                className={
+                  hasLiveFeed ? "status-dot connected" : "status-dot"
+                }
+              />{" "}
+              {hasMt5
+                ? `MT5 · ${frame.toUpperCase()}`
+                : hasLiveFeed
+                  ? `LIVE · ${frame.toUpperCase()}`
+                  : "DATA · PREVIEW"}
+            </div>
+          </div>
+        </header>
+
+        <div className="page-content">
+          {/* 1. Same Horizontal Market Switcher at top of .page-content as all other markets */}
+          <MarketNavigation current="forex" />
+
+          {/* 2. Unified Workspace Navigation Toolbar matching ThaiWorkspaceNav & UsWorkspaceNav */}
+          <section
+            id="thai-workspace-navigation"
+            className={styles.forexToolbar}
+            aria-label="พื้นที่ทำงาน Forex & Gold"
+          >
+            <div className={styles.forexToolbarHead}>
+              <div>
+                <h1>
+                  Forex &amp; Gold <small>XAUUSD · FX MAJORS 15m</small>
+                </h1>
+                <p>
+                  เลือกเครื่องมือวิเคราะห์ วางแผนเทรด และรับสัญญาณแจ้งเตือนสดห้อง Telegram VIP
+                </p>
               </div>
-            ))}
-          </div>}
+              <span className={styles.forexSymbolPill}>
+                กำลังวิเคราะห์{" "}
+                <b>{selected.display_symbol || selected.canonical_symbol}</b>
+              </span>
+            </div>
 
-          <nav className={styles.sectionTabs} aria-label="มุมมอง Forex">
-            {SECTIONS.map((item) => (
-              <button
-                key={item.id}
-                aria-current={section === item.id ? "page" : undefined}
-                onClick={() => setSection(item.id)}
-              >
-                <item.icon size={15} />
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </nav>
+            <div className={styles.forexToolbarRow}>
+              <nav aria-label="มุมมอง Forex" className="views">
+                {SECTIONS.map((item) => {
+                  const Icon = item.icon;
+                  const active = section === item.id;
+                  return (
+                    <a
+                      key={item.id}
+                      href={`#forex-${item.id}`}
+                      aria-current={active ? "location" : undefined}
+                      onClick={(event) => {
+                        if (
+                          event.metaKey ||
+                          event.ctrlKey ||
+                          event.shiftKey ||
+                          event.altKey
+                        )
+                          return;
+                        event.preventDefault();
+                        setSection(item.id);
+                      }}
+                    >
+                      <Icon size={15} style={{ opacity: 0.9, flexShrink: 0 }} />
+                      <b>{item.label}</b>
+                      <small>{item.badge}</small>
+                    </a>
+                  );
+                })}
+              </nav>
+            </div>
+          </section>
+
+          {section !== "studio" && (
+            <div className={styles.metrics}>
+              {METRICS.map(([label, value, note, tone]) => (
+                <div key={label}>
+                  <span>{label}</span>
+                  <strong
+                    className={
+                      tone === "positive"
+                        ? styles.positive
+                        : tone === "negative"
+                          ? styles.negative
+                          : ""
+                    }
+                  >
+                    {value}
+                  </strong>
+                  <small>{note}</small>
+                </div>
+              ))}
+            </div>
+          )}
 
           {section === "studio" && <ForexStudio />}
 

@@ -2,7 +2,7 @@
   --fx-accent: #15dcb0;
   --fx-border: transparent;
   min-height: 100vh;
-  background: #080d1b;
+  background: transparent;
   color: #f8fafc;
   font-size: 13px;
   line-height: 1.55;
@@ -247,49 +247,174 @@
 .topSearch {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 9px;
-  flex: 0 1 165px;
+  gap: 8px;
+  padding: 0 14px;
+  flex: 0 1 280px;
   border: none;
-  background: #04101b;
-  border-radius: 6px;
-  color: #588394;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  color: #94a3b8;
+  backdrop-filter: blur(12px);
 }
 .topSearch input {
   width: 100%;
-  padding: 7px 0;
+  padding: 8px 0;
   background: none;
   border: 0;
   outline: 0;
-  font-size: 9px;
-  color: #b8d3dd;
+  font-size: 12.5px;
+  color: #f8fafc;
 }
 .topSearch input::placeholder {
-  color: #5f8899;
+  color: #94a3b8;
 }
 .ticker {
   display: flex;
-  gap: 20px;
+  gap: 10px;
   flex: 1;
-  overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ticker::-webkit-scrollbar {
+  display: none;
 }
 .ticker button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   white-space: nowrap;
-  background: none;
+  background: rgba(255, 255, 255, 0.04);
   border: 0;
-  padding: 0;
-  font-size: 8px;
-  color: #c2dbe5;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  color: #e2e8f0;
+  transition: background 0.2s ease;
+}
+.ticker button:hover {
+  background: rgba(255, 255, 255, 0.09);
 }
 .ticker strong {
-  font-size: 8px;
+  font-size: 12px;
+  color: #f8fafc;
 }
 .ticker b {
-  font-size: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.forexToolbar {
+  position: relative;
+  background: rgba(15, 23, 42, 0.35);
+  border: none !important;
+  border-radius: 20px;
+  padding: 14px 20px;
+  margin: 6px 0 16px;
+  color: #f8fafc;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  scroll-margin-top: 80px;
+}
+.forexToolbarHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.forexToolbarHead h1 {
+  font-size: 20px;
+  margin: 0;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #f8fafc;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.forexToolbarHead h1 small {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+.forexToolbarHead p {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin: 2px 0 0;
+}
+.forexSymbolPill {
+  font-size: 11.5px;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: none !important;
+  backdrop-filter: blur(10px);
+}
+.forexSymbolPill b {
+  font-size: 13px;
+  color: #38bdf8;
+  font-weight: 700;
+}
+.forexToolbarRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.forexToolbarRow :global(.views) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  flex: 1;
+}
+.forexToolbarRow :global(.views a) {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none !important;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  text-decoration: none;
+  color: #cbd5e1;
+  background: transparent;
+  box-shadow: none !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.forexToolbarRow :global(.views a b) {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.forexToolbarRow :global(.views a small) {
+  font-size: 11px;
   font-weight: 500;
+  color: #94a3b8;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.forexToolbarRow :global(.views a:hover) {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+.forexToolbarRow :global(.views a[aria-current="location"]) {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+.forexToolbarRow :global(.views a[aria-current="location"] b) {
+  color: #ffffff;
+  font-weight: 700;
+}
+.forexToolbarRow :global(.views a[aria-current="location"] small) {
+  color: #38bdf8;
 }
 .topActions {
   display: flex;
