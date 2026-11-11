@@ -134,31 +134,20 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [accountConfigured, setAccountConfigured] = useState(false);
   const [marketQuote, setMarketQuote] = useState(null);
   const [quoteState, setQuoteState] = useState('idle');
-  const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('nugaom-theme');
-      const initial = (saved === 'dark' || saved === 'light') ? saved : 'dark';
-      setTheme(initial);
+      localStorage.setItem('nugaom-theme', 'dark');
       if (typeof document !== 'undefined') {
-        document.documentElement.setAttribute('data-theme', initial);
-        if (document.body) document.body.setAttribute('data-theme', initial);
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.classList.remove('theme-light-glass');
+        if (document.body) {
+          document.body.setAttribute('data-theme', 'dark');
+          document.body.classList.remove('theme-light-glass');
+        }
       }
     } catch {}
   }, []);
-
-  function toggleTheme() {
-    const next = theme === 'light' ? 'dark' : 'light';
-    setTheme(next);
-    try {
-      localStorage.setItem('nugaom-theme', next);
-      if (typeof document !== 'undefined') {
-        document.documentElement.setAttribute('data-theme', next);
-        if (document.body) document.body.setAttribute('data-theme', next);
-      }
-    } catch {}
-  }
 
   const market = MARKETS.find(item => item.id === activeMarket) ?? MARKETS[0];
   const asset = selectedAsset ?? market;
@@ -525,9 +514,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   }, [popup]);
 
   return (
-    <div className={`app-frame market-workspace monitor-workspace market-${marketId} ${theme === 'light' ? 'theme-light-glass' : ''}`} data-theme={theme} style={{'--market-accent':page.accent,'--market-rgb':page.rgb}}>
-      <AmbientLiquidGlass isLight={theme === 'light'} />
-      {theme === 'dark' && <AmbientDepth />}
+    <div className={`app-frame market-workspace monitor-workspace market-${marketId}`} data-theme="dark" style={{'--market-accent':page.accent,'--market-rgb':page.rgb}}>
+      <AmbientLiquidGlass isLight={false} />
+      <AmbientDepth />
       <WorkspaceSidebar marketId={marketId} activeNav={activeNav} onNavigate={navigateTo} rights={rights} account={memberAccount} loginHref={loginHref} hasRealBars={hasRealBars} favoriteCount={favoriteAssets.length} />
 
       <main className="main-area">
@@ -535,16 +524,6 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
           <div className="topbar-search-area"><SymbolSearch marketId={marketId} onSelect={selectAsset} /></div>
           <div className="topbar-actions">
-            <button
-              type="button"
-              className={`theme-glass-toggle ${theme === 'light' ? 'light-mode' : 'dark-mode'}`}
-              onClick={toggleTheme}
-              title={theme === 'light' ? 'เปลี่ยนเป็น Magic Dark' : 'เปลี่ยนเป็น Liquid Glass Light'}
-              aria-label={theme === 'light' ? 'สลับเป็นโหมดมืด Magic Dark' : 'สลับเป็นโหมดสว่าง Liquid Glass'}
-            >
-              <span className="theme-glass-icon">{theme === 'light' ? '☀️' : '🌙'}</span>
-              <span>{theme === 'light' ? 'Liquid Glass' : 'Magic Dark'}</span>
-            </button>
             <a className="monitor-account" href={loginHref}>บัญชีสมาชิก ↗</a>
             <SoundControl/>
             <div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? liveSeries.source : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div>

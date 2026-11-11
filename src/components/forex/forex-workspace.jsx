@@ -507,7 +507,7 @@ export default function ForexWorkspace({ initialSymbol = null, initialSection = 
 
           {section === "alerts" && (
             <>
-              <Alerts enabled={alertSettings} onChange={setAlertSettings} />
+              <Alerts enabled={alertSettings} onChange={setAlertSettings} viewer={viewer} />
               <AlertHistory />
             </>
           )}

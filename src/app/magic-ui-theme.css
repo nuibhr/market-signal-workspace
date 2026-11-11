@@ -243,15 +243,22 @@ html:not([data-theme='light']) body:not([data-theme='light']) .hub-account-arrow
 /* Menu Group Toggles */
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-group-toggle,
 html:not([data-theme='light']) body:not([data-theme='light']) .hub-group-toggle {
-  color: #94A3B8 !important;
+  background: transparent !important;
+  color: #CBD5E1 !important;
   border-radius: var(--magic-radius-menu) !important;
   transition: var(--magic-transition) !important;
+}
+
+html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-group-toggle[aria-expanded='true'],
+html:not([data-theme='light']) body:not([data-theme='light']) .hub-group-toggle[aria-expanded='true'] {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #F8FAFC !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-group-toggle:hover,
 html:not([data-theme='light']) body:not([data-theme='light']) .hub-group-toggle:hover {
   background: #1C3250 !important;
-  color: #F1F5F9 !important;
+  color: #F8FAFC !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-group-index,
@@ -262,13 +269,39 @@ html:not([data-theme='light']) body:not([data-theme='light']) .hub-group-index {
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-nav-glyph,
 html:not([data-theme='light']) body:not([data-theme='light']) .hub-nav-glyph {
-  color: #94A3B8 !important;
-  transition: color 180ms ease !important;
+  background: rgba(34, 211, 238, 0.12) !important;
+  color: #38BDF8 !important;
+  box-shadow: none !important;
+  transition: color 180ms ease, background 180ms ease !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-group-toggle:hover .hub-nav-glyph,
 html:not([data-theme='light']) body:not([data-theme='light']) .hub-group-toggle:hover .hub-nav-glyph {
+  background: rgba(34, 211, 238, 0.22) !important;
   color: #22D3EE !important;
+}
+
+html:not([data-theme='light']) .hub-sidebar .engine-card {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: none !important;
+}
+
+html:not([data-theme='light']) .hub-sidebar .engine-heading {
+  color: #E2E8F0 !important;
+}
+
+html:not([data-theme='light']) .hub-sidebar .engine-card p {
+  color: #94A3B8 !important;
+}
+
+html:not([data-theme='light']) .hub-sidebar .sidebar-foot {
+  background: rgba(8, 13, 27, 0.85) !important;
+  color: #CBD5E1 !important;
+  border-top: none !important;
+}
+
+html:not([data-theme='light']) .hub-sidebar .sidebar-foot span {
+  color: #94A3B8 !important;
 }
 
 /* Menu Items (Default State) */
@@ -276,13 +309,13 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .nav-it
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .hub-subnav,
 html:not([data-theme='light']) body:not([data-theme='light']) .hub-subnav,
 html:not([data-theme='light']) body:not([data-theme='light']) .nav-item {
-  color: #94A3B8 !important;
+  color: #CBD5E1 !important;
   background: transparent !important;
   border: none !important;
   border-radius: var(--magic-radius-menu) !important;
   padding: 8px 12px !important;
   transition: var(--magic-transition) !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
@@ -567,7 +600,7 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) .views 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='views']:not([class*='us-workspace-nav']) a small {
   font-size: 11px !important;
   font-weight: 400 !important;
-  color: #64748b !important;
+  color: #94a3b8 !important;
   white-space: nowrap !important;
 }
 
@@ -1620,7 +1653,7 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='us-stage2-desk_clockHours'],
 [data-theme='dark'] [class*='us-stage2-desk_clockHours'] {
-  color: #64748b !important;
+  color: #94a3b8 !important;
   border: none !important;
 }
 
@@ -2016,7 +2049,7 @@ html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='us-stage2-desk_blueprintLabel'],
 [data-theme='dark'] [class*='us-stage2-desk_blueprintLabel'] {
-  color: #64748b !important;
+  color: #94a3b8 !important;
 }
 
 html:not([data-theme='light']) .market-workspace:not(.theme-light-glass) [class*='us-stage2-desk_blueprintSub'],
@@ -2518,39 +2551,18 @@ p, span, a, button, input, label {
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── 1. Text Inputs, Search Fields, Selects & Textareas (Liquid Capsules) ── */
-html:not([data-theme='light']) input:not([type='checkbox']):not([type='radio']),
-html:not([data-theme='light']) select,
-html:not([data-theme='light']) textarea,
-html:not([data-theme='light']) .symbol-search-field,
-html:not([data-theme='light']) [class*='textInput'] {
+input:not([type='checkbox']):not([type='radio']),
+select,
+textarea,
+.symbol-search-field,
+[class*='textInput'] {
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
-  background: rgba(255, 255, 255, 0.055) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
-  color: #f1f5f9 !important;
-  border-radius: 9999px !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-[data-theme='light'] input:not([type='checkbox']):not([type='radio']),
-[data-theme='light'] select,
-[data-theme='light'] textarea,
-[data-theme='light'] .symbol-search-field,
-[data-theme='light'] [class*='textInput'],
-.market-workspace.theme-light-glass input:not([type='checkbox']):not([type='radio']),
-.market-workspace.theme-light-glass select,
-.market-workspace.theme-light-glass textarea,
-.market-workspace.theme-light-glass .symbol-search-field,
-.market-workspace.theme-light-glass [class*='textInput'] {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  background: rgba(15, 23, 42, 0.045) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  color: #0f172a !important;
+  color: #f8fafc !important;
   border-radius: 9999px !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
@@ -2561,31 +2573,15 @@ textarea,
 }
 
 /* Fluid Ambient Glow on Focus without harsh border strokes */
-html:not([data-theme='light']) input:not([type='checkbox']):not([type='radio']):focus,
-html:not([data-theme='light']) select:focus,
-html:not([data-theme='light']) textarea:focus,
-html:not([data-theme='light']) .symbol-search-field:focus-within,
-html:not([data-theme='light']) [class*='textInput']:focus {
+input:not([type='checkbox']):not([type='radio']):focus,
+select:focus,
+textarea:focus,
+.symbol-search-field:focus-within,
+[class*='textInput']:focus {
   border: none !important;
   outline: none !important;
-  background: rgba(255, 255, 255, 0.085) !important;
-  box-shadow: 0 0 22px rgba(56, 189, 248, 0.25) !important;
-}
-
-[data-theme='light'] input:not([type='checkbox']):not([type='radio']):focus,
-[data-theme='light'] select:focus,
-[data-theme='light'] textarea:focus,
-[data-theme='light'] .symbol-search-field:focus-within,
-[data-theme='light'] [class*='textInput']:focus,
-.market-workspace.theme-light-glass input:not([type='checkbox']):not([type='radio']):focus,
-.market-workspace.theme-light-glass select:focus,
-.market-workspace.theme-light-glass textarea:focus,
-.market-workspace.theme-light-glass .symbol-search-field:focus-within,
-.market-workspace.theme-light-glass [class*='textInput']:focus {
-  border: none !important;
-  outline: none !important;
-  background: rgba(255, 255, 255, 0.94) !important;
-  box-shadow: 0 4px 20px rgba(2, 132, 199, 0.16) !important;
+  background: rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.28) !important;
 }
 
 .market-nav-divider {

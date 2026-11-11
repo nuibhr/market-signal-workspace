@@ -37,8 +37,8 @@ const STRATEGIES = [
     timeframe: '15m',
     defaultPlan: { entry: 2724.5, stop: 2712.0, lock: 2728.5, tp1: 2742.0, tp2: 2758.0 },
     rules: [
-      { label: 'กรองแนวโน้ม', desc: 'ราคาเหนือ EMA 20 > 50 และเกิด Breakout แท่งเทียน 15m' },
-      { label: 'คุมความเสี่ยง', desc: 'Stop Loss วางหลัง Swing Low ตามระยะ 1.5 ATR โครงสร้าง' },
+      { label: 'กรองแนวโน้ม', desc: 'อัลกอริทึมตรวจจับโครงสร้างแนวโน้มและโมเมนตัมแท่งเทียน 15m (Proprietary Engine)' },
+      { label: 'คุมความเสี่ยง', desc: 'คำนวณระยะ Stop Loss ตามโครงสร้างความผันผวนอัตโนมัติ (ไม่ถอย SL)' },
       { label: '🛡️ ล็อคกำไร', desc: 'เลื่อน SL บังหน้าทุน +0.5R ทันทีเมื่อราคาบวกเกิน 1R' },
       { label: '🎯 ทำกำไร 2 สเต็ป', desc: 'ปิด 50% ที่ TP1 (1.8R) แล้วปล่อย 50% Runner ชน TP2 (3R)' },
     ],
@@ -52,8 +52,8 @@ const STRATEGIES = [
     timeframe: '15m',
     defaultPlan: { entry: 1.0825, stop: 1.0805, lock: 1.0841, tp1: 1.0858, tp2: 1.0885 },
     rules: [
-      { label: 'กรองแนวโน้ม', desc: 'Mean Reversion ราคาพักตัวเข้าหาแถบ Dynamic Band' },
-      { label: 'คุมความเสี่ยง', desc: 'Fixed Stop Loss 20 pips ชัดเจน ไม่ถอย SL เด็ดขาด' },
+      { label: 'กรองแนวโน้ม', desc: 'ระบบ AI สแกนจังหวะย่อตัวเข้าโซนสภาพคล่องหลัก (สูตรลับเฉพาะระบบ)' },
+      { label: 'คุมความเสี่ยง', desc: 'กำหนดจุดตัดขาดทุนชัดเจนตามกรอบความผันผวน ไม่ถอย SL เด็ดขาด' },
       { label: '🛡️ ล็อคกำไร', desc: 'ขยับ Breakeven ทันทีเมื่อราคาบวก +0.8R' },
       { label: '🎯 ทำกำไร 2 สเต็ป', desc: 'ปิด 60% ที่ TP1 (1.5R) และ 40% ที่ TP2 (2.5R)' },
     ],
@@ -67,8 +67,8 @@ const STRATEGIES = [
     timeframe: '15m',
     defaultPlan: { entry: 152.4, stop: 151.9, lock: 152.65, tp1: 153.0, tp2: 153.6 },
     rules: [
-      { label: 'กรองแนวโน้ม', desc: 'กวาดสภาพคล่อง Asia High/Low แล้วเกิดแท่ง Rejection' },
-      { label: 'คุมความเสี่ยง', desc: 'SL เหนือไส้เทียน Sweep + Buffer 5 pips' },
+      { label: 'กรองแนวโน้ม', desc: 'ตรวจจับสัญญาณกลับตัวหลังพักตัวในกรอบเซสชันเอเชียด้วย AI' },
+      { label: 'คุมความเสี่ยง', desc: 'วางจุดตัดขาดทุนเหนือ/ใต้กรอบโครงสร้างพร้อมระยะปลอดภัยอัตโนมัติ' },
       { label: '🛡️ ล็อคกำไร', desc: 'ล็อคทุนไวที่ +0.5R ไม่ปล่อยให้กำไรกลายเป็นขาดทุน' },
       { label: '🎯 ทำกำไร 2 สเต็ป', desc: 'เก็บกำไรไวที่ TP1 (1.2R) เพื่อสะสม Cash Flow ต่อเนื่อง' },
     ],
@@ -248,9 +248,9 @@ export default function ProCopyEaDesk({ bridge = null, viewer = null }) {
               ถอดรหัสกลยุทธ์ EA โปรเทรด &amp; ล็อคกำไรอัตโนมัติ
             </h2>
             <p className={styles.heroDesc}>
-              แกะรอยสูตรโปรเทรดเดอร์สาย Copy Trade แท้: <strong>ไม่ใช้ Martingale / ไม่เบิ้ลไม้ล้างพอร์ต</strong> แต่ใช้{' '}
-              <strong>วินัย 3 สเต็ป</strong> (เข้าตามเทรนด์ 15m ➔ เลื่อน SL บังทุนล็อคกำไร 0.5R ➔ ปิด 50% ที่ TP1 ➔
-              ปล่อย 50% Trailing Runner ชน 3R) พร้อมบันทึกสถิติ Win/Loss รายวัน
+              ระบบบริหารหน้าตักระดับสถาบัน (Proprietary AI Engine): <strong>ไม่ใช้ Martingale / ไม่เบิ้ลไม้ล้างพอร์ต</strong> แต่ใช้{' '}
+              <strong>วินัยล็อคกำไร 3 สเต็ป</strong> (เข้าเมื่อแท่ง 15m ปิดจริง ➔ เลื่อน SL บังทุนล็อคกำไร +0.5R ➔ แบ่งปิด 50% ที่ TP1 ➔
+              ปล่อย 50% Trailing Runner ชน TP2) โดยเก็บสูตรการสแกนเป็นความลับของระบบ
             </p>
           </div>
 

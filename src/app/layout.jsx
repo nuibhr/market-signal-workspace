@@ -31,7 +31,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="th">
+    <html lang="th" data-theme="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body><MonitorProvider><AssistantProvider><SharedDataNotice/>{children}</AssistantProvider></MonitorProvider></body>
+      <body data-theme="dark"><MonitorProvider><AssistantProvider><SharedDataNotice/>{children}</AssistantProvider></MonitorProvider></body>
     </html>
   );
 }
