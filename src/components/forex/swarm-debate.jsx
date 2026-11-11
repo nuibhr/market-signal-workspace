@@ -419,7 +419,7 @@ export default function SwarmDebate({
               cursor: "pointer",
             }}
           >
-            <Lock size={13} /> ยิงสัญญาณเข้า LINE VIP
+            <Lock size={13} /> ยิงสัญญาณเข้า Telegram VIP
           </button>
         </div>
       </div>
@@ -468,11 +468,11 @@ export default function SwarmDebate({
               <Sparkles size={24} />
             </div>
             <h3 style={{ color: "#eefaf6", margin: "0 0 8px", fontSize: "18px" }}>
-              ปลดล็อก AI Swarm สัญญาณสดเข้า LINE VIP
+              ปลดล็อก AI Swarm สัญญาณสดเข้า Telegram VIP
             </h3>
             <p style={{ color: "#a5c2c7", fontSize: "12px", lineHeight: 1.6, margin: "0 0 16px" }}>
               รับการแจ้งเตือนมติสภา 6 AI Agents บนกรอบเวลา 15m เรียลไทม์
-              พร้อมการคำนวณขนาด Lot ตามทุนพอร์ตของคุณ ส่งตรงเข้า LINE ทุกไม้
+              พร้อมการคำนวณขนาด Lot ตามทุนพอร์ตของคุณ ส่งตรงเข้า Telegram VIP ทุกไม้
               ไม่ตกรอบตลาดลอนดอนและนิวยอร์ก
             </p>
             <div style={{ display: "grid", gap: "8px" }}>
@@ -491,7 +491,7 @@ export default function SwarmDebate({
                   textDecoration: "none",
                 }}
               >
-                ดูแพ็กเกจสมาชิก VIP (เริ่มต้นเพียง ฿990/เดือน)
+                ดูแพ็กเกจสมาชิก PRO VIP (เพียง ฿399/เดือน)
               </a>
               <button
                 type="button"

@@ -880,7 +880,7 @@ export default function UsStage2Desk({
             <span>· รับสัญญาณ Auto-Pick ทุกวันหลังตลาดปิด</span>
           </div>
           <a href="/account" className={styles.proCtaBtn}>
-            <span>⭐️ สมัครสมาชิก PRO VIP เพื่อปลดล็อกสัญญาณทุกวัน</span>
+            <span>⭐️ สมัครสมาชิก PRO VIP (฿399/ด.) เพื่อปลดล็อกสัญญาณทุกวัน</span>
             <span>↗</span>
           </a>
         </div>

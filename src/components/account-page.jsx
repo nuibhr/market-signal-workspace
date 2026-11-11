@@ -178,7 +178,7 @@ export default function AccountPage({initialData=null}) {
                   <span style={{ fontSize: '10px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>ปลดล็อกครบ 100%</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '6px', fontSize: '11px' }}>
-                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>✅ ปลดล็อกครบ 4 ตลาด (Thai + DR + US + TFEX)</span>
+                  <span style={{ color: '#38bdf8', fontWeight: 600 }}>✅ ปลดล็อกครบทุกตลาด (Thai + DR + Forex + TFEX + US)</span>
                   <span style={{ color: '#38bdf8', fontWeight: 600 }}>✅ <b>บอทแจ้งเตือนเสียงสไตล์เพื่อน</b> (Audio Alert)</span>
                   <span style={{ color: '#38bdf8', fontWeight: 600 }}>✅ <b>Telegram VIP Bot</b> ส่งการบ้านหุ้นเด่นทุกเช้า</span>
                   <span style={{ color: '#38bdf8', fontWeight: 600 }}>✅ <b>DR Arbitrage Shield</b> ดักจับพรีเมียมแพงเกิน</span>

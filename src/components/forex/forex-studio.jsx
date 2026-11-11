@@ -1525,12 +1525,12 @@ export default function ForexStudio() {
             <Sparkles size={16} className={styles.pulseIcon} />
             <div>
               <strong>⚡ ไม่พลาดไม้ทองคำ 15m ลอนดอน/นิวยอร์ก</strong>
-              <small>รับมติสภา 6 AI สดยิงตรงเข้า LINE VIP ทุกไม้</small>
+              <small>รับมติสภา 6 AI สดยิงตรงเข้า Telegram VIP ทุกไม้</small>
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <a href="/account" className={styles.mobileVipBtn}>
-              <Lock size={12} /> ปลดล็อก LINE VIP
+              <Lock size={12} /> ปลดล็อก PRO VIP (฿399/ด.)
             </a>
             <button
               type="button"

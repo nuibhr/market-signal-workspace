@@ -304,7 +304,7 @@ test("ForexStudio renders server-side with accessible structure and demo notices
   assert.ok(!markup.includes("24W - 6L"), "Must not contain a hardcoded W/L record");
   assert.match(markup, /TODAY&#x27;S GOLD BATTLE PLAN/);
   assert.match(markup, /ไม่พลาดไม้ทองคำ/);
-  assert.match(markup, /ปลดล็อก LINE VIP/);
+  assert.match(markup, /ปลดล็อก PRO VIP/);
 });
 
 test("auto target, stop, side inversion, and hit calculations calculate reliably", () => {
