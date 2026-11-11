@@ -59,8 +59,13 @@ export default function MonitorProvider({children}) {
           for(let i=0;i<500&&!disposed;i++){
             const e=await box.claim(document.visibilityState==='visible');if(!e)break;await box.displayed(e.id);if(!referenceAlertHistorical(e))setToast(e);
             if(!referenceAlertHistorical(e)&&e.deliveryVoice==='pending'){
-              await box.voice(e.id,sound.current?'attempted':'muted');
-              if(sound.current)speak(eventSpeech(e),value=>box.voice(e.id,value),()=>!referenceAlertHistorical(e),e.id);
+              const text=eventSpeech(e);
+              if(!text){
+                await box.voice(e.id,'muted');
+              }else{
+                await box.voice(e.id,sound.current?'attempted':'muted');
+                if(sound.current)speak(text,value=>box.voice(e.id,value),()=>!referenceAlertHistorical(e),e.id);
+              }
             }
             await box.dismiss(e.id);
           }
@@ -85,8 +90,13 @@ export default function MonitorProvider({children}) {
         await box.displayed(e.id);
         if(!referenceAlertHistorical(e))setToast(e);
         if(!referenceAlertHistorical(e)&&e.deliveryVoice==='pending'){
-          await box.voice(e.id,sound.current?'attempted':'muted');
-          if(sound.current)speak(eventSpeech(e),value=>box.voice(e.id,value),()=>!referenceAlertHistorical(e));
+          const text=eventSpeech(e);
+          if(!text){
+            await box.voice(e.id,'muted');
+          }else{
+            await box.voice(e.id,sound.current?'attempted':'muted');
+            if(sound.current)speak(text,value=>box.voice(e.id,value),()=>!referenceAlertHistorical(e));
+          }
         }
         await box.dismiss(e.id);
       }
