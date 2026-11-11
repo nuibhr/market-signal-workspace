@@ -1,9 +1,16 @@
 'use client';
 import {readApiJson} from '../../security/api-response.mjs';
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import {pollAfterCompletion} from '../../monitor/poll.mjs';
 import {DISCOVERY_INTERVAL_MS} from '../../signals/cadence.mjs';
 import {sizeReferencePlan} from '../../signals/decision-brief.mjs';
+import {
+  createSignalSpeaker,
+  buildStockSupportResistanceSpeech,
+  buildMorningBriefSpeech,
+  buildEveningHomeworkSpeech,
+} from '../../auto-pick/speech.mjs';
+import {soundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import styles from './thai-screener.module.css';
 
@@ -75,7 +82,7 @@ export function filterThaiRows(rows,{preset='all',query='',savedOnly=false,favor
  return result.sort((a,b)=>sort==='symbol'?a.symbol.localeCompare(b.symbol):(Number.isFinite(value(b))?value(b):-Infinity)-(Number.isFinite(value(a))?value(a):-Infinity)||a.symbol.localeCompare(b.symbol));
 }
 
-export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onToggleFavorite,showMetrics=true}){
+export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onToggleFavorite,onSpeakRow,showMetrics=true}){
  return <div className={styles.tableScroll}><table className={`${styles.table} table-zebra table-pin-rows`} data-detailed={showMetrics}><thead><tr><th>หุ้น / กลุ่ม</th><th>ราคาปิด D1 / %Chg</th><th>EMA Template</th><th>Stage</th>{showMetrics&&<><th>RSI14</th><th>P/E / Div%</th><th>RVOL / RS vs SET</th></>}<th>แผน 2R · Entry / SL / TP1</th><th>กราฟ</th></tr></thead><tbody>{rows.map(r=><tr key={r.symbol} data-selected={r.symbol===selectedSymbol}>
   <th><div className={styles.identity}><button type="button" className={styles.star} aria-label={`${favorites.includes(r.symbol)?'เลิกติดตาม':'ติดตาม'} ${r.symbol}`} aria-pressed={favorites.includes(r.symbol)} onClick={()=>onToggleFavorite?.(r.symbol,'thai')}>{favorites.includes(r.symbol)?'★':'☆'}</button><InstrumentLogo asset={{market:'thai',symbol:r.symbol}}/><span><b>{r.symbol}</b><small title={r.sectorLabel??'ยังไม่มีข้อมูลกลุ่ม'}>{r.sector??'—'} · {r.section==='SET100'?'SET100':r.section==='MAI_INITIAL'?'mai':'—'}</small></span></div></th>
   <td><b>{n(r.price)}</b><small data-tone={r.changePercent>0?'up':r.changePercent<0?'down':'neutral'}>{r.changePercent>0?'+':''}{n(r.changePercent)}% · {r.priceDay??'รอข้อมูล'}</small><small>{r.source??'ยังไม่มีแหล่งข้อมูล'}</small></td>
@@ -84,7 +91,7 @@ export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onT
   {showMetrics&&<><td>{n(r.rsi,1)}</td><td>{n(r.pe)}<small>Div {n(r.dividendPercent)}%</small></td>
   <td><b>{n(r.rvol)}×</b><small data-tone={r.rs?.outperforming?'up':'neutral'}>RS {r.rs?.excessReturnPercent>0?'+':''}{n(r.rs?.excessReturnPercent)}%</small></td></>}
   <td>{r.plan?<><b>{n(r.plan.entry)} / {n(r.plan.stopLoss)} / {n(r.plan.minimumTarget)}</b><small>{r.planFrame} · Stop {n(r.plan.stopPercent)}% · 2R สุทธิ / ขายครึ่ง</small></>:<small>ยังไม่มีแผนผ่าน Stop ≤8% / พื้นที่ 2R</small>}</td>
-  <td><button type="button" className={styles.chartButton} onClick={()=>onSelect?.(r.symbol)} aria-label={`ดูกราฟ ${r.symbol}`}>ดูกราฟ ↗</button></td>
+  <td><div style={{display:'flex',gap:'6px',alignItems:'center'}}><button type="button" className={styles.chartButton} onClick={()=>onSelect?.(r.symbol)} aria-label={`ดูกราฟ ${r.symbol}`}>ดูกราฟ ↗</button>{onSpeakRow&&r.plan&&<button type="button" className={styles.chartButton} onClick={()=>onSpeakRow(r)} aria-label={`ฟังแผนแนวรับแนวต้าน ${r.symbol}`} title={`ฟังเสียงแนวรับ-แนวต้าน ${r.symbol}`}>🔊</button>}</div></td>
  </tr>)}</tbody></table></div>;
 }
 
@@ -99,6 +106,57 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
  const [doctorResult,setDoctorResult]=useState(null);
  const [doctorUsed,setDoctorUsed]=useState(0);
  const [quotaExceeded,setQuotaExceeded]=useState(false);
+
+ /* ─── Thai Retail Trader 3 Core Questions & Voice Briefing State ─── */
+ const [retailTab,setRetailTab]=useState(()=>{
+  const bkkHour=(new Date().getUTCHours()+7)%24;
+  return bkkHour>=16||bkkHour<6?'evening':'morning';
+ });
+ const [voiceEnabled,setVoiceEnabled]=useState(true);
+ const [speechState,setSpeechState]=useState('idle');
+ const [lastSpokenText,setLastSpokenText]=useState('');
+ const speakerRef=useRef(null);
+ const autoAnnouncedRef=useRef(false);
+ const pendingAutoTextRef=useRef('');
+
+ useEffect(()=>{
+  if(typeof window==='undefined')return undefined;
+  let storage;try{storage=window.localStorage;}catch(_e){}
+  const pref=soundPreference(storage);
+  setVoiceEnabled(pref);
+  speakerRef.current=createSignalSpeaker(window,state=>{
+   setSpeechState(state);
+  });
+  const onStorage=e=>{
+   if(e.key===SOUND_PREFERENCE_KEY){
+    const next=soundPreference(storage);
+    setVoiceEnabled(next);
+    if(!next)speakerRef.current?.stop();
+   }
+  };
+  const onFirstInteraction=()=>{
+   speakerRef.current?.unlock?.();
+   if(pendingAutoTextRef.current&&voiceEnabled){
+    const txt=pendingAutoTextRef.current;
+    pendingAutoTextRef.current='';
+    speakerRef.current?.play(txt);
+   }
+  };
+  window.addEventListener('storage',onStorage);
+  document.addEventListener('pointerdown',onFirstInteraction,{once:true,passive:true});
+  return()=>{
+   window.removeEventListener('storage',onStorage);
+   document.removeEventListener('pointerdown',onFirstInteraction);
+   speakerRef.current?.stop();
+  };
+ },[]);
+
+ function speakText(text){
+  if(!text||!speakerRef.current)return;
+  setLastSpokenText(text);
+  speakerRef.current.unlock?.();
+  speakerRef.current.play(text);
+ }
 
  useEffect(()=>{
   if(typeof window!=='undefined'){
@@ -143,12 +201,50 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   return candidates.sort((a,b)=>((b.score??0)-(a.score??0))||((b.rs?.excessReturnPercent??-999)-(a.rs?.excessReturnPercent??-999))||((b.rvol??0)-(a.rvol??0))).slice(0,3);
  },[rows]);
 
+ const morningPicks=useMemo(()=>{
+  const valid=rows.filter(r=>r.plan&&Number.isFinite(r.price)&&!['unavailable','stale'].includes(r.status));
+  return [...valid]
+   .sort((a,b)=>((b.volumeBreakout?2:0)+(b.templatePass?2:0)+(b.score??0))-((a.volumeBreakout?2:0)+(a.templatePass?2:0)+(a.score??0)))
+   .slice(0,3);
+ },[rows]);
+
+ const eveningHomework=useMemo(()=>{
+  const valid=rows.filter(r=>r.plan&&Number.isFinite(r.price)&&!['unavailable','stale'].includes(r.status));
+  const stage2Pick=valid.find(r=>r.stage===2&&r.templatePass)||valid[0]||null;
+  const pullbackPick=valid.find(r=>r.pullback&&r.symbol!==stage2Pick?.symbol)||valid.find(r=>r.symbol!==stage2Pick?.symbol)||null;
+  const breakoutPick=valid.find(r=>r.volumeBreakout&&r.symbol!==stage2Pick?.symbol&&r.symbol!==pullbackPick?.symbol)||valid.find(r=>r.symbol!==stage2Pick?.symbol&&r.symbol!==pullbackPick?.symbol)||null;
+  return [
+   stage2Pick?{bucket:'🚀 การบ้านสายต้นน้ำ (Stage 2 Leader)',desc:'โครงสร้างขาขึ้นแข็งแกร่ง ยืนเหนือ EMA ทุกเส้น ชนะตลาด SET',row:stage2Pick}:null,
+   pullbackPick?{bucket:'🎯 การบ้านสายย่อรับแนวรับ (Pullback EMA)',desc:'ย่อตัวใกล้โซนแนวรับปลอดภัย จุด Stop Loss แคบ ไม่ต้องไล่ราคา',row:pullbackPick}:null,
+   breakoutPick?{bucket:'🔥 การบ้านสายวอลุ่มเข้าจ่อเบรก (Volume Surge)',desc:'วอลุ่มสะสมเข้าผิดปกติ เฝ้าจังหวะเปิดตลาดพรุ่งนี้เช้า',row:breakoutPick}:null,
+  ].filter(Boolean);
+ },[rows]);
+
+ /* ─── Auto Voice Briefing when stock plans load ─── */
+ useEffect(()=>{
+  if(!visible||!voiceEnabled||autoAnnouncedRef.current)return;
+  if(!morningPicks.length)return;
+  autoAnnouncedRef.current=true;
+  const sessionKey='nugaom_thai_plan_voiced_v1';
+  try{
+   if(typeof window!=='undefined'&&window.sessionStorage?.getItem(sessionKey))return;
+   window.sessionStorage?.setItem(sessionKey,'1');
+  }catch(_e){}
+  const bkkHour=(new Date().getUTCHours()+7)%24;
+  const autoText=(bkkHour>=16||bkkHour<6)
+   ?buildEveningHomeworkSpeech(rows,regime)
+   :buildMorningBriefSpeech(rows,regime);
+  setLastSpokenText(autoText);
+  pendingAutoTextRef.current=autoText;
+  speakerRef.current?.play(autoText);
+ },[visible,voiceEnabled,morningPicks,rows,regime]);
+
  const avoidedCount=useMemo(()=>{
   const weak=rows.filter(r=>r.stage===4||(r.stage===3&&!r.templatePass)).length;
   return rows.some(r=>r.stage!==null)?weak:null;
  },[rows,stats]);
 
- function handleRunDoctor(sym){
+ function handleRunDoctor(sym,{speak=true}={}){
   const target=(sym||doctorInput||'').trim().toUpperCase();
   if(!target)return;
   const isVip=signalAccess===true||ownerPreview;
@@ -160,6 +256,10 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   if(match){
    setDoctorResult(match);
    setQuotaExceeded(false);
+   if(speak&&voiceEnabled){
+    const analysis=getDoctorAnalysis(match);
+    speakText(buildStockSupportResistanceSpeech({...match,...analysis}));
+   }
    if(!isVip){
     const today=new Date().toISOString().slice(0,10);
     const nextUsed=doctorUsed+1;
@@ -181,6 +281,173 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
 
  return <section id="section-auto-pick" className={`${styles.dashboard} ${compact?styles.compact:''}`} aria-label="Thai Stock Screener">
   {compact?<header className={styles.compactHeader}><div><h2>ระบบคัดหุ้นขาขึ้น &amp; เช็คแนวรับแนวต้าน</h2><p>วิเคราะห์ Trend Template · กรอบความเสี่ยง 2R · คัดเฉพาะหุ้นที่ความได้เปรียบสูง</p></div><button type="button" disabled={busy||signalAccess!==true} onClick={()=>setRevision(v=>v+1)}>{busy?'กำลังโหลด…':'↻ โหลดข้อมูลล่าสุด'}</button></header>:<>  <header className={styles.header}><div><span className={styles.eyebrow}>THAI EQUITIES / SET100 + mai</span><h1>ตลาดหุ้นไทย <span>Decision Terminal</span></h1><p>คัดหุ้น · เก็บไว้เฝ้า · เปิดกราฟ · ติดตามผล ในหน้าเดียว</p></div><div className={styles.actions}><button type="button" onClick={onOpenStyleScanner}>สแกนตามสไตล์ (Multi-Strategy) ↗</button><a href="#section-radar">Strategy Radar ↓</a><a href="#chart-panel">กราฟ {selectedSymbol} ↓</a><a href="#section-results" onClick={event=>{if(onResults){event.preventDefault();onResults();}}}>Trade Ledger (100 ไม้)</a><button type="button" disabled={busy||signalAccess!==true} onClick={()=>setRevision(v=>v+1)}>{busy?'กำลังโหลด…':'↻ โหลดผลล่าสุด'}</button></div></header></>}
+
+  {/* ─── 0. ศูนย์ตอบโจทย์นักลงทุนไทย 3 คำถามหลัก + เสียงแจ้งเตือนหุ้นในแผนอัตโนมัติ ─── */}
+  <section className={styles.retailBriefSection} aria-label="โพยเสียงเช้านี้เล่นอะไรดี และการบ้านหุ้นเย็นนี้">
+   <div className={styles.retailBriefHead}>
+    <div>
+     <span className={styles.scoreboardPill}>🔊 THAI VOICE BRIEFING · ตอบโจทย์ 3 คำถามหลักนักลงทุนไทย</span>
+     <h3>เช้านี้เล่นอะไรดี? · ตอนเย็นมีการบ้านไหม? · แนวรับแนวต้านเท่าไหร่?</h3>
+     <p>ระบบคัดหุ้นเข้าแผน 2R จากข้อมูลจริง พร้อมอ่านออกเสียงภาษาไทยแจ้งจุดเข้า แนวรับ แนวต้าน และจุดคัทลอสให้ฟังทันที</p>
+    </div>
+    <div className={styles.retailVoiceControls}>
+     <button
+      type="button"
+      className={styles.voicePlayPrimary}
+      onClick={()=>{
+       const txt=retailTab==='evening'
+        ?buildEveningHomeworkSpeech(rows,regime)
+        :buildMorningBriefSpeech(rows,regime);
+       speakText(txt);
+      }}
+     >
+      {speechState==='speaking'?'🔊 กำลังอ่านโพยหุ้น…':'🔊 กดฟังเสียงสรุปโพยหุ้นในแผน'}
+     </button>
+     {speechState==='speaking'&&(
+      <button
+       type="button"
+       className={styles.voiceStopBtn}
+       onClick={()=>speakerRef.current?.stop()}
+      >
+       ⏹ หยุดเสียง
+      </button>
+     )}
+    </div>
+   </div>
+
+   {lastSpokenText&&(
+    <div className={styles.spokenTranscriptBar} role="status" aria-live="polite">
+     <span>🎙️ <strong>สคริปต์เสียงแจ้งเตือนล่าสุด:</strong> {lastSpokenText}</span>
+     <button type="button" onClick={()=>speakText(lastSpokenText)}>ฟังซ้ำ ↻</button>
+    </div>
+   )}
+
+   <div className={styles.retailTabs} role="tablist" aria-label="เลือกคำถามยอดฮิต">
+    <button
+     type="button"
+     role="tab"
+     aria-selected={retailTab==='morning'}
+     className={retailTab==='morning'?styles.retailTabActive:styles.retailTab}
+     onClick={()=>{
+      setRetailTab('morning');
+      speakText(buildMorningBriefSpeech(rows,regime));
+     }}
+    >
+     🌅 1. เช้านี้เล่นอะไรดีครับ? <small>โพย 3 หุ้นเด่นพร้อมลุย + ฟังเสียง</small>
+    </button>
+    <button
+     type="button"
+     role="tab"
+     aria-selected={retailTab==='evening'}
+     className={retailTab==='evening'?styles.retailTabActive:styles.retailTab}
+     onClick={()=>{
+      setRetailTab('evening');
+      speakText(buildEveningHomeworkSpeech(rows,regime));
+     }}
+    >
+     🌙 2. ตอนเย็นมีการบ้านไหม? <small>การบ้าน 3 สไตล์เฝ้าพรุ่งนี้ + ฟังเสียง</small>
+    </button>
+    <button
+     type="button"
+     role="tab"
+     aria-selected={retailTab==='levels'}
+     className={retailTab==='levels'?styles.retailTabActive:styles.retailTab}
+     onClick={()=>{
+      setRetailTab('levels');
+      const targetRow=doctorResult&&!doctorResult.notInList?doctorResult:(selected||morningPicks[0]||rows[0]);
+      if(targetRow){
+       setDoctorInput(targetRow.symbol);
+       handleRunDoctor(targetRow.symbol,{speak:true});
+      }
+      document.getElementById('thai-stock-doctor')?.scrollIntoView({behavior:'smooth'});
+     }}
+    >
+     🎯 3. แนวรับแนวต้านเท่าไหร่? <small>เช็คแนวรับ-แนวต้าน-จุดคัทรายตัว + ฟังเสียง</small>
+    </button>
+   </div>
+
+   {retailTab==='morning'&&(
+    <div className={styles.retailCardsGrid}>
+     {morningPicks.length?morningPicks.map((item,idx)=>{
+      const analysis=getDoctorAnalysis(item);
+      return (
+       <article key={item.symbol} className={styles.retailCard}>
+        <div className={styles.retailCardTop}>
+         <span className={styles.retailRankBadge}>โพยเช้า #{idx+1}</span>
+         <div className={styles.retailAssetTitle}>
+          <InstrumentLogo asset={{market:'thai',symbol:item.symbol}}/>
+          <div>
+           <strong>{item.symbol} · ฿{n(item.price)}</strong>
+           <small>{item.name} · {item.volumeBreakout?'🔥 วอลุ่มเข้าจ่อเบรก':item.templatePass?'🚀 Stage 2 ขาขึ้น':'🎯 เข้าแผน 2R'}</small>
+          </div>
+         </div>
+         <button
+          type="button"
+          className={styles.retailSpeakChip}
+          onClick={()=>speakText(buildStockSupportResistanceSpeech({...item,...analysis}))}
+         >
+          🔊 ฟังแผน {item.symbol}
+         </button>
+        </div>
+        <div className={styles.retailLevelPills}>
+         <div><span>🟢 แนวรับ/จุดเข้า</span><strong>฿{n(item.plan?.entry)}</strong></div>
+         <div><span>🎯 แนวต้าน TP1</span><strong className={styles.targetText}>฿{n(item.plan?.minimumTarget)}</strong></div>
+         <div><span>🚀 แนวต้าน TP2</span><strong className={styles.targetText}>฿{n(analysis?.target2)}</strong></div>
+         <div><span>🔴 จุดคัท SL</span><strong className={styles.stopLossText}>฿{n(item.plan?.stopLoss)}</strong></div>
+        </div>
+        <div className={styles.retailCardFoot}>
+         <small>ความเสี่ยงต่อไม้ {n(item.plan?.stopPercent)}% · กรอบกำไร 2R สุทธิ</small>
+         <button type="button" onClick={()=>onSelect?.(item.symbol)}>เปิดกราฟ &amp; คำนวณไม้ ↗</button>
+        </div>
+       </article>
+      );
+     }):(
+      <p className={styles.retailEmpty}>กำลังโหลดโพยหุ้นเช้านี้จากข้อมูลตลาดจริง…</p>
+     )}
+    </div>
+   )}
+
+   {retailTab==='evening'&&(
+    <div className={styles.retailCardsGrid}>
+     {eveningHomework.length?eveningHomework.map(({bucket,desc,row:item})=>{
+      const analysis=getDoctorAnalysis(item);
+      return (
+       <article key={`${bucket}-${item.symbol}`} className={styles.retailCard}>
+        <div className={styles.retailCardTop}>
+         <span className={styles.retailHomeworkBadge}>{bucket}</span>
+         <div className={styles.retailAssetTitle}>
+          <InstrumentLogo asset={{market:'thai',symbol:item.symbol}}/>
+          <div>
+           <strong>{item.symbol} · ฿{n(item.price)}</strong>
+           <small>{desc}</small>
+          </div>
+         </div>
+         <button
+          type="button"
+          className={styles.retailSpeakChip}
+          onClick={()=>speakText(buildStockSupportResistanceSpeech({...item,...analysis}))}
+         >
+          🔊 ฟังการบ้าน {item.symbol}
+         </button>
+        </div>
+        <div className={styles.retailLevelPills}>
+         <div><span>🟢 แนวรับเฝ้ารับ</span><strong>฿{n(item.plan?.entry)}</strong></div>
+         <div><span>🎯 แนวต้านแรก</span><strong className={styles.targetText}>฿{n(item.plan?.minimumTarget)}</strong></div>
+         <div><span>🚀 แนวต้านถัดไป</span><strong className={styles.targetText}>฿{n(analysis?.target2)}</strong></div>
+         <div><span>🔴 จุดหนีตาย (SL)</span><strong className={styles.stopLossText}>฿{n(item.plan?.stopLoss)}</strong></div>
+        </div>
+        <div className={styles.retailCardFoot}>
+         <small>ราคาปิดอ้างอิง {item.priceDay??'ล่าสุด'} · เตรียมเฝ้าเปิดตลาดพรุ่งนี้</small>
+         <button type="button" onClick={()=>onSelect?.(item.symbol)}>เปิดกราฟทำการบ้าน ↗</button>
+        </div>
+       </article>
+      );
+     }):(
+      <p className={styles.retailEmpty}>กำลังโหลดการบ้านหุ้นเย็นนี้จากข้อมูลราคาปิดล่าสุด…</p>
+     )}
+    </div>
+   )}
+  </section>
 
   {/* ─── 1. Verified Track Record Scoreboard ─── */}
   <section className={styles.scoreboardSection} aria-label="Verified Signal Track Record">
@@ -254,12 +521,12 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   </section>
 
   {/* ─── 2. Instant Stock Doctor (เช็คแนวรับ-แนวต้านด่วน 3 บรรทัด) ─── */}
-  <section className={styles.doctorSection} aria-label="ตรวจแนวรับแนวต้านด่วน 3 บรรทัด">
+  <section id="thai-stock-doctor" className={styles.doctorSection} aria-label="ตรวจแนวรับแนวต้านด่วน 3 บรรทัด">
    <div className={styles.doctorHead}>
     <div className={styles.doctorTitleGroup}>
-     <span className={styles.doctorPill}>🩺 INSTANT STOCK DOCTOR · เช็คหุ้นด่วน</span>
-     <h3>พิมพ์ชื่อหุ้น · รู้แนวรับ แนวต้าน จุดคัททันทีใน 3 วินาที</h3>
-     <p>หมดปัญหาไม่รู้จะซื้อราคาไหน คัทตรงไหน ระบบคำนวณจุดได้เปรียบตามโครงสร้างราคาให้ทันที</p>
+     <span className={styles.doctorPill}>🩺 INSTANT STOCK DOCTOR · เช็คแนวรับ-แนวต้านด่วน + เสียงพูด</span>
+     <h3>พิมพ์ชื่อหุ้น หรือคลิกชื่อหุ้น · รู้แนวรับ แนวต้าน จุดคัท พร้อมฟังเสียงทันที</h3>
+     <p>ตอบคำถาม "แนวรับแนวต้านเท่าไหร่?" ทันทีใน 3 วินาที คำนวณโซนรับปลอดภัย เป้าต้าน TP1/TP2 และจุดคัทลอสตามโครงสร้างจริง</p>
     </div>
     <div className={styles.doctorQuotaBadge}>
      {signalAccess===true||ownerPreview?(
@@ -343,19 +610,24 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
 
        <div className={styles.doctorLevelsGrid}>
         <div className={styles.doctorLevelItem} data-tone="green">
-         <span>🟢 โซนซื้อปลอดภัย (แนวรับ)</span>
+         <span>🟢 แนวรับ (โซนซื้อปลอดภัย)</span>
          <strong>฿{n(doctorAnalysis?.support)}</strong>
          <small>แนวรับสะสม ไม่ควรไล่ราคา</small>
+        </div>
+        <div className={styles.doctorLevelItem} data-tone="target">
+         <span>🎯 แนวต้าน 1 (เป้า 2R TP1)</span>
+         <strong>฿{n(doctorAnalysis?.target1)}</strong>
+         <small>แบ่งขายล็อคกำไร 50% (+{n(doctorAnalysis?.target1Pct)}%)</small>
+        </div>
+        <div className={styles.doctorLevelItem} data-tone="target">
+         <span>🚀 แนวต้าน 2 (เป้ารันเทรนด์ TP2)</span>
+         <strong>฿{n(doctorAnalysis?.target2)}</strong>
+         <small>แนวต้านใหญ่ถัดไป (+{n(doctorAnalysis?.target2Pct)}%)</small>
         </div>
         <div className={styles.doctorLevelItem} data-tone="red">
          <span>🔴 จุดตัดขาดทุน (SL ห้ามต่อรอง)</span>
          <strong>หลุด ฿{n(doctorAnalysis?.stop)}</strong>
          <small>คัททันทีตามวินัย (-{n(doctorAnalysis?.stopPct)}%)</small>
-        </div>
-        <div className={styles.doctorLevelItem} data-tone="target">
-         <span>🎯 เป้าทำกำไรแรก (2R TP1)</span>
-         <strong>฿{n(doctorAnalysis?.target1)}</strong>
-         <small>ขาย 50% ยก Stop (+{n(doctorAnalysis?.target1Pct)}%)</small>
         </div>
        </div>
 
@@ -365,6 +637,13 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
        </div>
 
        <div className={styles.doctorActions}>
+        <button
+         type="button"
+         className={styles.voicePlayPrimary}
+         onClick={()=>speakText(buildStockSupportResistanceSpeech({...doctorResult,...doctorAnalysis}))}
+        >
+         🔊 ฟังเสียงแนวรับ-แนวต้าน {doctorResult.symbol}
+        </button>
         <button
          type="button"
          className={styles.secondaryActionBtn}
@@ -431,6 +710,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
       <div className={styles.focusFoot}>
        <span className={styles.rsHighlight}>{item.rs?.excessReturnPercent?`RS ชนะ SET +${n(item.rs.excessReturnPercent)}%`:'Stage 2 Leader'}</span>
        <div className={styles.focusActions}>
+        <button type="button" onClick={()=>speakText(buildStockSupportResistanceSpeech(item))}>🔊 ฟังแผน</button>
         <button type="button" onClick={()=>onSelect?.(item.symbol)}>คำนวณไม้ ↗</button>
         <button type="button" onClick={()=>onSelect?.(item.symbol)} aria-label={`ดูกราฟ ${item.symbol}`}>ดูกราฟ ↗</button>
        </div>
@@ -451,7 +731,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    {preset==='orb'&&<p className={styles.notice}>ORB 15m · พักสัญญาณใหม่ระหว่างวิจัย ฟีดหน่วงอย่างน้อย 15 นาที · <a href="#section-results" onClick={event=>{if(onResults){event.preventDefault();onResults();}}}>เปิดประวัติ Trade Ledger ↓</a></p>}
    {preset==='dividend'&&<p className={styles.notice}>เกณฑ์นี้ใช้ Dividend ≥3% และ P/E ≤15 จากข้อมูล provider ไม่ใช่การยืนยันสมาชิกดัชนี SETHD ข้อมูลที่ขาดจะไม่ผ่านตัวกรอง</p>}
    {error&&<p role="alert" className={styles.notice}>ยังอ่านข้อมูลไม่ได้ กรุณาลองโหลดผลล่าสุด · {error}</p>}
-   {!data?<p role="status" className={styles.message}>{busy||signalAccess===null?'กำลังอ่านผลและโหลดราคาจริง…':'รอข้อมูลจากผู้ให้บริการ'}</p>:<><ThaiScreenerTable showMetrics={showMetrics} rows={filtered.slice((current-1)*7,current*7)} favorites={favorites} selectedSymbol={selectedSymbol} onSelect={onSelect} onToggleFavorite={onToggleFavorite}/>{!filtered.length&&<p role="status" className={styles.message}>{preset==='orb'?'ไม่มีสัญญาณ ORB ใหม่ในโหมดที่พักวิจัย':'ยังไม่มีหุ้นผ่านตัวกรองนี้ ลองล้างตัวกรองหรือรอข้อมูลครบ'}</p>}<footer className={styles.pagination}><span>{filtered.length}/{rows.length} ตัว · หน้าละ 7 · {data?.dataMode==='daily-snapshot'?'ผลส่วนกลางรอบรายวัน · ใช้ร่วมกันทั้งวัน':'คัดใหม่รายตัวทุก 10 นาทีตามคิว'}</span><div><button disabled={current===1} onClick={()=>setPage(current-1)}>ก่อนหน้า</button><span>{current}/{pages}</span><button disabled={current===pages} onClick={()=>setPage(current+1)}>ถัดไป</button></div></footer></>}
+   {!data?<p role="status" className={styles.message}>{busy||signalAccess===null?'กำลังอ่านผลและโหลดราคาจริง…':'รอข้อมูลจากผู้ให้บริการ'}</p>:<><ThaiScreenerTable showMetrics={showMetrics} rows={filtered.slice((current-1)*7,current*7)} favorites={favorites} selectedSymbol={selectedSymbol} onSelect={onSelect} onToggleFavorite={onToggleFavorite} onSpeakRow={row=>speakText(buildStockSupportResistanceSpeech(row))}/>{!filtered.length&&<p role="status" className={styles.message}>{preset==='orb'?'ไม่มีสัญญาณ ORB ใหม่ในโหมดที่พักวิจัย':'ยังไม่มีหุ้นผ่านตัวกรองนี้ ลองล้างตัวกรองหรือรอข้อมูลครบ'}</p>}<footer className={styles.pagination}><span>{filtered.length}/{rows.length} ตัว · หน้าละ 7 · {data?.dataMode==='daily-snapshot'?'ผลส่วนกลางรอบรายวัน · ใช้ร่วมกันทั้งวัน':'คัดใหม่รายตัวทุก 10 นาทีตามคิว'}</span><div><button disabled={current===1} onClick={()=>setPage(current-1)}>ก่อนหน้า</button><span>{current}/{pages}</span><button disabled={current===pages} onClick={()=>setPage(current+1)}>ถัดไป</button></div></footer></>}
    
    <div className={styles.elevatedSizing} aria-label="โต๊ะคำนวณขนาดไม้ 2R Position Sizing">
     <div className={styles.sizingHead}>

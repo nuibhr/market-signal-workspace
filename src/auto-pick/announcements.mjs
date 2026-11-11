@@ -1,5 +1,6 @@
+import { STOCK_SPOKEN_NAMES } from './speech.mjs';
 const LETTERS = { A: 'เอ', B: 'บี', C: 'ซี', D: 'ดี', E: 'อี', F: 'เอฟ', G: 'จี', H: 'เอช', I: 'ไอ', J: 'เจ', K: 'เค', L: 'แอล', M: 'เอ็ม', N: 'เอ็น', O: 'โอ', P: 'พี', Q: 'คิว', R: 'อาร์', S: 'เอส', T: 'ที', U: 'ยู', V: 'วี', W: 'ดับเบิลยู', X: 'เอ็กซ์', Y: 'วาย', Z: 'แซด' };
-const NAMES = { NVDA: 'เอ็นวีดีเอ', NVDA80: 'เอ็นวีดีเอ ดีอาร์', AAPL80: 'แอปเปิล ดีอาร์', PTT: 'พีทีที', AOT: 'เอโอที', CPALL: 'ซีพีออลล์', ADVANC: 'แอดวานซ์', KBANK: 'เคแบงก์', SCB: 'เอสซีบี', DELTA: 'เดลต้า', GULF: 'กัลฟ์' };
+const NAMES = { ...STOCK_SPOKEN_NAMES, NVDA: 'เอ็นวีดีเอ', NVDA80: 'เอ็นวีดีเอ ดีอาร์', AAPL80: 'แอปเปิล ดีอาร์', PTT: 'พีทีที', AOT: 'เอโอที', CPALL: 'ซีพีออลล์', ADVANC: 'แอดวานซ์', KBANK: 'เคแบงก์', SCB: 'เอสซีบี', DELTA: 'เดลต้า', GULF: 'กัลฟ์' };
 
 export const ANNOUNCEMENT_TYPES = new Set(['PICK_READY', 'ENTRY', 'TARGET', 'STOP', 'EXIT', 'AMBIGUOUS', 'DATA_GAP', 'SESSION_END', 'NEAR_STOP', 'STOP_MOVED', 'EXPIRED', 'NEWS']);
 export const SPOKEN_TYPES = new Set(['PICK_READY', 'ENTRY', 'TARGET', 'STOP', 'EXIT']);

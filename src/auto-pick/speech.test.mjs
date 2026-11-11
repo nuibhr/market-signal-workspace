@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSignalSpeaker, formatForThaiSpeech } from './speech.mjs';
+import {
+  createSignalSpeaker,
+  formatForThaiSpeech,
+  speakableThaiTicker,
+  buildStockSupportResistanceSpeech,
+  buildMorningBriefSpeech,
+  buildEveningHomeworkSpeech,
+} from './speech.mjs';
 
 function fixture() {
   const spoken = [], states = [];
@@ -94,4 +101,31 @@ test('Audio-enabled browser uses audio stream and falls back to speech synthesis
   assert.equal(speaker.play('แจ้งเตือนบนมือถือ'), true);
   assert.equal(audioInstances.length, 3);
   assert.ok(audioInstances[2].src.includes('/api/tts?text='));
+});
+
+test('Thai retail 3 core questions speech builders generate clear Thai voice scripts', () => {
+  assert.equal(speakableThaiTicker('CPALL'), 'ซีพีออลล์');
+  assert.equal(speakableThaiTicker('PTT.BK'), 'พีทีที');
+  assert.equal(speakableThaiTicker('NVDA80'), 'เอ็นวีดีเอ ดีอาร์');
+
+  const sampleRows = [
+    { symbol: 'CPALL', price: 62.5, stage: 2, templatePass: true, volumeBreakout: true, pullback: false, score: 8, status: 'available', plan: { entry: 61.5, stopLoss: 59.0, minimumTarget: 66.5, stopPercent: 4.0 } },
+    { symbol: 'ADVANC', price: 285.0, stage: 2, templatePass: true, volumeBreakout: false, pullback: true, score: 7, status: 'available', plan: { entry: 280.0, stopLoss: 270.0, minimumTarget: 300.0, stopPercent: 3.5 } },
+    { symbol: 'GULF', price: 58.25, stage: 2, templatePass: false, volumeBreakout: true, pullback: false, score: 6, status: 'available', plan: { entry: 57.5, stopLoss: 55.0, minimumTarget: 62.5, stopPercent: 4.3 } },
+  ];
+
+  const srSpeech = buildStockSupportResistanceSpeech(sampleRows[0]);
+  assert.ok(srSpeech.includes('ซีพีออลล์'));
+  assert.ok(srSpeech.includes('แนวรับ'));
+  assert.ok(srSpeech.includes('แนวต้าน'));
+  assert.ok(srSpeech.includes('จุดคัทลอส'));
+
+  const morningSpeech = buildMorningBriefSpeech(sampleRows, 'ตลาดเอื้อ');
+  assert.ok(morningSpeech.includes('โพยหุ้นเด่นเช้านี้เล่นอะไรดี'));
+  assert.ok(morningSpeech.includes('ซีพีออลล์'));
+
+  const eveningSpeech = buildEveningHomeworkSpeech(sampleRows, 'ตลาดเอื้อ');
+  assert.ok(eveningSpeech.includes('การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้'));
+  assert.ok(eveningSpeech.includes('สายต้นน้ำขาขึ้น'));
+  assert.ok(eveningSpeech.includes('สายย่อรับแนวรับ'));
 });

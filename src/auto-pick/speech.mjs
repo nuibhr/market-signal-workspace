@@ -3,9 +3,104 @@
 // Tier 2: Browser SpeechSynthesis (th-TH) instant zero-delay fallback
 // Text verbalizer: Translates market abbreviations and numbers into natural spoken Thai.
 
+const THAI_LETTERS = {
+  A: 'เอ', B: 'บี', C: 'ซี', D: 'ดี', E: 'อี', F: 'เอฟ', G: 'จี', H: 'เอช', I: 'ไอ',
+  J: 'เจ', K: 'เค', L: 'แอล', M: 'เอ็ม', N: 'เอ็น', O: 'โอ', P: 'พี', Q: 'คิว', R: 'อาร์',
+  S: 'เอส', T: 'ที', U: 'ยู', V: 'วี', W: 'ดับเบิลยู', X: 'เอ็กซ์', Y: 'วาย', Z: 'แซด',
+};
+
+export const STOCK_SPOKEN_NAMES = {
+  PTT: 'พีทีที', PTTEP: 'พีทีทีอีพี', PTTGC: 'พีทีทีจีซี', OR: 'โออาร์', TOP: 'ไทยออยล์',
+  SPRC: 'เอสพีอาร์ซี', BCP: 'บางจาก', BANPU: 'บ้านปู', IRPC: 'ไออาร์พีซี',
+  CPALL: 'ซีพีออลล์', CPF: 'ซีพีเอฟ', CPAXT: 'ซีพีแอ็กซ์ตร้า', CRC: 'ซีอาร์ซี', CPN: 'ซีพีเอ็น',
+  HMPRO: 'โฮมโปร', GLOBAL: 'โกลบอลเฮ้าส์', DOHOME: 'ดูโฮม', COM7: 'คอมเซเว่น', BJC: 'บีเจซี',
+  ADVANC: 'แอดวานซ์', TRUE: 'ทรู', JMART: 'เจมาร์ท', JMT: 'เจเอ็มที',
+  DELTA: 'เดลต้า', HANA: 'ฮานา', KCE: 'เคซีอี', CCET: 'ซีซีอีที',
+  GULF: 'กัลฟ์', GPSC: 'จีพีเอสซี', BGRIM: 'บีกริม', EGCO: 'เอ็กโก', RATCH: 'ราชกรุ๊ป',
+  EA: 'อีเอ', GUNKUL: 'กันกุล',
+  KBANK: 'เคแบงก์', SCB: 'เอสซีบี', BBL: 'แบงก์กรุงเทพ', KTB: 'กรุงไทย', TTB: 'ทีทีบี',
+  TISCO: 'ทิสโก้', KKP: 'เกียรตินาคิน', TCAP: 'ทีแคป',
+  MTC: 'เอ็มทีซี', SAWAD: 'ศรีสวัสดิ์', TIDLOR: 'ติดล้อ', KTC: 'เคทีซี', AEONTS: 'อิออน', BAM: 'แบม',
+  AOT: 'เอโอที', BDMS: 'บีดีเอ็มเอส', BH: 'บำรุงราษฎร์', BCH: 'บีซีเอช', CHG: 'จุฬารัตน์', PR9: 'พระรามเก้า',
+  BEM: 'บีอีเอ็ม', BTS: 'บีทีเอส', MINT: 'ไมเนอร์', CENTEL: 'เซ็นเทล', AWC: 'เอดับบลิวซี', ERW: 'เอราวัณ',
+  WHA: 'ดับบลิวเอชเอ', AMATA: 'อมตะ', LH: 'แลนด์แอนด์เฮ้าส์', SIRI: 'แสนสิริ', SPALI: 'ศุภาลัย', AP: 'เอพี', QH: 'คิวเฮ้าส์',
+  SCC: 'ปูนใหญ่', SCGP: 'เอสซีจีพี', IVL: 'ไอวีแอล', TU: 'ไทยยูเนี่ยน', ITC: 'ไอทีซี',
+  OSP: 'โอสถสภา', CBG: 'คาราบาว', ICHI: 'อิชิตัน', SNNP: 'เอสเอ็นเอ็นพี', AU: 'อาฟเตอร์ยู',
+  WARRIX: 'วอริกซ์', MASTER: 'มาสเตอร์', BBIK: 'บลูบิค', DITTO: 'ดิทโต้', PLANB: 'แพลนบี', VGI: 'วีจีไอ',
+  STA: 'เอสทีเอ', STGT: 'เอสทีจีที', RCL: 'อาร์ซีแอล', PRM: 'พริมา', BA: 'บางกอกแอร์', AAV: 'แอร์เอเชีย',
+  NVDA80: 'เอ็นวีดีเอ ดีอาร์', AAPL80: 'แอปเปิล ดีอาร์', TSLA80: 'เทสลา ดีอาร์', MSFT80: 'ไมโครซอฟท์ ดีอาร์',
+  BABA80: 'อาลีบาบา ดีอาร์', GOOG80: 'กูเกิล ดีอาร์', TENCENT80: 'เทนเซ็นต์ ดีอาร์', AMD80: 'เอเอ็มดี ดีอาร์',
+  NVDA: 'เอ็นวีดีเอ', AAPL: 'แอปเปิล', TSLA: 'เทสลา', MSFT: 'ไมโครซอฟท์', META: 'เมตา', AMZN: 'แอมะซอน', GOOGL: 'กูเกิล',
+  XAUUSD: 'ทองคำ เอ็กซ์เอยู', EURUSD: 'ยูโรดอลลาร์', GBPUSD: 'ปอนด์ดอลลาร์', USDJPY: 'ดอลลาร์เยน',
+};
+
+export function speakableThaiTicker(symbol = '') {
+  const clean = String(symbol || '').trim().toUpperCase().replace(/\.BK$/i, '');
+  if (!clean) return 'หุ้นที่เลือก';
+  if (STOCK_SPOKEN_NAMES[clean]) return STOCK_SPOKEN_NAMES[clean];
+  if (clean.endsWith('80') && STOCK_SPOKEN_NAMES[clean.slice(0, -2)]) {
+    return `${STOCK_SPOKEN_NAMES[clean.slice(0, -2)]} ดีอาร์`;
+  }
+  return [...clean].map(ch => THAI_LETTERS[ch] || ch).join(' ');
+}
+
+export function buildStockSupportResistanceSpeech(row) {
+  if (!row) return '';
+  const name = speakableThaiTicker(row.symbol);
+  const p = Number(row.price);
+  const support = Number(row.plan?.entry ?? row.support ?? (p > 0 ? (p * 0.975).toFixed(2) : 0));
+  const stop = Number(row.plan?.stopLoss ?? row.stop ?? (p > 0 ? (p * 0.94).toFixed(2) : 0));
+  const target1 = Number(row.plan?.minimumTarget ?? row.target1 ?? (p > 0 ? (p * 1.08).toFixed(2) : 0));
+  const target2 = Number(row.target2 ?? (support > 0 && stop > 0 ? (support + (support - stop) * 2.5).toFixed(2) : (p * 1.15).toFixed(2)));
+  const fmt = v => Number.isFinite(v) && v > 0 ? Number(v.toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 }) : 'รอข้อมูล';
+
+  return `เช็คแนวรับแนวต้านหุ้น ${name} ราคาปัจจุบัน ${fmt(p)} บาท โซนแนวรับปลอดภัย ${fmt(support)} บาท แนวต้านเป้าแรก ${fmt(target1)} บาท แนวต้านถัดไป ${fmt(target2)} บาท และจุดคัทลอสหากหลุด ${fmt(stop)} บาท`;
+}
+
+export function buildMorningBriefSpeech(rows = [], regime = 'ตลาดผสม') {
+  const valid = (rows || []).filter(r => r && r.plan && Number.isFinite(r.price) && !['unavailable', 'stale'].includes(r.status));
+  const picks = [...valid]
+    .sort((a, b) => ((b.volumeBreakout ? 2 : 0) + (b.templatePass ? 2 : 0) + (b.score ?? 0)) - ((a.volumeBreakout ? 2 : 0) + (a.templatePass ? 2 : 0) + (a.score ?? 0)))
+    .slice(0, 3);
+
+  if (!picks.length) {
+    return 'สวัสดีตอนเช้าค่ะ ขณะนี้กำลังรอผลสแกนหุ้นเข้าแผนรอบเช้า กรุณากดโหลดข้อมูลล่าสุดสักครู่ค่ะ';
+  }
+  const fmt = v => Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  const parts = picks.map((item, idx) => {
+    const name = speakableThaiTicker(item.symbol);
+    return `ตัวที่ ${idx + 1} ${name} แนวรับจุดเข้า ${fmt(item.plan.entry)} บาท เป้าแนวต้าน ${fmt(item.plan.minimumTarget)} บาท จุดคัท ${fmt(item.plan.stopLoss)} บาท`;
+  });
+  return `โพยหุ้นเด่นเช้านี้เล่นอะไรดี ภาวะตลาด ${regime} คัดหุ้นเข้าแผน ${picks.length} ตัวเน้นๆ ${parts.join(' ')} วางแผนตามกรอบสองอาร์และคุมความเสี่ยงทุกไม้นะคะ`;
+}
+
+export function buildEveningHomeworkSpeech(rows = [], regime = 'ตลาดผสม') {
+  const valid = (rows || []).filter(r => r && r.plan && Number.isFinite(r.price) && !['unavailable', 'stale'].includes(r.status));
+  const stage2Pick = valid.find(r => r.stage === 2 && r.templatePass) || valid[0];
+  const pullbackPick = valid.find(r => r.pullback && r.symbol !== stage2Pick?.symbol) || valid.find(r => r.symbol !== stage2Pick?.symbol);
+  const breakoutPick = valid.find(r => r.volumeBreakout && r.symbol !== stage2Pick?.symbol && r.symbol !== pullbackPick?.symbol)
+    || valid.find(r => r.symbol !== stage2Pick?.symbol && r.symbol !== pullbackPick?.symbol);
+
+  const picks = [
+    stage2Pick ? { tag: 'สายต้นน้ำขาขึ้น', item: stage2Pick } : null,
+    pullbackPick ? { tag: 'สายย่อรับแนวรับ', item: pullbackPick } : null,
+    breakoutPick ? { tag: 'สายวอลุ่มเข้าจ่อเบรก', item: breakoutPick } : null,
+  ].filter(Boolean);
+
+  if (!picks.length) {
+    return 'สรุปการบ้านหุ้นเย็นนี้ ขณะนี้กำลังรอข้อมูลราคาปิดประจำวัน กรุณากดโหลดข้อมูลล่าสุดค่ะ';
+  }
+  const fmt = v => Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  const parts = picks.map(({ tag, item }) => {
+    const name = speakableThaiTicker(item.symbol);
+    return `${tag} หุ้น ${name} แนวรับเฝ้ารับ ${fmt(item.plan.entry)} บาท แนวต้าน ${fmt(item.plan.minimumTarget)} บาท จุดคัท ${fmt(item.plan.stopLoss)} บาท`;
+  });
+  return `การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้ ภาวะตลาด ${regime} ${parts.join(' ')} จดเข้าลิสต์เฝ้าเปิดตลาดพรุ่งนี้เช้าได้เลยค่ะ`;
+}
+
 export function formatForThaiSpeech(text) {
   if (typeof text !== 'string') return '';
-  return text
+  let result = text
     // Strip bracketed news tags
     .replace(/\[\s*(?:มีคลิป|คลิป|ชมคลิป|ด่วน|LIVE|สด|อัปเดต|update).*?\]/gi, '')
     .replace(/\(\s*(?:มีคลิป|คลิป|ชมคลิป|ด่วน|LIVE|สด|อัปเดต|update).*?\)/gi, '')
@@ -28,15 +123,25 @@ export function formatForThaiSpeech(text) {
     .replace(/\bD1\b/gi, 'เดย์')
     .replace(/\bSHORT\b/g, 'ชอร์ต')
     .replace(/\bLONG\b/g, 'ลอง')
+    .replace(/\bSET100\b/gi, 'เซ็ต 100')
     .replace(/\bSET50\b/gi, 'เซ็ต 50')
+    .replace(/\bSET\b/g, 'เซ็ต')
     .replace(/\bTFEX\b/gi, 'ทีเฟกซ์')
+    .replace(/\bDR80\b/gi, 'ดีอาร์ 80')
     .replace(/\bDR\b/g, 'ดีอาร์')
     // Strip ticker suffixes
     .replace(/([A-Za-z0-9]+)\.BK\b/g, '$1')
     // Punctuation and symbols
-    .replace(/%/g, ' เปอร์เซ็นต์ ')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/%/g, ' เปอร์เซ็นต์ ');
+
+  // Replace known stock ticker symbols with natural Thai spoken names when embedded in Thai speech
+  if (/[\u0E00-\u0E7F]/.test(result)) {
+    result = result.replace(/\b([A-Z]{2,10}(?:80)?)\b/g, (match) => {
+      return STOCK_SPOKEN_NAMES[match] || match;
+    });
+  }
+
+  return result.replace(/\s+/g, ' ').trim();
 }
 
 export function createSignalSpeaker(browser, onState = () => {}, options = {}) {

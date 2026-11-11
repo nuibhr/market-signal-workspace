@@ -4,9 +4,43 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const THAI_CHAR_REGEX = /[\u0E00-\u0E7F]/;
-const MAX_TEXT_LENGTH = 600;
+const MAX_TEXT_LENGTH = 1000;
+const MAX_CHUNK_LENGTH = 150;
 const MAX_CACHE_SIZE = 300;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+export function splitThaiTtsChunks(text, maxLen = MAX_CHUNK_LENGTH) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!clean) return [];
+  if (clean.length <= maxLen) return [clean];
+
+  const words = clean.split(' ');
+  const chunks = [];
+  let current = '';
+
+  for (const word of words) {
+    if (!word) continue;
+    if (word.length > maxLen) {
+      if (current) {
+        chunks.push(current);
+        current = '';
+      }
+      for (let i = 0; i < word.length; i += maxLen) {
+        chunks.push(word.slice(i, i + maxLen));
+      }
+      continue;
+    }
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxLen) {
+      current = candidate;
+    } else {
+      if (current) chunks.push(current);
+      current = word;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
 
 const audioCache = new Map();
 const pendingJobs = new Map();
@@ -51,9 +85,9 @@ async function synthesizeHf(text) {
   };
 }
 
-// Free Cloud Neural Thai TTS
-async function synthesizeCloud(text) {
-  const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=th&client=tw-ob&q=${encodeURIComponent(text)}`;
+// Free Cloud Neural Thai TTS (supports multi-chunk concatenation for long briefings)
+async function synthesizeCloudChunk(chunk) {
+  const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=th&client=tw-ob&q=${encodeURIComponent(chunk)}`;
   const res = await fetch(url, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -63,8 +97,18 @@ async function synthesizeCloud(text) {
   });
   if (!res.ok) throw new Error(`FREE_TTS_HTTP_${res.status}`);
   const arrayBuffer = await res.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+async function synthesizeCloud(text) {
+  const chunks = splitThaiTtsChunks(text, MAX_CHUNK_LENGTH);
+  const buffers = [];
+  for (const chunk of chunks) {
+    const buf = await synthesizeCloudChunk(chunk);
+    buffers.push(buf);
+  }
   return {
-    buffer: Buffer.from(arrayBuffer),
+    buffer: Buffer.concat(buffers),
     contentType: 'audio/mpeg',
     engine: 'cloud-neural-tha',
   };
