@@ -17,6 +17,7 @@ export function createMonitorAudio(browser,{onState=()=>{},visible=()=>true,setT
   });
   return {
     supported:speaker.supported,
+    unlock(){speaker.unlock?.();if(enabled&&paused){paused=false;drain();}},
     enable(value){enabled=value;paused=false;if(!value){clearTimer(timer);queue.splice(0).forEach(p=>p.done('muted'));current?.done('interrupted');current=null;speaker.stop();}else drain();},
     play(text,done=()=>{},eligible=()=>true,key=null){if(!enabled){done('muted');return false;}queue.push({text,done,eligible,key});drain();return true;},
     cancel(key){if(!key)return;for(let i=queue.length-1;i>=0;i--)if(queue[i].key===key)queue.splice(i,1)[0].done('interrupted');if(current?.key===key){clearTimer(timer);const p=current;current=null;speaker.stop();p.done('interrupted');drain();}},

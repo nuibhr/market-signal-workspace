@@ -248,7 +248,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
   function chooseThaiView(view,{history=true,scroll=true}={}){
     const target=THAI_VIEWS.find(item=>item.id===view)??THAI_VIEWS[0];
-    setThaiView(target.id);setActiveNav(target.id==='chart'?'chart':target.id==='results'?'results':'overview');setPopup(null);
+    setThaiView(target.id);setActiveNav(target.id==='chart'?'chart':target.id==='results'?'results':target.id==='portfolio'?'portfolio':'overview');setPopup(null);
     if(target.id==='results')setResultsRequest(v=>v+1);
     if(history&&window.location.hash!==target.hash)window.history.pushState(null,'',target.hash);
     if(!scroll)return;
@@ -267,6 +267,11 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     if (id === 'risk' || id === 'financial') { window.location.href = '/risk'; return; }
     if (id === 'calendar-page' || id === 'calendar') { window.location.href = '/calendar'; return; }
     if (id === 'developers') { window.location.href = '/developers'; return; }
+    if (id === 'portfolio') {
+      if (marketId === 'thai') { chooseThaiView('portfolio'); return; }
+      window.location.href = '/thai#section-portfolio';
+      return;
+    }
     setActiveNav(id);
     if(marketId==='thai'&&['search','favorites','watchlist','overview','chart'].includes(id)){
       setPopup(null);if(['favorites','watchlist'].includes(id))setFavoritesOpenRequest(v=>v+1);
@@ -623,7 +628,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
           {marketId!=='thai'&&marketId!=='us'&&<div className="favorite-strip"><span>★ หุ้นโปรด</span>{favoriteAssets.length ? favoriteAssets.slice(0,8).map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}>{item.symbol}{item.sectionId==='US_ETFS'&&<small> ETF</small>}</button>) : <small>เก็บตัวที่สนใจ แล้วติดตามราคาและแนวโน้มต่อได้</small>}<button className="favorite-overview" onClick={()=>navigateTo('favorites')}>ดูหุ้นโปรด ({favoriteAssets.length})</button><button className="favorite-toggle" aria-label={`${favorites.includes(asset.symbol)?'เลิกติดตาม':'ติดตาม'} ${asset.symbol} จากกราฟ`} aria-pressed={favorites.includes(asset.symbol)} onClick={() => toggleFavorite(asset.symbol)}>{favorites.includes(asset.symbol) ? '★ บันทึกแล้ว' : '☆ เพิ่มหุ้นโปรด'}</button></div>}
 
-          {(marketId !== 'us' || usTab === 'chart') && <>
+          {(marketId !== 'us' || usTab === 'chart') && !(marketId === 'thai' && thaiView === 'portfolio') && <>
             {marketId === 'us' && usTab === 'chart' && (
               <div style={{
                 display: 'flex',

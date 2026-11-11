@@ -1106,13 +1106,13 @@ html:not([data-theme='light']) [class*='tabBtnActive'] {
   box-shadow: 0 0 16px rgba(34, 211, 238, 0.25) !important;
 }
 
-html:not([data-theme='light']) [class*='filterPill']:not([class*='us-stage2-desk_']) {
+html:not([data-theme='light']) [class*='filterPill']:not([class*='us-stage2-desk_']):not([class*='equity-portfolio-desk_']):not([class*='filterPills']) {
   background: #172641 !important;
   border: none !important;
   color: #94A3B8 !important;
 }
 
-html:not([data-theme='light']) [class*='filterPillActive']:not([class*='us-stage2-desk_']) {
+html:not([data-theme='light']) [class*='filterPillActive']:not([class*='us-stage2-desk_']):not([class*='equity-portfolio-desk_']) {
   background: linear-gradient(90deg, #163A63 0%, #1D4ED8 100%) !important;
   border: none !important;
   color: #22D3EE !important;
@@ -1125,7 +1125,8 @@ html:not([data-theme='light']) [class*='radarCard'] {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
 }
 
-html:not([data-theme='light']) [class*='desk']:not([class*='us-stage2-desk_']) {
+html:not([data-theme='light']) [class*='dr-strategy_desk'],
+html:not([data-theme='light']) article[class*='desk']:not([class*='us-stage2-desk_']):not([class*='equity-portfolio-desk_']) {
   background: #111C33 !important;
   border: none !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35) !important;
@@ -2517,18 +2518,15 @@ p, span, a, button, input, label {
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── 1. Text Inputs, Search Fields, Selects & Textareas (Liquid Capsules) ── */
-input,
-select,
-textarea,
-.symbol-search-field,
-[class*='input'],
-[class*='field']:not(.primary-grid),
-[class*='search'],
-[class*='textInput'] {
+html:not([data-theme='light']) input:not([type='checkbox']):not([type='radio']),
+html:not([data-theme='light']) select,
+html:not([data-theme='light']) textarea,
+html:not([data-theme='light']) .symbol-search-field,
+html:not([data-theme='light']) [class*='textInput'] {
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.055) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   color: #f1f5f9 !important;
@@ -2536,24 +2534,62 @@ textarea,
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+[data-theme='light'] input:not([type='checkbox']):not([type='radio']),
+[data-theme='light'] select,
+[data-theme='light'] textarea,
+[data-theme='light'] .symbol-search-field,
+[data-theme='light'] [class*='textInput'],
+.market-workspace.theme-light-glass input:not([type='checkbox']):not([type='radio']),
+.market-workspace.theme-light-glass select,
+.market-workspace.theme-light-glass textarea,
+.market-workspace.theme-light-glass .symbol-search-field,
+.market-workspace.theme-light-glass [class*='textInput'] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: rgba(15, 23, 42, 0.045) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #0f172a !important;
+  border-radius: 9999px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
 textarea,
 [class*='textarea'] {
-  border-radius: 14px !important;
+  border-radius: 16px !important;
 }
 
 /* Fluid Ambient Glow on Focus without harsh border strokes */
-input:focus,
-select:focus,
-textarea:focus,
-.symbol-search-field:focus-within,
-[class*='input']:focus,
-[class*='field']:focus-within,
-[class*='search']:focus-within,
-[class*='textInput']:focus {
+html:not([data-theme='light']) input:not([type='checkbox']):not([type='radio']):focus,
+html:not([data-theme='light']) select:focus,
+html:not([data-theme='light']) textarea:focus,
+html:not([data-theme='light']) .symbol-search-field:focus-within,
+html:not([data-theme='light']) [class*='textInput']:focus {
   border: none !important;
   outline: none !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 0 20px rgba(56, 189, 248, 0.25) !important;
+  background: rgba(255, 255, 255, 0.085) !important;
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.25) !important;
+}
+
+[data-theme='light'] input:not([type='checkbox']):not([type='radio']):focus,
+[data-theme='light'] select:focus,
+[data-theme='light'] textarea:focus,
+[data-theme='light'] .symbol-search-field:focus-within,
+[data-theme='light'] [class*='textInput']:focus,
+.market-workspace.theme-light-glass input:not([type='checkbox']):not([type='radio']):focus,
+.market-workspace.theme-light-glass select:focus,
+.market-workspace.theme-light-glass textarea:focus,
+.market-workspace.theme-light-glass .symbol-search-field:focus-within,
+.market-workspace.theme-light-glass [class*='textInput']:focus {
+  border: none !important;
+  outline: none !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  box-shadow: 0 4px 20px rgba(2, 132, 199, 0.16) !important;
+}
+
+.market-nav-divider {
+  display: none !important;
 }
 
 /* ── 2. Buttons & Interactive Controls (Borderless Soft Pills) ── */
@@ -2634,4 +2670,254 @@ td,
   border-left: none !important;
   border-right: none !important;
   border-radius: 18px !important;
+}
+
+/* ── 6. Dark Mode News & Monitor Alert History (โหมดข่าวดำ & ประวัติแจ้งเตือน) ── */
+html:not([data-theme='light']) .monitor-history {
+  background: linear-gradient(155deg, rgba(15, 23, 42, 0.82) 0%, rgba(7, 13, 24, 0.92) 100%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: none !important;
+  border-radius: 26px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+}
+
+html:not([data-theme='light']) .monitor-history h2,
+html:not([data-theme='light']) .monitor-history strong {
+  color: #ffffff !important;
+}
+
+html:not([data-theme='light']) .monitor-history p,
+html:not([data-theme='light']) .monitor-history-empty,
+html:not([data-theme='light']) .monitor-history-foot {
+  color: #94a3b8 !important;
+}
+
+html:not([data-theme='light']) .monitor-history-table-wrap {
+  background: rgba(255, 255, 255, 0.025) !important;
+  border: none !important;
+  border-radius: 18px !important;
+}
+
+html:not([data-theme='light']) .monitor-history table {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+}
+
+html:not([data-theme='light']) .monitor-history th {
+  background: rgba(15, 23, 42, 0.85) !important;
+  color: #94a3b8 !important;
+}
+
+html:not([data-theme='light']) .monitor-history td {
+  color: #e2e8f0 !important;
+}
+
+html:not([data-theme='light']) .monitor-history tr:hover td {
+  background: rgba(56, 189, 248, 0.06) !important;
+}
+
+html:not([data-theme='light']) .monitor-history button,
+html:not([data-theme='light']) .monitor-record-head button {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #f1f5f9 !important;
+  border: none !important;
+  border-radius: 999px !important;
+}
+
+html:not([data-theme='light']) .monitor-history button:hover:not(:disabled),
+html:not([data-theme='light']) .monitor-record-head button:hover {
+  background: rgba(56, 189, 248, 0.18) !important;
+  color: #7dd3fc !important;
+}
+
+html:not([data-theme='light']) .monitor-record-dialog {
+  background: linear-gradient(155deg, rgba(15, 23, 42, 0.96) 0%, rgba(8, 14, 26, 0.98) 100%) !important;
+  backdrop-filter: blur(32px) saturate(190%) !important;
+  border: none !important;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+}
+
+html:not([data-theme='light']) .monitor-record-grid div {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: none !important;
+  color: #f1f5f9 !important;
+}
+
+html:not([data-theme='light']) .monitor-record-grid span {
+  color: #94a3b8 !important;
+}
+
+html:not([data-theme='light']) .monitor-record-message {
+  background: rgba(56, 189, 248, 0.1) !important;
+  border: none !important;
+  color: #e0f2fe !important;
+}
+
+html:not([data-theme='light']) .monitor-event-toast {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.94) 0%, rgba(9, 16, 29, 0.96) 100%) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  border: none !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  color: #f8fafc !important;
+}
+
+html:not([data-theme='light']) .monitor-event-toast strong {
+  color: #ffffff !important;
+}
+
+html:not([data-theme='light']) .monitor-event-toast p,
+html:not([data-theme='light']) .monitor-event-toast small {
+  color: #cbd5e1 !important;
+}
+
+/* News Card Audio Button (🔊 ฟังข่าว) */
+.news-speak-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: none !important;
+  background: rgba(56, 189, 248, 0.15);
+  color: #7dd3fc;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+}
+
+.news-speak-btn:hover {
+  background: rgba(56, 189, 248, 0.26);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* ── 7. Mobile Liquid Glass Dock, Drawer Sheet & Touch Ergonomics ── */
+html:not([data-theme='light']) .hub-mobile-dock {
+  background: rgba(8, 13, 24, 0.88) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: none !important;
+  box-shadow: 0 -10px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+html:not([data-theme='light']) .hub-mobile-dock button {
+  color: #94a3b8 !important;
+  border: none !important;
+}
+
+html:not([data-theme='light']) .hub-mobile-dock button.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.24), rgba(56, 189, 248, 0.22)) !important;
+  color: #6ee7b7 !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2) !important;
+}
+
+html:not([data-theme='light']) .hub-mobile-sheet {
+  background: linear-gradient(165deg, rgba(12, 19, 34, 0.96) 0%, rgba(6, 11, 21, 0.98) 100%) !important;
+  backdrop-filter: blur(32px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(190%) !important;
+  color: #f8fafc !important;
+}
+
+html:not([data-theme='light']) .hub-mobile-sheet-head {
+  border: none !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-radius: 18px !important;
+}
+
+html:not([data-theme='light']) .hub-mobile-sheet-head button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f8fafc !important;
+  border: none !important;
+  border-radius: 999px !important;
+}
+
+html:not([data-theme='light']) .hub-mobile-group {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: none !important;
+  border-radius: 20px !important;
+}
+
+html:not([data-theme='light']) .hub-mobile-group > span {
+  color: #7dd3fc !important;
+}
+
+html:not([data-theme='light']) .hub-mobile-group button {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #e2e8f0 !important;
+  border: none !important;
+  border-radius: 14px !important;
+}
+
+html:not([data-theme='light']) .hub-mobile-group button.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(56, 189, 248, 0.22)) !important;
+  color: #6ee7b7 !important;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+
+  .monitor-sound {
+    min-height: 38px !important;
+    padding: 6px 12px !important;
+    font-size: 0.78rem !important;
+    border-radius: 999px !important;
+    touch-action: manipulation;
+  }
+
+  .monitor-event-toast {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important;
+    border-radius: 20px !important;
+  }
+
+  .market-news-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .market-news-Controls,
+  .market-news-markets {
+    width: 100% !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    padding-bottom: 4px !important;
+    scrollbar-width: none !important;
+  }
+
+  .market-news-markets button {
+    flex: 0 0 auto !important;
+    min-width: 140px !important;
+  }
+
+  .monitor-history {
+    padding: 16px 14px !important;
+  }
+
+  .monitor-history-head {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .monitor-history-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .monitor-history-actions button {
+    flex: 1 1 auto !important;
+    justify-content: center !important;
+    min-height: 38px !important;
+  }
 }

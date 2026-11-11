@@ -87,4 +87,11 @@ test('Audio-enabled browser uses audio stream and falls back to speech synthesis
   assert.equal(audioInstances.length, 2);
   audioInstances[1].onerror(new Error('Network error'));
   assert.equal(spoken.length, 1);
+
+  // Test mobile unlock reuses persistent Audio element
+  speaker.unlock();
+  assert.equal(audioInstances.length, 3);
+  assert.equal(speaker.play('แจ้งเตือนบนมือถือ'), true);
+  assert.equal(audioInstances.length, 3);
+  assert.ok(audioInstances[2].src.includes('/api/tts?text='));
 });

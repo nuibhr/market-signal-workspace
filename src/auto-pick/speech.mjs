@@ -43,11 +43,44 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
   let generation = 0;
   let current = null;
   let currentAudio = null;
+  let sharedAudio = null;
 
   const hasSynthesis = Boolean(browser?.speechSynthesis && typeof browser?.SpeechSynthesisUtterance === 'function');
   const AudioCtor = browser?.Audio || (typeof Audio !== 'undefined' ? Audio : null);
   const hasAudio = Boolean(AudioCtor && options.useAudio !== false);
   const supported = hasSynthesis || hasAudio;
+
+  function unlock() {
+    if (hasAudio && !sharedAudio) {
+      try {
+        const a = new AudioCtor('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+        a.playsInline = true;
+        a.volume = 0;
+        const p = a.play?.();
+        if (p && typeof p.then === 'function') {
+          p.then(() => {
+            if (currentAudio !== a) {
+              try { a.pause(); a.currentTime = 0; } catch {}
+              a.volume = 1;
+            }
+          }).catch(() => {
+            a.volume = 1;
+          });
+        } else {
+          a.volume = 1;
+        }
+        sharedAudio = a;
+      } catch {}
+    }
+    if (hasSynthesis && !current) {
+      try {
+        const u = new browser.SpeechSynthesisUtterance('');
+        u.volume = 0;
+        u.lang = 'th-TH';
+        browser.speechSynthesis.speak?.(u);
+      } catch {}
+    }
+  }
 
   function stop() {
     generation += 1;
@@ -107,7 +140,17 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
   function playAudio(text, ticket) {
     try {
       const url = `/api/tts?text=${encodeURIComponent(text)}`;
-      const audio = new AudioCtor(url);
+      let audio;
+      if (sharedAudio) {
+        audio = sharedAudio;
+        try { audio.pause(); } catch {}
+        audio.volume = 1;
+        audio.src = url;
+        audio.load?.();
+      } else {
+        audio = new AudioCtor(url);
+        audio.playsInline = true;
+      }
       currentAudio = audio;
       current = audio;
 
@@ -142,7 +185,9 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
       if (p && typeof p.catch === 'function') {
         p.catch(err => {
           if (ticket !== generation) return;
-          if (err?.name === 'NotAllowedError') {
+          if (hasSynthesis && !started && err?.name !== 'NotAllowedError') {
+            playSynthesis(text, ticket);
+          } else if (err?.name === 'NotAllowedError') {
             settle('blocked', 'not-allowed');
           } else if (hasSynthesis && !started) {
             playSynthesis(text, ticket);
@@ -186,6 +231,7 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
   return {
     play,
     stop,
+    unlock,
     supported,
     get pending() {
       return current !== null;

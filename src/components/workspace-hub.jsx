@@ -16,6 +16,7 @@ const GROUPS = [
     icon: Compass,
     items: [
       ['overview', 'แดชบอร์ดภาพรวมตลาด', LayoutDashboard],
+      ['portfolio', 'เปิดพอร์ต / ยืนยันสิทธิ์ VIP', ShieldCheck],
       ['scanner', 'Multi-Strategy Scanner', Radar],
       ['watchlist', 'Watchlist (หุ้นโปรด)', Star],
     ],

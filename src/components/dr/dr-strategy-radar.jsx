@@ -595,6 +595,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   // Audio Voice Playback Handlers
   const handlePlayMorningBriefing = () => {
     if (!speakerRef.current || !voiceEnabled) return;
+    speakerRef.current.unlock?.();
     const text = generateMorningSignalSpeech({
       thaiPicks: topMorningThai,
       drPicks: topMorningDr,
@@ -609,6 +610,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
   const handleSpeakSingle = (p) => {
     if (!speakerRef.current || !voiceEnabled) return;
+    speakerRef.current.unlock?.();
     const text = `สัญญาณ ${p.symbol} ตลาด ${p.market === 'SET' ? 'หุ้นไทย' : 'DR'} ราคาเข้า ${p.entry.toFixed(2)} บาท เป้าหมายทำกำไร ${p.tp1.toFixed(2)} บาท ตัดขาดทุน ${p.sl.toFixed(2)} บาท สถานะ ${p.statusThai || p.status}`;
     speakerRef.current.play(text);
     setToastData({

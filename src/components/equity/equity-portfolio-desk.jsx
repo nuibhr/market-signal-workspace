@@ -597,25 +597,47 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
     }
   };
 
+  const [studioMode, setStudioMode] = useState('lead'); // 'lead' | 'api' | 'demo'
+
+  const focusInlineStudio = (bId = '003', type = 'new_account', mode = 'lead') => {
+    setStudioMode(mode);
+    if (mode === 'lead') {
+      setLeadBroker(bId);
+      setLeadType(type);
+      setLeadSuccess(null);
+      setLeadError(null);
+    } else if (mode === 'api' && bId) {
+      setBrokerId(bId);
+    }
+    if (typeof document !== 'undefined') {
+      requestAnimationFrame(() => {
+        document.getElementById('vip-inline-studio')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
+  };
+
   const openLeadModal = (bId = '003', type = 'new_account') => {
     setLeadBroker(bId);
     setLeadType(type);
     setLeadAccountNo('');
+    setStudioMode('lead');
     setModalTab('lead');
     setLeadSuccess(null);
     setLeadError(null);
-    setModalOpen(true);
+    focusInlineStudio(bId, type, 'lead');
   };
 
   const openApiModal = (bId = null) => {
     if (bId) setBrokerId(bId);
+    setStudioMode('api');
     setModalTab('api');
-    setModalOpen(true);
+    focusInlineStudio(bId || brokerId, leadType, 'api');
   };
 
   const openDemoModal = () => {
+    setStudioMode('demo');
     setModalTab('demo');
-    setModalOpen(true);
+    focusInlineStudio(brokerId, leadType, 'demo');
   };
 
   const holdings = data?.holdings || [];
@@ -879,6 +901,368 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* ─── INLINE LIQUID GLASS VIP CONCIERGE & API STUDIO ─── */}
+          <div id="vip-inline-studio" className={styles.inlineStudioSurface}>
+            <div className={styles.suiteNav}>
+              <button
+                type="button"
+                className={`${styles.suiteNavTab} ${studioMode === 'lead' && leadType === 'existing_port' ? styles.suiteNavTabActiveLead : ''}`}
+                onClick={() => {
+                  setStudioMode('lead');
+                  setLeadType('existing_port');
+                  setLeadSuccess(null);
+                }}
+              >
+                <span>👤 มีพอร์ตแล้ว · แจ้งเลขพอร์ตรับสิทธิ์ VIP</span>
+                <span className={styles.recBadge}>ไม่ต้องย้ายโบรค</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.suiteNavTab} ${studioMode === 'lead' && leadType === 'new_account' ? styles.suiteNavTabActiveLead : ''}`}
+                onClick={() => {
+                  setStudioMode('lead');
+                  setLeadType('new_account');
+                  setLeadSuccess(null);
+                }}
+              >
+                <span>👑 ยังไม่มีพอร์ต · ขอเปิดบัญชีใหม่ VIP</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.suiteNavTab} ${studioMode === 'api' ? styles.suiteNavTabActiveApi : ''}`}
+                onClick={() => setStudioMode('api')}
+              >
+                <span>⚡ ผูกพอร์ตจริง Settrade API</span>
+              </button>
+            </div>
+
+            {studioMode === 'lead' && (
+              <div className={styles.tabContent}>
+                {leadSuccess ? (
+                  <div className={styles.vipSuccessState}>
+                    <div className={styles.vipSuccessIcon}>
+                      {leadSuccess.leadType === 'existing_port' ? '🛡️' : '👑'}
+                    </div>
+                    <h3 className={styles.vipSuccessHeading}>
+                      {leadSuccess.leadType === 'existing_port'
+                        ? 'แจ้งเลขพอร์ตยืนยันสิทธิ์ VIP เรียบร้อยแล้ว!'
+                        : 'ยื่นคำขอเปิดพอร์ต VIP เรียบร้อยแล้ว!'}
+                    </h3>
+                    <div className={styles.leadIdChip}>รหัสคำขอ: {leadSuccess.leadId}</div>
+                    <p className={styles.vipSuccessDesc}>
+                      {leadSuccess.leadType === 'existing_port' ? (
+                        <>
+                          ข้อมูลเลขพอร์ต <strong style={{ color: '#38bdf8' }}>{leadSuccess.accountNo || leadAccountNo}</strong> ถูกส่งตรงถึงทีมมาร์เก็ตติ้งของ{' '}
+                          <strong style={{ color: leadSuccess.brokerId === '003' ? '#c084fc' : leadSuccess.brokerId === '050' ? '#fbbf24' : '#38bdf8' }}>
+                            {leadSuccess.brokerName}
+                          </strong>{' '}
+                          เรียบร้อยแล้ว เจ้าหน้าที่ IC จะตรวจสอบเลขพอร์ตและเปิดสิทธิ์การใช้งาน VIP ให้ท่านทันที
+                        </>
+                      ) : (
+                        <>
+                          ข้อมูลของท่านถูกส่งตรงถึงหัวหน้าทีมมาร์เก็ตติ้งของ{' '}
+                          <strong style={{ color: leadSuccess.brokerId === '003' ? '#c084fc' : leadSuccess.brokerId === '050' ? '#fbbf24' : '#38bdf8' }}>
+                            {leadSuccess.brokerName}
+                          </strong>{' '}
+                          เรียบร้อยแล้ว เจ้าหน้าที่ IC จะติดต่อท่านเพื่อดูแลการเปิดพอร์ตแบบ Fast-track
+                        </>
+                      )}
+                    </p>
+                    <button
+                      type="button"
+                      className={styles.btnPrimaryVip}
+                      onClick={() => setLeadSuccess(null)}
+                      style={{ maxWidth: '320px', width: '100%' }}
+                    >
+                      ✓ ส่งคำขอเพิ่มหรือกลับหน้าแบบฟอร์ม
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleLeadSubmit} className={styles.leadForm}>
+                    <div className={styles.brokerPickGrid}>
+                      <div
+                        className={`${styles.brokerPickCard} ${styles.cardPi} ${leadBroker === '003' ? styles.brokerPickCardActivePi : ''}`}
+                        onClick={() => setLeadBroker('003')}
+                      >
+                        <div className={styles.brokerPickHeader}>
+                          <span className={styles.brokerLogoBadgePi}>🥧 บล.พาย (003)</span>
+                          <span className={leadBroker === '003' ? styles.chosenIndicatorPi : styles.unchosenIndicator}>
+                            {leadBroker === '003' ? '🟢 ✓ กำลังเลือก' : 'คลิกเลือก'}
+                          </span>
+                        </div>
+                        <strong className={styles.brokerTitle}>Pi Securities (มหาชน)</strong>
+                        <p className={styles.brokerDesc}>เทรดหุ้นไทย &amp; DR โลก ผ่านแอป Pi Financial มาร์เก็ตติ้งดูแล VIP</p>
+                      </div>
+
+                      <div
+                        className={`${styles.brokerPickCard} ${styles.cardTrinity} ${leadBroker === '022' ? styles.brokerPickCardActiveTrinity : ''}`}
+                        onClick={() => setLeadBroker('022')}
+                      >
+                        <div className={styles.brokerPickHeader}>
+                          <span className={styles.brokerLogoBadgeTrinity}>🌟 บล.ทรีนีตี้ (022)</span>
+                          <span className={leadBroker === '022' ? styles.chosenIndicatorTrinity : styles.unchosenIndicator}>
+                            {leadBroker === '022' ? '🟢 ✓ กำลังเลือก' : 'คลิกเลือก'}
+                          </span>
+                        </div>
+                        <strong className={styles.brokerTitle}>Trinity Securities</strong>
+                        <p className={styles.brokerDesc}>บทวิเคราะห์สถิติแม่นยำ พร้อมเชื่อมต่อ Settrade Open API เต็มระบบ</p>
+                      </div>
+
+                      <div
+                        className={`${styles.brokerPickCard} ${styles.cardAsl} ${leadBroker === '050' ? styles.brokerPickCardActiveAsl : ''}`}
+                        onClick={() => setLeadBroker('050')}
+                      >
+                        <div className={styles.brokerPickHeader}>
+                          <span className={styles.brokerLogoBadgeAsl}>⚡ บล.เอเอสแอล (050)</span>
+                          <span className={leadBroker === '050' ? styles.chosenIndicatorAsl : styles.unchosenIndicator}>
+                            {leadBroker === '050' ? '🟢 ✓ กำลังเลือก' : 'คลิกเลือก'}
+                          </span>
+                        </div>
+                        <strong className={styles.brokerTitle}>ASL Securities</strong>
+                        <p className={styles.brokerDesc}>เทรดไว ค่าคอมคุ้มค่า พร้อม Settrade Streaming &amp; Open API</p>
+                      </div>
+                    </div>
+
+                    <div className={styles.formFieldsBox}>
+                      {leadType === 'existing_port' && (
+                        <div className={styles.accountNoHighlightBox}>
+                          <div className={styles.accountNoHeader}>
+                            <label className={styles.inputLabelBold}>
+                              🏷️ เลขที่บัญชีซื้อขายหุ้น (Account Number) *
+                            </label>
+                            <span className={styles.accountNoBrokerPill}>
+                              บล.{leadBroker === '003' ? 'พาย (003)' : leadBroker === '022' ? 'ทรีนีตี้ (022)' : 'เอเอสแอล (050)'}
+                            </span>
+                          </div>
+                          <div className={styles.inputWrapLarge}>
+                            <input
+                              type="text"
+                              required
+                              className={styles.textInputLarge}
+                              placeholder="กรอกเลขพอร์ต 6-8 หลักของท่าน เช่น 99242240"
+                              value={leadAccountNo}
+                              onChange={(e) => setLeadAccountNo(e.target.value)}
+                            />
+                          </div>
+                          <p className={styles.accountNoHelper}>
+                            🔒 ข้อมูลเลขพอร์ตส่งตรงให้เจ้าหน้าที่ บล.{leadBroker === '003' ? 'พาย' : leadBroker === '022' ? 'ทรีนีตี้' : 'เอเอสแอล'} ตรวจสอบยืนยันสิทธิ์ VIP เท่านั้น (เฉพาะทีมโบรคของท่านที่เห็นข้อมูลนี้)
+                          </p>
+                        </div>
+                      )}
+
+                      <div className={styles.inputTwoCol}>
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>ชื่อ - นามสกุล *</label>
+                          <div className={styles.inputWrap}>
+                            <span className={styles.inputIcon}>👤</span>
+                            <input
+                              type="text"
+                              required
+                              className={styles.textInput}
+                              placeholder="เช่น สมชาย ใจดี"
+                              value={leadName}
+                              onChange={(e) => setLeadName(e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>เบอร์โทรศัพท์มือถือ *</label>
+                          <div className={styles.inputWrap}>
+                            <span className={styles.inputIcon}>📞</span>
+                            <input
+                              type="tel"
+                              required
+                              className={styles.textInput}
+                              placeholder="เช่น 0812345678"
+                              value={leadPhone}
+                              onChange={(e) => setLeadPhone(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={styles.inputTwoCol} style={{ marginTop: '12px' }}>
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>LINE ID (สำหรับเจ้าหน้าที่ติดต่อกลับ)</label>
+                          <div className={styles.inputWrap}>
+                            <span className={styles.inputIcon}>💬</span>
+                            <input
+                              type="text"
+                              className={styles.textInput}
+                              placeholder="เช่น somchai_trader"
+                              value={leadLine}
+                              onChange={(e) => setLeadLine(e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className={styles.inputGroup}>
+                          <label className={styles.inputLabel}>หมายเหตุเพิ่มเติม / เวลาที่สะดวก</label>
+                          <div className={styles.inputWrap}>
+                            <span className={styles.inputIcon}>📝</span>
+                            <input
+                              type="text"
+                              className={styles.textInput}
+                              placeholder={leadType === 'existing_port' ? 'เช่น มีพอร์ตอยู่แล้ว ต้องการเปิดสิทธิ์ VIP' : 'เช่น สนใจเปิดพอร์ตเทรดหุ้นไทยและ DR'}
+                              value={leadNotes}
+                              onChange={(e) => setLeadNotes(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={styles.inputGroup} style={{ marginTop: '14px' }}>
+                        <label className={styles.inputLabel}>สินทรัพย์และบริการที่ท่านสนใจ</label>
+                        <div className={styles.interestChipsRow}>
+                          {INTEREST_OPTIONS.map((opt) => {
+                            const isSelected = leadInterests.includes(opt.id);
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                className={`${styles.interestChip} ${isSelected ? styles.interestChipActive : ''}`}
+                                onClick={() => handleInterestToggle(opt.id)}
+                              >
+                                <span>{opt.label}</span>
+                                <b>{isSelected ? '✓' : '+'}</b>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {leadError && <div className={styles.leadErrorBar}>⚠️ {leadError}</div>}
+
+                    <div className={styles.formFooterRow}>
+                      <button
+                        type="submit"
+                        className={styles.btnPrimaryVip}
+                        disabled={leadSubmitting || !leadName.trim() || !leadPhone.trim() || (leadType === 'existing_port' && !leadAccountNo.trim())}
+                      >
+                        {leadSubmitting
+                          ? 'กำลังส่งข้อมูลให้เจ้าหน้าที่...'
+                          : leadType === 'existing_port'
+                            ? `👤 ยืนยันแจ้งเลขพอร์ตรับสิทธิ์ VIP (${leadBroker === '003' ? 'บล.พาย 003' : leadBroker === '022' ? 'บล.ทรีนีตี้ 022' : 'บล.เอเอสแอล 050'})`
+                            : `👑 ยืนยันขอเปิดบัญชีใหม่ VIP (${leadBroker === '003' ? 'บล.พาย 003' : leadBroker === '022' ? 'บล.ทรีนีตี้ 022' : 'บล.เอเอสแอล 050'})`}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {studioMode === 'api' && (
+              <div className={styles.tabContent}>
+                <div className={styles.brokerPickGrid}>
+                  <div
+                    className={`${styles.brokerPickCard} ${styles.cardPi} ${brokerId === '003' ? styles.brokerPickCardActivePi : ''}`}
+                    onClick={() => setBrokerId('003')}
+                  >
+                    <div className={styles.brokerPickHeader}>
+                      <span className={styles.brokerLogoBadgePi}>🥧 บล.พาย (003)</span>
+                      <span className={brokerId === '003' ? styles.chosenIndicatorPi : styles.unchosenIndicator}>
+                        {brokerId === '003' ? '🟢 ✓ กำลังเลือก' : 'คลิกเลือก'}
+                      </span>
+                    </div>
+                    <strong className={styles.brokerTitle}>Pi Securities (003)</strong>
+                  </div>
+                  <div
+                    className={`${styles.brokerPickCard} ${styles.cardTrinity} ${brokerId === '022' ? styles.brokerPickCardActiveTrinity : ''}`}
+                    onClick={() => setBrokerId('022')}
+                  >
+                    <div className={styles.brokerPickHeader}>
+                      <span className={styles.brokerLogoBadgeTrinity}>🌟 บล.ทรีนีตี้ (022)</span>
+                      <span className={brokerId === '022' ? styles.chosenIndicatorTrinity : styles.unchosenIndicator}>
+                        {brokerId === '022' ? '🟢 ✓ กำลังเลือก' : 'คลิกเลือก'}
+                      </span>
+                    </div>
+                    <strong className={styles.brokerTitle}>Trinity Securities (022)</strong>
+                  </div>
+                  <div
+                    className={`${styles.brokerPickCard} ${styles.cardAsl} ${brokerId === '050' ? styles.brokerPickCardActiveAsl : ''}`}
+                    onClick={() => setBrokerId('050')}
+                  >
+                    <div className={styles.brokerPickHeader}>
+                      <span className={styles.brokerLogoBadgeAsl}>⚡ บล.เอเอสแอล (050)</span>
+                      <span className={brokerId === '050' ? styles.chosenIndicatorAsl : styles.unchosenIndicator}>
+                        {brokerId === '050' ? '🟢 ✓ กำลังเลือก' : 'คลิกเลือก'}
+                      </span>
+                    </div>
+                    <strong className={styles.brokerTitle}>ASL Securities (050)</strong>
+                  </div>
+                </div>
+
+                <div className={styles.formFieldsBox}>
+                  <div className={styles.inputTwoCol}>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.inputLabel}>เลขบัญชีซื้อขายหุ้น (Account Number) *</label>
+                      <div className={styles.inputWrap}>
+                        <span className={styles.inputIcon}>🏷️</span>
+                        <input
+                          type="text"
+                          autoComplete="off"
+                          className={styles.textInput}
+                          placeholder="เช่น 99242240"
+                          value={accountNo}
+                          onChange={(e) => setAccountNo(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label className={styles.inputLabel}>App ID (Settrade Open API) *</label>
+                      <div className={styles.inputWrap}>
+                        <span className={styles.inputIcon}>🔑</span>
+                        <input
+                          type="text"
+                          autoComplete="off"
+                          className={styles.textInput}
+                          placeholder="กรอก App ID"
+                          value={appId}
+                          onChange={(e) => setAppId(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.inputGroup} style={{ marginTop: '12px' }}>
+                    <label className={styles.inputLabel}>API Secret (Zero-Custody Enclave) *</label>
+                    <div className={styles.inputWrap}>
+                      <span className={styles.inputIcon}>🔒</span>
+                      <input
+                        type={showSecret ? 'text' : 'password'}
+                        autoComplete="off"
+                        className={styles.textInput}
+                        style={{ paddingRight: '45px' }}
+                        placeholder="กรอก API Secret"
+                        value={appSecret}
+                        onChange={(e) => setAppSecret(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className={styles.eyeBtn}
+                        onClick={() => setShowSecret(!showSecret)}
+                      >
+                        {showSecret ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={styles.formFooterRow}>
+                  <button
+                    type="button"
+                    className={styles.btnPrimaryApiSubmit}
+                    onClick={() => syncPortfolio(false)}
+                    disabled={loading || !accountNo.trim() || !appId.trim() || !appSecret.trim()}
+                  >
+                    {loading ? 'กำลังเชื่อมต่อ Settrade...' : '⚡ ยืนยันเชื่อมต่อพอร์ตจริง'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import UsAssetTabs from './us-asset-tabs.jsx';
+import { useMonitor } from './monitor/monitor-provider.jsx';
 import { analyzeCandles } from '../analysis/technical.mjs';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS } from '../markets/catalog.mjs';
 
@@ -204,6 +205,7 @@ export function NewsGuide({ onOpenNews }) {
 }
 
 export function NewsFeedState({ onOpenGuide, onOpenCalendar }) {
+  const monitor = useMonitor();
   const [state, setState] = useState({ status: 'loading', markets: [] });
   const [revision, setRevision] = useState(0);
   useEffect(() => {
@@ -234,7 +236,7 @@ export function NewsFeedState({ onOpenGuide, onOpenCalendar }) {
   const topicLabels = { earnings_results: 'งบการเงิน', corporate_action: 'กิจการ', management_governance: 'ผู้บริหาร', product_tech: 'สินค้า/เทคโนโลยี', ma_partnership: 'ดีลธุรกิจ', industry_thematic: 'อุตสาหกรรม', macro_economic: 'เศรษฐกิจ', regulatory_legal: 'กฎเกณฑ์', analyst_rating: 'นักวิเคราะห์', geopolitics: 'ภูมิรัฐศาสตร์' };
   const markets = state.markets?.length ? state.markets : state.status === 'loading' ? [{ id: 'thai', label: 'หุ้นไทย', status: 'loading', articles: [] }, { id: 'us', label: 'หุ้นอเมริกา', status: 'loading', articles: [] }] : [];
   return <div className="feature-body market-news">
-    <div className="feature-intro"><div><span className="feature-kicker">MARKET NEWS / MARKETDX</span><p>ข่าวหุ้นไทยและหุ้นอเมริกา อย่างละ 4 ข่าวล่าสุด · คัดตามประเทศที่หุ้นจดทะเบียน</p></div><div className="market-news-actions"><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ โหลดใหม่</button><button className="feature-refresh" onClick={onOpenGuide}>? คู่มือ</button></div></div>
+    <div className="feature-intro"><div><span className="feature-kicker">MARKET NEWS / ระบบคัดกรองข่าวภาษาไทย</span><p>ข่าวหุ้นไทยและตลาดโลก · ระบบเสียงอ่านเฉพาะข่าวภาษาไทยเพื่อความชัดเจน</p></div><div className="market-news-actions"><button className="feature-refresh" onClick={() => setRevision(value => value + 1)}>↻ โหลดใหม่</button><button className="feature-refresh" onClick={onOpenGuide}>? คู่มือ</button></div></div>
     <button className="fred-news-link" onClick={onOpenCalendar}><span>◷</span><strong>ติดตามวันประกาศและตัวเลขเศรษฐกิจสหรัฐฯ จาก FRED</strong><small>FRED เป็นข้อมูลเศรษฐกิจ ไม่ใช่พาดหัวข่าว</small><span>เปิด ↗</span></button>
     {(state.status === 'unconfigured' || state.status === 'unavailable' && !state.markets?.length) && <div className="feature-empty feature-news-empty" role="status"><strong>{errorMessages[state.code] ?? 'ยังดึงข่าวไม่ได้'}</strong><p>ระบบไม่แสดงข่าวตัวอย่างแทนข่าวจริง</p></div>}
     <div className="market-news-sections">{markets.map(market => <section className="market-news-market" key={market.id} aria-label={`ข่าว${market.label}`}><div className="market-news-market-head"><div><span className="market-news-flag">{market.id === 'thai' ? '🇹🇭' : '🇺🇸'}</span><h3>{market.label}</h3><small>ล่าสุดไม่เกิน 4 ข่าว</small></div><span>{market.status === 'stale' ? 'ข้อมูลเก่าจากแคช' : market.status === 'available' ? 'ข้อมูลจริง' : market.status === 'loading' ? 'กำลังโหลด' : 'ยังไม่พร้อม'}</span></div>
@@ -242,9 +244,10 @@ export function NewsFeedState({ onOpenGuide, onOpenCalendar }) {
       {market.status === 'unavailable' && <div className="feature-empty feature-news-empty"><strong>{errorMessages[market.code] ?? 'ยังดึงข่าวไม่ได้'}</strong><p>ลองโหลดใหม่อีกครั้งเมื่อแหล่งข้อมูลพร้อม</p></div>}
       {(market.status === 'available' || market.status === 'stale') && <><div className="market-news-list">{market.articles?.length ? market.articles.map(article => {
         const published = article.publishedAt ? new Date(article.publishedAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' }) : 'ไม่ระบุเวลา';
-        return <article className="market-news-card" key={article.id}><div className="market-news-card-top"><span className="market-news-source">{article.source}</span><span>{published}</span>{article.impactScore && <span>ความสำคัญ {article.impactScore}/5</span>}</div><h3><a href={article.url} target="_blank" rel="noopener noreferrer">{article.title} ↗</a></h3>{article.brief && <p>{article.brief}</p>}<div className="market-news-card-foot">{article.newsTypes?.slice(0, 2).map(type => <span className="market-news-topic" key={type}>{topicLabels[type] ?? type.replaceAll('_', ' ')}</span>)}{article.entities?.length > 0 && <span>กล่าวถึง {article.entities.join(' · ')}</span>}</div></article>;
+        const hasThai = /[\u0E00-\u0E7F]/.test(article.title || '');
+        return <article className="market-news-card" key={article.id}><div className="market-news-card-top"><span className="market-news-source">{article.source}</span><span>{published}</span>{article.impactScore && <span>ความสำคัญ {article.impactScore}/5</span>}{hasThai && monitor && <button type="button" className="news-speak-btn" onClick={() => monitor.speak(`${article.source || 'ข่าวหุ้น'} รายงาน ${article.title}`)}>🔊 ฟังข่าว</button>}</div><h3><a href={article.url} target="_blank" rel="noopener noreferrer">{article.title} ↗</a></h3>{article.brief && <p>{article.brief}</p>}<div className="market-news-card-foot">{article.newsTypes?.slice(0, 2).map(type => <span className="market-news-topic" key={type}>{topicLabels[type] ?? type.replaceAll('_', ' ')}</span>)}{article.entities?.length > 0 && <span>กล่าวถึง {article.entities.join(' · ')}</span>}</div></article>;
       }) : <div className="feature-empty feature-news-empty"><strong>ยังไม่มีข่าวหุ้นในหมวดนี้</strong><p>แหล่งข้อมูลตอบกลับสำเร็จ แต่ไม่มีรายการที่แสดงได้</p></div>}</div><p className="market-news-meta">ดึงล่าสุด {market.receivedAt ? new Date(market.receivedAt).toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short' }) : '—'}</p></>}
     </section>)}</div>
-    <p className="market-news-disclaimer">ข่าวแบ่งตามประเทศที่หุ้นจดทะเบียน · ประเภทข่าวจาก MarketDX ใช้จัดหมวดเนื้อหา ไม่ใช่สัญญาณซื้อขาย</p>
+    <p className="market-news-disclaimer">ข่าวแบ่งตามประเทศที่หุ้นจดทะเบียน · ระบบเสียงอ่านคัดกรองเฉพาะข่าวภาษาไทยอัตโนมัติ</p>
   </div>;
 }

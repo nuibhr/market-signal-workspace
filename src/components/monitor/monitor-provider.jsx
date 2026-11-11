@@ -26,7 +26,9 @@ export default function MonitorProvider({children}) {
   const boxes=useRef(new Map()),adapter=useRef(null),sound=useRef(true),identity=useRef(null);
   const speak=(text,done=()=>{},eligible,key)=>adapter.current?.play(text,done,eligible,key)??false;
   const toggle=()=>{
-    const next=!sound.current||['blocked','failed'].includes(audio);sound.current=next;setEnabled(next);adapter.current?.enable(next);
+    const next=!sound.current||['blocked','failed'].includes(audio);sound.current=next;setEnabled(next);
+    if(next)adapter.current?.unlock?.();
+    adapter.current?.enable(next);
     try{saveSoundPreference(window.localStorage,next);}catch{}setGestureReady(true);
     if(next)speak('ทดสอบเสียงแจ้งเตือนทุกตลาด');
   };
@@ -36,13 +38,27 @@ export default function MonitorProvider({children}) {
     if(!adapter.current.supported)setAudio('unsupported');
     let storage;try{storage=window.localStorage;}catch{}
     sound.current=soundPreference(storage);setEnabled(sound.current);adapter.current.enable(sound.current);
-    const unlock=event=>{if(!event.isTrusted||event.target.closest?.('.monitor-sound'))return;setGestureReady(true);if(sound.current)adapter.current.enable(true);document.removeEventListener('pointerdown',unlock);document.removeEventListener('keydown',unlock);};
-    document.addEventListener('pointerdown',unlock);document.addEventListener('keydown',unlock);
+    const unlock=event=>{
+      if(!event.isTrusted||event.target?.closest?.('.monitor-sound'))return;
+      setGestureReady(true);
+      if(sound.current){
+        adapter.current?.unlock?.();
+        adapter.current?.enable(true);
+      }
+      document.removeEventListener('pointerdown',unlock);
+      document.removeEventListener('touchend',unlock);
+      document.removeEventListener('click',unlock);
+      document.removeEventListener('keydown',unlock);
+    };
+    document.addEventListener('pointerdown',unlock,{passive:true});
+    document.addEventListener('touchend',unlock,{passive:true});
+    document.addEventListener('click',unlock,{passive:true});
+    document.addEventListener('keydown',unlock);
     const preference=event=>{if(event.key===SOUND_PREFERENCE_KEY){sound.current=soundPreference(storage);setEnabled(sound.current);adapter.current.enable(sound.current);}};
     window.addEventListener('storage',preference);
     const tick=setInterval(()=>setNow(Date.now()),1000);setNow(Date.now());
     const visible=()=>adapter.current.visible();document.addEventListener('visibilitychange',visible);
-    return()=>{clearInterval(tick);adapter.current.stop();document.removeEventListener('visibilitychange',visible);document.removeEventListener('pointerdown',unlock);document.removeEventListener('keydown',unlock);window.removeEventListener('storage',preference);};
+    return()=>{clearInterval(tick);adapter.current.stop();document.removeEventListener('visibilitychange',visible);document.removeEventListener('pointerdown',unlock);document.removeEventListener('touchend',unlock);document.removeEventListener('click',unlock);document.removeEventListener('keydown',unlock);window.removeEventListener('storage',preference);};
   },[]);
   useEffect(()=>{
     if(!active)return;
