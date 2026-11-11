@@ -744,6 +744,144 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
           </div>
         )}
 
+        {/* ─── 1.5 PROMINENT BROKER PARTNER & VIP ONBOARDING HUB ─── */}
+        <section className={styles.partnerHubSection}>
+          <div className={styles.partnerHubHeader}>
+            <div className={styles.partnerHubTitleGroup}>
+              <span className={styles.partnerHubBadge}>🏛️ ศูนย์บริการบัญชีหุ้นและพันธมิตรโบรกเกอร์ (Broker Partner &amp; VIP Hub)</span>
+              <h3 className={styles.partnerHubHeading}>
+                เปิดพอร์ตใหม่ หรือ แจ้งเลขพอร์ตเดิม ปลดล็อกสิทธิ์ VIP ใช้งานฟรีทันที
+              </h3>
+              <p className={styles.partnerHubSub}>
+                ร่วมมือกับ 3 บริษัทหลักทรัพย์ชั้นนำ บล.พาย (003), บล.ทรีนีตี้ (022) และ บล.เอเอสแอล (050) เพื่อมอบสิทธิ์ใช้งาน AI Core Engine, เชื่อมต่อพอร์ตสด Settrade Open API และมีผู้เชี่ยวชาญ IC ดูแลส่วนบุคคล
+              </p>
+            </div>
+            <div className={styles.partnerHubQuickActions}>
+              <button
+                type="button"
+                className={styles.partnerHubQuickBtnExisting}
+                onClick={() => openLeadModal('003', 'existing_port')}
+              >
+                👤 มีพอร์ตแล้ว? แจ้งเลขพอร์ต VIP
+              </button>
+              <button
+                type="button"
+                className={styles.partnerHubQuickBtnNew}
+                onClick={() => openLeadModal('003', 'new_account')}
+              >
+                ✨ ยังไม่มีพอร์ต? ขอเปิดบัญชีใหม่
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.partnerShowcaseGrid}>
+            {/* Pi Card */}
+            <div className={`${styles.partnerShowcaseCard} ${styles.cardPiGlow}`}>
+              <div className={styles.partnerShowcaseTop}>
+                <div className={styles.partnerBrandInfo}>
+                  <span className={styles.brokerTagPi}>003 · PI FINANCIAL</span>
+                  <h4 className={styles.brokerBrandName}>บล.พาย (Pi Securities)</h4>
+                </div>
+                <span className={styles.brokerEmblemPi}>🥧</span>
+              </div>
+              <p className={styles.partnerBrandDesc}>
+                แอป Pi Financial ซื้อขายหุ้นไทย &amp; DR ระดับโลก มาร์เก็ตติ้งส่วนตัวดูแลเอกสารรวดเร็ว
+              </p>
+              <ul className={styles.partnerPerksList}>
+                <li><span className={styles.perkCheckPi}>✓</span> สิทธิ์ VIP สแกนหุ้นโมเมนตัมฟรี</li>
+                <li><span className={styles.perkCheckPi}>✓</span> เทรด DR สากลด้วยเงินบาทสะดวกสบาย</li>
+                <li><span className={styles.perkCheckPi}>✓</span> ทีมงาน IC ติดต่ออำนวยความสะดวกตรง</li>
+              </ul>
+              <div className={styles.partnerCardActions}>
+                <button
+                  type="button"
+                  className={styles.partnerCardBtnExistingPi}
+                  onClick={() => openLeadModal('003', 'existing_port')}
+                >
+                  👤 แจ้งเลขพอร์ตพาย
+                </button>
+                <button
+                  type="button"
+                  className={styles.partnerCardBtnNewPi}
+                  onClick={() => openLeadModal('003', 'new_account')}
+                >
+                  ✨ เปิดบัญชีใหม่
+                </button>
+              </div>
+            </div>
+
+            {/* Trinity Card */}
+            <div className={`${styles.partnerShowcaseCard} ${styles.cardTrinityGlow}`}>
+              <div className={styles.partnerShowcaseTop}>
+                <div className={styles.partnerBrandInfo}>
+                  <span className={styles.brokerTagTrinity}>022 · TRINITY</span>
+                  <h4 className={styles.brokerBrandName}>บล.ทรีนีตี้ (Trinity Securities)</h4>
+                </div>
+                <span className={styles.brokerEmblemTrinity}>🌟</span>
+              </div>
+              <p className={styles.partnerBrandDesc}>
+                โบรกเกอร์ชั้นนำ บทวิเคราะห์แม่นยำ พร้อมเชื่อมต่อ Settrade Open API พอร์ตสดได้ทันที
+              </p>
+              <ul className={styles.partnerPerksList}>
+                <li><span className={styles.perkCheckTrinity}>✓</span> สิทธิ์เชื่อมต่อ Settrade Open API เต็มระบบ</li>
+                <li><span className={styles.perkCheckTrinity}>✓</span> วิเคราะห์พอร์ต Zero-Custody ไม่เก็บรหัส</li>
+                <li><span className={styles.perkCheckTrinity}>✓</span> ทีมงาน Algorithm และ AI ช่วยดูแล</li>
+              </ul>
+              <div className={styles.partnerCardActions}>
+                <button
+                  type="button"
+                  className={styles.partnerCardBtnExistingTrinity}
+                  onClick={() => openLeadModal('022', 'existing_port')}
+                >
+                  👤 แจ้งเลขพอร์ตทรีนีตี้
+                </button>
+                <button
+                  type="button"
+                  className={styles.partnerCardBtnNewTrinity}
+                  onClick={() => openLeadModal('022', 'new_account')}
+                >
+                  ✨ เปิดบัญชีใหม่
+                </button>
+              </div>
+            </div>
+
+            {/* ASL Card */}
+            <div className={`${styles.partnerShowcaseCard} ${styles.cardAslGlow}`}>
+              <div className={styles.partnerShowcaseTop}>
+                <div className={styles.partnerBrandInfo}>
+                  <span className={styles.brokerTagAsl}>050 · ASL SECURITIES</span>
+                  <h4 className={styles.brokerBrandName}>บล.เอเอสแอล (ASL Securities)</h4>
+                </div>
+                <span className={styles.brokerEmblemAsl}>⚡</span>
+              </div>
+              <p className={styles.partnerBrandDesc}>
+                โบรกเกอร์นวัตกรรมใหม่ เทรดไว ค่าคอมคุ้มค่า รองรับ Streaming &amp; Open API
+              </p>
+              <ul className={styles.partnerPerksList}>
+                <li><span className={styles.perkCheckAsl}>✓</span> อัตราค่าคอมมิชชั่นสุดคุ้มค่า</li>
+                <li><span className={styles.perkCheckAsl}>✓</span> สิทธิ์ใช้งานห้องสัญญาณ VIP ฟรี</li>
+                <li><span className={styles.perkCheckAsl}>✓</span> มาร์เก็ตติ้งส่วนตัวดูแลสิทธิพิเศษ</li>
+              </ul>
+              <div className={styles.partnerCardActions}>
+                <button
+                  type="button"
+                  className={styles.partnerCardBtnExistingAsl}
+                  onClick={() => openLeadModal('050', 'existing_port')}
+                >
+                  👤 แจ้งเลขพอร์ตเอเอสแอล
+                </button>
+                <button
+                  type="button"
+                  className={styles.partnerCardBtnNewAsl}
+                  onClick={() => openLeadModal('050', 'new_account')}
+                >
+                  ✨ เปิดบัญชีใหม่
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ─── 2. TRIO INTELLIGENCE COCKPIT (3 HIGH-IMPACT GLASS TILES) ─── */}
         <div className={styles.trioCockpitGrid}>
           {/* Tile 1: Net Asset Value & Purchasing Power */}
@@ -1231,13 +1369,20 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                 ) : (
                   <form onSubmit={handleLeadSubmit} className={styles.leadForm}>
                     <div className={styles.formLeadHeader}>
+                      <div className={styles.trustBadgesRow}>
+                        <span className={styles.trustBadgeItem}>🛡️ โบรกเกอร์พันธมิตรทางการ</span>
+                        <span className={styles.trustBadgeItem}>🔒 Zero-Custody ไร้ความเสี่ยง</span>
+                        <span className={styles.trustBadgeItem}>⚡ อนุมัติสิทธิ์ VIP รวดเร็ว</span>
+                      </div>
                       <h3 className={styles.modalHeading}>
                         {leadType === 'existing_port'
-                          ? 'แจ้งเลขพอร์ตเพื่อยืนยันรับสิทธิ์ VIP พาร์ทเนอร์'
-                          : 'ยื่นขอเปิดพอร์ต VIP กับโบรกเกอร์พันธมิตร'}
+                          ? '👤 แจ้งเลขพอร์ตเพื่อรับสิทธิ์ VIP ใช้งานฟรี'
+                          : '👑 ยื่นขอเปิดพอร์ต VIP กับโบรกเกอร์พันธมิตร'}
                       </h3>
                       <p className={styles.modalSubheading}>
-                        บล.พาย (003), บล.ทรีนีตี้ (022) &amp; บล.เอเอสแอล (050) — มาร์เก็ตติ้งส่วนตัวจะดูแลท่านโดยตรง
+                        {leadType === 'existing_port'
+                          ? 'มีพอร์ตกับ บล.พาย (003), บล.ทรีนีตี้ (022) หรือ บล.เอเอสแอล (050) อยู่แล้ว แจ้งเลขพอร์ตเพื่อรับสิทธิ์ห้องสแกน AI และเชื่อมต่อ Open API โดยไม่ต้องย้ายโบรค'
+                          : 'เปิดบัญชีใหม่กับ บล.พาย (003), บล.ทรีนีตี้ (022) หรือ บล.เอเอสแอล (050) เพื่อรับสิทธิ์ VIP ฟรี พร้อมทีมมาร์เก็ตติ้ง IC ดูแลส่วนบุคคล'}
                       </p>
                     </div>
 
@@ -1248,15 +1393,36 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                         className={`${styles.leadTypeBtn} ${leadType === 'existing_port' ? styles.leadTypeBtnActive : ''}`}
                         onClick={() => setLeadType('existing_port')}
                       >
-                        <span>👤 มีพอร์ตแล้ว (แจ้งเลขพอร์ตเพื่อยืนยันสิทธิ์ VIP)</span>
+                        <span className={styles.leadTypeBtnIcon}>👤</span>
+                        <div className={styles.leadTypeBtnTextWrap}>
+                          <strong>มีพอร์ตแล้ว</strong>
+                          <small>แจ้งเลขพอร์ตรับสิทธิ์ VIP</small>
+                        </div>
                       </button>
                       <button
                         type="button"
                         className={`${styles.leadTypeBtn} ${leadType === 'new_account' ? styles.leadTypeBtnActive : ''}`}
                         onClick={() => setLeadType('new_account')}
                       >
-                        <span>✨ ยังไม่มีพอร์ต (ยื่นขอเปิดบัญชีใหม่)</span>
+                        <span className={styles.leadTypeBtnIcon}>✨</span>
+                        <div className={styles.leadTypeBtnTextWrap}>
+                          <strong>ยังไม่มีพอร์ต</strong>
+                          <small>ขอเปิดบัญชีหุ้นใหม่</small>
+                        </div>
                       </button>
+                    </div>
+
+                    {/* Mode Guidance Card */}
+                    <div className={styles.leadModeGuidanceCard}>
+                      {leadType === 'existing_port' ? (
+                        <p>
+                          💡 <b>มีพอร์ตอยู่แล้ว:</b> เพียงเลือกโบรกเกอร์และระบุเลขพอร์ตของท่าน ข้อมูลจะถูกส่งตรงให้เจ้าหน้าที่โบรกเกอร์ตรวจสอบยืนยันสิทธิ์ VIP ให้ท่านทันที โดยไม่ต้องย้ายโบรค
+                        </p>
+                      ) : (
+                        <p>
+                          ✨ <b>เปิดบัญชีใหม่:</b> เจ้าหน้าที่ IC ของโบรกเกอร์จะติดต่อท่านเพื่อช่วยดูแลเรื่องเอกสารเปิดพอร์ตออนไลน์แบบ Fast-track พร้อมมอบสิทธิ์ VIP ทันทีที่พอร์ตเปิดสำเร็จ
+                        </p>
+                      )}
                     </div>
 
                     {/* Trio Interactive Broker Cards */}
@@ -1331,24 +1497,28 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                     {/* Form Input Fields */}
                     <div className={styles.formFieldsBox}>
                       {leadType === 'existing_port' && (
-                        <div className={styles.inputGroup} style={{ marginBottom: '14px' }}>
-                          <label className={styles.inputLabel}>
-                            เลขบัญชีซื้อขายหุ้น (Account Number) กับโบรคเกอร์นี้ *
-                          </label>
-                          <div className={styles.inputWrap}>
-                            <span className={styles.inputIcon}>🏷️</span>
+                        <div className={styles.accountNoHighlightBox}>
+                          <div className={styles.accountNoHeader}>
+                            <label className={styles.inputLabelBold}>
+                              🏷️ เลขที่บัญชีซื้อขายหุ้น (Account Number) *
+                            </label>
+                            <span className={styles.accountNoBrokerPill}>
+                              บล.{leadBroker === '003' ? 'พาย (003)' : leadBroker === '022' ? 'ทรีนีตี้ (022)' : 'เอเอสแอล (050)'}
+                            </span>
+                          </div>
+                          <div className={styles.inputWrapLarge}>
                             <input
                               type="text"
                               required
-                              className={styles.textInput}
-                              placeholder="เช่น 99242240 หรือเลขพอร์ตของท่าน"
+                              className={styles.textInputLarge}
+                              placeholder="เช่น 99242240 หรือเลขพอร์ต 6-8 หลักของท่าน"
                               value={leadAccountNo}
                               onChange={(e) => setLeadAccountNo(e.target.value)}
                             />
                           </div>
-                          <small style={{ color: '#94a3b8', fontSize: '11px', marginTop: '4px', display: 'block' }}>
-                            กรุณากรอกเลขพอร์ตเพื่อส่งให้เจ้าหน้าที่ บล.{leadBroker === '003' ? 'พาย' : leadBroker === '022' ? 'ทรีนีตี้' : 'เอเอสแอล'} ตรวจสอบและอนุมัติสิทธิ์ VIP
-                          </small>
+                          <p className={styles.accountNoHelper}>
+                            🔒 ข้อมูลเลขพอร์ตจะถูกส่งให้เจ้าหน้าที่ บล.{leadBroker === '003' ? 'พาย' : leadBroker === '022' ? 'ทรีนีตี้' : 'เอเอสแอล'} ตรวจสอบยืนยันสิทธิ์ VIP โดยไม่มีการเข้าถึงข้อมูลการซื้อขายส่วนตัว
+                          </p>
                         </div>
                       )}
 

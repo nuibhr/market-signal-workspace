@@ -29,7 +29,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     tp1: 159.50,
     tp1Reward: 21.00,
     tp2: 172.00,
-    trailingGuide: 'ขยับ Stop Loss บังทุนเมื่อแตะ $149 และ Run Trend ตาม EMA20',
+    trailingGuide: 'ขยับ Stop Loss บังทุนเมื่อแตะ $149 และรันเทรนด์ตามระบบ AI Trailing',
     catalyst: 'Blackwell GPU High Volume Ramp & Mega Data Center Demand',
   },
   {
@@ -52,7 +52,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     tp1: 51.00,
     tp1Reward: 6.80,
     tp2: 55.50,
-    trailingGuide: 'ล็อกกำไร 50% ที่ $51.00 แล้วปล่อยส่วนที่เหลือเกาะเส้น EMA10',
+    trailingGuide: 'ล็อกกำไร 50% ที่ $51.00 แล้วปล่อยส่วนที่เหลือรันตามโมเมนตัมหลัก',
     catalyst: 'AIP Commercial Growth 50%+ YoY & S&P 500 Inclusion Flow',
   },
   {
@@ -87,8 +87,8 @@ export const US_STAGE2_FOCUS_PICKS = [
     changePercent: 0.95,
     isUp: true,
     topPick: false,
-    stage: 'Stage 2 พักตัวบน EMA20',
-    pattern: 'EMA20 Bounce Pullback',
+    stage: 'Stage 2 พักตัวบนแนวรับหลัก',
+    pattern: 'Support Bounce Pullback',
     rsRating: 88,
     rvol: 1.18,
     proximityHigh: 5.4,
@@ -121,7 +121,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     tp1: 670.00,
     tp1Reward: 80.00,
     tp2: 715.00,
-    trailingGuide: 'เกาะเทรนด์ EMA20 อย่างเคร่งครัด แบ่งขาย 30% เมื่อแตะ TP1',
+    trailingGuide: 'เกาะเทรนด์ขาขึ้นอย่างเคร่งครัด แบ่งขาย 30% เมื่อแตะ TP1',
     catalyst: 'AI Ad Recommendation Engine & Llama Open Source Ecosystem',
   },
   {
@@ -144,7 +144,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     tp1: 214.00,
     tp1Reward: 26.00,
     tp2: 228.00,
-    trailingGuide: 'รันเทรนด์ตามเส้น EMA50 ไม่หลุด $175 ถือต่อสบายใจ',
+    trailingGuide: 'รันเทรนด์ตามโครงสร้างหลัก ไม่หลุด $175 ถือต่อสบายใจ',
     catalyst: 'AWS Re-acceleration & North America Retail Margin Expansion',
   },
   {
@@ -203,7 +203,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     isUp: true,
     topPick: false,
     stage: 'Stage 2 พักตัวยก Low',
-    pattern: 'EMA50 Pullback & Reclaim',
+    pattern: 'Base Pullback & Reclaim',
     rsRating: 84,
     rvol: 1.10,
     proximityHigh: 12.0,
@@ -374,13 +374,13 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     symbol: 'NVDA',
     name: 'NVIDIA Corporation',
     stage: 2,
-    stageLabel: 'Stage 2 ขาขึ้นสมบูรณ์แบบ (Mark Minervini Trend Template)',
+    stageLabel: 'Stage 2 ซูเปอร์เทรนด์ขาขึ้น (Nugaom AI Momentum Model)',
     healthScore: 98,
     status: 'bullish',
     rsRating: 98,
-    trendSummary: 'ราคายืนเหนือ EMA20 > EMA50 > EMA200 เส้นค่าเฉลี่ยเรียงตัวขึ้นสมบูรณ์ สถาบันสะสมสม่ำเสมอ แข็งแกร่งกว่าตลาด 98%',
+    trendSummary: 'โครงสร้างแนวโน้มขาขึ้นทรงพลัง สถาบันสะสมสม่ำเสมอ แข็งแกร่งกว่าตลาด 98% (AI Proprietary Score)',
     actionPlan: '✅ ซื้อตามรอบ Breakout Pivot $138.50 วาง Stop Loss $128.00 (เสี่ยง 7.5%) ล็อกเป้า 2R ที่ $159.50',
-    caution: 'ไม่มีสัญญาณอันตราย เกาะเส้น EMA20 รันเทรนด์',
+    caution: 'ไม่มีสัญญาณอันตราย เกาะแนวโน้มหลักรันเทรนด์',
   },
   PLTR: {
     symbol: 'PLTR',
@@ -391,7 +391,7 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     status: 'bullish',
     rsRating: 96,
     trendSummary: 'โมเมนตัม AIP หนุนกำไรโตระเบิด สถาบันเข้าซื้อต่อเนื่องหลังเข้า S&P 500 ทำ New High แข็งแกร่ง',
-    actionPlan: '✅ ถือรันเทรนด์ หรือแบ่งล็อกกำไร 50% ที่เป้า 2R ($51.00) ส่วนที่เหลือเกาะเส้น EMA10 วางจุดตัดขาดทุนที่ $40.80',
+    actionPlan: '✅ ถือรันเทรนด์ หรือแบ่งล็อกกำไร 50% ที่เป้า 2R ($51.00) ส่วนที่เหลือรันตามระบบ วางจุดตัดขาดทุนที่ $40.80',
     caution: 'RSI เริ่มตึงตัว ให้ขยับ Stop Loss บังทุนเมื่อทะลุ $48',
   },
   AAPL: {
@@ -402,8 +402,8 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     healthScore: 89,
     status: 'bullish',
     rsRating: 89,
-    trendSummary: 'ยืนเหนือ EMA50 รอรับแรงหนุนจากรอบเปลี่ยนเครื่อง iPhone 16 และ Apple Intelligence',
-    actionPlan: '✅ ทยอยสะสมเมื่อราคาย่อทดสอบ EMA20 หรือเบรก $235 วาง Stop ใต้ฐาน $219 เป้าหมายแรก $267 (+2R)',
+    trendSummary: 'ยืนเหนือแนวรับโครงสร้างหลัก รอรับแรงหนุนจากรอบเปลี่ยนเครื่อง iPhone 16 และ Apple Intelligence',
+    actionPlan: '✅ ทยอยสะสมเมื่อราคาย่อทดสอบแนวรับ หรือเบรก $235 วาง Stop ใต้ฐาน $219 เป้าหมายแรก $267 (+2R)',
     caution: 'หลุดต่ำกว่า $219 ให้ตัดขาดทุนทันที',
   },
   TSLA: {
@@ -426,8 +426,8 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     healthScore: 28,
     status: 'bearish',
     rsRating: 28,
-    trendSummary: '❌ ราคาอยู่ใต้เส้น EMA200 ยาวนานกว่า 1 ปี ทำ New Low ต่อเนื่อง เสียส่วนแบ่งตลาดให้ชิป AI ขาดทุนหนัก',
-    actionPlan: '⛔ คำเตือน: ห้ามช้อนซื้อเด็ดขาด! แม้ราคาจะดู "ถูก" ลงกว่า 50% นี่คือกับดักมูลค่า (Value Trap) กฎ Minervini: ห้ามซื้อหุ้นใต้เส้น EMA200 วัน',
+    trendSummary: '❌ ราคาอยู่ในโครงสร้างขาลงอันตรายต่อเนื่อง ทำ New Low สม่ำเสมอ เสียส่วนแบ่งตลาดให้ชิป AI ขาดทุนหนัก',
+    actionPlan: '⛔ คำเตือน: ห้ามช้อนซื้อเด็ดขาด! แม้ราคาจะดู "ถูก" ลงกว่า 50% นี่คือกับดักมูลค่า (Value Trap) กฎเหล็ก: ห้ามซื้อหุ้นในโครงสร้างขาลงอันตราย',
     caution: 'อย่ารับมีดที่กำลังร่วง เสี่ยงเงินจมติดดอยข้ามปี',
   },
   NKE: {
@@ -438,7 +438,7 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     healthScore: 32,
     status: 'bearish',
     rsRating: 32,
-    trendSummary: '❌ ยอดขายทั่วโลกหดตัว คู่แข่งใหม่แย่งส่วนแบ่งรองเท้าวิ่ง เส้น EMA เรียงตัวกดลงทุกมิติ',
+    trendSummary: '❌ ยอดขายทั่วโลกหดตัว คู่แข่งใหม่แย่งส่วนแบ่งรองเท้าวิ่ง โครงสร้างราคาเรียงตัวกดลงทุกมิติ',
     actionPlan: '⛔ คำเตือน: หลีกเลี่ยงการเข้าซื้อ ต้องรอให้กราฟสร้างฐาน Stage 1 นานอย่างน้อย 6-12 เดือนก่อนจึงจะพิจารณาใหม่',
     caution: 'การเด้งสั้นในขาลงคือโอกาสหนีตาย ไม่ใช่โอกาสซื้อ',
   },
@@ -451,7 +451,7 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     status: 'bearish',
     rsRating: 35,
     trendSummary: '❌ ปัญหาความปลอดภัยสายการผลิตและการประท้วงหยุดงาน หนี้สินระดับสูงกดดันกระแสเงินสด',
-    actionPlan: '⛔ คำเตือน: กราฟหลุดทุกแนวรับสำคัญ ไม่ผ่านเกณฑ์ Trend Template ใดๆ ทั้งสิ้น',
+    actionPlan: '⛔ คำเตือน: กราฟหลุดทุกแนวรับสำคัญ ไม่ผ่านเกณฑ์โมเดลคัดกรองสัญญาณใดๆ ทั้งสิ้น',
     caution: 'ความเสี่ยงเพิ่มทุนกดดันราคาหุ้นต่อเนื่อง',
   },
   BABA: {
@@ -904,7 +904,7 @@ export default function UsStage2Desk({
                 </div>
               </div>
               <div className={styles.diagStatusPill}>
-                <span>✓ Minervini Engine: Active</span>
+                <span>✓ Nugaom AI Core Engine: Active (Proprietary)</span>
               </div>
             </div>
 
@@ -1775,7 +1775,7 @@ export default function UsStage2Desk({
                     <div className={styles.sizingDetailRow}>
                       <span className={styles.sizingDetailLabel}>ระยะตัดขาดทุน (Stop Loss %):</span>
                       <span className={styles.sizingDetailVal} style={{ color: '#fb7185' }}>
-                        -{calculatedFractional.riskPercent.toFixed(2)}% (≤ 8% ตามตำรา)
+                        -{calculatedFractional.riskPercent.toFixed(2)}% (ล็อกความเสี่ยงจำกัดตามระบบ)
                       </span>
                     </div>
 

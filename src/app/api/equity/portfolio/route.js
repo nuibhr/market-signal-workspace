@@ -92,7 +92,7 @@ function buildDemoPortfolio(brokerId = '022', appCode = 'ALGO_EQ') {
           trailingStop: 46.5,
           cutLossPrice: 44.0,
           action: 'HOLD & RUN TREND',
-          actionNote: 'เบรกแนวต้าน 46.50 พร้อมวอลุ่ม ยืนเหนือ EMA50 แข็งแกร่ง',
+          actionNote: 'เบรกแนวต้าน 46.50 พร้อมวอลุ่ม ยืนเหนือแนวรับโครงสร้างหลักอย่างแข็งแกร่ง',
         },
         {
           symbol: 'SPY80',
@@ -144,7 +144,7 @@ function buildDemoPortfolio(brokerId = '022', appCode = 'ALGO_EQ') {
           trailingStop: null,
           cutLossPrice: 62.0,
           action: '🚨 REDUCE / CUT LOSS NOW',
-          actionNote: 'หลุด EMA50 และ EMA200 แนะนำลดพอร์ตเพื่อจำกัด Drawdown',
+          actionNote: 'หลุดแนวรับโครงสร้างสำคัญ แนะนำลดพอร์ตเพื่อจำกัด Drawdown',
         },
       ]
     : [
@@ -267,12 +267,12 @@ function buildDemoPortfolio(brokerId = '022', appCode = 'ALGO_EQ') {
           unrealizedPl: -4500,
           unrealizedPlPct: -4.55,
           stage: 4,
-          stageName: 'Stage 4 ขาลงอันตราย (หลุด EMA50)',
+          stageName: 'Stage 4 โครงสร้างขาลงอันตราย',
           stageColor: '#f43f5e',
           trailingStop: null,
           cutLossPrice: 31.0,
           action: '🚨 REDUCE / CUT LOSS NOW',
-          actionNote: 'หลุดแนวรับ EMA50 กลายเป็น Stage 4 แนะนำตัดขาดทุนก่อนเสียหายหนัก',
+          actionNote: 'หลุดแนวรับโครงสร้างหลัก กลายเป็น Stage 4 แนะนำตัดขาดทุนก่อนเสียหายหนัก',
         },
       ];
 

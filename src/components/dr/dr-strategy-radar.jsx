@@ -120,11 +120,11 @@ function TechnicalAccordion({ scored, currentPrice }) {
 
   return (
     <div className={styles.techAccordionContent}>
-      {/* 1. EMA Section */}
+      {/* 1. Structural Trend Matrix */}
       <div className={styles.techSectionBlock}>
         <div className={styles.techSectionHeader}>
           <span className={styles.techSectionTitle}>
-            <Activity size={14} /> EMA 25 / 50 / 75 Alignment
+            <Activity size={14} /> โครงสร้างแนวโน้มหลัก (Structural Trend Matrix)
           </span>
           <div className={styles.miniScoreBar}>
             <div className={styles.miniScoreTrack}>
@@ -135,9 +135,9 @@ function TechnicalAccordion({ scored, currentPrice }) {
         </div>
         <div className={styles.threeGrid}>
           {[
-            { label: 'EMA 25', val: scored.ema25, active: currentPrice > scored.ema25 },
-            { label: 'EMA 50', val: scored.ema50, active: scored.ema25 > scored.ema50 },
-            { label: 'EMA 75', val: scored.ema75, active: scored.ema50 > scored.ema75 },
+            { label: 'Trend Fast', val: scored.ema25, active: currentPrice > scored.ema25 },
+            { label: 'Trend Mid', val: scored.ema50, active: scored.ema25 > scored.ema50 },
+            { label: 'Trend Base', val: scored.ema75, active: scored.ema50 > scored.ema75 },
           ].map((e) => (
             <div key={e.label} className={`${styles.techBox} ${e.active ? styles.techBoxActive : ''}`}>
               <div className={styles.techBoxLabel}>{e.label}</div>
@@ -153,7 +153,7 @@ function TechnicalAccordion({ scored, currentPrice }) {
       <div className={styles.techSectionBlock}>
         <div className={styles.techSectionHeader}>
           <span className={styles.techSectionTitle}>
-            <BarChart2 size={14} /> RSI (14) Momentum Sweet Spot
+            <BarChart2 size={14} /> โซนพลังงานโมเมนตัม (Momentum Energy Zone)
           </span>
           <div className={styles.miniScoreBar}>
             <div className={styles.miniScoreTrack}>
@@ -172,11 +172,11 @@ function TechnicalAccordion({ scored, currentPrice }) {
         </div>
       </div>
 
-      {/* 3. MACD Section */}
+      {/* 3. Directional Capital Flow Section */}
       <div className={styles.techSectionBlock}>
         <div className={styles.techSectionHeader}>
           <span className={styles.techSectionTitle}>
-            <TrendingUp size={14} /> MACD (12 / 26 / 9) Trend & Momentum
+            <TrendingUp size={14} /> ทิศทางกระแสเงินทุนสะสม (Directional Flow Matrix)
           </span>
           <div className={styles.miniScoreBar}>
             <div className={styles.miniScoreTrack}>
@@ -187,17 +187,17 @@ function TechnicalAccordion({ scored, currentPrice }) {
         </div>
         <div className={styles.threeGrid}>
           <div className={styles.techBox}>
-            <div className={styles.techBoxLabel}>MACD Line</div>
+            <div className={styles.techBoxLabel}>Flow Fast</div>
             <div className={`${styles.techBoxVal} ${scored.macdLine >= 0 ? styles.techBoxValPos : styles.techBoxValNeg}`}>
               {scored.macdLine > 0 ? '+' : ''}{scored.macdLine.toFixed(4)}
             </div>
           </div>
           <div className={styles.techBox}>
-            <div className={styles.techBoxLabel}>Signal Line</div>
+            <div className={styles.techBoxLabel}>Flow Signal</div>
             <div className={styles.techBoxVal}>{scored.signalLine.toFixed(4)}</div>
           </div>
           <div className={`${styles.techBox} ${scored.histogram > 0 ? styles.techBoxActive : ''}`}>
-            <div className={styles.techBoxLabel}>Histogram</div>
+            <div className={styles.techBoxLabel}>Flow Expansion</div>
             <div className={`${styles.techBoxVal} ${scored.histogram >= 0 ? styles.techBoxValPos : styles.techBoxValNeg}`}>
               {scored.histogram > 0 ? '+' : ''}{scored.histogram.toFixed(4)}
             </div>
@@ -205,11 +205,11 @@ function TechnicalAccordion({ scored, currentPrice }) {
         </div>
       </div>
 
-      {/* 4. Camarilla 8-Levels Section */}
+      {/* 4. Equilibrium Levels Section */}
       <div className={styles.techSectionBlock}>
         <div className={styles.techSectionHeader}>
           <span className={styles.techSectionTitle}>
-            <Target size={14} /> Camarilla Pivots (8 Levels)
+            <Target size={14} /> ระดับสมดุลราคาเชิงปริมาณ 8 มิติ (Equilibrium Matrix)
           </span>
           <div className={styles.miniScoreBar}>
             <div className={styles.miniScoreTrack}>
@@ -219,15 +219,15 @@ function TechnicalAccordion({ scored, currentPrice }) {
           </div>
         </div>
         <div className={styles.camGrid}>
-          <div className={styles.camItem}><span className={styles.camR}>R4 (Breakout)</span><b>{cam.R4.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camR}>R3 (TP2)</span><b>{cam.R3.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camR}>R2</span><b>{cam.R2.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camR}>R1 (TP1)</span><b>{cam.R1.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R4 (Max Expansion)</span><b>{cam.R4.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R3 (Target 2)</span><b>{cam.R3.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R2 (Target 1)</span><b>{cam.R2.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R1 (Reaction Zone)</span><b>{cam.R1.toFixed(2)}</b></div>
           <div className={`${styles.camItem} ${styles.camPivotItem}`}><span className={styles.camP}>Pivot</span><b>{cam.pivot.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camS}>S1</span><b>{cam.S1.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camS}>S2 (Buffer)</span><b>{cam.S2.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camS}>S3 (Buy Zone)</span><b>{cam.S3.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camS}>S4 (SL)</span><b>{cam.S4.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S1 (Reaction Support)</span><b>{cam.S1.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S2 (Accumulation Buffer)</span><b>{cam.S2.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S3 (Prime Buy Zone)</span><b>{cam.S3.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S4 (Structural Invalidation)</span><b>{cam.S4.toFixed(2)}</b></div>
         </div>
       </div>
     </div>
@@ -906,7 +906,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <div className={styles.scoreMetricCard} data-accent="red">
               <span className={styles.scoreMetricLabel}>🛡️ ขาดทุนเฉลี่ยเมื่อคัท (SL)</span>
               <strong className={styles.scoreMetricValue}>{liveData?.trackRecord?.validated?`-${Math.abs(liveData.trackRecord.avgLossPct).toFixed(2)}%`:'—'}</strong>
-              <small className={styles.scoreMetricSub}>คัทตามโครงสร้าง ATR + Camarilla S4</small>
+              <small className={styles.scoreMetricSub}>คัทตามจุดจำกัดความเสี่ยงอัตโนมัติของระบบ</small>
             </div>
             <div className={styles.scoreMetricCard} data-accent="gold">
               <span className={styles.scoreMetricLabel}>📈 ผลตอบแทนสะสม (ไม้ปิดจริง)</span>
@@ -1041,7 +1041,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                 <div className={styles.doctorLevelItem} data-tone="green">
                   <span>🎯 โซนน่าสะสม (Buy Zone)</span>
                   <strong>{activeDrDoctor.buyZone}</strong>
-                  <small>ตามกรอบราคาแม่ &amp; Camarilla</small>
+                  <small>คำนวณตามโมเดลสมดุลราคา AI</small>
                 </div>
                 <div className={styles.doctorLevelItem} data-tone="red">
                   <span>🛑 จุดยอมแพ้ (Cut Loss SL)</span>
@@ -1470,10 +1470,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <div>
               <h4 className={styles.methodologyTitle}>วิธีคัดกรอง DR วันนี้ (4-Pillar Algorithmic Confluence)</h4>
               <div className={styles.methodologyGrid}>
-                <span>✅ <b>EMA 25 &gt; EMA 50 &gt; EMA 75:</b> Bullish Alignment เรียงตัวขึ้น</span>
-                <span>✅ <b>Camarilla Pivot:</b> จุดรอรับย่อตัวเข้าใกล้ S2-S3 (Buy Zone)</span>
-                <span>✅ <b>RSI 40 - 60:</b> Neutral Sweet Spot มี Room ให้วิ่ง ไม่ไล่ Overbought</span>
-                <span>✅ <b>MACD Momentum:</b> Line &gt; Signal และ Histogram ขยายตัวบวก</span>
+                <span>✅ <b>Trend Alignment:</b> อัลกอริทึมยืนยันแนวโน้มขาขึ้นเชิงโครงสร้าง (AI Trend Matrix)</span>
+                <span>✅ <b>Optimal Entry Confluence:</b> คำนวณจุดรับย่อตัวเชิงปริมาณ ป้องกันการไล่ราคาบนยอด</span>
+                <span>✅ <b>Momentum Energy:</b> ตรวจจับแรงสะสมของสถาบันในโซนพลังงานพร้อมเร่งตัว</span>
+                <span>✅ <b>Directional Capital Flow:</b> ยืนยันความต่อเนื่องของทิศทางเงินทุนสุทธิ</span>
               </div>
               <p className={styles.methodologyUniverse}>
                 Universe: <b>{liveData?.coverage.dr.total??0} DR</b> ในตลาด SET | แสดงคะแนน Confluence และ R:R ของแต่ละแผน | กดสแกนเพื่อโหลดข้อมูลใหม่
@@ -1497,8 +1497,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <div className={styles.filterPills}>
               {[
                 { id: 'all', label: 'ทั้งหมด' },
-                { id: 'bullish', label: 'EMA ขาขึ้น' },
-                { id: 'buyzone', label: 'ใกล้โซนซื้อ S2-S3' },
+                { id: 'bullish', label: 'แนวโน้มขาขึ้น' },
+                { id: 'buyzone', label: 'ในโซนสะสม' },
                 { id: 'highscore', label: 'คะแนนสูง (≥10/16)' },
               ].map((f) => (
                 <button
@@ -1533,7 +1533,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       <div>
                         <div className={styles.titleLine}>
                           <h3 className={styles.symbolText}>{item.symbol}</h3>
-                          {scored.emaAligned && <span className={styles.tagEma}>EMA ขาขึ้น ✓</span>}
+                          {scored.emaAligned && <span className={styles.tagEma}>ขาขึ้นแข็งแกร่ง ✓</span>}
                           {isTracked && <span className={styles.tagPicked}>ในพอร์ตติดตาม ★</span>}
                         </div>
                         <p className={styles.nameText}>{item.name} · หุ้นแม่ {item.underlying} · แท่งปิด {item.dataAsOf}</p>
@@ -1575,10 +1575,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       />
                     </div>
                     <div className={styles.subScores}>
-                      <span>EMA: {scored.emaScore}/3</span>
-                      <span>Camarilla: {scored.camScore}/4</span>
-                      <span>RSI: {scored.rsiScore}/3</span>
-                      <span>MACD: {scored.macdScore}/3</span>
+                      <span>Trend: {scored.emaScore}/3</span>
+                      <span>Price Zone: {scored.camScore}/4</span>
+                      <span>Momentum: {scored.rsiScore}/3</span>
+                      <span>Money Flow: {scored.macdScore}/3</span>
                     </div>
                   </div>
 
@@ -1623,8 +1623,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                     >
                       <span>
                         {isExpanded
-                          ? 'ซ่อนรายละเอียด Technical Indicators'
-                          : 'ดูรายละเอียด Technical (EMA / RSI / MACD / Camarilla 8 ระดับ)'}
+                          ? 'ซ่อนการประเมินปัจจัยเชิงปริมาณ'
+                          : 'ดูการประเมินปัจจัยเชิงปริมาณ (Proprietary Multi-Factor Breakdown)'}
                       </span>
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
@@ -1757,10 +1757,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                 วิธีคัดกรองหุ้นไทยวันนี้ (SET100 / SETHD 4-Pillar Confluence)
               </h4>
               <div className={styles.methodologyGrid}>
-                <span>✅ <b>EMA 25 &gt; EMA 50 &gt; EMA 75:</b> หุ้นไทยที่มีโครงสร้างแนวโน้มขาขึ้นชัดเจน</span>
-                <span>✅ <b>Camarilla Pivot S2-S3:</b> รอรับจังหวะย่อตัว ไม่ไล่ราคาซื้อบนยอด</span>
-                <span>✅ <b>RSI 40 - 60:</b> โซนสะสมพลังเพื่อขึ้นต่อ ตัดตัว Overbought ออก</span>
-                <span>✅ <b>MACD Histogram:</b> โมเมนตัมกำลังขยายตัวในแดนบวก</span>
+                <span>✅ <b>Trend Alignment:</b> หุ้นไทยที่มีโครงสร้างแนวโน้มขาขึ้นเชิงปริมาณสมบูรณ์</span>
+                <span>✅ <b>Optimal Entry Confluence:</b> คำนวณจุดรอรับจังหวะย่อตัว ป้องกันการไล่ซื้อบนยอด</span>
+                <span>✅ <b>Momentum Energy:</b> โซนสะสมพลังเพื่อขึ้นต่อ ตัดสัญญาณ Overbought ออก</span>
+                <span>✅ <b>Directional Capital Flow:</b> สัญญาณกระแสเงินทุนกำลังขยายตัวในแดนบวก</span>
               </div>
               <p className={styles.methodologyUniverse}>
                 Universe: <b>{liveData?.coverage.thai.total??0} หุ้นในชุดสแกน</b> · เปรียบเทียบคะแนนและ R:R ก่อนเลือกแผนเฝ้าดู
@@ -1784,8 +1784,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <div className={styles.filterPills}>
               {[
                 { id: 'all', label: 'ทั้งหมด' },
-                { id: 'bullish', label: 'EMA ขาขึ้น' },
-                { id: 'buyzone', label: 'ใกล้โซนซื้อ S2-S3' },
+                { id: 'bullish', label: 'แนวโน้มขาขึ้น' },
+                { id: 'buyzone', label: 'ในโซนสะสม' },
                 { id: 'highscore', label: 'คะแนนสูง (≥10/16)' },
               ].map((f) => (
                 <button
@@ -1820,7 +1820,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       <div>
                         <div className={styles.titleLine}>
                           <h3 className={styles.symbolText}>{item.symbol}</h3>
-                          {scored.emaAligned && <span className={styles.tagEma}>EMA ขาขึ้น ✓</span>}
+                          {scored.emaAligned && <span className={styles.tagEma}>ขาขึ้นแข็งแกร่ง ✓</span>}
                           {isTracked && <span className={styles.tagPicked}>ในพอร์ตติดตาม ★</span>}
                         </div>
                         <p className={styles.nameText}>
@@ -1855,10 +1855,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       />
                     </div>
                     <div className={styles.subScores}>
-                      <span>EMA: {scored.emaScore}/3</span>
-                      <span>Camarilla: {scored.camScore}/4</span>
-                      <span>RSI: {scored.rsiScore}/3</span>
-                      <span>MACD: {scored.macdScore}/3</span>
+                      <span>Trend: {scored.emaScore}/3</span>
+                      <span>Price Zone: {scored.camScore}/4</span>
+                      <span>Momentum: {scored.rsiScore}/3</span>
+                      <span>Money Flow: {scored.macdScore}/3</span>
                     </div>
                   </div>
 
@@ -1903,8 +1903,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                     >
                       <span>
                         {isExpanded
-                          ? 'ซ่อนรายละเอียด Technical Indicators'
-                          : 'ดูรายละเอียด Technical (EMA / RSI / MACD / Camarilla 8 ระดับ)'}
+                          ? 'ซ่อนการประเมินปัจจัยเชิงปริมาณ'
+                          : 'ดูการประเมินปัจจัยเชิงปริมาณ (Proprietary Multi-Factor Breakdown)'}
                       </span>
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>

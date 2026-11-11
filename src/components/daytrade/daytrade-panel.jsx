@@ -99,7 +99,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
         <p>สัญญาณเดย์เทรดอ้างอิงราคาปิดแท่ง 15m จาก Vantage CFD · ข้อมูลสรุปและตัวชี้วัดรายวันใช้ FMP EOD ภายใต้สิทธิ์การแสดงผล · ETF CFD เป็นการวิเคราะห์เพื่อการศึกษาค้นคว้า (Research-only) · ไม่มีข้อมูล Intraday Order Book หรือ Level 2</p>
       </div>}
       {data.market==='us'&&<p className={styles.caption}>ราคา: Vantage CFD · Volume หุ้นอ้างอิง: รอเชื่อม FMP ระหว่างวัน · สแกนเฉพาะช่วงหลัก US · ใช้ราคา ไม่ใช้ tick volume แทน volume หุ้น</p>}
-    <div className={styles.rules}><span>EMA20 / EMA50</span><span>ยืนยันด้วยแท่งปิด 15m</span><span>SL ตามโครงสร้าง ≥ 1.5 ATR</span><span>TP 2R · ถือไม่เกิน 16 แท่ง</span><span>ไม่เลื่อนคุ้มทุนก่อนเป้า</span></div>
+    <div className={styles.rules}><span>โมเดลกรรมสิทธิ์ Nugaom AI Core</span><span>ยืนยันโมเมนตัม 15m</span><span>ระบบบริหารความเสี่ยงอัตโนมัติ</span><span>เป้าหมาย 2R เชิงปริมาณ</span><span>วินัยคำสั่งตามระบบ</span></div>
       <div className={styles.toolbar}>
         <label>ค้นหา<input aria-label="ค้นหาสินทรัพย์เดย์เทรด" placeholder="NTES, symbol หรือชื่อสินทรัพย์…" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/></label>
         <label>กลุ่มสินทรัพย์<select aria-label="กลุ่มสินทรัพย์" value={group} onChange={e=>{setGroup(e.target.value);setPage(1);}}><option value="all">ทุกตลาด</option>{Object.entries(MARKET_LABELS).map(([v,l])=><option key={v} value={v}>{l}</option>)}<option value="etf">ETF CFDs</option></select></label>

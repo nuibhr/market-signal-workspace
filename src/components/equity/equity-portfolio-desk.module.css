@@ -331,6 +331,345 @@
   font-weight: 700;
 }
 
+/* ─── 1.5 PROMINENT BROKER PARTNER & VIP ONBOARDING HUB ─── */
+.partnerHubSection {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: none !important;
+  border-radius: 24px;
+  padding: 24px 28px;
+  margin: 22px 0 10px;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+}
+
+.partnerHubHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.partnerHubTitleGroup {
+  flex: 1;
+  min-width: 280px;
+}
+
+.partnerHubBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.partnerHubHeading {
+  font-size: 19px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 8px 0 6px;
+  letter-spacing: -0.2px;
+  line-height: 1.35;
+}
+
+.partnerHubSub {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.55;
+  max-width: 680px;
+}
+
+.partnerHubQuickActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.partnerHubQuickBtnExisting {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(59, 130, 246, 0.25) 100%);
+  border: none !important;
+  border-radius: 9999px;
+  color: #38bdf8;
+  padding: 10px 18px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.partnerHubQuickBtnExisting:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.32) 0%, rgba(59, 130, 246, 0.38) 100%);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.35);
+}
+
+.partnerHubQuickBtnNew {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.3) 100%);
+  border: none !important;
+  border-radius: 9999px;
+  color: #34d399;
+  padding: 10px 18px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.22);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.partnerHubQuickBtnNew:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.38) 0%, rgba(5, 150, 105, 0.45) 100%);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.38);
+}
+
+.partnerShowcaseGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.partnerShowcaseCard {
+  border-radius: 20px;
+  padding: 20px;
+  border: none !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  backdrop-filter: blur(20px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cardPiGlow {
+  background: linear-gradient(160deg, rgba(168, 85, 247, 0.12) 0%, rgba(147, 51, 234, 0.04) 100%);
+  box-shadow: inset 0 1px 1px rgba(168, 85, 247, 0.15);
+}
+
+.cardPiGlow:hover {
+  background: linear-gradient(160deg, rgba(168, 85, 247, 0.18) 0%, rgba(147, 51, 234, 0.08) 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(168, 85, 247, 0.25);
+}
+
+.cardTrinityGlow {
+  background: linear-gradient(160deg, rgba(6, 182, 212, 0.12) 0%, rgba(14, 165, 233, 0.04) 100%);
+  box-shadow: inset 0 1px 1px rgba(6, 182, 212, 0.15);
+}
+
+.cardTrinityGlow:hover {
+  background: linear-gradient(160deg, rgba(6, 182, 212, 0.18) 0%, rgba(14, 165, 233, 0.08) 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(6, 182, 212, 0.25);
+}
+
+.cardAslGlow {
+  background: linear-gradient(160deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.04) 100%);
+  box-shadow: inset 0 1px 1px rgba(245, 158, 11, 0.15);
+}
+
+.cardAslGlow:hover {
+  background: linear-gradient(160deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.08) 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.25);
+}
+
+.partnerShowcaseTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.partnerBrandInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.brokerTagPi {
+  font-size: 10px;
+  font-weight: 800;
+  color: #c084fc;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.brokerTagTrinity {
+  font-size: 10px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.brokerTagAsl {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.brokerBrandName {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.brokerEmblemPi,
+.brokerEmblemTrinity,
+.brokerEmblemAsl {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.partnerBrandDesc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.partnerPerksList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.perkCheckPi {
+  color: #c084fc;
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.perkCheckTrinity {
+  color: #38bdf8;
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.perkCheckAsl {
+  color: #fbbf24;
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.partnerCardActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.partnerCardBtnExistingPi,
+.partnerCardBtnExistingTrinity,
+.partnerCardBtnExistingAsl {
+  background: rgba(255, 255, 255, 0.06);
+  border: none !important;
+  border-radius: 9999px;
+  color: #e2e8f0;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.partnerCardBtnExistingPi:hover {
+  background: rgba(168, 85, 247, 0.25);
+  color: #ffffff;
+}
+
+.partnerCardBtnExistingTrinity:hover {
+  background: rgba(6, 182, 212, 0.25);
+  color: #ffffff;
+}
+
+.partnerCardBtnExistingAsl:hover {
+  background: rgba(245, 158, 11, 0.25);
+  color: #ffffff;
+}
+
+.partnerCardBtnNewPi {
+  background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+  border: none !important;
+  border-radius: 9999px;
+  color: #ffffff;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+  transition: all 0.2s ease;
+}
+
+.partnerCardBtnNewPi:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(168, 85, 247, 0.45);
+}
+
+.partnerCardBtnNewTrinity {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  border: none !important;
+  border-radius: 9999px;
+  color: #ffffff;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  transition: all 0.2s ease;
+}
+
+.partnerCardBtnNewTrinity:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.45);
+}
+
+.partnerCardBtnNewAsl {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border: none !important;
+  border-radius: 9999px;
+  color: #ffffff;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  transition: all 0.2s ease;
+}
+
+.partnerCardBtnNewAsl:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.45);
+}
+
 /* ─── 2. TRIO INTELLIGENCE COCKPIT (3 HIGH-IMPACT GLASS TILES) ─── */
 .trioCockpitGrid {
   display: grid;
@@ -1011,6 +1350,24 @@
   line-height: 1.45;
 }
 
+.trustBadgesRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.trustBadgeItem {
+  background: rgba(255, 255, 255, 0.05);
+  border: none !important;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  backdrop-filter: blur(10px);
+}
+
 /* Liquid Glass Lead Type Switcher */
 .leadTypeSwitcher {
   display: flex;
@@ -1018,8 +1375,8 @@
   border: none !important;
   border-radius: 9999px;
   padding: 4px;
-  gap: 4px;
-  margin: 14px 0 18px;
+  gap: 6px;
+  margin: 14px 0 12px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
@@ -1030,27 +1387,77 @@
   background: transparent;
   border: none !important;
   color: #94a3b8;
-  padding: 9px 14px;
+  padding: 10px 16px;
   border-radius: 9999px;
-  font-size: 12px;
-  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  gap: 10px;
+  text-align: left;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.leadTypeBtnIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.leadTypeBtnTextWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.leadTypeBtnTextWrap strong {
+  font-size: 12px;
+  font-weight: 800;
+  color: #e2e8f0;
+  line-height: 1.25;
+}
+
+.leadTypeBtnTextWrap small {
+  font-size: 10px;
+  color: #94a3b8;
+  line-height: 1.25;
 }
 
 .leadTypeBtn:hover {
   color: #ffffff;
 }
 
+.leadTypeBtn:hover .leadTypeBtnTextWrap strong {
+  color: #ffffff;
+}
+
 .leadTypeBtnActive {
   background: linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(99, 102, 241, 0.25) 100%) !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 14px rgba(56, 189, 248, 0.25);
-  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
+}
+
+.leadTypeBtnActive .leadTypeBtnTextWrap strong {
+  color: #ffffff !important;
+}
+
+.leadTypeBtnActive .leadTypeBtnTextWrap small {
+  color: #bae6fd !important;
+}
+
+/* Mode Guidance Card */
+.leadModeGuidanceCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: none !important;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(12px);
+}
+
+.leadModeGuidanceCard p {
+  margin: 0;
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.5;
 }
 
 /* Interactive Broker Cards (Pi 003, Trinity 022, ASL 050) */
@@ -1216,6 +1623,78 @@
   border-radius: 20px;
   padding: 20px;
   margin-bottom: 18px;
+}
+
+.accountNoHighlightBox {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(99, 102, 241, 0.08) 100%);
+  border: none !important;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.accountNoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.inputLabelBold {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.accountNoBrokerPill {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.inputWrapLarge {
+  width: 100%;
+}
+
+.textInputLarge {
+  width: 100%;
+  height: 44px;
+  background: rgba(0, 0, 0, 0.4);
+  border: none !important;
+  border-radius: 12px;
+  padding: 0 14px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.textInputLarge:focus {
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
+  outline: none;
+}
+
+.textInputLarge::placeholder {
+  color: #64748b;
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: normal;
+}
+
+.accountNoHelper {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 8px 0 0;
+  line-height: 1.45;
 }
 
 .inputTwoCol {
@@ -1577,14 +2056,20 @@
 
 /* Responsive Media Queries */
 @media (max-width: 900px) {
-  .trioCockpitGrid {
+  .trioCockpitGrid,
+  .partnerShowcaseGrid {
     grid-template-columns: 1fr;
   }
 
   .brokerPickGrid,
   .inputTwoCol,
-  .demoChoiceRow {
+  .demoChoiceRow,
+  .partnerCardActions {
     grid-template-columns: 1fr;
+  }
+
+  .partnerHubHeader {
+    flex-direction: column;
   }
 
   .commandDesk {
