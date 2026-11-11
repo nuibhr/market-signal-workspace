@@ -111,6 +111,10 @@ function db() {
     try { database.exec(sql);database.prepare('INSERT INTO storage_migrations VALUES(?,?)').run(version,new Date().toISOString());database.exec('COMMIT'); }
     catch(error){database.exec('ROLLBACK');database.close();database=undefined;throw error;}
   }
+  const leadCols = new Set(database.prepare('PRAGMA table_info(partner_account_leads)').all().map(c => c.name));
+  if (!leadCols.has('lead_type')) database.exec("ALTER TABLE partner_account_leads ADD COLUMN lead_type TEXT NOT NULL DEFAULT 'new_account'");
+  if (!leadCols.has('account_no')) database.exec("ALTER TABLE partner_account_leads ADD COLUMN account_no TEXT");
+  database.exec("CREATE INDEX IF NOT EXISTS partner_leads_type ON partner_account_leads(lead_type, created_at DESC)");
   for (const file of [path, `${path}-wal`, `${path}-shm`]) { try { chmodSync(file, 0o600); } catch { /* SQLite sidecars may not exist yet. */ } }
   return database;
   } catch(error) {

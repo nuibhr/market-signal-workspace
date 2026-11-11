@@ -59,6 +59,50 @@ test('partner-leads POST successfully saves lead and does not expose direct exte
   assert.equal(data.brokerOpenUrl, undefined);
 });
 
+test('partner-leads POST validates existing_port requires accountNo', async () => {
+  const req = new Request('http://localhost:3000/api/equity/partner-leads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
+    body: JSON.stringify({
+      brokerId: '050',
+      leadType: 'existing_port',
+      fullName: 'นายทดสอบ เอเอสแอล',
+      phone: '0812345678',
+      // accountNo is missing
+    }),
+  });
+  const res = await POST(req);
+  assert.equal(res.status, 400);
+  const data = await res.json();
+  assert.equal(data.error, 'ACCOUNT_NO_REQUIRED');
+});
+
+test('partner-leads POST successfully saves ASL 050 lead with existing_port and accountNo', async () => {
+  const req = new Request('http://localhost:3000/api/equity/partner-leads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
+    body: JSON.stringify({
+      brokerId: '050',
+      leadType: 'existing_port',
+      accountNo: 'ASL-998877',
+      fullName: 'นายสมเกียรติ พอร์ตเอเอสแอล',
+      phone: '0898765432',
+      lineId: 'somkiat_asl',
+      email: 'somkiat@asl.co.th',
+      interests: ['หุ้นไทย Stage 2'],
+      notes: 'ขอสิทธิ์ VIP ห้องสแกนหุ้น',
+    }),
+  });
+  const res = await POST(req);
+  assert.equal(res.status, 201);
+  const data = await res.json();
+  assert.equal(data.success, true);
+  assert.equal(data.brokerId, '050');
+  assert.equal(data.brokerName, 'ASL Securities (บล.เอเอสแอล)');
+  assert.equal(data.leadType, 'existing_port');
+  assert.equal(data.accountNo, 'ASL-998877');
+});
+
 test('partner-leads GET rejects unauthorized requests', async () => {
   const req = new Request('http://localhost:3000/api/equity/partner-leads');
   const res = await GET(req);

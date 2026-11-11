@@ -1,6 +1,6 @@
 import { storage } from '../../../../storage/database.mjs';
 import { currentMember, sameOrigin } from '../../../../membership/server.mjs';
-import { isAdmin } from '../../../../membership/store.mjs';
+import { isAdmin, getBrokerStaffRole } from '../../../../membership/store.mjs';
 import { rateLimit, readJsonBody, requestErrorResponse } from '../../../../security/request-guard.mjs';
 import { sendTelegramMessage } from '../../../../notifications/broadcaster.mjs';
 import { randomUUID } from 'node:crypto';
@@ -23,6 +23,12 @@ const BROKER_CONFIG = {
     thaiName: 'บล.ทรีนีตี้',
     tag: 'OFFICIAL PARTNER',
   },
+  '050': {
+    id: '050',
+    name: 'ASL Securities (บล.เอเอสแอล)',
+    thaiName: 'บล.เอเอสแอล',
+    tag: 'OFFICIAL PARTNER',
+  },
 };
 
 export async function POST(request) {
@@ -39,6 +45,8 @@ export async function POST(request) {
 
   const {
     brokerId = '022',
+    leadType = 'new_account', // 'new_account' | 'existing_port'
+    accountNo = '',
     fullName = '',
     phone = '',
     lineId = '',
@@ -50,7 +58,17 @@ export async function POST(request) {
   // Validate broker
   if (!BROKER_CONFIG[brokerId]) {
     return Response.json(
-      { success: false, error: 'INVALID_BROKER', message: 'กรุณาเลือกโบรกเกอร์พันธมิตรที่ถูกต้อง (Pi หรือ Trinity)' },
+      { success: false, error: 'INVALID_BROKER', message: 'กรุณาเลือกโบรกเกอร์พันธมิตรที่ถูกต้อง (Pi 003, Trinity 022 หรือ ASL 050)' },
+      { status: 400, headers: NO_STORE }
+    );
+  }
+
+  const validLeadType = leadType === 'existing_port' ? 'existing_port' : 'new_account';
+  const trimmedAccountNo = String(accountNo || '').trim().slice(0, 40);
+
+  if (validLeadType === 'existing_port' && (!trimmedAccountNo || trimmedAccountNo.length < 3)) {
+    return Response.json(
+      { success: false, error: 'ACCOUNT_NO_REQUIRED', message: 'กรุณาระบุเลขที่บัญชีหุ้น / เลขพอร์ตเพื่อยืนยันสิทธิ์' },
       { status: 400, headers: NO_STORE }
     );
   }
@@ -103,8 +121,8 @@ export async function POST(request) {
     await storage.run(
       `INSERT INTO partner_account_leads (
         id, member_id, broker_id, broker_name, full_name, phone, line_id, email,
-        interests, status, notes, ip_hash, user_agent, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?)`,
+        interests, status, notes, lead_type, account_no, ip_hash, user_agent, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?, ?, ?)`,
       leadId,
       member?.id || null,
       brokerId,
@@ -115,6 +133,8 @@ export async function POST(request) {
       trimmedEmail || null,
       JSON.stringify(safeInterests),
       trimmedNotes || null,
+      validLeadType,
+      trimmedAccountNo || null,
       request.headers.get('x-forwarded-for')?.slice(0, 50) || 'client',
       request.headers.get('user-agent')?.slice(0, 200) || null,
       now,
@@ -125,21 +145,27 @@ export async function POST(request) {
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       const timeStr = new Date().toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
       const dateStr = new Date().toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric' });
-      const interestLabels = safeInterests.length > 0 ? safeInterests.join(', ') : 'หุ้นไทย & DR ทั่วไป';
+      const interestLabels = safeInterests.length > 0 ? safeInterests.join(', ') : validLeadType === 'existing_port' ? 'ขอรับสิทธิ์ VIP รายเดือน' : 'หุ้นไทย & DR ทั่วไป';
 
-      const alertText = `👑 <b>มีลูกค้าใหม่ขอเปิดพอร์ตผ่าน Nugaom Platform (IB Lead)!</b>
+      const alertHeader = validLeadType === 'existing_port'
+        ? `👑 <b>มีลูกค้าแจ้งยืนยันเลขพอร์ต VIP (Existing Client)!</b>`
+        : `📝 <b>มีลูกค้าใหม่ขอเปิดบัญชีหุ้น (New Account Lead)!</b>`;
+
+      const alertText = `${alertHeader}
 ────────────────────────
-🏛️ <b>โบรกเกอร์ที่เลือก:</b> <b>${broker.name}</b> (รหัส ${brokerId})
-👤 <b>ชื่อ-สกุล:</b> ${trimmedName}
+🏛️ <b>โบรกเกอร์:</b> <b>${broker.name}</b> (รหัส ${brokerId})
+${validLeadType === 'existing_port' ? `🆔 <b>เลขที่พอร์ต:</b> <code>${trimmedAccountNo}</code>\n` : ''}👤 <b>ชื่อ-สกุล:</b> ${trimmedName}
 📞 <b>เบอร์โทรติดต่อ:</b> <code>${cleanedPhone}</code>
 💬 <b>LINE ID:</b> <code>${trimmedLineId || '—'}</code>
 📧 <b>อีเมล:</b> <code>${trimmedEmail || '—'}</code>
-🎯 <b>สิ่งที่สนใจ:</b> ${interestLabels}
-${trimmedNotes ? `📝 <b>หมายเหตุ:</b> ${trimmedNotes}\n` : ''}⏱️ <b>เวลายื่นเรื่อง:</b> ${dateStr} เวลา ${timeStr} น.
+🎯 <b>${validLeadType === 'existing_port' ? 'สิทธิ์ที่ต้องการยืนยัน' : 'สิ่งที่สนใจ'}:</b> ${interestLabels}
+${trimmedNotes ? `📝 <b>หมายเหตุ:</b> ${trimmedNotes}\n` : ''}⏱️ <b>เวลาส่งเรื่อง:</b> ${dateStr} เวลา ${timeStr} น.
 ────────────────────────
 💾 <b>บันทึกในฐานข้อมูล:</b> ตาราง <code>partner_account_leads</code> (รหัส ${leadId})
 ⚡ <b>ขั้นตอนถัดไป (Action Required):</b>
-มาร์เก็ตติ้ง/ผู้ดูแลลูกค้าของโบรกเกอร์ ${broker.name} ประจำพาร์ทเนอร์แพลตฟอร์ม จะโทรติดต่อดูแลและอำนวยความสะดวกให้ลูกค้าโดยตรง`;
+${validLeadType === 'existing_port'
+  ? `เจ้าหน้าที่/มาร์เก็ตติ้งของ ${broker.name} ตรวจสอบเลขพอร์ตเพื่อออกโค้ด VIP หรือเปิดสิทธิ์ Settrade Open API ให้ลูกค้า`
+  : `เจ้าหน้าที่การตลาดของ ${broker.name} ประจำพาร์ทเนอร์แพลตฟอร์ม จะโทรติดต่อดูแลและอำนวยความสะดวกการเปิดบัญชีให้ลูกค้าโดยตรง`}`;
 
       sendTelegramMessage({
         token: process.env.TELEGRAM_BOT_TOKEN,
@@ -150,13 +176,19 @@ ${trimmedNotes ? `📝 <b>หมายเหตุ:</b> ${trimmedNotes}\n` : ''}
       });
     }
 
+    const confirmMessage = validLeadType === 'existing_port'
+      ? `บันทึกข้อมูลแจ้งเลขพอร์ต ${broker.name} เรียบร้อยแล้ว เจ้าหน้าที่จะตรวจสอบเพื่อยืนยันสิทธิ์ VIP ให้ท่านโดยเร็ว`
+      : `บันทึกข้อมูลขอเปิดบัญชี ${broker.name} สำเร็จ เจ้าหน้าที่การตลาดจะติดต่อประสานงานดูแลท่านโดยเร็ว`;
+
     return Response.json(
       {
         success: true,
         leadId,
         brokerId,
         brokerName: broker.name,
-        message: `บันทึกข้อมูลขอเปิดบัญชี ${broker.name} สำเร็จ เจ้าหน้าที่การตลาดจะติดต่อประสานงานดูแลท่านโดยเร็ว`,
+        leadType: validLeadType,
+        accountNo: trimmedAccountNo || null,
+        message: confirmMessage,
       },
       { status: 201, headers: NO_STORE }
     );
@@ -176,20 +208,29 @@ export async function GET(request) {
   } catch {
     member = null;
   }
-  if (!member || !isAdmin(member)) {
+  const role = getBrokerStaffRole(member);
+  if (!role) {
     return Response.json({ success: false, error: 'FORBIDDEN' }, { status: 403, headers: NO_STORE });
   }
 
   const url = new URL(request.url);
-  const brokerId = url.searchParams.get('brokerId');
+  const reqBrokerId = url.searchParams.get('brokerId');
+  const leadType = url.searchParams.get('leadType');
   const status = url.searchParams.get('status');
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10)));
 
+  // If officer for a specific broker, forcibly lock to their brokerId!
+  const targetBrokerId = role.isSuper ? reqBrokerId : role.brokerId;
+
   let sql = 'SELECT * FROM partner_account_leads WHERE 1=1';
   const params = [];
-  if (brokerId) {
+  if (targetBrokerId) {
     sql += ' AND broker_id = ?';
-    params.push(brokerId);
+    params.push(targetBrokerId);
+  }
+  if (leadType && ['new_account', 'existing_port'].includes(leadType)) {
+    sql += ' AND lead_type = ?';
+    params.push(leadType);
   }
   if (status) {
     sql += ' AND status = ?';
@@ -200,7 +241,7 @@ export async function GET(request) {
 
   try {
     const leads = await storage.all(sql, ...params);
-    return Response.json({ success: true, leads }, { headers: NO_STORE });
+    return Response.json({ success: true, leads, brokerRole: role }, { headers: NO_STORE });
   } catch (err) {
     return Response.json({ success: false, error: err.message }, { status: 500, headers: NO_STORE });
   }

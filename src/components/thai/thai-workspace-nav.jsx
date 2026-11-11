@@ -13,7 +13,7 @@ const VIEW_ICONS = {
 export const THAI_VIEWS = [
   { id: 'stage2', hash: '#section-auto-pick', label: 'สแกนหุ้นขาขึ้น (Stage 2)', note: 'คัดหุ้นเด่น & เช็คแนวรับแนวต้าน' },
   { id: 'radar', hash: '#section-radar', label: 'เรดาร์สัญญาณสด (Radar)', note: 'แผนเฝ้ารายวัน & เสียงแจ้งเตือน' },
-  { id: 'portfolio', hash: '#section-portfolio', label: 'เชื่อมต่อพอร์ต (Settrade API)', note: 'บล.พาย 003 & ทรีนีตี้ 022' },
+  { id: 'portfolio', hash: '#section-portfolio', label: 'เปิดพอร์ต / ยืนยันสิทธิ์ VIP', note: 'พาย 003 · ทรีนีตี้ 022 · เอเอสแอล 050' },
   { id: 'chart', hash: '#chart-panel', label: 'กราฟเทคนิค (Chart)', note: 'แท่งเทียน & อินดิเคเตอร์' },
   { id: 'results', hash: '#section-results', label: 'บันทึกผลงาน (Trade Ledger)', note: 'ประวัติ & สถิติชนะ 100 ไม้' },
 ];

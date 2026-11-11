@@ -31,6 +31,26 @@ export function normalizePortfolio(value) {
   return number;
 }
 export function isAdmin(member) { return Boolean(member && !isDemoIdentity(member) && process.env.ADMIN_LINE_IDS?.split(',').map(id => id.trim()).includes(member.line_id)); }
+export function getBrokerStaffRole(member, env = process.env) {
+  if (!member || isDemoIdentity(member) || !member.line_id) return null;
+  const superIds = (env.ADMIN_LINE_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (superIds.includes(member.line_id)) {
+    return { isSuper: true, brokerId: null, brokerName: 'All Brokers', role: 'super_admin' };
+  }
+  const piIds = (env.BROKER_003_ADMIN_LINE_IDS || env.BROKER_PI_LINE_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (piIds.includes(member.line_id)) {
+    return { isSuper: false, brokerId: '003', brokerName: 'Pi Securities (บล.พาย)', role: 'broker_admin' };
+  }
+  const trinityIds = (env.BROKER_022_ADMIN_LINE_IDS || env.BROKER_TRINITY_LINE_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (trinityIds.includes(member.line_id)) {
+    return { isSuper: false, brokerId: '022', brokerName: 'Trinity Securities (บล.ทรีนีตี้)', role: 'broker_admin' };
+  }
+  const aslIds = (env.BROKER_050_ADMIN_LINE_IDS || env.BROKER_ASL_LINE_IDS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (aslIds.includes(member.line_id)) {
+    return { isSuper: false, brokerId: '050', brokerName: 'ASL Securities (บล.เอเอสแอล)', role: 'broker_admin' };
+  }
+  return null;
+}
 
 const AI_FREE_DAILY = 5;
 function bangkokDay() {

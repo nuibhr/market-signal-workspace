@@ -116,14 +116,14 @@ export default function BillingPanel({account,rights,billing,onRefresh}){
    </article>
   </div>
 
-  {/* ── Partner Broker VIP Privilege Strip (Pi 003 & Trinity 022) ── */}
+  {/* ── Partner Broker VIP Privilege Strip (Pi 003, Trinity 022 & ASL 050) ── */}
   <div style={{ margin: '18px 0 24px', padding: '18px 22px', borderRadius: '18px', background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, rgba(56, 189, 248, 0.14) 100%)', boxShadow: 'inset 0 1px 1px rgba(114, 223, 179, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
    <div>
     <span style={{ fontSize: '11px', fontWeight: 800, color: '#34d399', letterSpacing: '0.8px', display: 'block', marginBottom: '4px' }}>🏛️ PARTNER BROKER VIP PRIVILEGE</span>
-    <strong style={{ color: '#ffffff', fontSize: '15px', display: 'block' }}>เปิดพอร์ตหุ้นไทย &amp; DR กับพันธมิตร บล.พาย (003) หรือ บล.ทรีนีตี้ (022) รับโค้ด VIP ฟรี!</strong>
-    <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: '#cbd5e1' }}>ลูกค้าที่เปิดบัญชีผ่านแพลตฟอร์มจะได้รับโค้ดรายเดือน (NUG-...) จากทีมงานเพื่อปลดล็อกสิทธิ์ 30 วัน พร้อมเชื่อมต่อ Settrade Open API</p>
+    <strong style={{ color: '#ffffff', fontSize: '15px', display: 'block' }}>เปิดพอร์ตหรือแจ้งเลขพอร์ตกับ บล.พาย (003), บล.ทรีนีตี้ (022) หรือ บล.เอเอสแอล (050) รับสิทธิ์ VIP ฟรี!</strong>
+    <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: '#cbd5e1' }}>ลูกค้าที่มีพอร์ตแล้วหรือเปิดบัญชีใหม่ผ่านแพลตฟอร์มจะได้รับโค้ดรายเดือน (NUG-...) จากทีมงานเพื่อปลดล็อกสิทธิ์ 30 วัน พร้อมเชื่อมต่อ Settrade Open API</p>
    </div>
-   <a href="/thai#section-portfolio" className="account-secondary" style={{ whiteSpace: 'nowrap' }}>ยื่นเปิดพอร์ต VIP พาร์ทเนอร์ ↗</a>
+   <a href="/thai#section-portfolio" className="account-secondary" style={{ whiteSpace: 'nowrap' }}>ยื่นเปิดพอร์ต / แจ้งเลขพอร์ต VIP ↗</a>
   </div>
 
   {/* ── Clear Feature Comparison Matrix Table ── */}
