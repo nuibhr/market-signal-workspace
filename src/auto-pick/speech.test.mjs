@@ -147,7 +147,7 @@ test('Thai retail 3 core questions speech builders generate clear Thai voice scr
   const eveningSpeech = buildEveningHomeworkSpeech(sampleRows, 'ตลาดเอื้อ', { now: unlockedTime, morningPicks: [sampleRows[0]] });
   assert.ok(eveningSpeech.includes('การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้'));
   assert.ok(!eveningSpeech.includes('ซีพีออลล์')); // Verified: de-duplicated against morning pick!
-  assert.ok(eveningSpeech.includes('สายต้นน้ำขาขึ้น') || eveningSpeech.includes('สายย่อรับแนวรับ') || eveningSpeech.includes('สายวอลุ่มเข้าจ่อเบรก'));
+  assert.ok(eveningSpeech.includes('3 ตัวเด่น') && eveningSpeech.includes('รับ'));
 
   const drSample = [
     { symbol: 'NVDA80', thbPrice: 24.5, fairThb: 24.4, support: 23.8, target1: 26.2, target2: 27.6, stop: 22.9 },

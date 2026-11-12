@@ -277,26 +277,18 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   ].filter(Boolean);
  },[rows,morningSymbols]);
 
- /* ─── Auto Voice Briefing when stock plans load ─── */
+ /* ─── Voice Briefing preparation (On-Demand only, no auto-play on load) ─── */
  useEffect(()=>{
-  let storage;try{storage=window.localStorage;}catch(_e){}
-  const soundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
-  if(!visible||!soundOn||autoAnnouncedRef.current)return;
+  if(!visible||autoAnnouncedRef.current)return;
   if(!morningPicks.length)return;
   autoAnnouncedRef.current=true;
-  const sessionKey='nugaom_thai_plan_voiced_v1';
-  try{
-   if(typeof window!=='undefined'&&window.sessionStorage?.getItem(sessionKey))return;
-   window.sessionStorage?.setItem(sessionKey,'1');
-  }catch(_e){}
   const timeGate=isEveningHomeworkUnlocked();
   const autoText=timeGate.unlocked
    ?buildEveningHomeworkSpeech(rows,regime,{morningPicks})
    :buildMorningBriefSpeech(rows,regime);
   setLastSpokenText(autoText);
   pendingAutoTextRef.current=autoText;
-  speakText(autoText);
- },[visible,voiceEnabled,monitor?.enabled,morningPicks,rows,regime]);
+ },[visible,morningPicks,rows,regime]);
 
  const avoidedCount=useMemo(()=>{
   const weak=rows.filter(r=>r.stage===4||(r.stage===3&&!r.templatePass)).length;
