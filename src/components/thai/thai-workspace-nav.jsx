@@ -1,5 +1,6 @@
 'use client';
 import { TrendingUp, Radar, ShieldCheck, CandlestickChart, Award } from 'lucide-react';
+import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import styles from './thai-workspace.module.css';
 
 const VIEW_ICONS = {
@@ -26,12 +27,22 @@ export default function ThaiWorkspaceNav({ view = 'stage2', symbol, onNavigate, 
   return (
     <section id="thai-workspace-navigation" className={styles.toolbar} aria-label="พื้นที่ทำงานหุ้นไทย">
       <div className={styles.heading}>
-        <div>
-          <h1>หุ้นไทย <small>SET100 + mai</small></h1>
-          <p>เลือกเครื่องมือวิเคราะห์ และเปิดกราฟหุ้นที่สนใจ</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img
+            src="/nugaom-mascot.png"
+            alt="โลโก้ Nugaom AI"
+            width="42"
+            height="42"
+            style={{ borderRadius: '12px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.35)' }}
+          />
+          <div>
+            <h1>หุ้นไทย <small>SET100 + mai</small></h1>
+            <p>เลือกเครื่องมือวิเคราะห์ โพยเช้า 09:30 · บ่าย 13:30 · การบ้านเย็น 17:30 และเปิดกราฟหุ้นที่สนใจ</p>
+          </div>
         </div>
         <span className={styles.symbol}>
-          กำลังวิเคราะห์ <b>{symbol}</b>
+          {symbol ? <InstrumentLogo asset={{ market: 'thai', symbol }} /> : null}
+          <span>กำลังวิเคราะห์ <b>{symbol}</b></span>
         </span>
       </div>
       <div className={styles.row}>

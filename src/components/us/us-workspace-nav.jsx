@@ -1,4 +1,5 @@
 'use client';
+import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import styles from './us-workspace-nav.module.css';
 
 export const US_VIEWS = [
@@ -14,13 +15,21 @@ export default function UsWorkspaceNav({ activeTab = 'focus', symbol, onTabChang
   return (
     <section id="us-workspace-navigation" className={styles.toolbar} aria-label="พื้นที่ทำงานหุ้นสหรัฐฯ และ Thematic ETFs">
       <div className={styles.heading}>
-        <div className={styles.titleGroup}>
+        <div className={styles.titleGroup} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img
+            src="/nugaom-mascot.png"
+            alt="โลโก้ Nugaom AI"
+            width="42"
+            height="42"
+            style={{ borderRadius: '12px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.35)' }}
+          />
           <h1>
             <span>🇺🇸 หุ้นสหรัฐฯ &amp; Global ETFs</span>
             <span className={styles.scopeBadge}>S&amp;P 500 · NASDAQ 100</span>
           </h1>
         </div>
         <span className={styles.symbol}>
+          {symbol ? <InstrumentLogo asset={{ market: 'us', symbol }} /> : null}
           <span className={styles.liveDot} />
           <span>วิเคราะห์:</span>
           <b>{symbol}</b>

@@ -94,21 +94,126 @@ ${body}
 🔗 <b>เข้าสู่ระบบสมาชิก VIP:</b> <a href="${appOrigin}/account">เปิด Nugaom Member Portal ↗</a>`;
 }
 
-export async function sendTelegramMessage({ token, chatId, text, parseMode = 'HTML', fetcher = fetch } = {}) {
+export const TELEGRAM_MARKET_CATEGORIES = Object.freeze({
+  thai: {
+    id: 'thai',
+    badge: '🇹🇭 โพยหุ้นไทย SET100',
+    hashtag: '#หุ้นไทย #SET100',
+    path: '/thai',
+    envChatKey: 'TELEGRAM_CHAT_ID_THAI',
+    envThreadKey: 'TELEGRAM_THREAD_ID_THAI',
+    scheduleNote: '09:30 โพยเช้า · 13:30 โพยบ่าย · 17:30 การบ้านเย็น',
+  },
+  dr: {
+    id: 'dr',
+    badge: '🌐 โพย DR80 หุ้นโลก',
+    hashtag: '#DR80 #หุ้นต่างประเทศ',
+    path: '/dr',
+    envChatKey: 'TELEGRAM_CHAT_ID_DR',
+    envThreadKey: 'TELEGRAM_THREAD_ID_DR',
+    scheduleNote: '09:30 โพยเช้า · 13:30 โพยบ่าย · 17:30 การบ้านเย็น (เทียบ Fair Value)',
+  },
+  tfex: {
+    id: 'tfex',
+    badge: '⚡ โพย TFEX & SET50 Futures',
+    hashtag: '#TFEX #S50 #GO',
+    path: '/tfex',
+    envChatKey: 'TELEGRAM_CHAT_ID_TFEX',
+    envThreadKey: 'TELEGRAM_THREAD_ID_TFEX',
+    scheduleNote: '09:30 เปิดตลาดเช้า · 13:30 เปิดตลาดบ่าย · แจ้งเตือน LONG/SHORT',
+  },
+  us: {
+    id: 'us',
+    badge: '🇺🇸 โพยหุ้นอเมริกา S&P 500',
+    hashtag: '#USStocks #Stage2 #Dime',
+    path: '/us',
+    envChatKey: 'TELEGRAM_CHAT_ID_US',
+    envThreadKey: 'TELEGRAM_THREAD_ID_US',
+    scheduleNote: '19:30 ตั้งคำสั่ง GTC ล่วงหน้า · 06:00 สรุปปิดตลาดสหรัฐฯ',
+  },
+  forex: {
+    id: 'forex',
+    badge: '🥇 โพย Forex & Gold (Pro Copy EA)',
+    hashtag: '#XAUUSD #Forex #ProCopyEA',
+    path: '/forex',
+    envChatKey: 'TELEGRAM_CHAT_ID_FOREX',
+    envThreadKey: 'TELEGRAM_THREAD_ID_FOREX',
+    scheduleNote: 'แจ้งเตือนเรียลไทม์ 4 จังหวะ (Entry / Lock Profit / TP1 / TP2)',
+  },
+});
+
+export const TELEGRAM_ROUND_LABELS = Object.freeze({
+  morning_0930: '🌅 รอบเช้า 09:30 น. · เช้านี้เล่นอะไรดี?',
+  afternoon_1330: '☀️ รอบบ่าย 13:30 น. · บ่ายนี้เล่นอะไรดี?',
+  evening_1730: '🌙 รอบเย็น 17:30 น. · หุ้นการบ้านเฝ้าพรุ่งนี้',
+});
+
+export function resolveTelegramCategoryDestination(category = 'thai', env = process.env, explicitThreadId = null) {
+  const cat = TELEGRAM_MARKET_CATEGORIES[category] || TELEGRAM_MARKET_CATEGORIES.thai;
+  const chatId = (cat.envChatKey && env?.[cat.envChatKey]) ? env[cat.envChatKey] : env?.TELEGRAM_CHAT_ID;
+  const rawThread = explicitThreadId ?? (cat.envThreadKey ? env?.[cat.envThreadKey] : null);
+  const parsedThread = Number(rawThread);
+  const messageThreadId = Number.isInteger(parsedThread) && parsedThread > 0 ? parsedThread : null;
+  return { chatId, messageThreadId, categoryMeta: cat };
+}
+
+export function formatTelegramMarketPlaybookMessage({
+  category = 'thai',
+  round = 'morning_0930',
+  picks = [],
+  regime = 'ตลาดเอื้อ (SET100 / Global)',
+  appOrigin = 'https://nugaom-ai-pick.nuibhr1.workers.dev',
+} = {}) {
+  const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cat = TELEGRAM_MARKET_CATEGORIES[category] || TELEGRAM_MARKET_CATEGORIES.thai;
+  const roundTitle = TELEGRAM_ROUND_LABELS[round] || TELEGRAM_ROUND_LABELS.morning_0930;
+  const dateStr = new Date().toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium' });
+  const unit = category === 'us' || category === 'forex' ? '$' : category === 'tfex' ? 'จุด' : '฿';
+
+  const lines = (picks || []).slice(0, 5).map((item, idx) => {
+    const sym = esc(item.symbol || '—');
+    const rawEntry = item.entry ?? '—';
+    const rawTp = item.tp1 ?? item.target ?? '—';
+    const rawSl = item.sl ?? item.stop ?? '—';
+    const entry = Number.isFinite(Number(rawEntry)) ? Number(rawEntry).toLocaleString('en-US', { maximumFractionDigits: 2 }) : esc(rawEntry);
+    const tp1 = Number.isFinite(Number(rawTp)) ? Number(rawTp).toLocaleString('en-US', { maximumFractionDigits: 2 }) : esc(rawTp);
+    const sl = Number.isFinite(Number(rawSl)) ? Number(rawSl).toLocaleString('en-US', { maximumFractionDigits: 2 }) : esc(rawSl);
+    const note = item.note ? ` · <i>${esc(item.note)}</i>` : '';
+    return `${idx + 1}. <b><code>#${sym}</code></b>${note}\n   🟢 แนวรับ/จุดเข้า: <code>${entry} ${unit}</code> | 🎯 เป้า TP1: <code>${tp1} ${unit}</code> | 🔴 จุดคัท SL: <code>${sl} ${unit}</code>`;
+  });
+
+  return `📣 <b>[${esc(cat.badge)}]</b>\n<b>${esc(roundTitle)}</b>
+────────────────────────
+📅 <b>ประจำวันที่:</b> ${esc(dateStr)}
+📊 <b>ภาวะตลาด:</b> ${esc(regime)}
+
+${lines.length ? lines.join('\n\n') : '• กำลังอัปเดตรายชื่อเข้าแผนรอบล่าสุด'}
+────────────────────────
+💡 <b>วินัย 2R Management:</b> ตั้งรับที่โซนแนวรับ ไม่ไล่ราคา แบ่งขายล็อกกำไร 50% ที่ TP1 และยก Stop บังทุนเสมอ
+🏷️ <b>หมวดหมู่:</b> ${esc(cat.hashtag)}
+🔗 <b>เปิดกราฟ &amp; ฟังเสียงอ่านโพย:</b> <a href="${appOrigin}${cat.path}">เปิดหน้า ${esc(cat.badge)} ↗</a>`;
+}
+
+export async function sendTelegramMessage({ token, chatId, messageThreadId = null, text, parseMode = 'HTML', fetcher = fetch } = {}) {
   if (!token || !chatId) {
     throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  }
+
+  const payload = {
+    chat_id: chatId,
+    text,
+    parse_mode: parseMode,
+    disable_web_page_preview: false,
+  };
+  if (Number.isInteger(Number(messageThreadId)) && Number(messageThreadId) > 0) {
+    payload.message_thread_id = Number(messageThreadId);
   }
 
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
   const response = await fetcher(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: parseMode,
-      disable_web_page_preview: false,
-    }),
+    body: JSON.stringify(payload),
     signal: AbortSignal.timeout(10000),
   });
 

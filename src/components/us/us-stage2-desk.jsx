@@ -5,6 +5,7 @@ import { useDeskResource } from '../use-desk-resource.jsx';
 const money=(value,digits=2)=>Number.isFinite(value)?value.toFixed(digits):'—';
 import styles from './us-stage2-desk.module.css';
 import { RotateCw } from 'lucide-react';
+import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import { US_STOCKS, US_ETFS } from '../../markets/catalog.mjs';
 
 // ─── HIGH CONVICTION STAGE 2 STOCKS MASTER DATA ───
@@ -934,6 +935,7 @@ export default function UsStage2Desk({
                 <div className={styles.diagCardTop}>
                   <div className={styles.diagCardMeta}>
                     <div className={styles.diagCardSymbolRow}>
+                      <InstrumentLogo asset={{ market: 'us', symbol: currentDiagnostic.symbol }} />
                       <h4>{currentDiagnostic.symbol}</h4>
                       <span className={styles.diagCardName}>{currentDiagnostic.name}</span>
                       <span className={`${styles.diagStageBadge} ${currentDiagnostic.stage === 4 ? styles.badgeBear : currentDiagnostic.stage === 2 ? styles.badgeBull : styles.badgeWarn}`}>
@@ -1032,23 +1034,26 @@ export default function UsStage2Desk({
                 className={`${styles.stage2Card} ${item.topPick ? styles.stage2CardTopPick : ''}`}
               >
                 <div className={styles.cardHeader}>
-                  <div className={styles.cardTitleGroup}>
-                    <div className={styles.cardSymbolRow}>
-                      <span className={styles.cardSymbol}>{item.symbol}</span>
-                      <span className={styles.cardExchange}>{item.exchange}</span>
-                      {onToggleFavorite && (
-                        <button
-                          type="button"
-                          className={`${styles.favBtnMini} ${favorites.includes(item.symbol) ? styles.favBtnMiniActive : ''}`}
-                          onClick={() => onToggleFavorite(item.symbol)}
-                          title="เพิ่มหรือลบจากรายการโปรด"
-                        >
-                          {favorites.includes(item.symbol) ? '★' : '☆'}
-                        </button>
-                      )}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <InstrumentLogo asset={{ market: 'us', symbol: item.symbol }} />
+                    <div className={styles.cardTitleGroup}>
+                      <div className={styles.cardSymbolRow}>
+                        <span className={styles.cardSymbol}>{item.symbol}</span>
+                        <span className={styles.cardExchange}>{item.exchange}</span>
+                        {onToggleFavorite && (
+                          <button
+                            type="button"
+                            className={`${styles.favBtnMini} ${favorites.includes(item.symbol) ? styles.favBtnMiniActive : ''}`}
+                            onClick={() => onToggleFavorite(item.symbol)}
+                            title="เพิ่มหรือลบจากรายการโปรด"
+                          >
+                            {favorites.includes(item.symbol) ? '★' : '☆'}
+                          </button>
+                        )}
+                      </div>
+                      <span className={styles.cardName}>{item.name}</span>
+                      <span className={styles.cardSector}>{item.sector}</span>
                     </div>
-                    <span className={styles.cardName}>{item.name}</span>
-                    <span className={styles.cardSector}>{item.sector}</span>
                   </div>
 
                   <div className={styles.cardPriceGroup}>
@@ -2030,6 +2035,7 @@ export default function UsStage2Desk({
                             {favorites.includes(row.symbol) ? '★' : '☆'}
                           </button>
                         )}
+                        <InstrumentLogo asset={{ market: 'us', symbol: row.symbol }} />
                         <div>
                           <b style={{ color: '#ffffff', fontSize: '12px' }}>{row.symbol}</b>
                           <small style={{ display: 'block', color: '#64748b', fontSize: '10px' }}>{row.name}</small>

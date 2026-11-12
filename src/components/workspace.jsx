@@ -8,6 +8,7 @@ import MarketNavigation from './market-navigation.jsx';
 import {marketPage,marketHref} from '../markets/market-pages.mjs';
 import SignalDesk from './signal-desk.jsx';
 import {SoundControl} from './monitor/monitor-provider.jsx';
+import InstrumentLogo from './monitor/instrument-logo.jsx';
 import { ArrowRight, BookOpen, Layers3, Maximize2, Newspaper, Radar, RotateCw, Sparkles, Waves } from 'lucide-react';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS, TFEX_SYMBOLS } from '../markets/catalog.mjs';
 import { formatQuotePrice } from '../markets/quote-format.mjs';
@@ -521,7 +522,10 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
       <main className="main-area">
         <header className="topbar">
-          <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
+          <div className="topbar-context" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <InstrumentLogo asset={{ market: marketId, symbol: asset.symbol }} />
+            <div><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
+          </div>
           <div className="topbar-search-area"><SymbolSearch marketId={marketId} onSelect={selectAsset} /></div>
           <div className="topbar-actions">
             <a className="monitor-account" href={loginHref}>บัญชีสมาชิก ↗</a>

@@ -4,6 +4,9 @@ import {
   formatTelegramTradeMessage,
   formatTelegramEaSignalMessage,
   formatTelegramAdminAnnouncement,
+  formatTelegramMarketPlaybookMessage,
+  resolveTelegramCategoryDestination,
+  TELEGRAM_MARKET_CATEGORIES,
   sendTelegramMessage,
   verifyTelegramBot,
   createTelegramInviteLink,
@@ -50,7 +53,7 @@ export function createTelegramHandlers({
   if(!token||!chatId)return error('TELEGRAM_CREDENTIALS_REQUIRED',400);
   if(!ownToken&&body.chatId&&body.chatId!==env.TELEGRAM_CHAT_ID)return error('INVALID_DESTINATION',400);
   const action=body.action;
-  if(!['verify','test','signal','ea-signal','announcement','custom','create-invite','kick-member','auto-kick-expired'].includes(action))return error('INVALID_ACTION',400);
+  if(!['verify','test','signal','ea-signal','announcement','custom','market-playbook','create-invite','kick-member','auto-kick-expired'].includes(action))return error('INVALID_ACTION',400);
   if(action==='verify'){const bot=await verify({token});return Response.json({ok:bot.valid,botName:bot.botName,username:bot.username,error:bot.valid?null:'INVALID_TOKEN'},{status:bot.valid?200:400,headers});}
 
   const operationId=body.operationId||randomUUID();
@@ -133,6 +136,14 @@ export function createTelegramHandlers({
     const s=body.eaSignal;
     if(!s||!['BUY','SELL','LONG','SHORT'].includes(s.side)||!['ENTRY','LOCK_PROFIT','TP1','TP2'].includes(s.stage)||![s.entry,s.stopLoss,s.lockBuffer,s.tp1,s.tp2].every(v=>Number.isFinite(v)&&v>0)||!/^[-A-Z0-9./_]{1,32}$/.test(s.symbol))throw new RequestError('INVALID_SIGNAL',400);
     text=formatTelegramEaSignalMessage(s,options);summary=s.symbol+' '+s.stage;
+   }else if(action==='market-playbook'){
+    const category=body.category||'thai';
+    const round=body.round||'morning_0930';
+    if(!TELEGRAM_MARKET_CATEGORIES[category]||!['morning_0930','afternoon_1330','evening_1730'].includes(round))throw new RequestError('INVALID_PLAYBOOK_CATEGORY',400);
+    const picks=Array.isArray(body.picks)?body.picks:[];
+    if(!picks.length||picks.length>10)throw new RequestError('INVALID_PLAYBOOK_PICKS',400);
+    text=formatTelegramMarketPlaybookMessage({category,round,picks,regime:body.regime||'ตลาดเอื้อ (SET100 / Global)',...options});
+    summary=`[${TELEGRAM_MARKET_CATEGORIES[category].badge}] ${round}`;
    }else if(action==='signal'){
     const s=body.signal;
     if(!s||!['LONG','SHORT'].includes(s.side)||!/^[-A-Z0-9./_]{1,32}$/.test(s.symbol)||![s.plan?.entry,s.plan?.stop,s.plan?.target].every(v=>Number.isFinite(v)&&v>0))throw new RequestError('INVALID_SIGNAL',400);
@@ -143,10 +154,15 @@ export function createTelegramHandlers({
   const globalLimit=await rateLimit('telegram-provider',ownToken?member.id:'vip-channel',18);if(globalLimit)return globalLimit;
   const logDelivery=isAdmin(member);
   if(logDelivery&&!(await history.start({id,actor:member.id,summary})))return error('ALREADY_SUBMITTED',409);
+  const dest=body.category&&TELEGRAM_MARKET_CATEGORIES[body.category]
+   ?resolveTelegramCategoryDestination(body.category,env,body.topicThreadId)
+   :{chatId,messageThreadId:Number.isInteger(Number(body.topicThreadId))&&Number(body.topicThreadId)>0?Number(body.topicThreadId):null};
   try{
-   const result=await send({token,chatId,text,parseMode:'HTML'});
+   const sendPayload={token,chatId:dest.chatId||chatId,text,parseMode:'HTML'};
+   if(dest.messageThreadId)sendPayload.messageThreadId=dest.messageThreadId;
+   const result=await send(sendPayload);
    if(logDelivery)await history.finish(id,'SENT',result.messageId);
-   return Response.json({ok:true,messageId:result.messageId},{headers});
+   return Response.json({ok:true,messageId:result.messageId,category:body.category||null,messageThreadId:dest.messageThreadId||null},{headers});
   }catch{
    if(logDelivery)await history.finish(id,'CHECK_REQUIRED',null);
    return error('TELEGRAM_DISPATCH_FAILED',502);

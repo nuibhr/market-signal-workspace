@@ -88,3 +88,25 @@ test('auto-kick-expired batch kicks list of expired user IDs', async () => {
   assert.deepEqual(data.kicked, ['1001', '1002', '1003']);
   assert.equal(kicks.length, 3);
 });
+
+test('market-playbook dispatches categorized playbook with category badge, hashtags and topic thread support', async () => {
+  const { handler, calls } = setup({ id: 'admin' }, true);
+  const res = await handler.POST(request({
+    action: 'market-playbook',
+    category: 'dr',
+    round: 'morning_0930',
+    topicThreadId: 88,
+    picks: [
+      { symbol: 'NVDA80', name: 'NVIDIA DR', entry: 23.8, target: 26.2, stop: 22.9, note: 'Premium +0.4%' },
+    ],
+  }));
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.ok, true);
+  assert.equal(data.category, 'dr');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].messageThreadId, 88);
+  assert.ok(calls[0].text.includes('[🌐 โพย DR80 หุ้นโลก]'));
+  assert.ok(calls[0].text.includes('09:30 น.'));
+  assert.ok(calls[0].text.includes('#DR80'));
+});

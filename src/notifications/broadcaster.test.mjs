@@ -4,6 +4,8 @@ import {
   formatTelegramTradeMessage,
   formatTelegramEaSignalMessage,
   formatTelegramAdminAnnouncement,
+  formatTelegramMarketPlaybookMessage,
+  resolveTelegramCategoryDestination,
   sendTelegramMessage,
   verifyTelegramBot,
   createTelegramInviteLink,
@@ -240,4 +242,61 @@ test('unbanTelegramChatMember unbans user', async () => {
   assert.equal(calledUrl, 'https://api.telegram.org/bottest_token/unbanChatMember');
   assert.equal(calledBody.user_id, '123456789');
   assert.equal(calledBody.only_if_banned, true);
+});
+
+test('formatTelegramMarketPlaybookMessage separates Thai, DR, and TFEX categories with clear headers and hashtags', () => {
+  const thaiMsg = formatTelegramMarketPlaybookMessage({
+    category: 'thai',
+    round: 'morning_0930',
+    regime: 'ตลาดเอื้อ (Stage 2 Bullish)',
+    picks: [
+      { symbol: 'DELTA', name: 'Delta Electronics', entry: 118.5, target: 127.0, stop: 114.0, note: 'Stage 2 Leader' },
+      { symbol: 'CPALL', name: 'CP ALL', entry: 61.5, target: 65.5, stop: 59.0, note: 'Pullback แนวรับ' },
+    ],
+    appOrigin: 'https://nugaom.ai',
+  });
+  assert.ok(thaiMsg.includes('[🇹🇭 โพยหุ้นไทย SET100]'));
+  assert.ok(thaiMsg.includes('09:30 น.'));
+  assert.ok(thaiMsg.includes('#หุ้นไทย'));
+  assert.ok(thaiMsg.includes('DELTA'));
+  assert.ok(thaiMsg.includes('https://nugaom.ai/thai'));
+
+  const drMsg = formatTelegramMarketPlaybookMessage({
+    category: 'dr',
+    round: 'afternoon_1330',
+    regime: 'Global Tech',
+    picks: [
+      { symbol: 'NVDA80', name: 'NVIDIA DR', entry: 23.8, target: 26.2, stop: 22.9, note: 'Premium +0.4%' },
+    ],
+    appOrigin: 'https://nugaom.ai',
+  });
+  assert.ok(drMsg.includes('[🌐 โพย DR80 หุ้นโลก]'));
+  assert.ok(drMsg.includes('13:30 น.'));
+  assert.ok(drMsg.includes('#DR80'));
+  assert.ok(drMsg.includes('NVDA80'));
+  assert.ok(drMsg.includes('https://nugaom.ai/dr'));
+
+  const tfexMsg = formatTelegramMarketPlaybookMessage({
+    category: 'tfex',
+    round: 'evening_1730',
+    regime: 'SET50 Index Futures',
+    picks: [
+      { symbol: 'S50M26', name: 'SET50 Futures', entry: 912.5, target: 924.0, stop: 906.0, note: 'Long ตามเทรนด์' },
+    ],
+    appOrigin: 'https://nugaom.ai',
+  });
+  assert.ok(tfexMsg.includes('[⚡ โพย TFEX &amp; SET50 Futures]'));
+  assert.ok(tfexMsg.includes('17:30 น.'));
+  assert.ok(tfexMsg.includes('#TFEX'));
+  assert.ok(tfexMsg.includes('S50M26'));
+});
+
+test('resolveTelegramCategoryDestination supports dedicated category chatId and topic threadId', () => {
+  const dest = resolveTelegramCategoryDestination('dr', {
+    TELEGRAM_CHAT_ID: '-100111',
+    TELEGRAM_CHAT_ID_DR: '-100222',
+    TELEGRAM_THREAD_ID_DR: '42',
+  });
+  assert.equal(dest.chatId, '-100222');
+  assert.equal(dest.messageThreadId, 42);
 });

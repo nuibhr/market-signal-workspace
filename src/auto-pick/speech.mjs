@@ -71,7 +71,24 @@ export function buildMorningBriefSpeech(rows = [], regime = 'ตลาดผส�
     const name = speakableThaiTicker(item.symbol);
     return `ตัวที่ ${idx + 1} ${name} แนวรับจุดเข้า ${fmt(item.plan.entry)} บาท เป้าแนวต้าน ${fmt(item.plan.minimumTarget)} บาท จุดคัท ${fmt(item.plan.stopLoss)} บาท`;
   });
-  return `โพยหุ้นเด่นเช้านี้เล่นอะไรดี ภาวะตลาด ${regime} คัดหุ้นเข้าแผน ${picks.length} ตัวเน้นๆ ${parts.join(' ')} วางแผนตามกรอบสองอาร์และคุมความเสี่ยงทุกไม้นะคะ`;
+  return `โพยหุ้นเด่นเช้านี้เล่นอะไรดี รอบเก้าโมงครึ่ง ภาวะตลาด ${regime} คัดหุ้นเข้าแผน ${picks.length} ตัวเน้นๆ ${parts.join(' ')} วางแผนตามกรอบสองอาร์และคุมความเสี่ยงทุกไม้นะคะ`;
+}
+
+export function buildAfternoonBriefSpeech(rows = [], regime = 'ตลาดผสม') {
+  const valid = (rows || []).filter(r => r && r.plan && Number.isFinite(r.price) && !['unavailable', 'stale'].includes(r.status));
+  const picks = [...valid]
+    .sort((a, b) => ((b.pullback ? 3 : 0) + (b.volumeBreakout ? 2 : 0) + (b.score ?? 0)) - ((a.pullback ? 3 : 0) + (a.volumeBreakout ? 2 : 0) + (a.score ?? 0)))
+    .slice(0, 3);
+
+  if (!picks.length) {
+    return 'สวัสดีภาคบ่ายรอบบ่ายโมงครึ่งค่ะ ขณะนี้กำลังรอผลสแกนหุ้นเปิดตลาดบ่าย กรุณากดโหลดข้อมูลล่าสุดสักครู่ค่ะ';
+  }
+  const fmt = v => Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  const parts = picks.map((item, idx) => {
+    const name = speakableThaiTicker(item.symbol);
+    return `ตัวที่ ${idx + 1} ${name} โซนย่อรับแนวรับ ${fmt(item.plan.entry)} บาท เป้าแนวต้านภาคบ่าย ${fmt(item.plan.minimumTarget)} บาท จุดคัท ${fmt(item.plan.stopLoss)} บาท`;
+  });
+  return `อัปเดตโพยหุ้นเปิดตลาดบ่าย รอบบ่ายโมงครึ่ง บ่ายนี้เล่นอะไรดี ภาวะตลาด ${regime} คัดหุ้นย่อรับแนวรับและวอลุ่มเข้าต่อเนื่อง ${picks.length} ตัว ${parts.join(' ')} เน้นรอรับที่แนวรับไม่ไล่ราคานะคะ`;
 }
 
 export function buildEveningHomeworkSpeech(rows = [], regime = 'ตลาดผสม') {
@@ -88,14 +105,76 @@ export function buildEveningHomeworkSpeech(rows = [], regime = 'ตลาดผ�
   ].filter(Boolean);
 
   if (!picks.length) {
-    return 'สรุปการบ้านหุ้นเย็นนี้ ขณะนี้กำลังรอข้อมูลราคาปิดประจำวัน กรุณากดโหลดข้อมูลล่าสุดค่ะ';
+    return 'สรุปการบ้านหุ้นเย็นนี้ รอบห้าโมงครึ่ง ขณะนี้กำลังรอข้อมูลราคาปิดประจำวัน กรุณากดโหลดข้อมูลล่าสุดค่ะ';
   }
   const fmt = v => Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 });
   const parts = picks.map(({ tag, item }) => {
     const name = speakableThaiTicker(item.symbol);
     return `${tag} หุ้น ${name} แนวรับเฝ้ารับ ${fmt(item.plan.entry)} บาท แนวต้าน ${fmt(item.plan.minimumTarget)} บาท จุดคัท ${fmt(item.plan.stopLoss)} บาท`;
   });
-  return `การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้ ภาวะตลาด ${regime} ${parts.join(' ')} จดเข้าลิสต์เฝ้าเปิดตลาดพรุ่งนี้เช้าได้เลยค่ะ`;
+  return `การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้ รอบห้าโมงครึ่ง ภาวะตลาด ${regime} ${parts.join(' ')} จดเข้าลิสต์เฝ้าเปิดตลาดพรุ่งนี้เช้าได้เลยค่ะ`;
+}
+
+export function buildDrMorningBriefSpeech(drRows = []) {
+  const picks = (drRows || []).filter(Boolean).slice(0, 3);
+  if (!picks.length) {
+    return 'สวัสดีตอนเช้าค่ะ โพยดีอาร์รอบเก้าโมงครึ่ง กำลังซิงก์ราคาหุ้นแม่จากต่างประเทศ กรุณารอสักครู่ค่ะ';
+  }
+  const fmt = v => Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  const parts = picks.map((item, idx) => {
+    const name = speakableThaiTicker(item.symbol);
+    const support = item.support ?? item.plan?.entry ?? (item.thbPrice ? item.thbPrice * 0.97 : 0);
+    const target = item.target1 ?? item.plan?.minimumTarget ?? (item.thbPrice ? item.thbPrice * 1.07 : 0);
+    const stop = item.stop ?? item.plan?.stopLoss ?? (item.thbPrice ? item.thbPrice * 0.94 : 0);
+    return `ตัวที่ ${idx + 1} ${name} แนวรับจุดเข้า ${fmt(support)} บาท เป้าแนวต้าน ${fmt(target)} บาท จุดคัท ${fmt(stop)} บาท`;
+  });
+  return `โพยดีอาร์เด่นเช้านี้เล่นอะไรดี รอบเก้าโมงครึ่ง คัดดีอาร์ตามทิศทางหุ้นแม่ต่างประเทศ ${picks.length} ตัว ${parts.join(' ')} เช็คราคายุติธรรมก่อนตั้งรับทุกครั้งนะคะ`;
+}
+
+export function buildDrAfternoonBriefSpeech(drRows = []) {
+  const picks = (drRows || []).filter(Boolean).slice(0, 3);
+  if (!picks.length) {
+    return 'อัปเดตโพยดีอาร์ภาคบ่าย รอบบ่ายโมงครึ่ง กำลังรอข้อมูลล่าสุดค่ะ';
+  }
+  const fmt = v => Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  const parts = picks.map((item, idx) => {
+    const name = speakableThaiTicker(item.symbol);
+    const support = item.support ?? item.plan?.entry ?? (item.thbPrice ? item.thbPrice * 0.97 : 0);
+    const target = item.target1 ?? item.plan?.minimumTarget ?? (item.thbPrice ? item.thbPrice * 1.07 : 0);
+    const stop = item.stop ?? item.plan?.stopLoss ?? (item.thbPrice ? item.thbPrice * 0.94 : 0);
+    return `ตัวที่ ${idx + 1} ${name} โซนย่อรับ ${fmt(support)} บาท แนวต้านภาคบ่าย ${fmt(target)} บาท จุดคัท ${fmt(stop)} บาท`;
+  });
+  return `โพยดีอาร์เปิดตลาดบ่าย รอบบ่ายโมงครึ่ง บ่ายนี้เล่นดีอาร์ตัวไหนดี คัดตัวไม่พรีเมียมเกินไป ${picks.length} ตัว ${parts.join(' ')} เน้นตั้งรับตามกรอบนะคะ`;
+}
+
+export function buildDrEveningHomeworkSpeech(drRows = []) {
+  const picks = (drRows || []).filter(Boolean).slice(0, 3);
+  if (!picks.length) {
+    return 'สรุปการบ้านดีอาร์เย็นนี้ รอบห้าโมงครึ่ง กำลังรอข้อมูลปิดตลาดค่ะ';
+  }
+  const fmt = v => Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 });
+  const tags = ['สายเทคขาขึ้น', 'สายย่อรับใกล้แฟร์แวลู', 'สายดักฟื้นตัวตามหุ้นแม่'];
+  const parts = picks.map((item, idx) => {
+    const name = speakableThaiTicker(item.symbol);
+    const support = item.support ?? item.plan?.entry ?? (item.thbPrice ? item.thbPrice * 0.97 : 0);
+    const target = item.target1 ?? item.plan?.minimumTarget ?? (item.thbPrice ? item.thbPrice * 1.07 : 0);
+    const stop = item.stop ?? item.plan?.stopLoss ?? (item.thbPrice ? item.thbPrice * 0.94 : 0);
+    return `${tags[idx] || `ตัวที่ ${idx + 1}`} ${name} แนวรับเฝ้ารับ ${fmt(support)} บาท แนวต้าน ${fmt(target)} บาท จุดคัท ${fmt(stop)} บาท`;
+  });
+  return `การบ้านดีอาร์เย็นนี้ รอบห้าโมงครึ่ง เตรียมเฝ้าคืนนี้และพรุ่งนี้เช้า ${parts.join(' ')} จดเข้าลิสต์เฝ้าได้เลยค่ะ`;
+}
+
+export function buildDrSupportResistanceSpeech(item) {
+  if (!item) return '';
+  const name = speakableThaiTicker(item.symbol);
+  const fmt = v => Number.isFinite(Number(v)) && Number(v) > 0 ? Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 }) : 'รอข้อมูล';
+  const price = item.thbPrice ?? item.price ?? 0;
+  const fair = item.fairThb ?? price;
+  const support = item.support ?? item.plan?.entry ?? (price * 0.97);
+  const target1 = item.target1 ?? item.plan?.minimumTarget ?? (price * 1.07);
+  const target2 = item.target2 ?? (price * 1.13);
+  const stop = item.stop ?? item.plan?.stopLoss ?? (price * 0.94);
+  return `เช็คแนวรับแนวต้านดีอาร์ ${name} ราคาในกระดาน ${fmt(price)} บาท ราคายุติธรรมเทียบหุ้นแม่ ${fmt(fair)} บาท โซนแนวรับปลอดภัย ${fmt(support)} บาท แนวต้านเป้าแรก ${fmt(target1)} บาท แนวต้านถัดไป ${fmt(target2)} บาท และจุดคัทลอสหากหลุด ${fmt(stop)} บาท`;
 }
 
 export function formatForThaiSpeech(text) {
@@ -144,7 +223,7 @@ export function formatForThaiSpeech(text) {
   return result.replace(/\s+/g, ' ').trim();
 }
 
-export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
+export function createSignalSpeaker(browser, onState = () => { }, options = {}) {
   let generation = 0;
   let current = null;
   let currentAudio = null;
@@ -165,7 +244,7 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
         if (p && typeof p.then === 'function') {
           p.then(() => {
             if (currentAudio !== a) {
-              try { a.pause(); a.currentTime = 0; } catch {}
+              try { a.pause(); a.currentTime = 0; } catch { }
               a.volume = 1;
             }
           }).catch(() => {
@@ -175,7 +254,7 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
           a.volume = 1;
         }
         sharedAudio = a;
-      } catch {}
+      } catch { }
     }
     if (hasSynthesis && !current) {
       try {
@@ -183,7 +262,7 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
         u.volume = 0;
         u.lang = 'th-TH';
         browser.speechSynthesis.speak?.(u);
-      } catch {}
+      } catch { }
     }
   }
 
@@ -193,14 +272,14 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
       try {
         currentAudio.pause();
         currentAudio.currentTime = 0;
-      } catch {}
+      } catch { }
       currentAudio = null;
     }
     current = null;
     if (hasSynthesis) {
       try {
         browser.speechSynthesis.cancel();
-      } catch {}
+      } catch { }
     }
     onState('idle', { reason: 'stopped' });
   }
@@ -212,6 +291,13 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
         onState('failed');
       }
       return false;
+    }
+    if (currentAudio) {
+      try {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      } catch {}
+      currentAudio = null;
     }
     const synthesis = browser.speechSynthesis;
     try {
@@ -244,11 +330,24 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
 
   function playAudio(text, ticket) {
     try {
+      if (currentAudio && currentAudio !== sharedAudio) {
+        try {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        } catch {}
+        currentAudio = null;
+      }
+      if (hasSynthesis) {
+        try { browser.speechSynthesis.cancel(); } catch {}
+      }
       const url = `/api/tts?text=${encodeURIComponent(text)}`;
       let audio;
       if (sharedAudio) {
         audio = sharedAudio;
-        try { audio.pause(); } catch {}
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch {}
         audio.volume = 1;
         audio.src = url;
         audio.load?.();
@@ -314,6 +413,8 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
     }
   }
 
+  let api = null;
+
   function play(text) {
     if (!supported || !text) {
       onState('unsupported');
@@ -324,6 +425,14 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
       onState('unsupported');
       return false;
     }
+    if (browser && browser.__activeSignalSpeaker && browser.__activeSignalSpeaker !== api) {
+      try {
+        browser.__activeSignalSpeaker.stop();
+      } catch {}
+    }
+    if (browser) {
+      browser.__activeSignalSpeaker = api;
+    }
     const ticket = ++generation;
 
     const preferAudio = hasAudio && options.engine !== 'synthesis';
@@ -333,7 +442,7 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
     return playSynthesis(spokenText, ticket);
   }
 
-  return {
+  api = {
     play,
     stop,
     unlock,
@@ -342,4 +451,6 @@ export function createSignalSpeaker(browser, onState = () => {}, options = {}) {
       return current !== null;
     },
   };
+
+  return api;
 }

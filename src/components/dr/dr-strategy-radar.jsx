@@ -45,7 +45,13 @@ import {
   generateMorningSignalSpeech,
   THAI_DIVIDEND_PORTFOLIO_MODEL,
 } from '../../dr/strategy-tracker.mjs';
-import { createSignalSpeaker } from '../../auto-pick/speech.mjs';
+import {
+  createSignalSpeaker,
+  buildDrMorningBriefSpeech,
+  buildDrAfternoonBriefSpeech,
+  buildDrEveningHomeworkSpeech,
+  buildDrSupportResistanceSpeech,
+} from '../../auto-pick/speech.mjs';
 import styles from './dr-strategy.module.css';
 import {requestStrategyFeed} from '../../dr/strategy-client.mjs';
 import {radarChartAsset,radarRowsForMarket} from '../../dr/chart-target.mjs';
@@ -319,6 +325,20 @@ const DR_DOCTOR_MASTER = {
     riskReward: '1 : 2.7',
     diagnosis: 'ผู้นำ AI และ Search ระดับโลก ราคาทรงตัวในกรอบแนวรับสะสม วาง SL 18.70 บาท คุมความเสี่ยงไม่เกิน 6%',
   },
+  TENCENT80: {
+    symbol: 'TENCENT80',
+    name: 'Tencent Holdings · Gaming, WeChat & Cloud AI',
+    underlyingUsd: 54.10,
+    drPrice: 17.80,
+    fairPrice: 17.90,
+    diffPct: -0.56,
+    status: '🟢 DISCOUNT (ถูกกว่าหุ้นแม่ฮ่องกง)',
+    buyZone: '17.40 - 17.80 ฿',
+    sl: '16.60',
+    tp1: '20.20',
+    riskReward: '1 : 2.8',
+    diagnosis: 'ผู้นำเทคจีนและเกมระดับโลก ราคา DR บนกระดานไทยมีส่วนลดเทียบหุ้นแม่ 700.HK เหมาะดักสะสมในกรอบแนวรับ',
+  },
 };
 
 export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',resultsRequest=0,favorites=[],favoritesByMarket={},onToggleFavorite,signalAccess=null,onOpenStyleScanner,compact=false,visible=true,workspaceView=null,onOpenResults }) {
@@ -428,6 +448,71 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
   const [drDoctorInput, setDrDoctorInput] = useState('');
   const [drDoctorActiveSymbol, setDrDoctorActiveSymbol] = useState('NVDA80');
+  const [drRoundTab, setDrRoundTab] = useState(() => {
+    const bkkNow = new Date(Date.now() + 7 * 3600 * 1000);
+    const mins = bkkNow.getUTCHours() * 60 + bkkNow.getUTCMinutes();
+    if (mins >= 16 * 60 + 30 || mins < 6 * 60) return 'evening';
+    if (mins >= 12 * 60 + 30) return 'afternoon';
+    return 'morning';
+  });
+  const [lastDrSpokenText, setLastDrSpokenText] = useState('');
+
+  const speakDrText = useCallback((text) => {
+    if (!text || !speakerRef.current) return;
+    setLastDrSpokenText(text);
+    speakerRef.current.unlock?.();
+    speakerRef.current.play(text);
+  }, []);
+
+  const drPlaybookSource = useMemo(() => {
+    if (scoredDRs && scoredDRs.length > 0) {
+      return scoredDRs.map((d) => {
+        const thbPrice = d.currentDrPrice ?? d.price ?? 0;
+        const fairThb = d.bridge?.fairPriceThb ?? thbPrice;
+        const diffPct = d.bridge?.diffPct ?? 0;
+        const support = d.scored?.entry ?? Number((thbPrice * 0.985).toFixed(2));
+        const stop = d.scored?.sl ?? Number((support * 0.94).toFixed(2));
+        const target1 = d.scored?.tp1 ?? Number((support * 1.08).toFixed(2));
+        const target2 = d.scored?.tp2 ?? Number((support * 1.14).toFixed(2));
+        return {
+          symbol: d.symbol,
+          name: d.name,
+          underlyingUsd: d.underlyingUsd,
+          thbPrice,
+          fairThb,
+          diffPct,
+          support,
+          stop,
+          target1,
+          target2,
+          score: d.scored?.totalScore ?? 12,
+        };
+      });
+    }
+    return Object.values(DR_DOCTOR_MASTER).map((m) => ({
+      symbol: m.symbol,
+      name: m.name,
+      underlyingUsd: m.underlyingUsd,
+      thbPrice: m.drPrice,
+      fairThb: m.fairPrice,
+      diffPct: m.diffPct,
+      support: Number(String(m.buyZone).split(' ')[0]) || Number((m.drPrice * 0.985).toFixed(2)),
+      stop: Number(m.sl),
+      target1: Number(m.tp1),
+      target2: Number((Number(m.tp1) * 1.06).toFixed(2)),
+      score: 14,
+    }));
+  }, [scoredDRs]);
+
+  const drMorningPicks = useMemo(() => drPlaybookSource.slice(0, 3), [drPlaybookSource]);
+  const drAfternoonPicks = useMemo(
+    () => [...drPlaybookSource].sort((a, b) => a.diffPct - b.diffPct).slice(0, 3),
+    [drPlaybookSource]
+  );
+  const drEveningPicks = useMemo(
+    () => [drPlaybookSource[0], drPlaybookSource[4] || drPlaybookSource[1], drPlaybookSource[2]].filter(Boolean),
+    [drPlaybookSource]
+  );
 
   const activeDrDoctor = useMemo(() => {
     const sym = (drDoctorActiveSymbol || 'NVDA80').toUpperCase().trim();
@@ -456,7 +541,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         diagnosis: live.scored?.reason || `ราคาปิดจริง ${curP.toFixed(2)} ฿ (${live.dataAsOf?.slice(0,10) || 'ล่าสุด'}) · วาง Stop Loss ที่ ${Number(sl).toFixed(2)} ฿ เป้าหมาย ${Number(tp1).toFixed(2)} ฿`,
       };
     }
-    return null;
+    return DR_DOCTOR_MASTER[sym] || DR_DOCTOR_MASTER.NVDA80;
   }, [drDoctorActiveSymbol, scoredDRs]);
 
   const topMorningThai = useMemo(() => {
@@ -851,6 +936,196 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         </aside>
       )}
 
+      {/* ── 0. DR 3-Round Daily Voice Playbook (09:30 / 13:30 / 17:30 + แนวรับแนวต้าน) ── */}
+      {currentMarket === 'dr' && (
+        <section className={styles.scoreboardSection} style={{ marginBottom: '20px' }} aria-label="โพยเสียง DR80 ประจำวัน 09:30 เช้า 13:30 บ่าย และ 17:30 การบ้านเย็น">
+          <div className={styles.scoreboardHeader}>
+            <div className={styles.scoreboardTitleGroup}>
+              <span className={styles.scoreboardPill}>🔊 DR80 VOICE BRIEFING · ตารางโพย 3 รอบประจำวัน (09:30 · 13:30 · 17:30 น.)</span>
+              <h3>09:30 เช้านี้เล่น DR ตัวไหนดี? · 13:30 บ่ายนี้เล่นอะไรดี? · 17:30 การบ้าน DR · แนวรับแนวต้านเท่าไหร่?</h3>
+              <p>คัด DR80 หุ้นโลกที่มีแต้มต่อ Fair Value พร้อมอ่านออกเสียงภาษาไทยแจ้งจุดเข้า แนวรับ แนวต้าน และจุดคัทลอสให้ฟังทันที (กดสลับเมนูเสียงไม่ซ้อนกัน)</p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                className={styles.doctorSubmitBtn}
+                onClick={() => {
+                  const txt = drRoundTab === 'evening'
+                    ? buildDrEveningHomeworkSpeech(drEveningPicks)
+                    : drRoundTab === 'afternoon'
+                      ? buildDrAfternoonBriefSpeech(drAfternoonPicks)
+                      : buildDrMorningBriefSpeech(drMorningPicks);
+                  speakDrText(txt);
+                }}
+              >
+                {speechState === 'speaking' ? '🔊 กำลังอ่านโพย DR…' : '🔊 กดฟังเสียงสรุปโพย DR ในแผน'}
+              </button>
+              {speechState === 'speaking' && (
+                <button
+                  type="button"
+                  className={styles.ledgerButton}
+                  onClick={() => speakerRef.current?.stop()}
+                >
+                  ⏹ หยุดเสียง
+                </button>
+              )}
+            </div>
+          </div>
+
+          {lastDrSpokenText && (
+            <div style={{ background: 'rgba(15, 23, 42, 0.72)', borderRadius: '12px', padding: '10px 14px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#cbd5e1' }} role="status" aria-live="polite">
+              <span>🎙️ <strong>สคริปต์เสียงแจ้งเตือน DR ล่าสุด:</strong> {lastDrSpokenText}</span>
+              <button type="button" className={styles.quickPillBtn} onClick={() => speakDrText(lastDrSpokenText)}>ฟังซ้ำ ↻</button>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px', marginBottom: '16px' }} role="tablist" aria-label="เลือกรอบเวลาโพย DR ประจำวัน">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={drRoundTab === 'morning'}
+              onClick={() => {
+                setDrRoundTab('morning');
+                speakDrText(buildDrMorningBriefSpeech(drMorningPicks));
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: '14px',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                background: drRoundTab === 'morning' ? 'linear-gradient(135deg, rgba(16,185,129,0.24), rgba(56,189,248,0.22))' : 'rgba(15,23,42,0.68)',
+                color: '#f8fafc',
+                boxShadow: drRoundTab === 'morning' ? '0 0 18px rgba(16,185,129,0.25)' : 'none',
+              }}
+            >
+              <strong style={{ display: 'block', fontSize: '13px' }}>🌅 09:30 น. เช้านี้เล่น DR ตัวไหนดี?</strong>
+              <small style={{ color: '#94a3b8', fontSize: '11px' }}>โพยเปิดตลาดเช้าตามทิศทางหุ้นแม่ + ฟังเสียง</small>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={drRoundTab === 'afternoon'}
+              onClick={() => {
+                setDrRoundTab('afternoon');
+                speakDrText(buildDrAfternoonBriefSpeech(drAfternoonPicks));
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: '14px',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                background: drRoundTab === 'afternoon' ? 'linear-gradient(135deg, rgba(16,185,129,0.24), rgba(56,189,248,0.22))' : 'rgba(15,23,42,0.68)',
+                color: '#f8fafc',
+                boxShadow: drRoundTab === 'afternoon' ? '0 0 18px rgba(16,185,129,0.25)' : 'none',
+              }}
+            >
+              <strong style={{ display: 'block', fontSize: '13px' }}>☀️ 13:30 น. บ่ายนี้เล่น DR ตัวไหนดี?</strong>
+              <small style={{ color: '#94a3b8', fontSize: '11px' }}>คัด DR ย่อรับไม่พรีเมียมเกินไป + ฟังเสียง</small>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={drRoundTab === 'evening'}
+              onClick={() => {
+                setDrRoundTab('evening');
+                speakDrText(buildDrEveningHomeworkSpeech(drEveningPicks));
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: '14px',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                background: drRoundTab === 'evening' ? 'linear-gradient(135deg, rgba(16,185,129,0.24), rgba(56,189,248,0.22))' : 'rgba(15,23,42,0.68)',
+                color: '#f8fafc',
+                boxShadow: drRoundTab === 'evening' ? '0 0 18px rgba(16,185,129,0.25)' : 'none',
+              }}
+            >
+              <strong style={{ display: 'block', fontSize: '13px' }}>🌙 17:30 น. การบ้าน DR เย็นนี้</strong>
+              <small style={{ color: '#94a3b8', fontSize: '11px' }}>การบ้าน 3 สไตล์เฝ้าคืนนี้/พรุ่งนี้เช้า + ฟังเสียง</small>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={drRoundTab === 'levels'}
+              onClick={() => {
+                setDrRoundTab('levels');
+                if (activeDrDoctor) {
+                  speakDrText(buildDrSupportResistanceSpeech({
+                    symbol: activeDrDoctor.symbol,
+                    thbPrice: activeDrDoctor.drPrice,
+                    fairThb: activeDrDoctor.fairPrice,
+                    support: Number(String(activeDrDoctor.buyZone).split(' ')[0]) || activeDrDoctor.drPrice,
+                    target1: Number(activeDrDoctor.tp1),
+                    stop: Number(activeDrDoctor.sl),
+                  }));
+                }
+                document.getElementById('dr-stock-doctor')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: '14px',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                background: drRoundTab === 'levels' ? 'linear-gradient(135deg, rgba(16,185,129,0.24), rgba(56,189,248,0.22))' : 'rgba(15,23,42,0.68)',
+                color: '#f8fafc',
+                boxShadow: drRoundTab === 'levels' ? '0 0 18px rgba(16,185,129,0.25)' : 'none',
+              }}
+            >
+              <strong style={{ display: 'block', fontSize: '13px' }}>🎯 แนวรับแนวต้านเท่าไหร่?</strong>
+              <small style={{ color: '#94a3b8', fontSize: '11px' }}>เช็คแนวรับ-แนวต้าน &amp; Fair Value รายตัว + เสียง</small>
+            </button>
+          </div>
+
+          <div className={styles.winnerCardsGrid}>
+            {(drRoundTab === 'evening' ? drEveningPicks : drRoundTab === 'afternoon' ? drAfternoonPicks : drMorningPicks).map((item, idx) => {
+              const badgeLabel = drRoundTab === 'evening'
+                ? ['🌙 17:30 · สายเทคขาขึ้น', '🌙 17:30 · สายย่อรับใกล้ Fair Value', '🌙 17:30 · สายดักฟื้นตัวตามหุ้นแม่'][idx] || `🌙 การบ้าน #${idx + 1}`
+                : drRoundTab === 'afternoon'
+                  ? `☀️ โพยบ่าย 13:30 #${idx + 1}`
+                  : `🌅 โพยเช้า 09:30 #${idx + 1}`;
+              return (
+                <div key={`${drRoundTab}-${item.symbol}`} className={styles.winnerCard}>
+                  <div className={styles.winnerCardHead}>
+                    <InstrumentLogo asset={{ market: 'dr', symbol: item.symbol }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <strong>{item.symbol} · ฿{item.thbPrice?.toFixed(2)}</strong>
+                      <small>{item.name} · Fair ฿{item.fairThb?.toFixed(2)}</small>
+                    </div>
+                    <span className={styles.winnerBadge}>{badgeLabel}</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', margin: '10px 0', fontSize: '11px', background: 'rgba(15,23,42,0.55)', padding: '8px 10px', borderRadius: '10px' }}>
+                    <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🟢 แนวรับ</span><strong>฿{item.support?.toFixed(2)}</strong></div>
+                    <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🎯 TP1</span><strong style={{ color: '#34d399' }}>฿{item.target1?.toFixed(2)}</strong></div>
+                    <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🚀 TP2</span><strong style={{ color: '#38bdf8' }}>฿{item.target2?.toFixed(2)}</strong></div>
+                    <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🔴 จุดคัท SL</span><strong style={{ color: '#fb7185' }}>฿{item.stop?.toFixed(2)}</strong></div>
+                  </div>
+                  <div className={styles.winnerDetails} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      type="button"
+                      className={styles.quickPillBtn}
+                      onClick={() => speakDrText(buildDrSupportResistanceSpeech(item))}
+                    >
+                      🔊 ฟังแผน {item.symbol}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.quickPillBtn}
+                      onClick={() => handleGoToChart({ symbol: item.symbol, market: 'dr' })}
+                    >
+                      เปิดกราฟ {item.symbol} ↗
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* ── DR Verified Track Record Scoreboard ── */}
       {currentMarket === 'dr' && (
         <section className={styles.scoreboardSection} aria-label="DR Verified Signal Track Record">
@@ -922,16 +1197,17 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
               <span>⚡ DR80 หุ้นโลกพร้อมแผน 2R จากราคาปิดจริงล่าสุด (Live Settrade EOD)</span>
             </div>
             <div className={styles.winnerCardsGrid}>
-              {(topDrFocus.length ? topDrFocus : scoredDRs).slice(0, 3).map((item) => {
-                const entry = item.scored?.entry ?? item.currentDrPrice;
-                const tp1 = item.scored?.tp1 ?? Number((entry * 1.06).toFixed(2));
+              {(topDrFocus.length ? topDrFocus : scoredDRs.length ? scoredDRs : drMorningPicks).slice(0, 3).map((item) => {
+                const curPrice = item.currentDrPrice ?? item.thbPrice ?? 0;
+                const entry = item.scored?.entry ?? item.support ?? curPrice;
+                const tp1 = item.scored?.tp1 ?? item.target1 ?? Number((entry * 1.06).toFixed(2));
                 const gainPct = entry > 0 ? (((tp1 - entry) / entry) * 100).toFixed(1) : '6.0';
                 return (
-                  <div key={item.symbol} className={styles.winnerCard} onClick={() => handleGoToChart(item)} style={{ cursor: 'pointer' }}>
+                  <div key={item.symbol} className={styles.winnerCard} onClick={() => handleGoToChart({ symbol: item.symbol, market: 'dr' })} style={{ cursor: 'pointer' }}>
                     <div className={styles.winnerCardHead}>
                       <InstrumentLogo asset={{ market: 'dr', symbol: item.symbol }} />
                       <div>
-                        <strong>{item.symbol} · ฿{item.currentDrPrice?.toFixed(2)}</strong>
+                        <strong>{item.symbol} · ฿{curPrice?.toFixed(2)}</strong>
                         <small>{item.name} · หุ้นแม่ {item.underlying || 'Global'}</small>
                       </div>
                       <span className={styles.winnerBadge}>เป้า +{gainPct}% 🎯</span>
@@ -950,7 +1226,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
       {/* ── 2. Instant DR Doctor (เช็คแนวรับ-แนวต้าน & Fair Value ด่วน 3 บรรทัด) ── */}
       {currentMarket === 'dr' && (
-        <section className={styles.doctorSection} aria-label="ตรวจแนวรับแนวต้านและ Fair Value DR ด่วน 3 บรรทัด">
+        <section id="dr-stock-doctor" className={styles.doctorSection} aria-label="ตรวจแนวรับแนวต้านและ Fair Value DR ด่วน 3 บรรทัด">
           <div className={styles.doctorHead}>
             <div className={styles.doctorTitleGroup}>
               <span className={styles.doctorPill}>🩺 INSTANT DR DOCTOR · หมอเช็ค DR ด่วน</span>
@@ -1065,6 +1341,24 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
               </div>
 
               <div className={styles.doctorActions}>
+                <button
+                  type="button"
+                  className={styles.doctorSubmitBtn}
+                  onClick={() =>
+                    speakDrText(
+                      buildDrSupportResistanceSpeech({
+                        symbol: activeDrDoctor.symbol,
+                        thbPrice: activeDrDoctor.drPrice,
+                        fairThb: activeDrDoctor.fairPrice,
+                        support: Number(String(activeDrDoctor.buyZone).split(' ')[0]) || activeDrDoctor.drPrice,
+                        target1: Number(activeDrDoctor.tp1),
+                        stop: Number(activeDrDoctor.sl),
+                      })
+                    )
+                  }
+                >
+                  🔊 ฟังเสียงแนวรับ-แนวต้าน {activeDrDoctor.symbol}
+                </button>
                 <button
                   type="button"
                   className={styles.doctorChartBtn}

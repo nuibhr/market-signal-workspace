@@ -6,7 +6,12 @@ import {
   speakableThaiTicker,
   buildStockSupportResistanceSpeech,
   buildMorningBriefSpeech,
+  buildAfternoonBriefSpeech,
   buildEveningHomeworkSpeech,
+  buildDrMorningBriefSpeech,
+  buildDrAfternoonBriefSpeech,
+  buildDrEveningHomeworkSpeech,
+  buildDrSupportResistanceSpeech,
 } from './speech.mjs';
 
 function fixture() {
@@ -128,4 +133,45 @@ test('Thai retail 3 core questions speech builders generate clear Thai voice scr
   assert.ok(eveningSpeech.includes('การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้'));
   assert.ok(eveningSpeech.includes('สายต้นน้ำขาขึ้น'));
   assert.ok(eveningSpeech.includes('สายย่อรับแนวรับ'));
+
+  const afternoonSpeech = buildAfternoonBriefSpeech(sampleRows, 'ตลาดเอื้อ');
+  assert.ok(afternoonSpeech.includes('รอบบ่ายโมงครึ่ง'));
+  assert.ok(afternoonSpeech.includes('บ่ายนี้เล่นอะไรดี'));
+
+  const drSample = [
+    { symbol: 'NVDA80', thbPrice: 24.5, fairThb: 24.4, support: 23.8, target1: 26.2, target2: 27.6, stop: 22.9 },
+    { symbol: 'AAPL80', thbPrice: 18.2, fairThb: 18.1, support: 17.6, target1: 19.4, target2: 20.5, stop: 17.0 },
+  ];
+  assert.ok(buildDrMorningBriefSpeech(drSample).includes('รอบเก้าโมงครึ่ง'));
+  assert.ok(buildDrAfternoonBriefSpeech(drSample).includes('รอบบ่ายโมงครึ่ง'));
+  assert.ok(buildDrEveningHomeworkSpeech(drSample).includes('รอบห้าโมงครึ่ง'));
+  assert.ok(buildDrSupportResistanceSpeech(drSample[0]).includes('เอ็นวีดีเอ ดีอาร์'));
+});
+
+test('window singleton lock stops previous speaker when another menu starts speaking', () => {
+  const paused = [];
+  class MockAudio {
+    constructor(src) {
+      this.src = src;
+    }
+    play() {
+      return Promise.resolve();
+    }
+    pause() {
+      paused.push(this.src);
+    }
+  }
+  const sharedBrowser = { Audio: MockAudio };
+  const statesA = [];
+  const statesB = [];
+  const speakerA = createSignalSpeaker(sharedBrowser, s => statesA.push(s));
+  const speakerB = createSignalSpeaker(sharedBrowser, s => statesB.push(s));
+
+  speakerA.play('เมนูหุ้นไทยกำลังพูด');
+  assert.equal(sharedBrowser.__activeSignalSpeaker, speakerA);
+
+  speakerB.play('เมนูดีอาร์กำลังพูด');
+  assert.equal(sharedBrowser.__activeSignalSpeaker, speakerB);
+  assert.equal(statesA.at(-1), 'idle');
+  assert.equal(paused.length, 1);
 });
