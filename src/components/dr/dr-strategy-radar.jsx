@@ -48,9 +48,9 @@ import {
 import {
   createSignalSpeaker,
   buildDrMorningBriefSpeech,
-  buildDrAfternoonBriefSpeech,
   buildDrEveningHomeworkSpeech,
   buildDrSupportResistanceSpeech,
+  isEveningHomeworkUnlocked,
 } from '../../auto-pick/speech.mjs';
 import styles from './dr-strategy.module.css';
 import {requestStrategyFeed} from '../../dr/strategy-client.mjs';
@@ -505,14 +505,16 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   }, [scoredDRs]);
 
   const drMorningPicks = useMemo(() => drPlaybookSource.slice(0, 3), [drPlaybookSource]);
-  const drAfternoonPicks = useMemo(
-    () => [...drPlaybookSource].sort((a, b) => a.diffPct - b.diffPct).slice(0, 3),
-    [drPlaybookSource]
+  const drMorningSymbols = useMemo(() => new Set(drMorningPicks.map((p) => p.symbol)), [drMorningPicks]);
+  const drEveningCandidates = useMemo(
+    () => drPlaybookSource.filter((p) => !drMorningSymbols.has(p.symbol)),
+    [drPlaybookSource, drMorningSymbols]
   );
   const drEveningPicks = useMemo(
-    () => [drPlaybookSource[0], drPlaybookSource[4] || drPlaybookSource[1], drPlaybookSource[2]].filter(Boolean),
-    [drPlaybookSource]
+    () => (drEveningCandidates.length > 0 ? drEveningCandidates : drPlaybookSource).slice(0, 3),
+    [drEveningCandidates, drPlaybookSource]
   );
+  const drEveningTimeStatus = useMemo(() => isEveningHomeworkUnlocked(), [scoredDRs]);
 
   const activeDrDoctor = useMemo(() => {
     const sym = (drDoctorActiveSymbol || 'NVDA80').toUpperCase().trim();
@@ -936,13 +938,13 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         </aside>
       )}
 
-      {/* ── 0. DR 3-Round Daily Voice Playbook (09:30 / 13:30 / 17:30 + แนวรับแนวต้าน) ── */}
+      {/* ── 0. DR Daily Voice Playbook (09:30 เช้า / 17:30 การบ้านเย็น + แนวรับแนวต้าน) ── */}
       {currentMarket === 'dr' && (
-        <section className={styles.scoreboardSection} style={{ marginBottom: '20px' }} aria-label="โพยเสียง DR80 ประจำวัน 09:30 เช้า 13:30 บ่าย และ 17:30 การบ้านเย็น">
+        <section className={styles.scoreboardSection} style={{ marginBottom: '20px' }} aria-label="โพยเสียง DR80 ประจำวัน 09:30 เช้า และ 17:30 การบ้านเย็น">
           <div className={styles.scoreboardHeader}>
             <div className={styles.scoreboardTitleGroup}>
-              <span className={styles.scoreboardPill}>🔊 DR80 VOICE BRIEFING · ตารางโพย 3 รอบประจำวัน (09:30 · 13:30 · 17:30 น.)</span>
-              <h3>09:30 เช้านี้เล่น DR ตัวไหนดี? · 13:30 บ่ายนี้เล่นอะไรดี? · 17:30 การบ้าน DR · แนวรับแนวต้านเท่าไหร่?</h3>
+              <span className={styles.scoreboardPill}>🔊 DR80 VOICE BRIEFING · ตารางโพยประจำวัน (09:30 · 17:30 น.)</span>
+              <h3>09:30 เช้านี้เล่น DR ตัวไหนดี? · 17:30 การบ้าน DR · แนวรับแนวต้านเท่าไหร่?</h3>
               <p>คัด DR80 หุ้นโลกที่มีแต้มต่อ Fair Value พร้อมอ่านออกเสียงภาษาไทยแจ้งจุดเข้า แนวรับ แนวต้าน และจุดคัทลอสให้ฟังทันที (กดสลับเมนูเสียงไม่ซ้อนกัน)</p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -951,10 +953,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                 className={styles.doctorSubmitBtn}
                 onClick={() => {
                   const txt = drRoundTab === 'evening'
-                    ? buildDrEveningHomeworkSpeech(drEveningPicks)
-                    : drRoundTab === 'afternoon'
-                      ? buildDrAfternoonBriefSpeech(drAfternoonPicks)
-                      : buildDrMorningBriefSpeech(drMorningPicks);
+                    ? buildDrEveningHomeworkSpeech(drEveningPicks, { drMorningPicks })
+                    : buildDrMorningBriefSpeech(drMorningPicks);
                   speakDrText(txt);
                 }}
               >
@@ -1005,32 +1005,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <button
               type="button"
               role="tab"
-              aria-selected={drRoundTab === 'afternoon'}
-              onClick={() => {
-                setDrRoundTab('afternoon');
-                speakDrText(buildDrAfternoonBriefSpeech(drAfternoonPicks));
-              }}
-              style={{
-                padding: '12px 14px',
-                borderRadius: '14px',
-                border: 'none',
-                textAlign: 'left',
-                cursor: 'pointer',
-                background: drRoundTab === 'afternoon' ? 'linear-gradient(135deg, rgba(16,185,129,0.24), rgba(56,189,248,0.22))' : 'rgba(15,23,42,0.68)',
-                color: '#f8fafc',
-                boxShadow: drRoundTab === 'afternoon' ? '0 0 18px rgba(16,185,129,0.25)' : 'none',
-              }}
-            >
-              <strong style={{ display: 'block', fontSize: '13px' }}>☀️ 13:30 น. บ่ายนี้เล่น DR ตัวไหนดี?</strong>
-              <small style={{ color: '#94a3b8', fontSize: '11px' }}>คัด DR ย่อรับไม่พรีเมียมเกินไป + ฟังเสียง</small>
-            </button>
-            <button
-              type="button"
-              role="tab"
               aria-selected={drRoundTab === 'evening'}
               onClick={() => {
                 setDrRoundTab('evening');
-                speakDrText(buildDrEveningHomeworkSpeech(drEveningPicks));
+                speakDrText(buildDrEveningHomeworkSpeech(drEveningPicks, { drMorningPicks }));
               }}
               style={{
                 padding: '12px 14px',
@@ -1043,8 +1021,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                 boxShadow: drRoundTab === 'evening' ? '0 0 18px rgba(16,185,129,0.25)' : 'none',
               }}
             >
-              <strong style={{ display: 'block', fontSize: '13px' }}>🌙 17:30 น. การบ้าน DR เย็นนี้</strong>
-              <small style={{ color: '#94a3b8', fontSize: '11px' }}>การบ้าน 3 สไตล์เฝ้าคืนนี้/พรุ่งนี้เช้า + ฟังเสียง</small>
+              <strong style={{ display: 'block', fontSize: '13px' }}>🌙 17:30 น. การบ้าน DR เย็นนี้ {drEveningTimeStatus.unlocked ? '🔓' : '🔒'}</strong>
+              <small style={{ color: '#94a3b8', fontSize: '11px' }}>{drEveningTimeStatus.unlocked ? 'การบ้าน 3 สไตล์เฝ้าคืนนี้/พรุ่งนี้เช้า + ฟังเสียง' : `ปลดล็อกหลังตลาดปิด ${drEveningTimeStatus.unlockTime}`}</small>
             </button>
             <button
               type="button"
@@ -1080,49 +1058,79 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             </button>
           </div>
 
-          <div className={styles.winnerCardsGrid}>
-            {(drRoundTab === 'evening' ? drEveningPicks : drRoundTab === 'afternoon' ? drAfternoonPicks : drMorningPicks).map((item, idx) => {
-              const badgeLabel = drRoundTab === 'evening'
-                ? ['🌙 17:30 · สายเทคขาขึ้น', '🌙 17:30 · สายย่อรับใกล้ Fair Value', '🌙 17:30 · สายดักฟื้นตัวตามหุ้นแม่'][idx] || `🌙 การบ้าน #${idx + 1}`
-                : drRoundTab === 'afternoon'
-                  ? `☀️ โพยบ่าย 13:30 #${idx + 1}`
+          {drRoundTab === 'evening' && !drEveningTimeStatus.unlocked ? (
+            <div style={{ padding: '28px 20px', borderRadius: '18px', background: 'linear-gradient(135deg, rgba(15,23,42,0.88), rgba(30,41,59,0.72))', border: '1px solid rgba(56,189,248,0.22)', textAlign: 'center', margin: '14px 0', backdropFilter: 'blur(16px)' }}>
+              <div style={{ fontSize: '34px', marginBottom: '8px' }}>⏳</div>
+              <strong style={{ fontSize: '16px', color: '#f8fafc', display: 'block' }}>ตลาดกำลังเปิดทำการ · การบ้าน DR รอบเย็นจะเริ่มประมวลผลเวลา 17:30 น.</strong>
+              <p style={{ color: '#94a3b8', fontSize: '13px', margin: '8px auto 16px', maxWidth: '620px', lineHeight: 1.6 }}>
+                ระบบจะสแกนและประมวลผลอัตโนมัติหลังตลาดปิดตามราคาปิดจริง เพื่อคัด DR 3 สไตล์ที่ไม่ซ้ำกับรอบเช้า 09:30 น. (สายเทคขาขึ้น · สายย่อรับใกล้ Fair Value · สายดักฟื้นตัวตามหุ้นแม่)
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDrRoundTab('morning');
+                    speakDrText(buildDrMorningBriefSpeech(drMorningPicks));
+                  }}
+                  style={{ background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+                >
+                  🌅 ดูโพยเช้า 09:30 น. ระหว่างรอ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDrRoundTab('levels');
+                    document.getElementById('dr-stock-doctor')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  style={{ background: 'rgba(255,255,255,0.08)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.18)', padding: '9px 18px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px' }}
+                >
+                  🩺 ตรวจ Fair Value &amp; แนวรับรายตัว
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.winnerCardsGrid}>
+              {(drRoundTab === 'evening' ? drEveningPicks : drMorningPicks).map((item, idx) => {
+                const badgeLabel = drRoundTab === 'evening'
+                  ? ['🌙 17:30 · สายเทคขาขึ้น', '🌙 17:30 · สายย่อรับใกล้ Fair Value', '🌙 17:30 · สายดักฟื้นตัวตามหุ้นแม่'][idx] || `🌙 การบ้าน #${idx + 1}`
                   : `🌅 โพยเช้า 09:30 #${idx + 1}`;
-              return (
-                <div key={`${drRoundTab}-${item.symbol}`} className={styles.winnerCard}>
-                  <div className={styles.winnerCardHead}>
-                    <InstrumentLogo asset={{ market: 'dr', symbol: item.symbol }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <strong>{item.symbol} · ฿{item.thbPrice?.toFixed(2)}</strong>
-                      <small>{item.name} · Fair ฿{item.fairThb?.toFixed(2)}</small>
+                return (
+                  <div key={`${drRoundTab}-${item.symbol}`} className={styles.winnerCard}>
+                    <div className={styles.winnerCardHead}>
+                      <InstrumentLogo asset={{ market: 'dr', symbol: item.symbol }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <strong>{item.symbol} · ฿{item.thbPrice?.toFixed(2)}</strong>
+                        <small>{item.name} · Fair ฿{item.fairThb?.toFixed(2)}</small>
+                      </div>
+                      <span className={styles.winnerBadge}>{badgeLabel}</span>
                     </div>
-                    <span className={styles.winnerBadge}>{badgeLabel}</span>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', margin: '10px 0', fontSize: '11px', background: 'rgba(15,23,42,0.55)', padding: '8px 10px', borderRadius: '10px' }}>
+                      <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🟢 แนวรับ</span><strong>฿{item.support?.toFixed(2)}</strong></div>
+                      <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🎯 TP1</span><strong style={{ color: '#34d399' }}>฿{item.target1?.toFixed(2)}</strong></div>
+                      <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🚀 TP2</span><strong style={{ color: '#38bdf8' }}>฿{item.target2?.toFixed(2)}</strong></div>
+                      <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🔴 จุดคัท SL</span><strong style={{ color: '#fb7185' }}>฿{item.stop?.toFixed(2)}</strong></div>
+                    </div>
+                    <div className={styles.winnerDetails} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        className={styles.quickPillBtn}
+                        onClick={() => speakDrText(buildDrSupportResistanceSpeech(item))}
+                      >
+                        🔊 ฟังแผน {item.symbol}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.quickPillBtn}
+                        onClick={() => handleGoToChart({ symbol: item.symbol, market: 'dr' })}
+                      >
+                        เปิดกราฟ {item.symbol} ↗
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', margin: '10px 0', fontSize: '11px', background: 'rgba(15,23,42,0.55)', padding: '8px 10px', borderRadius: '10px' }}>
-                    <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🟢 แนวรับ</span><strong>฿{item.support?.toFixed(2)}</strong></div>
-                    <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🎯 TP1</span><strong style={{ color: '#34d399' }}>฿{item.target1?.toFixed(2)}</strong></div>
-                    <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🚀 TP2</span><strong style={{ color: '#38bdf8' }}>฿{item.target2?.toFixed(2)}</strong></div>
-                    <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🔴 จุดคัท SL</span><strong style={{ color: '#fb7185' }}>฿{item.stop?.toFixed(2)}</strong></div>
-                  </div>
-                  <div className={styles.winnerDetails} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      type="button"
-                      className={styles.quickPillBtn}
-                      onClick={() => speakDrText(buildDrSupportResistanceSpeech(item))}
-                    >
-                      🔊 ฟังแผน {item.symbol}
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.quickPillBtn}
-                      onClick={() => handleGoToChart({ symbol: item.symbol, market: 'dr' })}
-                    >
-                      เปิดกราฟ {item.symbol} ↗
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 

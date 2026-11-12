@@ -8,8 +8,8 @@ import {
   createSignalSpeaker,
   buildStockSupportResistanceSpeech,
   buildMorningBriefSpeech,
-  buildAfternoonBriefSpeech,
   buildEveningHomeworkSpeech,
+  isEveningHomeworkUnlocked,
 } from '../../auto-pick/speech.mjs';
 import {soundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
@@ -231,24 +231,22 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    .slice(0,3);
  },[rows]);
 
- const afternoonPicks=useMemo(()=>{
-  const valid=rows.filter(r=>r.plan&&Number.isFinite(r.price)&&!['unavailable','stale'].includes(r.status));
-  return [...valid]
-   .sort((a,b)=>((b.pullback?3:0)+(b.volumeBreakout?2:0)+(b.score??0))-((a.pullback?3:0)+(a.volumeBreakout?2:0)+(a.score??0)))
-   .slice(0,3);
- },[rows]);
+ const morningSymbols=useMemo(()=>new Set(morningPicks.map(p=>p.symbol)),[morningPicks]);
+ const eveningTimeStatus=useMemo(()=>isEveningHomeworkUnlocked(),[fetchCycle]);
 
  const eveningHomework=useMemo(()=>{
   const valid=rows.filter(r=>r.plan&&Number.isFinite(r.price)&&!['unavailable','stale'].includes(r.status));
-  const stage2Pick=valid.find(r=>r.stage===2&&r.templatePass)||valid[0]||null;
-  const pullbackPick=valid.find(r=>r.pullback&&r.symbol!==stage2Pick?.symbol)||valid.find(r=>r.symbol!==stage2Pick?.symbol)||null;
-  const breakoutPick=valid.find(r=>r.volumeBreakout&&r.symbol!==stage2Pick?.symbol&&r.symbol!==pullbackPick?.symbol)||valid.find(r=>r.symbol!==stage2Pick?.symbol&&r.symbol!==pullbackPick?.symbol)||null;
+  const pool=valid.filter(r=>!morningSymbols.has(r.symbol));
+  const candidatePool=pool.length>0?pool:valid;
+  const stage2Pick=candidatePool.find(r=>r.stage===2&&r.templatePass)||candidatePool[0]||null;
+  const pullbackPick=candidatePool.find(r=>r.pullback&&r.symbol!==stage2Pick?.symbol)||candidatePool.find(r=>r.symbol!==stage2Pick?.symbol)||null;
+  const breakoutPick=candidatePool.find(r=>r.volumeBreakout&&r.symbol!==stage2Pick?.symbol&&r.symbol!==pullbackPick?.symbol)||candidatePool.find(r=>r.symbol!==stage2Pick?.symbol&&r.symbol!==pullbackPick?.symbol)||null;
   return [
-   stage2Pick?{bucket:'🚀 การบ้านสายต้นน้ำ (Stage 2 Leader)',desc:'โครงสร้างขาขึ้นแข็งแกร่ง ยืนเหนือ EMA ทุกเส้น ชนะตลาด SET',row:stage2Pick}:null,
-   pullbackPick?{bucket:'🎯 การบ้านสายย่อรับแนวรับ (Pullback EMA)',desc:'ย่อตัวใกล้โซนแนวรับปลอดภัย จุด Stop Loss แคบ ไม่ต้องไล่ราคา',row:pullbackPick}:null,
-   breakoutPick?{bucket:'🔥 การบ้านสายวอลุ่มเข้าจ่อเบรก (Volume Surge)',desc:'วอลุ่มสะสมเข้าผิดปกติ เฝ้าจังหวะเปิดตลาดพรุ่งนี้เช้า',row:breakoutPick}:null,
+   stage2Pick?{bucket:'🚀 การบ้านสายต้นน้ำ (Stage 2 Leader)',desc:'โครงสร้างขาขึ้นแข็งแกร่ง ยืนเหนือ EMA ทุกเส้น ชนะตลาด SET (ชุดใหม่ไม่ซ้ำเช้า)',row:stage2Pick}:null,
+   pullbackPick?{bucket:'🎯 การบ้านสายย่อรับแนวรับ (Pullback EMA)',desc:'ย่อตัวใกล้โซนแนวรับปลอดภัย จุด Stop Loss แคบ ไม่ต้องไล่ราคา (ชุดใหม่ไม่ซ้ำเช้า)',row:pullbackPick}:null,
+   breakoutPick?{bucket:'🔥 การบ้านสายวอลุ่มเข้าจ่อเบรก (Volume Surge)',desc:'วอลุ่มสะสมเข้าผิดปกติ เฝ้าจังหวะเปิดตลาดพรุ่งนี้เช้า (ชุดใหม่ไม่ซ้ำเช้า)',row:breakoutPick}:null,
   ].filter(Boolean);
- },[rows]);
+ },[rows,morningSymbols]);
 
  /* ─── Auto Voice Briefing when stock plans load ─── */
  useEffect(()=>{
@@ -260,13 +258,10 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    if(typeof window!=='undefined'&&window.sessionStorage?.getItem(sessionKey))return;
    window.sessionStorage?.setItem(sessionKey,'1');
   }catch(_e){}
-  const bkkNow=new Date(Date.now()+7*3600*1000);
-  const mins=bkkNow.getUTCHours()*60+bkkNow.getUTCMinutes();
-  const autoText=(mins>=16*60+30||mins<6*60)
-   ?buildEveningHomeworkSpeech(rows,regime)
-   :(mins>=12*60+30)
-    ?buildAfternoonBriefSpeech(rows,regime)
-    :buildMorningBriefSpeech(rows,regime);
+  const timeGate=isEveningHomeworkUnlocked();
+  const autoText=timeGate.unlocked
+   ?buildEveningHomeworkSpeech(rows,regime,{morningPicks})
+   :buildMorningBriefSpeech(rows,regime);
   setLastSpokenText(autoText);
   pendingAutoTextRef.current=autoText;
   speakerRef.current?.play(autoText);
@@ -373,26 +368,14 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
     <button
      type="button"
      role="tab"
-     aria-selected={retailTab==='afternoon'}
-     className={retailTab==='afternoon'?styles.retailTabActive:styles.retailTab}
-     onClick={()=>{
-      setRetailTab('afternoon');
-      speakText(buildAfternoonBriefSpeech(rows,regime));
-     }}
-    >
-     ☀️ 13:30 น. บ่ายนี้เล่นอะไรดี? <small>โพยเปิดตลาดบ่าย ย่อรับแนวรับ + ฟังเสียง</small>
-    </button>
-    <button
-     type="button"
-     role="tab"
      aria-selected={retailTab==='evening'}
      className={retailTab==='evening'?styles.retailTabActive:styles.retailTab}
      onClick={()=>{
       setRetailTab('evening');
-      speakText(buildEveningHomeworkSpeech(rows,regime));
+      speakText(buildEveningHomeworkSpeech(rows,regime,{morningPicks}));
      }}
     >
-     🌙 17:30 น. หุ้นการบ้านเย็นนี้ <small>การบ้าน 3 สไตล์เฝ้าพรุ่งนี้ + ฟังเสียง</small>
+     🌙 17:30 น. หุ้นการบ้านเย็นนี้ <small>{eveningTimeStatus.unlocked?'การบ้าน 3 สไตล์ไม่ซ้ำรอบเช้า + ฟังเสียง':'🔒 สแกนอัตโนมัติ 17:30 น. หลังตลาดปิด'}</small>
     </button>
     <button
      type="button"
@@ -452,46 +435,25 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
     </div>
    )}
 
-   {retailTab==='afternoon'&&(
-    <div className={styles.retailCardsGrid}>
-     {afternoonPicks.map((item,idx)=>{
-      const analysis=getDoctorAnalysis(item);
-      return (
-       <article key={item.symbol} className={styles.retailCard}>
-        <div className={styles.retailCardTop}>
-         <span className={styles.retailRankBadge}>☀️ โพยบ่าย 13:30 #{idx+1}</span>
-         <div className={styles.retailAssetTitle}>
-          <InstrumentLogo asset={{market:'thai',symbol:item.symbol}}/>
-          <div>
-           <strong>{item.symbol} · ฿{n(item.price)}</strong>
-           <small>{item.name} · {item.pullback?'🎯 ย่อรับแนวรับภาคบ่าย':'🔥 วอลุ่มเข้าต่อเนื่อง'}</small>
-          </div>
-         </div>
-         <button
-          type="button"
-          className={styles.retailSpeakChip}
-          onClick={()=>speakText(buildStockSupportResistanceSpeech({...item,...analysis}))}
-         >
-          🔊 ฟังแผน {item.symbol}
-         </button>
-        </div>
-        <div className={styles.retailLevelPills}>
-         <div><span>🟢 โซนรับภาคบ่าย</span><strong>฿{n(item.plan?.entry)}</strong></div>
-         <div><span>🎯 แนวต้าน TP1</span><strong className={styles.targetText}>฿{n(item.plan?.minimumTarget)}</strong></div>
-         <div><span>🚀 แนวต้าน TP2</span><strong className={styles.targetText}>฿{n(analysis?.target2)}</strong></div>
-         <div><span>🔴 จุดคัท SL</span><strong className={styles.stopLossText}>฿{n(item.plan?.stopLoss)}</strong></div>
-        </div>
-        <div className={styles.retailCardFoot}>
-         <small>ความเสี่ยงต่อไม้ {n(item.plan?.stopPercent)}% · เน้นตั้งรับที่แนวรับ ไม่ไล่ราคา</small>
-         <button type="button" onClick={()=>onSelect?.(item.symbol)}>เปิดกราฟ &amp; คำนวณไม้ ↗</button>
-        </div>
-       </article>
-      );
-     })}
-    </div>
-   )}
 
-   {retailTab==='evening'&&(
+
+   {retailTab==='evening'&&(!eveningTimeStatus.unlocked?(
+    <div style={{ padding: '28px 20px', borderRadius: '18px', background: 'linear-gradient(135deg, rgba(15,23,42,0.88), rgba(30,41,59,0.72))', border: '1px solid rgba(56,189,248,0.22)', textAlign: 'center', margin: '14px 0', backdropFilter: 'blur(16px)' }}>
+     <div style={{ fontSize: '34px', marginBottom: '8px' }}>⏳</div>
+     <strong style={{ fontSize: '16px', color: '#f8fafc', display: 'block' }}>ตลาดกำลังเปิดทำการ · การบ้านหุ้นรอบเย็นจะเริ่มประมวลผลเวลา 17:30 น.</strong>
+     <p style={{ color: '#94a3b8', fontSize: '13px', margin: '8px auto 16px', maxWidth: '620px', lineHeight: 1.6 }}>
+      ระบบจะสแกนและประมวลผลอัตโนมัติหลังตลาดปิดตามราคาปิดจริง เพื่อคัดหุ้น 3 สไตล์ที่ไม่ซ้ำกับรอบเช้า 09:30 น. (สายต้นน้ำผู้นำ Stage 2 · สายย่อรับแนวรับ · สายวอลุ่มเบรก)
+     </p>
+     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+      <button type="button" onClick={()=>{setRetailTab('morning');speakText(buildMorningBriefSpeech(rows,regime));}} style={{ background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
+       🌅 ดูโพยเช้า 09:30 น. ระหว่างรอ
+      </button>
+      <button type="button" onClick={()=>{setRetailTab('levels');document.getElementById('thai-stock-doctor')?.scrollIntoView({behavior:'smooth'});}} style={{ background: 'rgba(255,255,255,0.08)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.18)', padding: '9px 18px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px' }}>
+       🩺 ตรวจแนวรับ-แนวต้านรายตัว
+      </button>
+     </div>
+    </div>
+   ):(
     <div className={styles.retailCardsGrid}>
      {eveningHomework.map(({bucket,desc,row:item})=>{
       const analysis=getDoctorAnalysis(item);
@@ -521,14 +483,14 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
          <div><span>🔴 จุดหนีตาย (SL)</span><strong className={styles.stopLossText}>฿{n(item.plan?.stopLoss)}</strong></div>
         </div>
         <div className={styles.retailCardFoot}>
-         <small>ราคาปิดอ้างอิง {item.priceDay??'ล่าสุด'} · เตรียมเฝ้าเปิดตลาดพรุ่งนี้ 09:30 น.</small>
+         <small>ราคาปิดอ้างอิง {item.priceDay??'ล่าสุด'} · คัดชุดใหม่ไม่ซ้ำรอบเช้า</small>
          <button type="button" onClick={()=>onSelect?.(item.symbol)}>เปิดกราฟทำการบ้าน ↗</button>
         </div>
        </article>
       );
      })}
     </div>
-   )}
+   ))}
   </section>
 
   {/* ─── 1. Verified Track Record Scoreboard ─── */}

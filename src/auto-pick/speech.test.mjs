@@ -6,12 +6,11 @@ import {
   speakableThaiTicker,
   buildStockSupportResistanceSpeech,
   buildMorningBriefSpeech,
-  buildAfternoonBriefSpeech,
   buildEveningHomeworkSpeech,
   buildDrMorningBriefSpeech,
-  buildDrAfternoonBriefSpeech,
   buildDrEveningHomeworkSpeech,
   buildDrSupportResistanceSpeech,
+  isEveningHomeworkUnlocked,
 } from './speech.mjs';
 
 function fixture() {
@@ -129,22 +128,33 @@ test('Thai retail 3 core questions speech builders generate clear Thai voice scr
   assert.ok(morningSpeech.includes('โพยหุ้นเด่นเช้านี้เล่นอะไรดี'));
   assert.ok(morningSpeech.includes('ซีพีออลล์'));
 
-  const eveningSpeech = buildEveningHomeworkSpeech(sampleRows, 'ตลาดเอื้อ');
-  assert.ok(eveningSpeech.includes('การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้'));
-  assert.ok(eveningSpeech.includes('สายต้นน้ำขาขึ้น'));
-  assert.ok(eveningSpeech.includes('สายย่อรับแนวรับ'));
+  // Evening homework time gate test (during market open vs unlocked)
+  const lockedTime = new Date('2026-11-12T10:30:00+07:00');
+  const unlockedTime = new Date('2026-11-12T18:00:00+07:00');
+  assert.equal(isEveningHomeworkUnlocked(lockedTime).unlocked, false);
+  assert.equal(isEveningHomeworkUnlocked(unlockedTime).unlocked, true);
 
-  const afternoonSpeech = buildAfternoonBriefSpeech(sampleRows, 'ตลาดเอื้อ');
-  assert.ok(afternoonSpeech.includes('รอบบ่ายโมงครึ่ง'));
-  assert.ok(afternoonSpeech.includes('บ่ายนี้เล่นอะไรดี'));
+  const lockedSpeech = buildEveningHomeworkSpeech(sampleRows, 'ตลาดเอื้อ', { now: lockedTime });
+  assert.ok(lockedSpeech.includes('ตลาดกำลังเปิดทำการ'));
+  assert.ok(lockedSpeech.includes('17:30'));
+
+  const eveningSpeech = buildEveningHomeworkSpeech(sampleRows, 'ตลาดเอื้อ', { now: unlockedTime, morningPicks: [sampleRows[0]] });
+  assert.ok(eveningSpeech.includes('การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้'));
+  assert.ok(!eveningSpeech.includes('ซีพีออลล์')); // Verified: de-duplicated against morning pick!
+  assert.ok(eveningSpeech.includes('สายต้นน้ำขาขึ้น') || eveningSpeech.includes('สายย่อรับแนวรับ') || eveningSpeech.includes('สายวอลุ่มเข้าจ่อเบรก'));
 
   const drSample = [
     { symbol: 'NVDA80', thbPrice: 24.5, fairThb: 24.4, support: 23.8, target1: 26.2, target2: 27.6, stop: 22.9 },
     { symbol: 'AAPL80', thbPrice: 18.2, fairThb: 18.1, support: 17.6, target1: 19.4, target2: 20.5, stop: 17.0 },
+    { symbol: 'MSFT80', thbPrice: 15.0, fairThb: 14.9, support: 14.5, target1: 16.0, target2: 17.0, stop: 14.0 },
+    { symbol: 'GOOG80', thbPrice: 19.0, fairThb: 18.9, support: 18.2, target1: 20.5, target2: 21.8, stop: 17.5 },
   ];
   assert.ok(buildDrMorningBriefSpeech(drSample).includes('รอบเก้าโมงครึ่ง'));
-  assert.ok(buildDrAfternoonBriefSpeech(drSample).includes('รอบบ่ายโมงครึ่ง'));
-  assert.ok(buildDrEveningHomeworkSpeech(drSample).includes('รอบห้าโมงครึ่ง'));
+  const drLockedSpeech = buildDrEveningHomeworkSpeech(drSample, { now: lockedTime });
+  assert.ok(drLockedSpeech.includes('17:30'));
+
+  const drEveningSpeech = buildDrEveningHomeworkSpeech(drSample, { now: unlockedTime, drMorningPicks: [drSample[0]] });
+  assert.ok(drEveningSpeech.includes('รอบห้าโมงครึ่ง'));
   assert.ok(buildDrSupportResistanceSpeech(drSample[0]).includes('เอ็นวีดีเอ ดีอาร์'));
 });
 

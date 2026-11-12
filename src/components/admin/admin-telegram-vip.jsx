@@ -403,7 +403,7 @@ export default function AdminTelegramVip() {
       if (result.ok) {
         setToast({
           type: 'ok',
-          msg: `🚀 ส่งโพย [${preset.label}] รอบ ${playbookRound === 'morning_0930' ? '09:30 น.' : playbookRound === 'afternoon_1330' ? '13:30 น.' : '17:30 น.'} เข้า Telegram VIP สำเร็จ!`,
+          msg: `🚀 ส่งโพย [${preset.label}] รอบ ${playbookRound === 'morning_0930' ? '09:30 น.' : '17:30 น.'} เข้า Telegram VIP สำเร็จ!`,
         });
         await fetchBotStatus();
       } else {
@@ -531,13 +531,12 @@ export default function AdminTelegramVip() {
 
           <div style={{ marginBottom: '14px' }}>
             <label style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block', marginBottom: '0.45rem', fontWeight: 600 }}>
-              2. เลือกรอบเวลาแจ้งเตือนประจำวัน (09:30 · 13:30 · 17:30 น.):
+              2. เลือกรอบเวลาแจ้งเตือนประจำวัน (09:30 · 17:30 น.):
             </label>
             <div className={styles.stageSelector}>
               {[
                 { id: 'morning_0930', label: '🌅 09:30 น. โพยเช้า (เช้านี้เล่นอะไรดี?)' },
-                { id: 'afternoon_1330', label: '☀️ 13:30 น. โพยบ่าย (บ่ายนี้เล่นอะไรดี?)' },
-                { id: 'evening_1730', label: '🌙 17:30 น. หุ้นการบ้านเย็นนี้ (เฝ้าพรุ่งนี้)' },
+                { id: 'evening_1730', label: '🌙 17:30 น. หุ้นการบ้านเย็นนี้ (คัดไม่ซ้ำรอบเช้า · เฝ้าพรุ่งนี้)' },
               ].map((r) => (
                 <button
                   key={r.id}
@@ -571,7 +570,7 @@ export default function AdminTelegramVip() {
           <div className={styles.previewBox} style={{ marginBottom: '14px' }}>
             <span className={styles.previewBadge}>Preview · {MARKET_PLAYBOOK_PRESETS[playbookCategory]?.label}</span>
             {`📣 [${MARKET_PLAYBOOK_PRESETS[playbookCategory]?.label}]
-${playbookRound === 'morning_0930' ? '🌅 รอบเช้า 09:30 น. · เช้านี้เล่นอะไรดี?' : playbookRound === 'afternoon_1330' ? '☀️ รอบบ่าย 13:30 น. · บ่ายนี้เล่นอะไรดี?' : '🌙 รอบเย็น 17:30 น. · หุ้นการบ้านเฝ้าพรุ่งนี้'}
+${playbookRound === 'morning_0930' ? '🌅 รอบเช้า 09:30 น. · เช้านี้เล่นอะไรดี?' : '🌙 รอบเย็น 17:30 น. · หุ้นการบ้านเฝ้าพรุ่งนี้ (คัดชุดใหม่ไม่ซ้ำรอบเช้า)'}
 ────────────────────────
 ${(MARKET_PLAYBOOK_PRESETS[playbookCategory]?.picks || []).map((p, i) => `${i + 1}. #${p.symbol} (${p.note})\n   🟢 แนวรับ/จุดเข้า: ${p.entry} | 🎯 TP1: ${p.tp1} | 🔴 จุดคัท SL: ${p.sl}`).join('\n')}
 ────────────────────────

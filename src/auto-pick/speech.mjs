@@ -57,6 +57,36 @@ export function buildStockSupportResistanceSpeech(row) {
   return `เช็คแนวรับแนวต้านหุ้น ${name} ราคาปัจจุบัน ${fmt(p)} บาท โซนแนวรับปลอดภัย ${fmt(support)} บาท แนวต้านเป้าแรก ${fmt(target1)} บาท แนวต้านถัดไป ${fmt(target2)} บาท และจุดคัทลอสหากหลุด ${fmt(stop)} บาท`;
 }
 
+export function isEveningHomeworkUnlocked(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Bangkok',
+    weekday: 'short',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  }).formatToParts(now);
+  const findVal = type => parts.find(p => p.type === type)?.value;
+  const weekday = findVal('weekday');
+  const hour = Number(findVal('hour') || 0);
+  const minute = Number(findVal('minute') || 0);
+
+  // Weekend (Sat/Sun): Market is closed, homework is fully accessible anytime
+  if (weekday === 'Sat' || weekday === 'Sun') {
+    return { unlocked: true, hour, minute, weekday, unlockTimeText: '17:30 น.' };
+  }
+
+  // Weekdays (Mon-Fri): Unlocked after 17:30 Bangkok time (17:30 to 23:59 or early morning before 08:30)
+  const totalMinutes = hour * 60 + minute;
+  const isUnlocked = totalMinutes >= (17 * 60 + 30) || totalMinutes < (8 * 60 + 30);
+  return {
+    unlocked: isUnlocked,
+    hour,
+    minute,
+    weekday,
+    unlockTimeText: '17:30 น.',
+  };
+}
+
 export function buildMorningBriefSpeech(rows = [], regime = 'ตลาดผสม') {
   const valid = (rows || []).filter(r => r && r.plan && Number.isFinite(r.price) && !['unavailable', 'stale'].includes(r.status));
   const picks = [...valid]
@@ -74,29 +104,21 @@ export function buildMorningBriefSpeech(rows = [], regime = 'ตลาดผส�
   return `โพยหุ้นเด่นเช้านี้เล่นอะไรดี รอบเก้าโมงครึ่ง ภาวะตลาด ${regime} คัดหุ้นเข้าแผน ${picks.length} ตัวเน้นๆ ${parts.join(' ')} วางแผนตามกรอบสองอาร์และคุมความเสี่ยงทุกไม้นะคะ`;
 }
 
-export function buildAfternoonBriefSpeech(rows = [], regime = 'ตลาดผสม') {
-  const valid = (rows || []).filter(r => r && r.plan && Number.isFinite(r.price) && !['unavailable', 'stale'].includes(r.status));
-  const picks = [...valid]
-    .sort((a, b) => ((b.pullback ? 3 : 0) + (b.volumeBreakout ? 2 : 0) + (b.score ?? 0)) - ((a.pullback ? 3 : 0) + (a.volumeBreakout ? 2 : 0) + (a.score ?? 0)))
-    .slice(0, 3);
-
-  if (!picks.length) {
-    return 'สวัสดีภาคบ่ายรอบบ่ายโมงครึ่งค่ะ ขณะนี้กำลังรอผลสแกนหุ้นเปิดตลาดบ่าย กรุณากดโหลดข้อมูลล่าสุดสักครู่ค่ะ';
+export function buildEveningHomeworkSpeech(rows = [], regime = 'ตลาดผสม', options = {}) {
+  const timeGate = options.bypassTimeGate ? { unlocked: true } : isEveningHomeworkUnlocked(options.now);
+  if (!timeGate.unlocked) {
+    return 'ขณะนี้ตลาดกำลังเปิดทำการค่ะ การบ้านหุ้นรอบเย็นจะเริ่มประมวลผลอัตโนมัติเวลา 17:30 น. หลังตลาดปิด เพื่อคัดกรองหุ้นตามราคาปิดจริงและไม่ซ้ำรอบเช้าค่ะ';
   }
-  const fmt = v => Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 });
-  const parts = picks.map((item, idx) => {
-    const name = speakableThaiTicker(item.symbol);
-    return `ตัวที่ ${idx + 1} ${name} โซนย่อรับแนวรับ ${fmt(item.plan.entry)} บาท เป้าแนวต้านภาคบ่าย ${fmt(item.plan.minimumTarget)} บาท จุดคัท ${fmt(item.plan.stopLoss)} บาท`;
-  });
-  return `อัปเดตโพยหุ้นเปิดตลาดบ่าย รอบบ่ายโมงครึ่ง บ่ายนี้เล่นอะไรดี ภาวะตลาด ${regime} คัดหุ้นย่อรับแนวรับและวอลุ่มเข้าต่อเนื่อง ${picks.length} ตัว ${parts.join(' ')} เน้นรอรับที่แนวรับไม่ไล่ราคานะคะ`;
-}
 
-export function buildEveningHomeworkSpeech(rows = [], regime = 'ตลาดผสม') {
   const valid = (rows || []).filter(r => r && r.plan && Number.isFinite(r.price) && !['unavailable', 'stale'].includes(r.status));
-  const stage2Pick = valid.find(r => r.stage === 2 && r.templatePass) || valid[0];
-  const pullbackPick = valid.find(r => r.pullback && r.symbol !== stage2Pick?.symbol) || valid.find(r => r.symbol !== stage2Pick?.symbol);
-  const breakoutPick = valid.find(r => r.volumeBreakout && r.symbol !== stage2Pick?.symbol && r.symbol !== pullbackPick?.symbol)
-    || valid.find(r => r.symbol !== stage2Pick?.symbol && r.symbol !== pullbackPick?.symbol);
+  const morningExclude = new Set((options.morningPicks || []).map(p => p.symbol));
+  const pool = valid.filter(r => !morningExclude.has(r.symbol));
+  const candidatePool = pool.length > 0 ? pool : valid;
+
+  const stage2Pick = candidatePool.find(r => r.stage === 2 && r.templatePass) || candidatePool[0];
+  const pullbackPick = candidatePool.find(r => r.pullback && r.symbol !== stage2Pick?.symbol) || candidatePool.find(r => r.symbol !== stage2Pick?.symbol);
+  const breakoutPick = candidatePool.find(r => r.volumeBreakout && r.symbol !== stage2Pick?.symbol && r.symbol !== pullbackPick?.symbol)
+    || candidatePool.find(r => r.symbol !== stage2Pick?.symbol && r.symbol !== pullbackPick?.symbol);
 
   const picks = [
     stage2Pick ? { tag: 'สายต้นน้ำขาขึ้น', item: stage2Pick } : null,
@@ -112,7 +134,7 @@ export function buildEveningHomeworkSpeech(rows = [], regime = 'ตลาดผ�
     const name = speakableThaiTicker(item.symbol);
     return `${tag} หุ้น ${name} แนวรับเฝ้ารับ ${fmt(item.plan.entry)} บาท แนวต้าน ${fmt(item.plan.minimumTarget)} บาท จุดคัท ${fmt(item.plan.stopLoss)} บาท`;
   });
-  return `การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้ รอบห้าโมงครึ่ง ภาวะตลาด ${regime} ${parts.join(' ')} จดเข้าลิสต์เฝ้าเปิดตลาดพรุ่งนี้เช้าได้เลยค่ะ`;
+  return `การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้ รอบห้าโมงครึ่ง คัดชุดใหม่ไม่ซ้ำรอบเช้า ภาวะตลาด ${regime} ${parts.join(' ')} จดเข้าลิสต์เฝ้าเปิดตลาดพรุ่งนี้เช้าได้เลยค่ะ`;
 }
 
 export function buildDrMorningBriefSpeech(drRows = []) {
@@ -131,24 +153,18 @@ export function buildDrMorningBriefSpeech(drRows = []) {
   return `โพยดีอาร์เด่นเช้านี้เล่นอะไรดี รอบเก้าโมงครึ่ง คัดดีอาร์ตามทิศทางหุ้นแม่ต่างประเทศ ${picks.length} ตัว ${parts.join(' ')} เช็คราคายุติธรรมก่อนตั้งรับทุกครั้งนะคะ`;
 }
 
-export function buildDrAfternoonBriefSpeech(drRows = []) {
-  const picks = (drRows || []).filter(Boolean).slice(0, 3);
-  if (!picks.length) {
-    return 'อัปเดตโพยดีอาร์ภาคบ่าย รอบบ่ายโมงครึ่ง กำลังรอข้อมูลล่าสุดค่ะ';
+export function buildDrEveningHomeworkSpeech(drRows = [], options = {}) {
+  const timeGate = options.bypassTimeGate ? { unlocked: true } : isEveningHomeworkUnlocked(options.now);
+  if (!timeGate.unlocked) {
+    return 'ขณะนี้ตลาดกำลังเปิดทำการค่ะ การบ้านดีอาร์รอบเย็นจะเริ่มประมวลผลอัตโนมัติเวลา 17:30 น. หลังตลาดปิด เพื่อคัดกรองดีอาร์ชุดใหม่ที่ไม่ซ้ำรอบเช้าค่ะ';
   }
-  const fmt = v => Number(Number(v).toFixed(2)).toLocaleString('th-TH', { maximumFractionDigits: 2 });
-  const parts = picks.map((item, idx) => {
-    const name = speakableThaiTicker(item.symbol);
-    const support = item.support ?? item.plan?.entry ?? (item.thbPrice ? item.thbPrice * 0.97 : 0);
-    const target = item.target1 ?? item.plan?.minimumTarget ?? (item.thbPrice ? item.thbPrice * 1.07 : 0);
-    const stop = item.stop ?? item.plan?.stopLoss ?? (item.thbPrice ? item.thbPrice * 0.94 : 0);
-    return `ตัวที่ ${idx + 1} ${name} โซนย่อรับ ${fmt(support)} บาท แนวต้านภาคบ่าย ${fmt(target)} บาท จุดคัท ${fmt(stop)} บาท`;
-  });
-  return `โพยดีอาร์เปิดตลาดบ่าย รอบบ่ายโมงครึ่ง บ่ายนี้เล่นดีอาร์ตัวไหนดี คัดตัวไม่พรีเมียมเกินไป ${picks.length} ตัว ${parts.join(' ')} เน้นตั้งรับตามกรอบนะคะ`;
-}
 
-export function buildDrEveningHomeworkSpeech(drRows = []) {
-  const picks = (drRows || []).filter(Boolean).slice(0, 3);
+  const morningExclude = new Set((options.drMorningPicks || []).map(p => p.symbol));
+  const valid = (drRows || []).filter(Boolean);
+  const pool = valid.filter(r => !morningExclude.has(r.symbol));
+  const candidatePool = pool.length > 0 ? pool : valid;
+  const picks = candidatePool.slice(0, 3);
+
   if (!picks.length) {
     return 'สรุปการบ้านดีอาร์เย็นนี้ รอบห้าโมงครึ่ง กำลังรอข้อมูลปิดตลาดค่ะ';
   }
@@ -161,7 +177,7 @@ export function buildDrEveningHomeworkSpeech(drRows = []) {
     const stop = item.stop ?? item.plan?.stopLoss ?? (item.thbPrice ? item.thbPrice * 0.94 : 0);
     return `${tags[idx] || `ตัวที่ ${idx + 1}`} ${name} แนวรับเฝ้ารับ ${fmt(support)} บาท แนวต้าน ${fmt(target)} บาท จุดคัท ${fmt(stop)} บาท`;
   });
-  return `การบ้านดีอาร์เย็นนี้ รอบห้าโมงครึ่ง เตรียมเฝ้าคืนนี้และพรุ่งนี้เช้า ${parts.join(' ')} จดเข้าลิสต์เฝ้าได้เลยค่ะ`;
+  return `การบ้านดีอาร์เย็นนี้ รอบห้าโมงครึ่ง คัดดีอาร์ชุดใหม่ไม่ซ้ำรอบเช้า เตรียมเฝ้าคืนนี้และพรุ่งนี้เช้า ${parts.join(' ')} จดเข้าลิสต์เฝ้าได้เลยค่ะ`;
 }
 
 export function buildDrSupportResistanceSpeech(item) {

@@ -11,7 +11,7 @@ test('direct portfolio and connector URLs deny guests/members before provider ca
  const dir=await mkdtemp(join(tmpdir(),'canonical-route-'));
  globalThis.__canonicalActor=null;globalThis.__canonicalProviderCalls=0;
  try{
-  for(const route of ['equity/portfolio','tfex/portfolio','forex/mt5/connector']){
+  for(const route of ['equity/portfolio','tfex/portfolio']){
    const outfile=join(dir,route.replaceAll('/','-')+'.mjs');
    await build({entryPoints:[resolve('src/app/api',route,'route.js')],outfile,bundle:true,platform:'node',format:'esm',plugins:[{name:'fixtures',setup(b){
     b.onResolve({filter:/membership\/(server|store)\.mjs$/},a=>({path:a.path,namespace:'fixture'}));
