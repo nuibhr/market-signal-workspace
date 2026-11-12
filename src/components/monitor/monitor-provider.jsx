@@ -10,7 +10,8 @@ import {receiveSignalPage,referenceAlertHistorical} from '../../signals/client.m
 import {MARKET_LABELS} from '../../monitor/view.mjs';
 import {eventLabel,eventSpeech,tradeReference} from '../../monitor/records.mjs';
 import {newsEvents} from '../../monitor/news.mjs';
-import {soundPreference,saveSoundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
+import {soundPreference,saveSoundPreference,subscribeSoundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
+import {stopAllSignalSpeech} from '../../auto-pick/speech.mjs';
 import TradeRecordDialog from './trade-record.jsx';
 const Context=createContext(null);
 export const useMonitor=()=>useContext(Context);
@@ -26,10 +27,17 @@ export default function MonitorProvider({children}) {
   const boxes=useRef(new Map()),adapter=useRef(null),sound=useRef(true),identity=useRef(null);
   const speak=(text,done=()=>{},eligible,key)=>adapter.current?.play(text,done,eligible,key)??false;
   const toggle=()=>{
-    const next=!sound.current||['blocked','failed'].includes(audio);sound.current=next;setEnabled(next);
-    if(next)adapter.current?.unlock?.();
+    const next=!sound.current||['blocked','failed'].includes(audio);
+    sound.current=next;
+    setEnabled(next);
+    if(next){
+      adapter.current?.unlock?.();
+    }else{
+      stopAllSignalSpeech(window);
+    }
     adapter.current?.enable(next);
-    try{saveSoundPreference(window.localStorage,next);}catch{}setGestureReady(true);
+    try{saveSoundPreference(window.localStorage,next);}catch{}
+    setGestureReady(true);
     if(next)speak('ทดสอบเสียงแจ้งเตือนทุกตลาด');
   };
   useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(null),30000);return()=>clearTimeout(timer);},[toast]);
@@ -156,9 +164,9 @@ export default function MonitorProvider({children}) {
 }
 export function SoundControl(){
   const monitor=useMonitor();if(!monitor)return null;
-  const label=monitor.audio==='unsupported'?'ไม่รองรับเสียง':['blocked','failed'].includes(monitor.audio)?'แตะเพื่อเปิดเสียง':!monitor.enabled?'ปิดเสียง':monitor.audio==='speaking'?'กำลังอ่านเสียง':monitor.audio==='starting'?'กำลังเริ่มเสียง':!monitor.gestureReady?'แตะเพื่อเปิดเสียง':'เปิดเสียงแล้ว';
+  const label=monitor.audio==='unsupported'?'ไม่รองรับเสียง':['blocked','failed'].includes(monitor.audio)?'แตะเพื่อเปิดเสียง':!monitor.enabled?'ปิดเสียงอยู่':monitor.audio==='speaking'?'กำลังอ่านเสียง':monitor.audio==='starting'?'กำลังเริ่มเสียง':!monitor.gestureReady?'แตะเพื่อเปิดเสียง':'เปิดเสียงแล้ว';
   const icon=monitor.enabled?'🔊':'🔇';
-  return <button className="monitor-sound" type="button" aria-pressed={monitor.enabled} disabled={monitor.audio==='unsupported'} onClick={monitor.toggle} title="ควบคุมเสียงแจ้งเตือนทุกตลาด · ปิดเสียงยังคงบันทึกสถิติตามปกติ"><span className="sound-icon" aria-hidden="true">{icon}</span><span className="sound-label">{label}</span></button>;
+  return <button className="monitor-sound" type="button" aria-pressed={monitor.enabled} disabled={monitor.audio==='unsupported'} onClick={monitor.toggle} title={monitor.enabled ? 'กดเพื่อปิดเสียงแจ้งเตือนทุกอย่างในระบบ (Mute All)' : 'กดเพื่อเปิดเสียงแจ้งเตือนทุกอย่างในระบบ (Unmute All)'}><span className="sound-icon" aria-hidden="true">{icon}</span><span className="sound-label">{label}</span></button>;
 }
 export function AlertHistory(){
   const m=useMonitor(),[count,setCount]=useState(20);if(!m)return null;

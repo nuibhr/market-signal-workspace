@@ -10,8 +10,10 @@ import {
   buildMorningBriefSpeech,
   buildEveningHomeworkSpeech,
   isEveningHomeworkUnlocked,
+  stopAllSignalSpeech,
 } from '../../auto-pick/speech.mjs';
-import {soundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
+import {soundPreference,subscribeSoundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
+import {useMonitor} from '../monitor/monitor-provider.jsx';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import styles from './thai-screener.module.css';
 
@@ -126,15 +128,23 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   const bkkNow=new Date(Date.now()+7*3600*1000);
   const mins=bkkNow.getUTCHours()*60+bkkNow.getUTCMinutes();
   if(mins>=16*60+30||mins<6*60)return 'evening';
-  if(mins>=12*60+30)return 'afternoon';
   return 'morning';
  });
+ const monitor=useMonitor();
  const [voiceEnabled,setVoiceEnabled]=useState(true);
  const [speechState,setSpeechState]=useState('idle');
  const [lastSpokenText,setLastSpokenText]=useState('');
+ const [toastData,setToastData]=useState(null);
  const speakerRef=useRef(null);
  const autoAnnouncedRef=useRef(false);
  const pendingAutoTextRef=useRef('');
+
+ useEffect(()=>{
+  if(toastData){
+   const timer=setTimeout(()=>setToastData(null),4000);
+   return ()=>clearTimeout(timer);
+  }
+ },[toastData]);
 
  useEffect(()=>{
   if(!visible){
@@ -150,13 +160,13 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   speakerRef.current=createSignalSpeaker(window,state=>{
    setSpeechState(state);
   });
-  const onStorage=e=>{
-   if(e.key===SOUND_PREFERENCE_KEY){
-    const next=soundPreference(storage);
-    setVoiceEnabled(next);
-    if(!next)speakerRef.current?.stop();
+  const unsubscribe=subscribeSoundPreference(next=>{
+   setVoiceEnabled(next);
+   if(!next){
+    speakerRef.current?.stop();
+    stopAllSignalSpeech(window);
    }
-  };
+  });
   const onFirstInteraction=()=>{
    speakerRef.current?.unlock?.();
    if(pendingAutoTextRef.current&&voiceEnabled){
@@ -165,17 +175,36 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
     speakerRef.current?.play(txt);
    }
   };
-  window.addEventListener('storage',onStorage);
   document.addEventListener('pointerdown',onFirstInteraction,{once:true,passive:true});
   return()=>{
-   window.removeEventListener('storage',onStorage);
+   unsubscribe();
    document.removeEventListener('pointerdown',onFirstInteraction);
    speakerRef.current?.stop();
   };
  },[]);
 
+ useEffect(()=>{
+  if(monitor&&typeof monitor.enabled==='boolean'){
+   setVoiceEnabled(monitor.enabled);
+   if(!monitor.enabled){
+    speakerRef.current?.stop();
+    stopAllSignalSpeech(window);
+   }
+  }
+ },[monitor?.enabled]);
+
  function speakText(text){
-  if(!text||!speakerRef.current)return;
+  let storage;try{storage=window.localStorage;}catch(_e){}
+  const isSoundOn=monitor?monitor.enabled:(voiceEnabled&&soundPreference(storage));
+  if(!text||!speakerRef.current||!isSoundOn){
+   if(!isSoundOn&&text){
+    setToastData({
+     title:'🔇 ปิดเสียงแจ้งเตือนอยู่',
+     desc:'หากต้องการฟังเสียง กรุณากดเปิดเสียงที่มุมบนขวา ↗ ก่อนนะคะ',
+    });
+   }
+   return;
+  }
   setLastSpokenText(text);
   speakerRef.current.unlock?.();
   speakerRef.current.play(text);
@@ -250,7 +279,9 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
 
  /* ─── Auto Voice Briefing when stock plans load ─── */
  useEffect(()=>{
-  if(!visible||!voiceEnabled||autoAnnouncedRef.current)return;
+  let storage;try{storage=window.localStorage;}catch(_e){}
+  const soundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
+  if(!visible||!soundOn||autoAnnouncedRef.current)return;
   if(!morningPicks.length)return;
   autoAnnouncedRef.current=true;
   const sessionKey='nugaom_thai_plan_voiced_v1';
@@ -264,8 +295,8 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    :buildMorningBriefSpeech(rows,regime);
   setLastSpokenText(autoText);
   pendingAutoTextRef.current=autoText;
-  speakerRef.current?.play(autoText);
- },[visible,voiceEnabled,morningPicks,rows,regime]);
+  speakText(autoText);
+ },[visible,voiceEnabled,monitor?.enabled,morningPicks,rows,regime]);
 
  const avoidedCount=useMemo(()=>{
   const weak=rows.filter(r=>r.stage===4||(r.stage===3&&!r.templatePass)).length;
@@ -349,6 +380,16 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
     <div className={styles.spokenTranscriptBar} role="status" aria-live="polite">
      <span>🎙️ <strong>สคริปต์เสียงแจ้งเตือนล่าสุด:</strong> {lastSpokenText}</span>
      <button type="button" onClick={()=>speakText(lastSpokenText)}>ฟังซ้ำ ↻</button>
+    </div>
+   )}
+
+   {toastData&&(
+    <div style={{ background: 'rgba(15,23,42,0.92)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '12px', padding: '10px 16px', margin: '10px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', color: '#f8fafc', fontSize: '13px' }} role="status">
+     <div>
+      <strong style={{ color: '#f59e0b', display: 'block' }}>{toastData.title}</strong>
+      <span style={{ color: '#cbd5e1', fontSize: '12px' }}>{toastData.desc}</span>
+     </div>
+     <button type="button" onClick={()=>setToastData(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '18px', cursor: 'pointer', padding: '0 4px' }} aria-label="ปิดแจ้งเตือน">×</button>
     </div>
    )}
 

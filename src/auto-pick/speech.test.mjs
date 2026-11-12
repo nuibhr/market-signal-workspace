@@ -11,7 +11,13 @@ import {
   buildDrEveningHomeworkSpeech,
   buildDrSupportResistanceSpeech,
   isEveningHomeworkUnlocked,
+  stopAllSignalSpeech,
 } from './speech.mjs';
+import {
+  soundPreference,
+  saveSoundPreference,
+  subscribeSoundPreference,
+} from '../monitor/preferences.mjs';
 
 function fixture() {
   const spoken = [], states = [];
@@ -184,4 +190,65 @@ test('window singleton lock stops previous speaker when another menu starts spea
   assert.equal(sharedBrowser.__activeSignalSpeaker, speakerB);
   assert.equal(statesA.at(-1), 'idle');
   assert.equal(paused.length, 1);
+});
+
+test('stopAllSignalSpeech immediately pauses active audio and cancels speech synthesis across all menus', () => {
+  const cancelledSynthesis = [];
+  const paused = [];
+  class MockAudio {
+    constructor(src) {
+      this.src = src;
+    }
+    play() {
+      return Promise.resolve();
+    }
+    pause() {
+      paused.push(this.src);
+    }
+  }
+  const browser = {
+    Audio: MockAudio,
+    speechSynthesis: {
+      cancel() {
+        cancelledSynthesis.push(true);
+      },
+    },
+  };
+
+  const states = [];
+  const speaker = createSignalSpeaker(browser, s => states.push(s));
+  speaker.play('กำลังอ่านโพยการบ้าน');
+  assert.equal(browser.__activeSignalSpeaker, speaker);
+
+  stopAllSignalSpeech(browser);
+  assert.equal(states.at(-1), 'idle');
+  assert.ok(paused.length >= 1);
+  assert.ok(cancelledSynthesis.length >= 1);
+});
+
+test('saveSoundPreference notifies cross-component subscribers synchronously in the same window', () => {
+  const received = [];
+  const fakeStorage = new Map();
+  const mockStorage = {
+    getItem: k => fakeStorage.get(k) ?? null,
+    setItem: (k, v) => fakeStorage.set(k, v),
+  };
+
+  // Verify default is enabled
+  assert.equal(soundPreference(mockStorage), true);
+
+  // Subscribe
+  const unsubscribe = subscribeSoundPreference(enabled => received.push(enabled));
+
+  // Turn off
+  saveSoundPreference(mockStorage, false);
+  assert.equal(soundPreference(mockStorage), false);
+  assert.deepEqual(received, [false]);
+
+  // Turn on
+  saveSoundPreference(mockStorage, true);
+  assert.equal(soundPreference(mockStorage), true);
+  assert.deepEqual(received, [false, true]);
+
+  unsubscribe();
 });

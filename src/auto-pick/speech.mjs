@@ -291,6 +291,12 @@ export function createSignalSpeaker(browser, onState = () => { }, options = {}) 
       } catch { }
       currentAudio = null;
     }
+    if (sharedAudio) {
+      try {
+        sharedAudio.pause();
+        sharedAudio.currentTime = 0;
+      } catch { }
+    }
     current = null;
     if (hasSynthesis) {
       try {
@@ -468,5 +474,31 @@ export function createSignalSpeaker(browser, onState = () => { }, options = {}) 
     },
   };
 
+  if (browser) {
+    if (!browser.__allSignalSpeakers) browser.__allSignalSpeakers = new Set();
+    browser.__allSignalSpeakers.add(api);
+  }
+
   return api;
+}
+
+export function stopAllSignalSpeech(browser = (typeof window !== 'undefined' ? window : null)) {
+  if (!browser) return;
+  try {
+    if (browser.__activeSignalSpeaker) {
+      browser.__activeSignalSpeaker.stop();
+    }
+  } catch {}
+  try {
+    if (browser.__allSignalSpeakers) {
+      for (const speaker of browser.__allSignalSpeakers) {
+        try { speaker.stop(); } catch {}
+      }
+    }
+  } catch {}
+  try {
+    if (browser.speechSynthesis && typeof browser.speechSynthesis.cancel === 'function') {
+      browser.speechSynthesis.cancel();
+    }
+  } catch {}
 }

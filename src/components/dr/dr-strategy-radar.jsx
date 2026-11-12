@@ -51,7 +51,10 @@ import {
   buildDrEveningHomeworkSpeech,
   buildDrSupportResistanceSpeech,
   isEveningHomeworkUnlocked,
+  stopAllSignalSpeech,
 } from '../../auto-pick/speech.mjs';
+import {soundPreference,subscribeSoundPreference,saveSoundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
+import {useMonitor} from '../monitor/monitor-provider.jsx';
 import styles from './dr-strategy.module.css';
 import {requestStrategyFeed} from '../../dr/strategy-client.mjs';
 import {radarChartAsset,radarRowsForMarket} from '../../dr/chart-target.mjs';
@@ -373,18 +376,41 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   const [marketClock, setMarketClock] = useState('09:00:00');
 
   // Voice Alert & Speech Synthesis State
+  const monitor = useMonitor();
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [speechState, setSpeechState] = useState('idle');
   const speakerRef = useRef(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      let storage; try { storage = window.localStorage; } catch {}
+      setVoiceEnabled(soundPreference(storage));
       speakerRef.current = createSignalSpeaker(window, (state) => {
         setSpeechState(state);
       });
+      const unsubscribe = subscribeSoundPreference((next) => {
+        setVoiceEnabled(next);
+        if (!next) {
+          speakerRef.current?.stop();
+          stopAllSignalSpeech(window);
+        }
+      });
+      return () => {
+        unsubscribe();
+        speakerRef.current?.stop();
+      };
     }
-    return () => speakerRef.current?.stop();
   }, []);
+
+  useEffect(() => {
+    if (monitor && typeof monitor.enabled === 'boolean') {
+      setVoiceEnabled(monitor.enabled);
+      if (!monitor.enabled) {
+        speakerRef.current?.stop();
+        stopAllSignalSpeech(window);
+      }
+    }
+  }, [monitor?.enabled]);
 
   // Sync activeTab when currentMarket prop changes
   useEffect(() => {
@@ -452,17 +478,27 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     const bkkNow = new Date(Date.now() + 7 * 3600 * 1000);
     const mins = bkkNow.getUTCHours() * 60 + bkkNow.getUTCMinutes();
     if (mins >= 16 * 60 + 30 || mins < 6 * 60) return 'evening';
-    if (mins >= 12 * 60 + 30) return 'afternoon';
     return 'morning';
   });
   const [lastDrSpokenText, setLastDrSpokenText] = useState('');
 
   const speakDrText = useCallback((text) => {
-    if (!text || !speakerRef.current) return;
+    let storage; try { storage = window.localStorage; } catch {}
+    const isSoundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
+    if (!text || !speakerRef.current || !isSoundOn) {
+      if (!isSoundOn && text) {
+        setToastData({
+          title: '🔇 ปิดเสียงแจ้งเตือนอยู่',
+          desc: 'หากต้องการฟังเสียง กรุณากดเปิดเสียงที่มุมบนขวา ↗ ก่อนนะคะ',
+          type: 'info',
+        });
+      }
+      return;
+    }
     setLastDrSpokenText(text);
     speakerRef.current.unlock?.();
     speakerRef.current.play(text);
-  }, []);
+  }, [voiceEnabled, monitor]);
 
   const drPlaybookSource = useMemo(() => {
     if (scoredDRs && scoredDRs.length > 0) {
@@ -681,7 +717,18 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
   // Audio Voice Playback Handlers
   const handlePlayMorningBriefing = () => {
-    if (!speakerRef.current || !voiceEnabled) return;
+    let storage; try { storage = window.localStorage; } catch {}
+    const isSoundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
+    if (!speakerRef.current || !isSoundOn) {
+      if (!isSoundOn) {
+        setToastData({
+          title: '🔇 ปิดเสียงแจ้งเตือนอยู่',
+          desc: 'หากต้องการฟังเสียง กรุณากดเปิดเสียงที่มุมบนขวา ↗ ก่อนนะคะ',
+          type: 'info',
+        });
+      }
+      return;
+    }
     speakerRef.current.unlock?.();
     const text = generateMorningSignalSpeech({
       thaiPicks: topMorningThai,
@@ -696,7 +743,18 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   };
 
   const handleSpeakSingle = (p) => {
-    if (!speakerRef.current || !voiceEnabled) return;
+    let storage; try { storage = window.localStorage; } catch {}
+    const isSoundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
+    if (!speakerRef.current || !isSoundOn) {
+      if (!isSoundOn) {
+        setToastData({
+          title: '🔇 ปิดเสียงแจ้งเตือนอยู่',
+          desc: 'หากต้องการฟังเสียง กรุณากดเปิดเสียงที่มุมบนขวา ↗ ก่อนนะคะ',
+          type: 'info',
+        });
+      }
+      return;
+    }
     speakerRef.current.unlock?.();
     const text = `สัญญาณ ${p.symbol} ตลาด ${p.market === 'SET' ? 'หุ้นไทย' : 'DR'} ราคาเข้า ${p.entry.toFixed(2)} บาท เป้าหมายทำกำไร ${p.tp1.toFixed(2)} บาท ตัดขาดทุน ${p.sl.toFixed(2)} บาท สถานะ ${p.statusThai || p.status}`;
     speakerRef.current.play(text);
@@ -1499,7 +1557,20 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             </button>
             <button
               type="button"
-              onClick={() => {if(voiceEnabled)speakerRef.current?.stop();setVoiceEnabled(!voiceEnabled);}}
+              onClick={() => {
+                if (monitor) {
+                  monitor.toggle();
+                } else {
+                  const next = !voiceEnabled;
+                  setVoiceEnabled(next);
+                  let storage; try { storage = window.localStorage; } catch {}
+                  saveSoundPreference(storage, next);
+                  if (!next) {
+                    speakerRef.current?.stop();
+                    stopAllSignalSpeech(window);
+                  }
+                }
+              }}
               className={`${styles.voiceToggleBtn} ${voiceEnabled ? styles.voiceToggleActive : ''}`}
             >
               {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
