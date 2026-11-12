@@ -1,6 +1,6 @@
 import { storage } from '../../../../storage/database.mjs';
 import { currentMember, sameOrigin } from '../../../../membership/server.mjs';
-import { isAdmin, getBrokerStaffRole } from '../../../../membership/store.mjs';
+import { isAdmin, getBrokerStaffRole, submitPortfolio } from '../../../../membership/store.mjs';
 import { rateLimit, readJsonBody, requestErrorResponse } from '../../../../security/request-guard.mjs';
 import { sendTelegramMessage, createTelegramInviteLink } from '../../../../notifications/broadcaster.mjs';
 import { randomUUID } from 'node:crypto';
@@ -176,6 +176,15 @@ ${validLeadType === 'existing_port'
       });
     }
 
+    // Sync portfolio to logged-in member record if available
+    if (member && validLeadType === 'existing_port' && trimmedAccountNo) {
+      try {
+        await submitPortfolio(member, broker.name, trimmedAccountNo);
+      } catch (err) {
+        console.warn('[Partner Lead] Auto-submit portfolio to member record skipped:', err.message);
+      }
+    }
+
     // Generate personalized 1-time Telegram VIP Invite Link
     let inviteLink = null;
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
@@ -191,6 +200,9 @@ ${validLeadType === 'existing_port'
       } catch (err) {
         console.warn('[Partner Lead] Telegram invite creation skipped or failed:', err.message);
       }
+    }
+    if (!inviteLink && (process.env.TELEGRAM_VIP_INVITE_LINK || process.env.TELEGRAM_INVITE_LINK)) {
+      inviteLink = process.env.TELEGRAM_VIP_INVITE_LINK || process.env.TELEGRAM_INVITE_LINK;
     }
 
     const confirmMessage = validLeadType === 'existing_port'

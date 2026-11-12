@@ -263,7 +263,7 @@ test('formatTelegramMarketPlaybookMessage separates Thai, DR, and TFEX categorie
 
   const drMsg = formatTelegramMarketPlaybookMessage({
     category: 'dr',
-    round: 'afternoon_1330',
+    round: 'evening_1730',
     regime: 'Global Tech',
     picks: [
       { symbol: 'NVDA80', name: 'NVIDIA DR', entry: 23.8, target: 26.2, stop: 22.9, note: 'Premium +0.4%' },
@@ -271,7 +271,7 @@ test('formatTelegramMarketPlaybookMessage separates Thai, DR, and TFEX categorie
     appOrigin: 'https://nugaom.ai',
   });
   assert.ok(drMsg.includes('[🌐 โพย DR80 หุ้นโลก]'));
-  assert.ok(drMsg.includes('13:30 น.'));
+  assert.ok(drMsg.includes('17:30 น.'));
   assert.ok(drMsg.includes('#DR80'));
   assert.ok(drMsg.includes('NVDA80'));
   assert.ok(drMsg.includes('https://nugaom.ai/dr'));

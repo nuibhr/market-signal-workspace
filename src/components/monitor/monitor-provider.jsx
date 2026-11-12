@@ -34,6 +34,9 @@ export default function MonitorProvider({children}) {
       adapter.current?.unlock?.();
     }else{
       stopAllSignalSpeech(window);
+      if(typeof window!=='undefined'&&window.speechSynthesis){
+        try{window.speechSynthesis.cancel();}catch{}
+      }
     }
     adapter.current?.enable(next);
     try{saveSoundPreference(window.localStorage,next);}catch{}
@@ -166,7 +169,16 @@ export function SoundControl(){
   const monitor=useMonitor();if(!monitor)return null;
   const label=monitor.audio==='unsupported'?'ไม่รองรับเสียง':['blocked','failed'].includes(monitor.audio)?'แตะเพื่อเปิดเสียง':!monitor.enabled?'ปิดเสียงอยู่':monitor.audio==='speaking'?'กำลังอ่านเสียง':monitor.audio==='starting'?'กำลังเริ่มเสียง':!monitor.gestureReady?'แตะเพื่อเปิดเสียง':'เปิดเสียงแล้ว';
   const icon=monitor.enabled?'🔊':'🔇';
-  return <button className="monitor-sound" type="button" aria-pressed={monitor.enabled} disabled={monitor.audio==='unsupported'} onClick={monitor.toggle} title={monitor.enabled ? 'กดเพื่อปิดเสียงแจ้งเตือนทุกอย่างในระบบ (Mute All)' : 'กดเพื่อเปิดเสียงแจ้งเตือนทุกอย่างในระบบ (Unmute All)'}><span className="sound-icon" aria-hidden="true">{icon}</span><span className="sound-label">{label}</span></button>;
+  const handleToggle=()=>{
+    if(monitor.enabled){
+      stopAllSignalSpeech(typeof window!=='undefined'?window:null);
+      if(typeof window!=='undefined'&&window.speechSynthesis){
+        try{window.speechSynthesis.cancel();}catch{}
+      }
+    }
+    monitor.toggle();
+  };
+  return <button className="monitor-sound" type="button" aria-pressed={monitor.enabled} disabled={monitor.audio==='unsupported'} onClick={handleToggle} title={monitor.enabled ? 'กดเพื่อปิดเสียงแจ้งเตือนทุกอย่างในระบบ (Mute All)' : 'กดเพื่อเปิดเสียงแจ้งเตือนทุกอย่างในระบบ (Unmute All)'}><span className="sound-icon" aria-hidden="true">{icon}</span><span className="sound-label">{label}</span></button>;
 }
 export function AlertHistory(){
   const m=useMonitor(),[count,setCount]=useState(20);if(!m)return null;

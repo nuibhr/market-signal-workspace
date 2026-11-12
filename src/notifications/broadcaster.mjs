@@ -144,8 +144,7 @@ export const TELEGRAM_MARKET_CATEGORIES = Object.freeze({
 
 export const TELEGRAM_ROUND_LABELS = Object.freeze({
   morning_0930: '🌅 รอบเช้า 09:30 น. · เช้านี้เล่นอะไรดี?',
-  afternoon_1330: '☀️ รอบบ่าย 13:30 น. · บ่ายนี้เล่นอะไรดี?',
-  evening_1730: '🌙 รอบเย็น 17:30 น. · หุ้นการบ้านเฝ้าพรุ่งนี้',
+  evening_1730: '🌙 รอบเย็น 17:30 น. · หุ้นการบ้านเฝ้าพรุ่งนี้ (คัดชุดใหม่ไม่ซ้ำรอบเช้า)',
 });
 
 export function resolveTelegramCategoryDestination(category = 'thai', env = process.env, explicitThreadId = null) {

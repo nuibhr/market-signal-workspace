@@ -137,7 +137,6 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
  const [toastData,setToastData]=useState(null);
  const speakerRef=useRef(null);
  const autoAnnouncedRef=useRef(false);
- const pendingAutoTextRef=useRef('');
 
  useEffect(()=>{
   if(toastData){
@@ -169,11 +168,6 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   });
   const onFirstInteraction=()=>{
    speakerRef.current?.unlock?.();
-   if(pendingAutoTextRef.current&&voiceEnabled){
-    const txt=pendingAutoTextRef.current;
-    pendingAutoTextRef.current='';
-    speakerRef.current?.play(txt);
-   }
   };
   document.addEventListener('pointerdown',onFirstInteraction,{once:true,passive:true});
   return()=>{
@@ -287,7 +281,6 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    ?buildEveningHomeworkSpeech(rows,regime,{morningPicks})
    :buildMorningBriefSpeech(rows,regime);
   setLastSpokenText(autoText);
-  pendingAutoTextRef.current=autoText;
  },[visible,morningPicks,rows,regime]);
 
  const avoidedCount=useMemo(()=>{

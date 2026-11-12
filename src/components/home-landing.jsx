@@ -177,6 +177,11 @@ export default function HomeLanding() {
             <span>DR</span>
             <em className="ng-nav-badge"><i />GLOBAL</em>
           </Link>
+          <Link href="/open-account" className="ng-nav-link is-featured nav-open-account" style={{ color: '#c084fc' }}>
+            <ShieldCheck size={16} />
+            <span>เปิดพอร์ต VIP</span>
+            <em className="ng-nav-badge" style={{ background: 'rgba(192, 132, 252, 0.2)', color: '#d8b4fe' }}><i style={{ background: '#c084fc' }} />ฟรี</em>
+          </Link>
 
           <span className="ng-nav-divider" aria-hidden="true" />
 
@@ -230,15 +235,15 @@ export default function HomeLanding() {
               LIVE ECOSYSTEM
             </span>
             <p className="ng-spotlight-text">
-              พร้อมใช้งานเต็มรูปแบบ: <b>หุ้นไทย (Settrade API · บล.พาย &amp; ทรีนีตี้)</b> · <b>DR หุ้นโลก</b> · <b>Forex MT5</b>
+              พร้อมใช้งานเต็มรูปแบบ: <b>หุ้นไทย &amp; DR หุ้นโลก</b> · <b>เปิดพอร์ต 3 โบรกเกอร์ (Pi 003 · Trinity 022 · ASL 050) รับสิทธิ์ VIP &amp; สัญญาณ Telegram ฟรี</b>
             </p>
           </div>
           <div className="ng-spotlight-actions">
             <Link href="/thai" className="ng-spotlight-cta-primary">
               เปิดกระดานหุ้นไทย <span>→</span>
             </Link>
-            <Link href="/thai#section-portfolio" className="ng-spotlight-cta-secondary">
-              เชื่อมพอร์ต / เปิดบัญชีพันธมิตร ↗
+            <Link href="/open-account" className="ng-spotlight-cta-secondary">
+              เปิดบัญชีพาร์ตเนอร์ VIP ฟรี ↗
             </Link>
           </div>
         </div>
@@ -376,11 +381,11 @@ export default function HomeLanding() {
               </div>
               <ArrowUpRight size={18} className="ng-feat-arrow" />
             </Link>
-            <Link href="/thai#section-portfolio" className="ng-feature-card-link">
+            <Link href="/open-account" className="ng-feature-card-link">
               <span className="ng-feature-icon"><Bookmark /></span>
               <div>
-                <h3>เชื่อมพอร์ตจริง &amp; พันธมิตรโบรกเกอร์</h3>
-                <p>ซิงค์พอร์ต Settrade API และเปิดบัญชีใหม่กับ บล.พาย (003) &amp; ทรีนีตี้ (022)</p>
+                <h3>เปิดบัญชีพันธมิตร &amp; สิทธิ์ VIP ฟรี</h3>
+                <p>เปิดพอร์ตกับ บล.พาย (003), บล.ทรีนีตี้ (022) หรือ บล.เอเอสแอล (050) รับสิทธิ์ห้อง VIP และแจ้งเตือนฟรี</p>
               </div>
               <ArrowUpRight size={18} className="ng-feat-arrow" />
             </Link>
@@ -483,8 +488,8 @@ export default function HomeLanding() {
             </p>
           </div>
           <div className="ng-concierge-actions">
-            <Link href="/thai#section-portfolio" className="ng-concierge-primary">
-              เปิดพอร์ตพันธมิตร / เชื่อมพอร์ต ↗
+            <Link href="/open-account" className="ng-concierge-primary">
+              เปิดพอร์ตพันธมิตร VIP ฟรี ↗
             </Link>
             <Link href="/account" className="ng-concierge-secondary">
               เข้าสู่ระบบด้วย LINE →
@@ -579,8 +584,8 @@ export default function HomeLanding() {
           </div>
 
           <div className="ng-footer-col">
-            <h4>เครื่องมือระดับโปร</h4>
-            <Link href="/thai#section-portfolio">เชื่อมพอร์ตหุ้นไทย (Pi &amp; Trinity)</Link>
+            <h4>สิทธิพิเศษ &amp; พาร์ตเนอร์</h4>
+            <Link href="/open-account">เปิดพอร์ต 3 โบรกเกอร์ (Pi, Trinity, ASL)</Link>
             <Link href="/risk">Risk &amp; Position Calculator</Link>
             <Link href="/calendar">ปฏิทินเศรษฐกิจ &amp; ข่าวมหภาค</Link>
             <Link href="/developers">Structure API &amp; Playground</Link>
