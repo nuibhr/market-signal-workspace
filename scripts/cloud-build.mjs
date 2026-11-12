@@ -8,7 +8,7 @@ const nextServer=join(root,'node_modules/next/dist/server/next-server.js');
 const checksum=()=>createHash('sha256').update(readFileSync(nextServer)).digest('hex');
 const before=checksum();
 mkdirSync(stage,{recursive:true,mode:0o700});
-for(const name of ['src','public','deploy','scripts','package.json','package-lock.json','next.config.mjs','open-next.config.ts','wrangler.jsonc']){
+for(const name of ['src','public','deploy','scripts','schemas','package.json','package-lock.json','next.config.mjs','open-next.config.ts','wrangler.jsonc']){
   const source=join(root,name),dest=join(stage,name);
   if(existsSync(dest))rmSync(dest,{recursive:true,force:true});
   cpSync(source,dest,{recursive:true,filter:path=>!path.includes('/.wrangler')&&!path.endsWith('.credentials.json')&&!/(?:^|\/)\.env(?:\.|$)|\.env$|tunnel-token/.test(path)});
