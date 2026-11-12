@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {readTelegramSettings} from '../forex/telegram-settings.mjs';
+import {readTelegramSettings} from '../../notifications/telegram-settings.mjs';
 import {
   Send,
   Bot,

@@ -92,7 +92,7 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
         <div className={styles.heading}><div><span className={styles.eyebrow}>ALL INSTRUMENTS</span><h3>ติดตามราคาและเงื่อนไข</h3></div><span className={styles.caption}>ค้นหา / เลือกสินทรัพย์ทั้งหมด</span></div>
       <div className={styles.coverage}><b>ติดตาม {relevant.length}</b><span className={styles.positive}>เข้าเงื่อนไข {relevant.filter(r=>r.met).length}</span><span>ใกล้เข้า: ยังไม่มีเกณฑ์เดิม</span><span>ตรวจไม่ได้ {relevant.filter(r=>r.abnormal).length}</span><small>เว็บอ่านสถานะ {time(data.generatedAt)} · Polling 15s</small></div>
       {Object.keys(monitor?.errors||{}).filter(k=>!k.startsWith('swing-')).length>0&&<p className={styles.caption} role="status">บางตลาดโหลดไม่ได้ รายการตลาดนั้นจะไม่ใช้ข้อมูลค้างแสดงเงื่อนไข · ลองอัปเดตอีกครั้ง</p>}
-      {['us','forex'].includes(data.market)&&data.connection!=='connected'&&<div className={styles.notice}>MT5 {data.connection==='required'?'ยังไม่เชื่อมต่อ':data.connection==='expired'?'กุญแจหมดอายุ':'ไม่มี heartbeat ล่าสุด'} · <Link href="/forex">ตรวจการเชื่อมต่อ Vantage ↗</Link></div>}
+      {data.market==='us'&&data.connection!=='connected'&&<div className={styles.notice}>MT5 {data.connection==='required'?'ยังไม่เชื่อมต่อ':data.connection==='expired'?'กุญแจหมดอายุ':'ไม่มี heartbeat ล่าสุด'} · บริดจ์ข้อมูลภายนอก</div>}
       {data.mappingPending>0&&<div className={styles.notice}>มีหุ้น/ETF CFD อีก {data.mappingPending} รายการที่ยังยืนยันตลาด US ไม่ได้ รอข้อมูล Exchange/Path จาก EA รุ่นใหม่</div>}
       {data.market==='us'&&<div className={styles.notice}>
         <strong>US EOD &amp; Technical Drill-down</strong>

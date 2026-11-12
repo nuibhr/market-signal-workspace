@@ -174,24 +174,6 @@ if (res == 200) {
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <Link
-              href="/forex"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                background: 'rgba(168, 85, 247, 0.15)',
-                color: '#c084fc',
-                fontSize: '11px',
-                fontWeight: '700',
-                textDecoration: 'none',
-                border: "none",
-              }}
-            >
-              🌍 กราฟ Forex Desk
-            </Link>
-            <Link
               href="/thai#chart-panel"
               style={{
                 display: 'inline-flex',
@@ -411,11 +393,11 @@ if (res == 200) {
               </span>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <Link
-                  href="/forex"
+                  href="/thai"
                   className="ng-action-link"
-                  style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#c084fc', borderColor: 'rgba(124, 58, 237, 0.3)' }}
+                  style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }}
                 >
-                  🚀 ดูกราฟ SMC ใน Forex Desk <ArrowUpRight size={14} />
+                  🚀 ดูกราฟ SMC ในกระดานหุ้นไทย <ArrowUpRight size={14} />
                 </Link>
                 <Link href="/risk" className="ng-action-link">
                   คำนวณขนาดไม้ 2R <ArrowUpRight size={14} />

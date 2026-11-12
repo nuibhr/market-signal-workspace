@@ -58,11 +58,6 @@ export default function LandingRobot() {
           🌐 DR หุ้นโลก
           <em>GLOBAL</em>
         </Link>
-        <Link href="/forex" className="is-featured market-pill-forex">
-          <span className="pill-dot" />
-          ⚡ Forex / MT5
-          <em>24H LIVE</em>
-        </Link>
         <Link href="/tfex">📈 TFEX</Link>
         <Link href="/us">🇺🇸 หุ้นสหรัฐฯ &amp; ETFs</Link>
       </div>

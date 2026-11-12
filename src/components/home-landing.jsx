@@ -177,11 +177,6 @@ export default function HomeLanding() {
             <span>DR</span>
             <em className="ng-nav-badge"><i />GLOBAL</em>
           </Link>
-          <Link href="/forex" className="ng-nav-link is-featured nav-forex">
-            <ArrowLeftRight size={16} />
-            <span>Forex</span>
-            <em className="ng-nav-badge"><i />24H LIVE</em>
-          </Link>
 
           <span className="ng-nav-divider" aria-hidden="true" />
 
@@ -579,7 +574,6 @@ export default function HomeLanding() {
             <h4>กระดานตลาดหลัก</h4>
             <Link href="/thai">🇹🇭 หุ้นไทย (SET100 &amp; mai)</Link>
             <Link href="/dr">🌐 DR หุ้นโลกกระดานไทย</Link>
-            <Link href="/forex">⚡ Forex &amp; Gold MT5</Link>
             <Link href="/tfex">📈 TFEX Derivatives</Link>
             <Link href="/us">🇺🇸 หุ้นสหรัฐฯ &amp; Global ETFs</Link>
           </div>

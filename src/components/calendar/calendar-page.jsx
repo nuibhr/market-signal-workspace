@@ -114,24 +114,6 @@ export default function CalendarPage() {
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <Link
-              href="/forex"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                background: 'rgba(168, 85, 247, 0.15)',
-                color: '#c084fc',
-                fontSize: '11px',
-                fontWeight: '700',
-                textDecoration: 'none',
-                border: "none",
-              }}
-            >
-              🌍 Forex &amp; ทองคำ
-            </Link>
-            <Link
               href="/thai"
               style={{
                 display: 'inline-flex',
@@ -361,7 +343,7 @@ export default function CalendarPage() {
                       {/* Action Links into Trading Terminal */}
                       <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: "none", display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         <Link
-                          href={evt.market === 'thai' ? '/thai' : evt.market === 'tfex' ? '/tfex' : evt.market === 'us' ? '/us' : '/forex'}
+                          href={evt.market === 'thai' ? '/thai' : evt.market === 'tfex' ? '/tfex' : evt.market === 'us' ? '/us' : '/dr'}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -376,7 +358,7 @@ export default function CalendarPage() {
                             textDecoration: 'none',
                           }}
                         >
-                          <span>🚀 เปิดดูกระดาน {evt.market === 'thai' ? 'หุ้นไทย' : evt.market === 'tfex' ? 'TFEX S50' : evt.market === 'us' ? 'หุ้นสหรัฐฯ' : 'Forex & ทองคำ'} →</span>
+                          <span>🚀 เปิดดูกระดาน {evt.market === 'thai' ? 'หุ้นไทย' : evt.market === 'tfex' ? 'TFEX S50' : evt.market === 'us' ? 'หุ้นสหรัฐฯ' : 'DR หุ้นโลก'} →</span>
                         </Link>
                         <Link
                           href="/risk"
