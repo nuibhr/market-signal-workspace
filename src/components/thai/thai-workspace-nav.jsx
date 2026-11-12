@@ -14,7 +14,7 @@ const VIEW_ICONS = {
 export const THAI_VIEWS = [
   { id: 'stage2', hash: '#section-auto-pick', label: 'สแกนหุ้นขาขึ้น (Stage 2)', note: 'คัดหุ้นเด่น & เช็คแนวรับแนวต้าน' },
   { id: 'radar', hash: '#section-radar', label: 'เรดาร์สัญญาณสด (Radar)', note: 'แผนเฝ้ารายวัน & เสียงแจ้งเตือน' },
-  { id: 'portfolio', hash: '#section-portfolio', label: 'เปิดพอร์ต / ยืนยันสิทธิ์ VIP', note: 'พาย 003 · ทรีนีตี้ 022 · เอเอสแอล 050' },
+  { id: 'portfolio', hash: '/open-account', label: 'เปิดพอร์ต 3 โบรกเกอร์ (VIP ฟรี)', note: 'พาย 003 · ทรีนีตี้ 022 · เอเอสแอล 050' },
   { id: 'chart', hash: '#chart-panel', label: 'กราฟเทคนิค (Chart)', note: 'แท่งเทียน & อินดิเคเตอร์' },
   { id: 'results', hash: '#section-results', label: 'บันทึกผลงาน (Trade Ledger)', note: 'ประวัติ & สถิติชนะ 100 ไม้' },
 ];
@@ -37,7 +37,7 @@ export default function ThaiWorkspaceNav({ view = 'stage2', symbol, onNavigate, 
           />
           <div>
             <h1>หุ้นไทย <small>SET100 + mai</small></h1>
-            <p>เลือกเครื่องมือวิเคราะห์ โพยเช้า 09:30 · บ่าย 13:30 · การบ้านเย็น 17:30 และเปิดกราฟหุ้นที่สนใจ</p>
+            <p>เลือกเครื่องมือวิเคราะห์ โพยเช้า 09:30 · การบ้านเย็น 17:30 (สแกนคัดไม่ซ้ำรอบเช้า) และเปิดกราฟหุ้นที่สนใจ</p>
           </div>
         </div>
         <span className={styles.symbol}>
@@ -56,6 +56,11 @@ export default function ThaiWorkspaceNav({ view = 'stage2', symbol, onNavigate, 
                 aria-current={view === v.id ? 'location' : undefined}
                 onClick={(event) => {
                   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                  if (v.id === 'portfolio') {
+                    event.preventDefault();
+                    window.location.href = '/open-account';
+                    return;
+                  }
                   event.preventDefault();
                   onNavigate(v.id);
                 }}

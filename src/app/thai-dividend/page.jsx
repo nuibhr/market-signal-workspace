@@ -1,4 +1,4 @@
-import Workspace from '../../components/workspace.jsx';
+import { redirect } from 'next/navigation';
 
 export const metadata = {
   title: 'Thai Dividend Portfolio Radar | Nugaom AI Pick',
@@ -7,11 +7,6 @@ export const metadata = {
 
 export default async function ThaiDividendPage({ searchParams }) {
   const params = await searchParams;
-  return (
-    <Workspace
-      key="thai-dividend"
-      marketId="thai"
-      initialSymbol={typeof params.symbol === 'string' ? params.symbol : 'PTT'}
-    />
-  );
+  const symbol = typeof params?.symbol === 'string' ? `?symbol=${encodeURIComponent(params.symbol)}` : '';
+  redirect(`/thai${symbol}`);
 }

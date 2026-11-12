@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { FOREX_SYMBOLS } from "../../markets/catalog.mjs";
 import {
   BROKERS,
@@ -139,7 +139,7 @@ test("only Vantage is supported; all connection states are contracts for the opt
   ]);
 });
 
-test("Forex and US have dedicated desks while Thai/DR/TFEX retain the shared workspace", () => {
+test("Forex has been extracted to standalone app while Thai/DR/TFEX retain the shared workspace", () => {
   for (const market of ["thai", "dr", "tfex"]) {
     const path = `src/app/${market}/page.jsx`;
     const source = readFileSync(new URL(path, root), 'utf8');
@@ -147,9 +147,8 @@ test("Forex and US have dedicated desks while Thai/DR/TFEX retain the shared wor
     assert.ok(source.includes(`marketId="${market}"`));
     assert.doesNotMatch(source, /ForexWorkspace/);
   }
-  const route = readFileSync(new URL("src/app/forex/page.jsx", root), "utf8");
-  assert.match(route, /import ForexWorkspace from/);
-  assert.doesNotMatch(route, /components\/workspace\.jsx/);
+  // Forex is decoupled from this equity workspace into standalone desktop app
+  assert.equal(existsSync(new URL("src/app/forex/page.jsx", root)), false);
 });
 
 test("presentation fixtures are explicitly demo-only and never alter the starter contract", async () => {

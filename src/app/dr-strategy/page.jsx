@@ -1,17 +1,12 @@
-import Workspace from '../../components/workspace.jsx';
+import { redirect } from 'next/navigation';
 
 export const metadata = {
-  title: 'DR Strategy Tracker & Thai Dividend Radar | Nugaom AI Pick',
-  description: 'Nugaom AI Proprietary Quantitative Multi-Factor Radar, Indicative Arbitrage Bridge, and Thai Dividend Portfolio.',
+  title: 'DR Strategy Tracker | Nugaom AI Pick',
+  description: 'Nugaom AI Proprietary Quantitative Multi-Factor Radar and Indicative Arbitrage Bridge.',
 };
 
 export default async function DrStrategyPage({ searchParams }) {
   const params = await searchParams;
-  return (
-    <Workspace
-      key="dr"
-      marketId="dr"
-      initialSymbol={typeof params.symbol === 'string' ? params.symbol : 'AAPL80'}
-    />
-  );
+  const symbol = typeof params?.symbol === 'string' ? `?symbol=${encodeURIComponent(params.symbol)}` : '';
+  redirect(`/dr${symbol}`);
 }

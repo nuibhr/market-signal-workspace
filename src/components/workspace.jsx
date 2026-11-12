@@ -257,9 +257,8 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     if (id === 'risk' || id === 'financial') { window.location.href = '/risk'; return; }
     if (id === 'calendar-page' || id === 'calendar') { window.location.href = '/calendar'; return; }
     if (id === 'developers') { window.location.href = '/developers'; return; }
-    if (id === 'portfolio') {
-      if (marketId === 'thai') { chooseThaiView('portfolio'); return; }
-      window.location.href = '/thai#section-portfolio';
+    if (id === 'portfolio' || id === 'open-account') {
+      window.location.href = '/open-account';
       return;
     }
     setActiveNav(id);

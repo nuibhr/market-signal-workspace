@@ -412,11 +412,21 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     }
   }, [monitor?.enabled]);
 
-  // Sync activeTab when currentMarket prop changes
+  // Sync activeTab when currentMarket prop changes or workspaceView changes
   useEffect(() => {
-    setActiveTab(currentMarket==='thai'?'thai-scanner':'decision');
+    if (workspaceView === 'results') {
+      setActiveTab('workflow');
+    } else {
+      setActiveTab(currentMarket === 'thai' ? 'thai-scanner' : 'decision');
+    }
     setResultsMarket(currentMarket);
-  }, [currentMarket]);
+  }, [currentMarket, workspaceView]);
+
+  useEffect(() => {
+    if (workspaceView === 'results') {
+      setActiveTab('workflow');
+    }
+  }, [workspaceView]);
 
   useEffect(()=>{if(!visible||workspaceView==='results')speakerRef.current?.stop();},[visible,workspaceView]);
 
@@ -1653,11 +1663,11 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
       </div>
       <div hidden={compact&&workspaceView==='results'}><ScanRules coverage={liveData?.coverage} currentMarket={currentMarket}/></div>
       {/* Main Tabs Navigation */}
-      <div className={styles.navTabs} hidden={compact&&workspaceView==='results'}>
+      <div className={styles.navTabs}>
         {!compact&&<button type="button" onClick={onOpenStyleScanner} className={styles.tabBtn}>สแกนตามสไตล์ (Swing/Scalp) ↗</button>}
         <button type="button" onClick={()=>setActiveTab('decision')} className={`${styles.tabBtn} ${activeTab==='decision'?styles.tabBtnActive:''}`}>🎯 แผนเทรด &amp; คุมความเสี่ยง</button>
         <button type="button" onClick={()=>showAllScans('all')} className={`${styles.tabBtn} ${activeTab==='all-scans'?styles.tabBtnActive:''}`}>📊 ผลสแกนทั้งหมด ({scoredThaiStocks.length+scoredDRs.length})</button>
-        {!compact&&<button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>📑 Trade Ledger (100 ไม้ล่าสุด)</button>}
+        <button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>📑 Trade Ledger (ผลงาน 100 ไม้)</button>
         {currentMarket!=='thai'&&<button
           type="button"
           onClick={() => {

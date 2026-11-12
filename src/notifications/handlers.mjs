@@ -26,6 +26,16 @@ export function createTelegramHandlers({
   createInvite=createTelegramInviteLink,
   kickMember=kickTelegramChatMember,
   unbanMember=unbanTelegramChatMember,
+  hasValidLead = async (leadId) => {
+    if (!leadId || typeof leadId !== 'string' || !leadId.startsWith('lead_')) return false;
+    try {
+      const { storage } = await import('../storage/database.mjs');
+      const lead = await storage.get('SELECT id FROM partner_account_leads WHERE id = ?', leadId);
+      return Boolean(lead);
+    } catch {
+      return false;
+    }
+  },
   history={list:async()=>[],start:async()=>true,finish:async()=>{}}
 }){
  const headers={'Cache-Control':'private, no-store'};
@@ -64,10 +74,11 @@ export function createTelegramHandlers({
   if(action==='create-invite'){
     const isOwnerOrAdmin=isAdmin(member);
     const mRights=membershipFor(member);
-    if(!isOwnerOrAdmin && !mRights.capabilities?.autoPickFeed && mRights.tier !== 'subscriber' && mRights.tier !== 'trial') {
+    const hasLeadAccess = body.leadId ? await hasValidLead(body.leadId) : false;
+    if(!isOwnerOrAdmin && !hasLeadAccess && !mRights.capabilities?.autoPickFeed && mRights.tier !== 'subscriber' && mRights.tier !== 'trial') {
       return error('MEMBERSHIP_REQUIRED', 403);
     }
-    const linkName = `VIP · ${(body.memberName || member.display_name || member.id).slice(0, 20)}`;
+    const linkName = `VIP · ${(body.memberName || member.display_name || member.id || 'Member').slice(0, 20)}`;
     const limit = Number.isFinite(body.memberLimit) && body.memberLimit > 0 ? body.memberLimit : 1;
     const summary = `สร้าง One-Time Invite Link (${linkName})`;
     if(isOwnerOrAdmin) await history.start({id, actor:member.id, summary});

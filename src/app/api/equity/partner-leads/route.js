@@ -2,7 +2,7 @@ import { storage } from '../../../../storage/database.mjs';
 import { currentMember, sameOrigin } from '../../../../membership/server.mjs';
 import { isAdmin, getBrokerStaffRole } from '../../../../membership/store.mjs';
 import { rateLimit, readJsonBody, requestErrorResponse } from '../../../../security/request-guard.mjs';
-import { sendTelegramMessage } from '../../../../notifications/broadcaster.mjs';
+import { sendTelegramMessage, createTelegramInviteLink } from '../../../../notifications/broadcaster.mjs';
 import { randomUUID } from 'node:crypto';
 
 export const runtime = 'nodejs';
@@ -176,6 +176,23 @@ ${validLeadType === 'existing_port'
       });
     }
 
+    // Generate personalized 1-time Telegram VIP Invite Link
+    let inviteLink = null;
+    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+      try {
+        const invite = await createTelegramInviteLink({
+          token: process.env.TELEGRAM_BOT_TOKEN,
+          chatId: process.env.TELEGRAM_CHAT_ID,
+          name: `VIP · ${trimmedName.slice(0, 16)} (${brokerId})`,
+          memberLimit: 1,
+          expireDate: Date.now() + 24 * 60 * 60 * 1000, // 24 hours validity
+        });
+        inviteLink = invite?.inviteLink || null;
+      } catch (err) {
+        console.warn('[Partner Lead] Telegram invite creation skipped or failed:', err.message);
+      }
+    }
+
     const confirmMessage = validLeadType === 'existing_port'
       ? `บันทึกข้อมูลแจ้งเลขพอร์ต ${broker.name} เรียบร้อยแล้ว เจ้าหน้าที่จะตรวจสอบเพื่อยืนยันสิทธิ์ VIP ให้ท่านโดยเร็ว`
       : `บันทึกข้อมูลขอเปิดบัญชี ${broker.name} สำเร็จ เจ้าหน้าที่การตลาดจะติดต่อประสานงานดูแลท่านโดยเร็ว`;
@@ -188,6 +205,8 @@ ${validLeadType === 'existing_port'
         brokerName: broker.name,
         leadType: validLeadType,
         accountNo: trimmedAccountNo || null,
+        inviteLink,
+        trialActivated: true,
         message: confirmMessage,
       },
       { status: 201, headers: NO_STORE }

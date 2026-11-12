@@ -484,6 +484,42 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
   const [leadSubmitting, setLeadSubmitting] = useState(false);
   const [leadSuccess, setLeadSuccess] = useState(null);
   const [leadError, setLeadError] = useState(null);
+  const [copiedInvite, setCopiedInvite] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [manualInviteLink, setManualInviteLink] = useState(null);
+
+  const handleCopyInvite = (link) => {
+    if (!link) return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(link).then(() => {
+        setCopiedInvite(true);
+        setTimeout(() => setCopiedInvite(false), 3000);
+      });
+    }
+  };
+
+  const handleFetchInvite = async (leadId) => {
+    setInviteLoading(true);
+    try {
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create-invite',
+          leadId,
+          memberName: leadName || 'VIP Member',
+        }),
+      });
+      const data = await res.json();
+      if (data.ok && data.inviteLink) {
+        setManualInviteLink(data.inviteLink);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch invite link:', e);
+    } finally {
+      setInviteLoading(false);
+    }
+  };
 
   const syncPortfolio = useCallback(
     async (isDemo = true, overrideBrokerId = null) => {
@@ -590,6 +626,21 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
       }
 
       setLeadSuccess(result);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(
+            'nugaom_subscription_demo',
+            JSON.stringify({
+              active: true,
+              tier: 'trial',
+              leadId: result.leadId,
+              broker: result.brokerName,
+              activatedAt: new Date().toISOString(),
+              expiresAt: Date.now() + 14 * 86400000,
+            })
+          );
+        } catch {}
+      }
     } catch (err) {
       setLeadError(err.message);
     } finally {
@@ -970,6 +1021,65 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                         </>
                       )}
                     </p>
+                    {/* Instant Trial Banner */}
+                    <div className={styles.trialActivatedBadge}>
+                      <span style={{ fontSize: '16px' }}>🌟</span>
+                      <div>
+                        <strong>เปิดสิทธิ์ใช้งาน VIP Pro Trial 14 วันบนเครื่องของคุณแล้ว!</strong>
+                        <div style={{ fontSize: '11px', opacity: 0.85 }}>เข้าถึงระบบสแกนหุ้น Stage 2, คำนวณ 2R Sizing และเรดาร์สัญญาณได้ทันที</div>
+                      </div>
+                    </div>
+
+                    {/* Telegram VIP Closed-Loop Invite Card */}
+                    {(leadSuccess.inviteLink || manualInviteLink) ? (
+                      <div className={styles.telegramVipCard}>
+                        <div className={styles.telegramVipHeader}>
+                          <strong>✈️ ลิงก์เข้ากลุ่ม Telegram VIP พิเศษเฉพาะคุณ</strong>
+                          <span>1 สิทธิ์ / 24 ชม.</span>
+                        </div>
+                        <p className={styles.telegramVipDesc}>
+                          รับการแจ้งเตือนสัญญาณหุ้นไทย โพยเช้า 09:30, หุ้นการบ้าน 17:30, DR หุ้นนอก และ TFEX แบบ Real-time ทันทีที่ระบบพบจังหวะ
+                        </p>
+                        <div className={styles.telegramActionRow}>
+                          <a
+                            href={leadSuccess.inviteLink || manualInviteLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.telegramJoinBtn}
+                          >
+                            🚀 เปิด Telegram เพื่อเข้ากลุ่มทันที ↗
+                          </a>
+                          <button
+                            type="button"
+                            className={styles.telegramCopyBtn}
+                            onClick={() => handleCopyInvite(leadSuccess.inviteLink || manualInviteLink)}
+                          >
+                            {copiedInvite ? '✓ คัดลอกลิงก์แล้ว' : '📋 คัดลอกลิงก์'}
+                          </button>
+                        </div>
+                        <div style={{ marginTop: '8px', fontSize: '10px', color: '#94a3b8' }}>
+                          * ลิงก์ใช้ได้ 1 ครั้งสำหรับบัญชี Telegram ของท่าน เพื่อความปลอดภัยและสงวนสิทธิ์เฉพาะสมาชิก
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles.telegramVipCard}>
+                        <div className={styles.telegramVipHeader}>
+                          <strong>✈️ รับลิงก์เข้ากลุ่ม Telegram VIP</strong>
+                        </div>
+                        <p className={styles.telegramVipDesc}>
+                          กดรับลิงก์เชิญพิเศษ 1-Time Invite เพื่อเข้าร่วมกลุ่มแจ้งเตือนสัญญาณเทรดและแผนประจำวัน
+                        </p>
+                        <button
+                          type="button"
+                          className={styles.telegramJoinBtn}
+                          onClick={() => handleFetchInvite(leadSuccess.leadId)}
+                          disabled={inviteLoading}
+                        >
+                          {inviteLoading ? 'กำลังสร้างลิงก์เชิญ…' : '✈️ กดรับลิงก์เข้ากลุ่ม Telegram VIP ทันที'}
+                        </button>
+                      </div>
+                    )}
+
                     <button
                       type="button"
                       className={styles.btnPrimaryVip}
@@ -1670,6 +1780,59 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                         เรียบร้อยแล้ว เจ้าหน้าที่ IC จะทำการตรวจสอบเลขพอร์ตและเปิดสิทธิ์การใช้งาน VIP เต็มระบบให้ท่าน
                       </p>
 
+                      {/* Instant Trial Banner */}
+                      <div className={styles.trialActivatedBadge}>
+                        <span style={{ fontSize: '16px' }}>🌟</span>
+                        <div>
+                          <strong>เปิดสิทธิ์ใช้งาน VIP Pro Trial 14 วันบนเครื่องของคุณแล้ว!</strong>
+                          <div style={{ fontSize: '11px', opacity: 0.85 }}>เข้าถึงระบบสแกนหุ้น Stage 2, คำนวณ 2R Sizing และเรดาร์สัญญาณได้ทันที</div>
+                        </div>
+                      </div>
+
+                      {/* Telegram VIP Closed-Loop Invite Card */}
+                      {(leadSuccess.inviteLink || manualInviteLink) ? (
+                        <div className={styles.telegramVipCard}>
+                          <div className={styles.telegramVipHeader}>
+                            <strong>✈️ ลิงก์เข้ากลุ่ม Telegram VIP พิเศษเฉพาะคุณ</strong>
+                            <span>1 สิทธิ์ / 24 ชม.</span>
+                          </div>
+                          <p className={styles.telegramVipDesc}>
+                            รับการแจ้งเตือนสัญญาณหุ้นไทย โพยเช้า 09:30, หุ้นการบ้าน 17:30, DR หุ้นนอก และ TFEX แบบ Real-time ทันที
+                          </p>
+                          <div className={styles.telegramActionRow}>
+                            <a
+                              href={leadSuccess.inviteLink || manualInviteLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.telegramJoinBtn}
+                            >
+                              🚀 เปิด Telegram เพื่อเข้ากลุ่มทันที ↗
+                            </a>
+                            <button
+                              type="button"
+                              className={styles.telegramCopyBtn}
+                              onClick={() => handleCopyInvite(leadSuccess.inviteLink || manualInviteLink)}
+                            >
+                              {copiedInvite ? '✓ คัดลอกลิงก์แล้ว' : '📋 คัดลอกลิงก์'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={styles.telegramVipCard}>
+                          <div className={styles.telegramVipHeader}>
+                            <strong>✈️ รับลิงก์เข้ากลุ่ม Telegram VIP</strong>
+                          </div>
+                          <button
+                            type="button"
+                            className={styles.telegramJoinBtn}
+                            onClick={() => handleFetchInvite(leadSuccess.leadId)}
+                            disabled={inviteLoading}
+                          >
+                            {inviteLoading ? 'กำลังสร้างลิงก์เชิญ…' : '✈️ กดรับลิงก์เข้ากลุ่ม Telegram VIP ทันที'}
+                          </button>
+                        </div>
+                      )}
+
                       <div className={styles.timelineCard}>
                         <div className={styles.timelineRow}>
                           <div className={styles.timelineStepNumber}>1</div>
@@ -1715,6 +1878,59 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
                         </strong>{' '}
                         เรียบร้อยแล้ว เจ้าหน้าที่ IC จะติดต่อท่านเป็นกรณีพิเศษเพื่อดูแลเรื่องเอกสารเปิดพอร์ต
                       </p>
+
+                      {/* Instant Trial Banner */}
+                      <div className={styles.trialActivatedBadge}>
+                        <span style={{ fontSize: '16px' }}>🌟</span>
+                        <div>
+                          <strong>เปิดสิทธิ์ใช้งาน VIP Pro Trial 14 วันบนเครื่องของคุณแล้ว!</strong>
+                          <div style={{ fontSize: '11px', opacity: 0.85 }}>เข้าถึงระบบสแกนหุ้น Stage 2, คำนวณ 2R Sizing และเรดาร์สัญญาณได้ทันที</div>
+                        </div>
+                      </div>
+
+                      {/* Telegram VIP Closed-Loop Invite Card */}
+                      {(leadSuccess.inviteLink || manualInviteLink) ? (
+                        <div className={styles.telegramVipCard}>
+                          <div className={styles.telegramVipHeader}>
+                            <strong>✈️ ลิงก์เข้ากลุ่ม Telegram VIP พิเศษเฉพาะคุณ</strong>
+                            <span>1 สิทธิ์ / 24 ชม.</span>
+                          </div>
+                          <p className={styles.telegramVipDesc}>
+                            รับการแจ้งเตือนสัญญาณหุ้นไทย โพยเช้า 09:30, หุ้นการบ้าน 17:30, DR หุ้นนอก และ TFEX แบบ Real-time ทันที
+                          </p>
+                          <div className={styles.telegramActionRow}>
+                            <a
+                              href={leadSuccess.inviteLink || manualInviteLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.telegramJoinBtn}
+                            >
+                              🚀 เปิด Telegram เพื่อเข้ากลุ่มทันที ↗
+                            </a>
+                            <button
+                              type="button"
+                              className={styles.telegramCopyBtn}
+                              onClick={() => handleCopyInvite(leadSuccess.inviteLink || manualInviteLink)}
+                            >
+                              {copiedInvite ? '✓ คัดลอกลิงก์แล้ว' : '📋 คัดลอกลิงก์'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={styles.telegramVipCard}>
+                          <div className={styles.telegramVipHeader}>
+                            <strong>✈️ รับลิงก์เข้ากลุ่ม Telegram VIP</strong>
+                          </div>
+                          <button
+                            type="button"
+                            className={styles.telegramJoinBtn}
+                            onClick={() => handleFetchInvite(leadSuccess.leadId)}
+                            disabled={inviteLoading}
+                          >
+                            {inviteLoading ? 'กำลังสร้างลิงก์เชิญ…' : '✈️ กดรับลิงก์เข้ากลุ่ม Telegram VIP ทันที'}
+                          </button>
+                        </div>
+                      )}
 
                       <div className={styles.timelineCard}>
                         <div className={styles.timelineRow}>

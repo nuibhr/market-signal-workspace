@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import {CandlestickChart, Globe2, ChartNoAxesCombined, Layers3, ArrowLeftRight, House, Users, Sparkles} from 'lucide-react';
+import {CandlestickChart, Globe2, ChartNoAxesCombined, Layers3, ArrowLeftRight, House, Users, Sparkles, ShieldCheck} from 'lucide-react';
 import {VISIBLE_MARKET_PAGES} from '../markets/market-pages.mjs';
 
 const ICONS = {thai: CandlestickChart, dr: Globe2, tfex: Layers3, us: ChartNoAxesCombined, forex: ArrowLeftRight};
@@ -55,6 +55,22 @@ export default function MarketNavigation({current}){
           </Link>
         );
       })}
+      <span className="market-nav-divider" aria-hidden="true" />
+      <Link
+        href="/open-account"
+        aria-current={current === 'open-account' ? 'page' : undefined}
+        className="market-nav-link market-open-account"
+        style={{'--destination-accent': '#c084fc', '--destination-rgb': '192, 132, 252'}}
+        title="เปิดพอร์ต 3 โบรกเกอร์ (Pi, Trinity, ASL) รับสิทธิ์ VIP & Telegram สัญญาณฟรี"
+      >
+        <ShieldCheck size={17} className="market-nav-icon"/>
+        <span className="market-nav-name">เปิดบัญชี</span>
+        <span className="market-badge-pill" style={{ background: 'rgba(192, 132, 252, 0.2)', color: '#d8b4fe' }}>
+          <span className="market-pulse-dot" style={{ background: '#c084fc' }} />
+          VIP ฟรี
+        </span>
+        <small>PARTNERS</small>
+      </Link>
       <span className="market-nav-divider" aria-hidden="true" />
       <Link
         href="/risk"

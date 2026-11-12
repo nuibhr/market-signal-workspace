@@ -28,5 +28,11 @@ export default {
     './src/forex-mt5/connector.mq5', './src/forex-mt5/connector.ex5',
     './src/forex-mt5/customer-relay.zip',
   ] },
+  async redirects() {
+    return [
+      { source: '/dr-strategy', destination: '/dr', permanent: true },
+      { source: '/thai-dividend', destination: '/thai', permanent: true },
+    ];
+  },
   async headers() { return [{ source: '/:path*', headers }]; },
 };
