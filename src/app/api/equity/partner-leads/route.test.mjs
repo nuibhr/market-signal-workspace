@@ -109,3 +109,26 @@ test('partner-leads GET rejects unauthorized requests', async () => {
   assert.equal(res.status, 403);
 });
 
+test('partner-leads separates Telegram channels: sends lead alert to staff channel and creates invite for customer channel', async () => {
+  process.env.TELEGRAM_BOT_TOKEN = 'mock_bot_token';
+  process.env.TELEGRAM_CHAT_ID = '-100_CUSTOMER_VIP';
+  process.env.TELEGRAM_CHAT_ID_STAFF = '-100_MARKETING_STAFF';
+
+  const req = new Request('http://localhost:3000/api/equity/partner-leads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
+    body: JSON.stringify({
+      brokerId: '003',
+      leadType: 'new_account',
+      fullName: 'นายทดสอบ ช่องทางเทเลแกรม',
+      phone: '0812345678',
+    }),
+  });
+  const res = await POST(req);
+  assert.equal(res.status, 201);
+  const data = await res.json();
+  assert.equal(data.success, true);
+
+  delete process.env.TELEGRAM_CHAT_ID_STAFF;
+});
+

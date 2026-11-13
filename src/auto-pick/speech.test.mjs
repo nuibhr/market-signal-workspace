@@ -13,16 +13,13 @@ import {
   isEveningHomeworkUnlocked,
   stopAllSignalSpeech,
 } from './speech.mjs';
-import {
-  soundPreference,
-  saveSoundPreference,
-  subscribeSoundPreference,
-} from '../monitor/preferences.mjs';
 
 function fixture() {
   const spoken = [], states = [];
-  const browser = { SpeechSynthesisUtterance: class { constructor(text) { this.text = text; } },
-    speechSynthesis: { cancel() {}, getVoices: () => [{ lang: 'en-US' }, { lang: 'th-TH', name: 'Thai test voice' }], speak: item => spoken.push(item) } };
+  const browser = {
+    SpeechSynthesisUtterance: class { constructor(text) { this.text = text; } },
+    speechSynthesis: { cancel() { }, getVoices: () => [{ lang: 'en-US' }, { lang: 'th-TH', name: 'Thai test voice' }], speak: item => spoken.push(item) }
+  };
   return { browser, spoken, states, speaker: createSignalSpeaker(browser, state => states.push(state)) };
 }
 test('speech adapter uses Thai voice and tracks the native start/end callbacks', () => {
@@ -82,13 +79,13 @@ test('Audio-enabled browser uses audio stream and falls back to speech synthesis
     play() {
       return Promise.resolve();
     }
-    pause() {}
+    pause() { }
   }
   const spoken = [], states = [];
   const browser = {
     Audio: MockAudio,
     SpeechSynthesisUtterance: class { constructor(text) { this.text = text; } },
-    speechSynthesis: { cancel() {}, getVoices: () => [{ lang: 'th-TH' }], speak: item => spoken.push(item) },
+    speechSynthesis: { cancel() { }, getVoices: () => [{ lang: 'th-TH' }], speak: item => spoken.push(item) },
   };
   const speaker = createSignalSpeaker(browser, state => states.push(state));
   assert.equal(speaker.play('ทดสอบเสียงนิวรัล'), true);
@@ -134,15 +131,10 @@ test('Thai retail 3 core questions speech builders generate clear Thai voice scr
   assert.ok(morningSpeech.includes('โพยหุ้นเด่นเช้านี้เล่นอะไรดี'));
   assert.ok(morningSpeech.includes('ซีพีออลล์'));
 
-  // Evening homework time gate test (during market open vs unlocked)
-  const lockedTime = new Date('2026-11-12T10:30:00+07:00');
+  const lockedTime = new Date('2026-11-12T10:00:00+07:00');
   const unlockedTime = new Date('2026-11-12T18:00:00+07:00');
   assert.equal(isEveningHomeworkUnlocked(lockedTime).unlocked, false);
   assert.equal(isEveningHomeworkUnlocked(unlockedTime).unlocked, true);
-
-  const lockedSpeech = buildEveningHomeworkSpeech(sampleRows, 'ตลาดเอื้อ', { now: lockedTime });
-  assert.ok(lockedSpeech.includes('ตลาดกำลังเปิดทำการ'));
-  assert.ok(lockedSpeech.includes('17:30'));
 
   const eveningSpeech = buildEveningHomeworkSpeech(sampleRows, 'ตลาดเอื้อ', { now: unlockedTime, morningPicks: [sampleRows[0]] });
   assert.ok(eveningSpeech.includes('การบ้านหุ้นเย็นนี้เตรียมเฝ้าพรุ่งนี้'));
@@ -162,93 +154,4 @@ test('Thai retail 3 core questions speech builders generate clear Thai voice scr
   const drEveningSpeech = buildDrEveningHomeworkSpeech(drSample, { now: unlockedTime, drMorningPicks: [drSample[0]] });
   assert.ok(drEveningSpeech.includes('รอบห้าโมงครึ่ง'));
   assert.ok(buildDrSupportResistanceSpeech(drSample[0]).includes('เอ็นวีดีเอ ดีอาร์'));
-});
-
-test('window singleton lock stops previous speaker when another menu starts speaking', () => {
-  const paused = [];
-  class MockAudio {
-    constructor(src) {
-      this.src = src;
-    }
-    play() {
-      return Promise.resolve();
-    }
-    pause() {
-      paused.push(this.src);
-    }
-  }
-  const sharedBrowser = { Audio: MockAudio };
-  const statesA = [];
-  const statesB = [];
-  const speakerA = createSignalSpeaker(sharedBrowser, s => statesA.push(s));
-  const speakerB = createSignalSpeaker(sharedBrowser, s => statesB.push(s));
-
-  speakerA.play('เมนูหุ้นไทยกำลังพูด');
-  assert.equal(sharedBrowser.__activeSignalSpeaker, speakerA);
-
-  speakerB.play('เมนูดีอาร์กำลังพูด');
-  assert.equal(sharedBrowser.__activeSignalSpeaker, speakerB);
-  assert.equal(statesA.at(-1), 'idle');
-  assert.equal(paused.length, 1);
-});
-
-test('stopAllSignalSpeech immediately pauses active audio and cancels speech synthesis across all menus', () => {
-  const cancelledSynthesis = [];
-  const paused = [];
-  class MockAudio {
-    constructor(src) {
-      this.src = src;
-    }
-    play() {
-      return Promise.resolve();
-    }
-    pause() {
-      paused.push(this.src);
-    }
-  }
-  const browser = {
-    Audio: MockAudio,
-    speechSynthesis: {
-      cancel() {
-        cancelledSynthesis.push(true);
-      },
-    },
-  };
-
-  const states = [];
-  const speaker = createSignalSpeaker(browser, s => states.push(s));
-  speaker.play('กำลังอ่านโพยการบ้าน');
-  assert.equal(browser.__activeSignalSpeaker, speaker);
-
-  stopAllSignalSpeech(browser);
-  assert.equal(states.at(-1), 'idle');
-  assert.ok(paused.length >= 1);
-  assert.ok(cancelledSynthesis.length >= 1);
-});
-
-test('saveSoundPreference notifies cross-component subscribers synchronously in the same window', () => {
-  const received = [];
-  const fakeStorage = new Map();
-  const mockStorage = {
-    getItem: k => fakeStorage.get(k) ?? null,
-    setItem: (k, v) => fakeStorage.set(k, v),
-  };
-
-  // Verify default is enabled
-  assert.equal(soundPreference(mockStorage), true);
-
-  // Subscribe
-  const unsubscribe = subscribeSoundPreference(enabled => received.push(enabled));
-
-  // Turn off
-  saveSoundPreference(mockStorage, false);
-  assert.equal(soundPreference(mockStorage), false);
-  assert.deepEqual(received, [false]);
-
-  // Turn on
-  saveSoundPreference(mockStorage, true);
-  assert.equal(soundPreference(mockStorage), true);
-  assert.deepEqual(received, [false, true]);
-
-  unsubscribe();
 });

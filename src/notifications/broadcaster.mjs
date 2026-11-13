@@ -156,6 +156,34 @@ export function resolveTelegramCategoryDestination(category = 'thai', env = proc
   return { chatId, messageThreadId, categoryMeta: cat };
 }
 
+export function resolveTelegramStaffLeadDestination(brokerId, env = process.env) {
+  let chatId = null;
+  let threadId = null;
+
+  // 1. Broker-specific dedicated staff channel
+  if (brokerId === '003') {
+    chatId = env?.TELEGRAM_CHAT_ID_LEADS_PI || env?.TELEGRAM_CHAT_ID_PI || null;
+    threadId = env?.TELEGRAM_THREAD_ID_LEADS_PI || null;
+  } else if (brokerId === '022') {
+    chatId = env?.TELEGRAM_CHAT_ID_LEADS_TRINITY || env?.TELEGRAM_CHAT_ID_TRINITY || null;
+    threadId = env?.TELEGRAM_THREAD_ID_LEADS_TRINITY || null;
+  } else if (brokerId === '050') {
+    chatId = env?.TELEGRAM_CHAT_ID_LEADS_ASL || env?.TELEGRAM_CHAT_ID_ASL || null;
+    threadId = env?.TELEGRAM_THREAD_ID_LEADS_ASL || null;
+  }
+
+  // 2. Central staff / marketing leads channel
+  if (!chatId) {
+    chatId = env?.TELEGRAM_CHAT_ID_STAFF || env?.TELEGRAM_CHAT_ID_ADMIN || env?.TELEGRAM_CHAT_ID_LEADS || null;
+    threadId = env?.TELEGRAM_THREAD_ID_STAFF || env?.TELEGRAM_THREAD_ID_ADMIN || env?.TELEGRAM_THREAD_ID_LEADS || null;
+  }
+
+  const parsedThread = Number(threadId);
+  const messageThreadId = Number.isInteger(parsedThread) && parsedThread > 0 ? parsedThread : null;
+
+  return { chatId, messageThreadId };
+}
+
 export function formatTelegramMarketPlaybookMessage({
   category = 'thai',
   round = 'morning_0930',

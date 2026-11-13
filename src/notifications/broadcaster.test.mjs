@@ -11,7 +11,8 @@ import {
   createTelegramInviteLink,
   kickTelegramChatMember,
   unbanTelegramChatMember,
-  sendLineBroadcast
+  sendLineBroadcast,
+  resolveTelegramStaffLeadDestination
 } from './broadcaster.mjs';
 
 test('formatTelegramEaSignalMessage formats Pro Copy EA signal with lock profit and lot size', () => {
@@ -299,4 +300,27 @@ test('resolveTelegramCategoryDestination supports dedicated category chatId and 
   });
   assert.equal(dest.chatId, '-100222');
   assert.equal(dest.messageThreadId, 42);
+});
+
+test('resolveTelegramStaffLeadDestination isolates broker staff channels and falls back to staff channel, never customer channel', () => {
+  // Pi specific
+  const piDest = resolveTelegramStaffLeadDestination('003', {
+    TELEGRAM_CHAT_ID: '-100_CUSTOMER',
+    TELEGRAM_CHAT_ID_LEADS_PI: '-100_PI_STAFF',
+    TELEGRAM_CHAT_ID_STAFF: '-100_ALL_STAFF',
+  });
+  assert.equal(piDest.chatId, '-100_PI_STAFF');
+
+  // ASL falls back to central staff channel
+  const aslDest = resolveTelegramStaffLeadDestination('050', {
+    TELEGRAM_CHAT_ID: '-100_CUSTOMER',
+    TELEGRAM_CHAT_ID_STAFF: '-100_ALL_STAFF',
+  });
+  assert.equal(aslDest.chatId, '-100_ALL_STAFF');
+
+  // If no staff channel configured, it returns null and NEVER leaks to customer channel
+  const leakProtected = resolveTelegramStaffLeadDestination('022', {
+    TELEGRAM_CHAT_ID: '-100_CUSTOMER',
+  });
+  assert.equal(leakProtected.chatId, null);
 });

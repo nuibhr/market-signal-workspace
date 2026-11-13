@@ -3,7 +3,7 @@ import { useState } from 'react';
 import CoachHub from './coach-dashboard.jsx';
 import AdminTelegramVip from './admin/admin-telegram-vip.jsx';
 import Image from 'next/image';
-import { Activity, ArrowLeft, ArrowRight, Check, CircleAlert, Copy, History, LayoutDashboard, Radio, RefreshCw, Search, ShieldCheck, UserPlus, Users, Wallet, X } from 'lucide-react';
+import { Activity, ArrowLeft, ArrowRight, Check, CircleAlert, Copy, History, LayoutDashboard, LogOut, Radio, RefreshCw, Search, ShieldCheck, UserPlus, Users, Wallet, X } from 'lucide-react';
 import { useAdminResource } from './use-admin-resource.mjs';
 import { AuditList, date, LaunchPanel, MARKET_NAMES, MemberDialog, MemberIdentity, Pager, ResourceNotice, ReviewDialog, SIGNAL_NAMES, SignalsPanel, Status, SystemPanel } from './admin-operations-ui.jsx';
 const DEFAULT_NAV = [
@@ -78,7 +78,23 @@ export default function AdminConsole({ initialBrokerRole = null }){
   function refresh(){members.reload();if(tab==='overview'||tab==='system')system.reload();if(tab==='audit')audit.reload();if(tab==='signals')signals.reload();}
   async function copyCode(){try{await navigator.clipboard.writeText(issued.code);setCopied(true);}catch{setError('คัดลอกไม่ได้ กรุณาเลือกโค้ดแล้วคัดลอกด้วยตนเอง');}}
   return <div className="account-page admin-page admin-operations">
-    <header className="account-topbar"><a className="account-brand" href="/"><span><Image src="/nugaom-mascot.png" width={38} height={38} alt=""/></span><span><strong>Nugaom AI Pick</strong><small>ศูนย์ดูแลลูกค้า</small></span></a><a className="account-back" href="/account"><ArrowLeft size={16}/>บัญชีของฉัน</a></header>
+    <header className="account-topbar">
+      <a className="account-brand" href="/"><span><Image src="/nugaom-mascot.png" width={38} height={38} alt=""/></span><span><strong>Nugaom AI Pick</strong><small>ศูนย์ดูแลลูกค้า</small></span></a>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <a className="account-back" href="/account"><ArrowLeft size={16}/>บัญชีของฉัน</a>
+        <button
+          type="button"
+          className="account-secondary"
+          style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          onClick={async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/account';
+          }}
+        >
+          <LogOut size={15}/> ออกจากระบบ
+        </button>
+      </div>
+    </header>
     <div className="account-hero"><div className="account-hero-inner"><span className="account-kicker">สำหรับผู้ดูแล</span><h1>จัดการลูกค้า <em>และดูแลสัญญาณ</em></h1><p>ข้อมูลสมาชิกจาก LINE รายการต่ออายุ และเหตุการณ์สแกนจากระบบเดียวกัน</p></div></div>
     <div className="account-layout"><aside className="account-nav"><span className="account-nav-label">{isBrokerStaff ? 'เจ้าหน้าที่ บล.' : 'ศูนย์ควบคุม'}</span>{navList.map(([id,label,Icon])=><button key={id} className={tab===id?'selected':''} onClick={()=>{setTab(id);setError('');}}><Icon size={18}/>{label}{id==='members'&&summary?.pendingPortfolios>0&&<i>{summary.pendingPortfolios}</i>}{id==='renewals'&&summary?.pendingRenewals>0&&<i>{summary.pendingRenewals}</i>}{id==='partner_leads'&&partnerLeads?.data?.summary?.newLeads>0&&<i>{partnerLeads.data.summary.newLeads}</i>}</button>)}{!isBrokerStaff&&<a className="admin-nav-link" href="/team"><Users size={17}/>กล่องงานทีมและชุมชน</a>}<a className="admin-nav-link" href="/"><ArrowLeft size={17}/>กลับหน้าตลาด</a></aside>
       <main className="account-main">

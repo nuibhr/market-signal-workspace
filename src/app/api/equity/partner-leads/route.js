@@ -2,7 +2,7 @@ import { storage } from '../../../../storage/database.mjs';
 import { currentMember, sameOrigin } from '../../../../membership/server.mjs';
 import { isAdmin, getBrokerStaffRole, submitPortfolio } from '../../../../membership/store.mjs';
 import { rateLimit, readJsonBody, requestErrorResponse } from '../../../../security/request-guard.mjs';
-import { sendTelegramMessage, createTelegramInviteLink } from '../../../../notifications/broadcaster.mjs';
+import { sendTelegramMessage, createTelegramInviteLink, resolveTelegramStaffLeadDestination } from '../../../../notifications/broadcaster.mjs';
 import { randomUUID } from 'node:crypto';
 
 export const runtime = 'nodejs';
@@ -141,15 +141,16 @@ export async function POST(request) {
       now
     );
 
-    // Instant Telegram Alert to Admin/Marketing team
-    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+    // Dedicated Telegram Alert to Staff/Marketing Team ONLY (Never sent to customer channel!)
+    const staffDest = resolveTelegramStaffLeadDestination(brokerId, process.env);
+    if (process.env.TELEGRAM_BOT_TOKEN && staffDest.chatId) {
       const timeStr = new Date().toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
       const dateStr = new Date().toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric' });
       const interestLabels = safeInterests.length > 0 ? safeInterests.join(', ') : validLeadType === 'existing_port' ? 'ขอรับสิทธิ์ VIP รายเดือน' : 'หุ้นไทย & DR ทั่วไป';
 
       const alertHeader = validLeadType === 'existing_port'
-        ? `👑 <b>มีลูกค้าแจ้งยืนยันเลขพอร์ต VIP (Existing Client)!</b>`
-        : `📝 <b>มีลูกค้าใหม่ขอเปิดบัญชีหุ้น (New Account Lead)!</b>`;
+        ? `👑 <b>[แจ้งเตือนทีมมาร์เก็ตติ้ง] ลูกค้ายืนยันเลขพอร์ต VIP!</b>`
+        : `📝 <b>[แจ้งเตือนทีมมาร์เก็ตติ้ง] ลูกค้าใหม่ขอเปิดบัญชีหุ้น!</b>`;
 
       const alertText = `${alertHeader}
 ────────────────────────
@@ -164,16 +165,19 @@ ${trimmedNotes ? `📝 <b>หมายเหตุ:</b> ${trimmedNotes}\n` : ''}
 💾 <b>บันทึกในฐานข้อมูล:</b> ตาราง <code>partner_account_leads</code> (รหัส ${leadId})
 ⚡ <b>ขั้นตอนถัดไป (Action Required):</b>
 ${validLeadType === 'existing_port'
-  ? `เจ้าหน้าที่/มาร์เก็ตติ้งของ ${broker.name} ตรวจสอบเลขพอร์ตเพื่อออกโค้ด VIP หรือเปิดสิทธิ์ Settrade Open API ให้ลูกค้า`
-  : `เจ้าหน้าที่การตลาดของ ${broker.name} ประจำพาร์ทเนอร์แพลตฟอร์ม จะโทรติดต่อดูแลและอำนวยความสะดวกการเปิดบัญชีให้ลูกค้าโดยตรง`}`;
+  ? `เจ้าหน้าที่/มาร์เก็ตติ้งของ ${broker.name} เข้าตรวจสอบในระบบหลังบ้านเพื่ออนุมัติสิทธิ์ VIP ให้ลูกค้า`
+  : `เจ้าหน้าที่การตลาดของ ${broker.name} โทรติดต่อประสานงานเปิดบัญชีให้ลูกค้าโดยตรง`}`;
 
       sendTelegramMessage({
         token: process.env.TELEGRAM_BOT_TOKEN,
-        chatId: process.env.TELEGRAM_CHAT_ID,
+        chatId: staffDest.chatId,
+        messageThreadId: staffDest.messageThreadId,
         text: alertText,
       }).catch((err) => {
-        console.warn('[Partner Lead] Telegram notification dispatch skipped or failed:', err.message);
+        console.warn('[Partner Lead] Telegram staff notification skipped or failed:', err.message);
       });
+    } else {
+      console.info('[Partner Lead] Staff alert skipped: Dedicated staff Telegram channel not configured (TELEGRAM_CHAT_ID_STAFF / TELEGRAM_CHAT_ID_LEADS).');
     }
 
     // Sync portfolio to logged-in member record if available
@@ -185,20 +189,21 @@ ${validLeadType === 'existing_port'
       }
     }
 
-    // Generate personalized 1-time Telegram VIP Invite Link
+    // Generate personalized 1-time Telegram VIP Invite Link for Customer VIP channel
+    const customerVipChatId = process.env.TELEGRAM_CHAT_ID_VIP || process.env.TELEGRAM_CHAT_ID_THAI || process.env.TELEGRAM_CHAT_ID;
     let inviteLink = null;
-    if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
+    if (process.env.TELEGRAM_BOT_TOKEN && customerVipChatId) {
       try {
         const invite = await createTelegramInviteLink({
           token: process.env.TELEGRAM_BOT_TOKEN,
-          chatId: process.env.TELEGRAM_CHAT_ID,
+          chatId: customerVipChatId,
           name: `VIP · ${trimmedName.slice(0, 16)} (${brokerId})`,
           memberLimit: 1,
           expireDate: Date.now() + 24 * 60 * 60 * 1000, // 24 hours validity
         });
         inviteLink = invite?.inviteLink || null;
       } catch (err) {
-        console.warn('[Partner Lead] Telegram invite creation skipped or failed:', err.message);
+        console.warn('[Partner Lead] Telegram customer invite creation skipped or failed:', err.message);
       }
     }
     if (!inviteLink && (process.env.TELEGRAM_VIP_INVITE_LINK || process.env.TELEGRAM_INVITE_LINK)) {

@@ -15,7 +15,7 @@
     "STORAGE_PROVIDER": "d1",
     "SCANNER_RUNTIME": "vps",
     "LAUNCH_MAINTENANCE": "false",
-    "DEMO_LOGIN_ENABLED": "true",
+    "DEMO_LOGIN_ENABLED": "false",
     "AI_ANALYSIS_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     "NODE_ENV": "production",
     "AUTO_PICK_RUNTIME": "cloudflare",
