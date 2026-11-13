@@ -7,6 +7,9 @@ let shape = null;
 let payload = null;
 
 function getValidators() {
+  if (typeof navigator !== 'undefined' && navigator.userAgent === 'Cloudflare-Workers') {
+    return null;
+  }
   if (shape && payload) return { shape, payload };
   try {
     const ajv = new Ajv2020({ allErrors: true, strict: false });

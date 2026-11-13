@@ -1,6 +1,7 @@
 import {rateLimit} from '../../../security/request-guard.mjs';
 import {createSettradeClient,createTfexClient} from '../../settrade.mjs';
 import {getUsDailyBars} from '../../us-eod.mjs';
+import {getYahooHistory} from '../../yahoo-history.mjs';
 import {sharedDaily} from '../../shared-policy.mjs';
 import {createNativeSource,emptyNativeInput} from './native-source.mjs';
 import {storage} from '../../../storage/database.mjs';
@@ -33,10 +34,14 @@ export function scanAssets(market,universe="default"){
 }
 const unavailable=(market,universe)=>scanAssets(market,universe).map(a=>emptyNativeInput(a,market));
 export const nativeSource=createNativeSource({assets:scanAssets,createSettrade:()=>createSettradeClient(),createTfex:()=>createTfexClient(),
- getUsBars:(symbol,now,asset)=>getUsDailyBars(symbol,{now,assetKind:asset?.sectionId==='US_ETFS'?'etf':'stock',allowedProviders:['fmp','yahoo'].filter(p=>displayRights(rightsEvidence(),'us',p,now)==='CONFIRMED')})});
+ getUsBars:(symbol,now,asset)=>getUsDailyBars(symbol,{now,assetKind:asset?.sectionId==='US_ETFS'?'etf':'stock',allowedProviders:['fmp','yahoo'].filter(p=>displayRights(rightsEvidence(),'us',p,now)==='CONFIRMED')}),
+ getThaiDrFallback:async(asset,market,now)=>{
+  if(displayRights(rightsEvidence(),market,'yahoo',now)!=='CONFIRMED')return null;
+  try{return await getYahooHistory(asset,'1d');}catch{return null;}
+ }});
 async function loadInputs(market,{now,evidence,universe}){
  if(market==='forex')return loadForex({now,evidence});
- const providers=sharedDaily()?(market==='tfex'?['settrade']:market==='us'?['fmp','yahoo']:['settrade','yahoo']):(market==='us'?['fmp','yahoo']:['settrade']);
+ const providers=sharedDaily()?(market==='tfex'?['settrade']:market==='us'?['fmp','yahoo']:['settrade','yahoo']):(market==='us'?['fmp','yahoo']:market==='tfex'?['settrade']:['settrade','yahoo']);
  if(!providers.some(provider=>displayRights(evidence,market,provider,now)==='CONFIRMED'))return unavailable(market,universe);
  return nativeSource(market,{universe});
 }

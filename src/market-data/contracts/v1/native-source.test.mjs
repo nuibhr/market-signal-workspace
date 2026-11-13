@@ -30,3 +30,21 @@ test('TFEX quote retains unknown source time and null OI; crossed quote is unava
  const row=(await create()('tfex'))[0];assert.equal(row.dataAsOf,null);assert.equal(row.observedAt,null);assert.equal(row.data.openInterest,null);assert.equal(row.receivedAt,received);
  const load=create({createTfex:()=>({...client,getQuote:async symbol=>({symbol,status:'available',price:100,bid:102,ask:101})})});assert.equal((await load('tfex'))[0].available,false);
 });
+test('SET/DR fallback uses Yahoo only when configured handler is supplied and keeps fallback flag',async()=>{
+ const yahooRights={yahoo:{status:'CONFIRMED',markets:['thai','dr'],evidenceId:'FIXTURE',verifiedAt:'2026-10-01T00:00:00Z',validUntil:'2026-11-01T00:00:00Z'}};
+ const load=create({
+  createSettrade:()=>({...client,getDailyCandles:async()=>{throw {code:'SOURCE_UNAVAILABLE'};}}),
+  getThaiDrFallback:async asset=>({symbol:asset.symbol,instrumentId:asset.instrumentId,source:'Yahoo Finance · Delayed fallback',timeframe:'1d',receivedAt:received,fallback:true,chartOnly:true,bars}),
+ });
+ for(const market of ['thai','dr']){
+  const rows=await load(market);assert.equal(rows[0].available,true);assert.equal(rows[0].providerId,'yahoo');assert.equal(rows[0].fallback,true);
+  const projected=projectEnvelope(rows,{market,tier:'STARTER',now,evidence:yahooRights});
+  assert.equal(projected.records[0].data.price,12);assert.equal(projected.records[0].source.providerId,'yahoo');
+  assert.equal(projected.records[0].source.fallback,true);assert.equal(projected.records[0].eligibility.signal,false);
+ }
+ const failed=create({
+  createSettrade:()=>({...client,getDailyCandles:async()=>{throw {code:'AUTH_FAILED'};}}),
+  getThaiDrFallback:async()=>null,
+ });
+ assert.equal((await failed('thai'))[0].failureCode,'AUTH_FAILED');
+});
