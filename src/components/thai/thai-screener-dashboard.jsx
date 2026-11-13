@@ -15,6 +15,7 @@ import {
 import {soundPreference,subscribeSoundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
 import {useMonitor} from '../monitor/monitor-provider.jsx';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
+import TelegramVipJoinButton from '../telegram-vip-join-button.jsx';
 import styles from './thai-screener.module.css';
 
 const n=(v,d=2)=>Number.isFinite(v)?v.toLocaleString('en-US',{maximumFractionDigits:d}):'—';
@@ -528,9 +529,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
      <p>คัดกรองเฉพาะหุ้นที่มีโครงสร้างความได้เปรียบสูง (High Probability Setup) บันทึก Entry / SL / TP ชัดเจน</p>
     </div>
     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-     <a href="https://t.me/DRThaibot" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)', color: '#fff', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)' }}>
-      ✈️ รับการบ้านหุ้นเข้า Telegram VIP ↗
-     </a>
+     <TelegramVipJoinButton label="✈️ รับการบ้านหุ้นเข้า Telegram VIP ↗" />
      <button type="button" className={styles.ledgerButton} onClick={()=>{if(onResults)onResults();}}>
       📑 ดูบันทึกผลจริง Trade Ledger ↗
      </button>

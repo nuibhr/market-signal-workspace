@@ -1,5 +1,6 @@
 'use client';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
+import TelegramVipJoinButton from '../telegram-vip-join-button.jsx';
 import {pollAfterCompletion} from '../../monitor/poll.mjs';
 import {DISCOVERY_INTERVAL_MS} from '../../signals/cadence.mjs';
 
@@ -1212,26 +1213,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
               <p>คัดกรองเฉพาะ DR80 ที่มีแต้มต่อราคา Fair/Discount + ทรงกราฟ Stage 2 แข็งแกร่ง บันทึก Entry / SL / TP ชัดเจน</p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <a
-                href="https://t.me/DRThaibot"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-                  color: '#fff',
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)',
-                }}
-              >
-                ✈️ รับการบ้าน DR เด่นเข้า Telegram VIP ↗
-              </a>
+              <TelegramVipJoinButton label="✈️ รับการบ้าน DR เด่นเข้า Telegram VIP ↗" />
               <button
                 type="button"
                 className={styles.ledgerButton}
@@ -1442,14 +1424,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                 >
                   📈 ดูกราฟ {activeDrDoctor.symbol} ทันที ↗
                 </button>
-                <a
-                  href="https://t.me/DRThaibot"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <TelegramVipJoinButton
+                  label="✈️ รับโพย DR เด่นเข้า Telegram VIP ↗"
                   className={styles.doctorTelegramBtn}
-                >
-                  ✈️ รับโพย DR เด่นเข้า Telegram VIP ↗
-                </a>
+                />
               </div>
 
               {signalAccess !== true && (
