@@ -14,17 +14,17 @@
 .coach-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:18px 0}
 .coach-toolbar>h3{margin-right:auto;color:#0f172a;font-weight:700}
 .coach-toolbar label{display:flex;align-items:center;gap:8px;color:#334155;font-weight:600;font-size:13px}
-.coach-toolbar input,.coach-toolbar select,.coach-form input,.coach-form select{color:#0f172a;background:#ffffff;border:1px solid #cbd5e1;border-radius:10px;min-height:42px;padding:10px 12px;max-width:100%;font:inherit}
+.coach-toolbar input,.coach-toolbar select,.coach-form input,.coach-form select{color:#0f172a;background:#ffffff;border: none;border-radius:10px;min-height:42px;padding:10px 12px;max-width:100%;font:inherit}
 .coach-toolbar input{flex:1;min-width:180px}
 .coach-toolbar select{background-color:#ffffff}
-.coach-paper-label{display:inline-block;color:#065f46;border:1px solid #a7f3d0;background:#ecfdf5;padding:5px 9px;border-radius:6px;font-size:12px;font-weight:700;line-height:1.5}
+.coach-paper-label{display:inline-block;color:#065f46;border: none;background:#ecfdf5;padding:5px 9px;border-radius:6px;font-size:12px;font-weight:700;line-height:1.5}
 .coach-disclosure{font-size:13px;color:#475569;line-height:1.9;border-left:3px solid #10b981;padding-left:14px;background:rgba(255,255,255,0.7);padding-block:6px;border-radius:0 8px 8px 0}
 .coach-identity{display:flex;align-items:center;gap:14px;margin:20px 0}
 .coach-identity h2,.coach-identity h3{margin:8px 0;color:#0f172a;font-weight:700}
 .coach-identity p,.coach-identity span:not(.coach-paper-label){color:#475569;font-size:13px}
 .coach-avatar{border-radius:50%;overflow:hidden;flex-shrink:0;box-shadow:0 2px 8px rgba(15,23,42,0.08)}
 .coach-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:24px 0}
-.coach-stat-grid article,.coach-portfolio-grid article,.coach-trades article,.coach-create,.coach-form,.coach-confirm{background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(15,23,42,0.04);color:#0f172a}
+.coach-stat-grid article,.coach-portfolio-grid article,.coach-trades article,.coach-create,.coach-form,.coach-confirm{background:#ffffff;border: none;border-radius:16px;padding:20px;box-shadow:0 4px 16px rgba(15,23,42,0.04);color:#0f172a}
 .coach-stat-grid article{display:flex;flex-direction:column;gap:10px}
 .coach-stat-grid span{font-size:13px;color:#64748b;font-weight:600}
 .coach-stat-grid strong{font-size:26px;color:#0f172a;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;font-weight:700}

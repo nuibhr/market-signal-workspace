@@ -10,6 +10,7 @@ export function candleClosedAt(bar, timeframe, market) {
   if (typeof bar.time !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(bar.time)) return NaN;
   const date = Date.parse(`${bar.time}T00:00:00Z`);
   if (!Number.isFinite(date) || new Date(date).toISOString().slice(0, 10) !== bar.time) return NaN;
+  if (market === 'forex') return date + 86400000;
   if (market !== 'us') return Date.parse(`${bar.time}T17:00:00+07:00`);
   const summerClose = Date.parse(`${bar.time}T20:00:00Z`);
   return newYorkParts(summerClose).minutes === 960 ? summerClose : summerClose + 3600000;

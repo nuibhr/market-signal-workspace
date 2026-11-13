@@ -1,3 +1,9 @@
+# Current Cloudflare + VPS deployment
+
+For the production Cloudflare web app with a portable VPS scanner, use
+[the scanner deployment guide](vps/README.md). The all-on-VPS instructions below
+describe the older SQLite architecture and are not the migration path for D1.
+
 # แบบ VPS เดิม (เก็บไว้เป็นทางเลือก)
 
 แผนปัจจุบันเลือก Cloudflare Workers + Cron + D1 โปรดอ่าน [Cloudflare migration](cloudflare/README.md) ก่อน ไฟล์ VPS ด้านล่างเป็นแนวทางเดิม ไม่ใช่สิ่งที่ต้องซื้อหรือติดตั้งในขั้นตอนปัจจุบัน

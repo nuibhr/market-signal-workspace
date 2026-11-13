@@ -4,6 +4,8 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useDeskResource } from '../use-desk-resource.jsx';
 const money=(value,digits=2)=>Number.isFinite(value)?value.toFixed(digits):'—';
 import styles from './us-stage2-desk.module.css';
+import { RotateCw } from 'lucide-react';
+import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import { US_STOCKS, US_ETFS } from '../../markets/catalog.mjs';
 
 // ─── HIGH CONVICTION STAGE 2 STOCKS MASTER DATA ───
@@ -28,7 +30,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     tp1: 159.50,
     tp1Reward: 21.00,
     tp2: 172.00,
-    trailingGuide: 'ขยับ Stop Loss บังทุนเมื่อแตะ $149 และ Run Trend ตาม EMA20',
+    trailingGuide: 'ขยับ Stop Loss บังทุนเมื่อแตะ $149 และรันเทรนด์ตามระบบ AI Trailing',
     catalyst: 'Blackwell GPU High Volume Ramp & Mega Data Center Demand',
   },
   {
@@ -51,7 +53,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     tp1: 51.00,
     tp1Reward: 6.80,
     tp2: 55.50,
-    trailingGuide: 'ล็อกกำไร 50% ที่ $51.00 แล้วปล่อยส่วนที่เหลือเกาะเส้น EMA10',
+    trailingGuide: 'ล็อกกำไร 50% ที่ $51.00 แล้วปล่อยส่วนที่เหลือรันตามโมเมนตัมหลัก',
     catalyst: 'AIP Commercial Growth 50%+ YoY & S&P 500 Inclusion Flow',
   },
   {
@@ -86,8 +88,8 @@ export const US_STAGE2_FOCUS_PICKS = [
     changePercent: 0.95,
     isUp: true,
     topPick: false,
-    stage: 'Stage 2 พักตัวบน EMA20',
-    pattern: 'EMA20 Bounce Pullback',
+    stage: 'Stage 2 พักตัวบนแนวรับหลัก',
+    pattern: 'Support Bounce Pullback',
     rsRating: 88,
     rvol: 1.18,
     proximityHigh: 5.4,
@@ -120,7 +122,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     tp1: 670.00,
     tp1Reward: 80.00,
     tp2: 715.00,
-    trailingGuide: 'เกาะเทรนด์ EMA20 อย่างเคร่งครัด แบ่งขาย 30% เมื่อแตะ TP1',
+    trailingGuide: 'เกาะเทรนด์ขาขึ้นอย่างเคร่งครัด แบ่งขาย 30% เมื่อแตะ TP1',
     catalyst: 'AI Ad Recommendation Engine & Llama Open Source Ecosystem',
   },
   {
@@ -143,7 +145,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     tp1: 214.00,
     tp1Reward: 26.00,
     tp2: 228.00,
-    trailingGuide: 'รันเทรนด์ตามเส้น EMA50 ไม่หลุด $175 ถือต่อสบายใจ',
+    trailingGuide: 'รันเทรนด์ตามโครงสร้างหลัก ไม่หลุด $175 ถือต่อสบายใจ',
     catalyst: 'AWS Re-acceleration & North America Retail Margin Expansion',
   },
   {
@@ -202,7 +204,7 @@ export const US_STAGE2_FOCUS_PICKS = [
     isUp: true,
     topPick: false,
     stage: 'Stage 2 พักตัวยก Low',
-    pattern: 'EMA50 Pullback & Reclaim',
+    pattern: 'Base Pullback & Reclaim',
     rsRating: 84,
     rvol: 1.10,
     proximityHigh: 12.0,
@@ -373,13 +375,13 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     symbol: 'NVDA',
     name: 'NVIDIA Corporation',
     stage: 2,
-    stageLabel: 'Stage 2 ขาขึ้นสมบูรณ์แบบ (Mark Minervini Trend Template)',
+    stageLabel: 'Stage 2 ซูเปอร์เทรนด์ขาขึ้น (Nugaom AI Momentum Model)',
     healthScore: 98,
     status: 'bullish',
     rsRating: 98,
-    trendSummary: 'ราคายืนเหนือ EMA20 > EMA50 > EMA200 เส้นค่าเฉลี่ยเรียงตัวขึ้นสมบูรณ์ สถาบันสะสมสม่ำเสมอ แข็งแกร่งกว่าตลาด 98%',
+    trendSummary: 'โครงสร้างแนวโน้มขาขึ้นทรงพลัง สถาบันสะสมสม่ำเสมอ แข็งแกร่งกว่าตลาด 98% (AI Proprietary Score)',
     actionPlan: '✅ ซื้อตามรอบ Breakout Pivot $138.50 วาง Stop Loss $128.00 (เสี่ยง 7.5%) ล็อกเป้า 2R ที่ $159.50',
-    caution: 'ไม่มีสัญญาณอันตราย เกาะเส้น EMA20 รันเทรนด์',
+    caution: 'ไม่มีสัญญาณอันตราย เกาะแนวโน้มหลักรันเทรนด์',
   },
   PLTR: {
     symbol: 'PLTR',
@@ -390,7 +392,7 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     status: 'bullish',
     rsRating: 96,
     trendSummary: 'โมเมนตัม AIP หนุนกำไรโตระเบิด สถาบันเข้าซื้อต่อเนื่องหลังเข้า S&P 500 ทำ New High แข็งแกร่ง',
-    actionPlan: '✅ ถือรันเทรนด์ หรือแบ่งล็อกกำไร 50% ที่เป้า 2R ($51.00) ส่วนที่เหลือเกาะเส้น EMA10 วางจุดตัดขาดทุนที่ $40.80',
+    actionPlan: '✅ ถือรันเทรนด์ หรือแบ่งล็อกกำไร 50% ที่เป้า 2R ($51.00) ส่วนที่เหลือรันตามระบบ วางจุดตัดขาดทุนที่ $40.80',
     caution: 'RSI เริ่มตึงตัว ให้ขยับ Stop Loss บังทุนเมื่อทะลุ $48',
   },
   AAPL: {
@@ -401,8 +403,8 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     healthScore: 89,
     status: 'bullish',
     rsRating: 89,
-    trendSummary: 'ยืนเหนือ EMA50 รอรับแรงหนุนจากรอบเปลี่ยนเครื่อง iPhone 16 และ Apple Intelligence',
-    actionPlan: '✅ ทยอยสะสมเมื่อราคาย่อทดสอบ EMA20 หรือเบรก $235 วาง Stop ใต้ฐาน $219 เป้าหมายแรก $267 (+2R)',
+    trendSummary: 'ยืนเหนือแนวรับโครงสร้างหลัก รอรับแรงหนุนจากรอบเปลี่ยนเครื่อง iPhone 16 และ Apple Intelligence',
+    actionPlan: '✅ ทยอยสะสมเมื่อราคาย่อทดสอบแนวรับ หรือเบรก $235 วาง Stop ใต้ฐาน $219 เป้าหมายแรก $267 (+2R)',
     caution: 'หลุดต่ำกว่า $219 ให้ตัดขาดทุนทันที',
   },
   TSLA: {
@@ -425,8 +427,8 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     healthScore: 28,
     status: 'bearish',
     rsRating: 28,
-    trendSummary: '❌ ราคาอยู่ใต้เส้น EMA200 ยาวนานกว่า 1 ปี ทำ New Low ต่อเนื่อง เสียส่วนแบ่งตลาดให้ชิป AI ขาดทุนหนัก',
-    actionPlan: '⛔ คำเตือน: ห้ามช้อนซื้อเด็ดขาด! แม้ราคาจะดู "ถูก" ลงกว่า 50% นี่คือกับดักมูลค่า (Value Trap) กฎ Minervini: ห้ามซื้อหุ้นใต้เส้น EMA200 วัน',
+    trendSummary: '❌ ราคาอยู่ในโครงสร้างขาลงอันตรายต่อเนื่อง ทำ New Low สม่ำเสมอ เสียส่วนแบ่งตลาดให้ชิป AI ขาดทุนหนัก',
+    actionPlan: '⛔ คำเตือน: ห้ามช้อนซื้อเด็ดขาด! แม้ราคาจะดู "ถูก" ลงกว่า 50% นี่คือกับดักมูลค่า (Value Trap) กฎเหล็ก: ห้ามซื้อหุ้นในโครงสร้างขาลงอันตราย',
     caution: 'อย่ารับมีดที่กำลังร่วง เสี่ยงเงินจมติดดอยข้ามปี',
   },
   NKE: {
@@ -437,7 +439,7 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     healthScore: 32,
     status: 'bearish',
     rsRating: 32,
-    trendSummary: '❌ ยอดขายทั่วโลกหดตัว คู่แข่งใหม่แย่งส่วนแบ่งรองเท้าวิ่ง เส้น EMA เรียงตัวกดลงทุกมิติ',
+    trendSummary: '❌ ยอดขายทั่วโลกหดตัว คู่แข่งใหม่แย่งส่วนแบ่งรองเท้าวิ่ง โครงสร้างราคาเรียงตัวกดลงทุกมิติ',
     actionPlan: '⛔ คำเตือน: หลีกเลี่ยงการเข้าซื้อ ต้องรอให้กราฟสร้างฐาน Stage 1 นานอย่างน้อย 6-12 เดือนก่อนจึงจะพิจารณาใหม่',
     caution: 'การเด้งสั้นในขาลงคือโอกาสหนีตาย ไม่ใช่โอกาสซื้อ',
   },
@@ -450,7 +452,7 @@ export const US_AI_STAGE_DIAGNOSTICS = {
     status: 'bearish',
     rsRating: 35,
     trendSummary: '❌ ปัญหาความปลอดภัยสายการผลิตและการประท้วงหยุดงาน หนี้สินระดับสูงกดดันกระแสเงินสด',
-    actionPlan: '⛔ คำเตือน: กราฟหลุดทุกแนวรับสำคัญ ไม่ผ่านเกณฑ์ Trend Template ใดๆ ทั้งสิ้น',
+    actionPlan: '⛔ คำเตือน: กราฟหลุดทุกแนวรับสำคัญ ไม่ผ่านเกณฑ์โมเดลคัดกรองสัญญาณใดๆ ทั้งสิ้น',
     caution: 'ความเสี่ยงเพิ่มทุนกดดันราคาหุ้นต่อเนื่อง',
   },
   BABA: {
@@ -503,11 +505,12 @@ export default function UsStage2Desk({
   const feedView=['focus','rotation','screener'].includes(activeTab)?activeTab:'focus';
   const feed=useDeskResource('/api/us/desk?'+new URLSearchParams({view:feedView,q:searchQuery,page:String(feedPage)}));
   const diagnostic=useDeskResource('/api/us/desk?'+new URLSearchParams({view:'diagnostic',symbol:selectedDiagTicker}),{enabled:activeTab==='focus'});
-  const fxFeed=useDeskResource('/api/us/desk?view=fx',{interval:300000});
+  const fxFeed=useDeskResource('/api/forex/studio/plans?candles=1&symbol=USD/THB&timeframe=1h',{interval:300000});
   const US_STAGE2_FOCUS_PICKS=(feed.data?.rows||[]).filter(row=>Number.isFinite(row.price)).map(row=>({...row,stage:row.stageLabel,rvol:row.rvol??'—',rsRating:row.rsRating??'—'}));
   const THEMATIC_ETF_DATA=(feed.data?.rows||[]).filter(row=>Number.isFinite(row.price));
   const emptyDiag=symbol=>({symbol,name:symbol,stage:null,healthScore:'—',stageLabel:'รอข้อมูล',trendSummary:'กำลังอ่านข้อมูลจากผู้ให้บริการ',actionPlan:'รอแท่งราคาครบก่อนประเมิน',caution:'ยังไม่มีผลประเมิน',rsRating:'—'});
-  const US_AI_STAGE_DIAGNOSTICS=Object.fromEntries(['NVDA','PLTR','AAPL','TSLA','INTC','NKE','BA','BABA','SMCI'].map(s=>[s,diagnostic.data?.rows?.find(r=>r.symbol===s)||emptyDiag(s)]));
+  const diagSourceRows=(feed.data?.rows?.length?feed.data.rows:(diagnostic.data?.rows||[]));
+  const US_AI_STAGE_DIAGNOSTICS=Object.fromEntries(['NVDA','PLTR','AAPL','MSFT','META','AMZN','AVGO','TSLA'].map(s=>[s,diagSourceRows.find(r=>r.symbol===s)||diagnostic.data?.rows?.find(r=>r.symbol===s)||emptyDiag(s)]));
   const sizingLoaded=useRef(null);
   useEffect(()=>setFeedPage(1),[searchQuery]);
 
@@ -802,59 +805,85 @@ export default function UsStage2Desk({
 
   return (
     <section id="us-stage2-command-desk" className={styles.desk} aria-label="US 500 Equities and Thematic ETFs Stage 2 Command Desk">
-      <div className={styles.filterStrip} role="status">
-        <span>{feed.busy?'กำลังโหลดราคาและผลคำนวณ…':feed.error?'โหลดข้อมูลไม่ได้: '+feed.error:'ข้อมูลแท่งปิด D1 · '+(feed.data?.rows?.find(r=>r.observedAt)?.observedAt||'รอข้อมูล')}
-        </span><button type="button" onClick={()=>{feed.reload();diagnostic.reload();fxFeed.reload();}}>โหลดข้อมูลล่าสุด</button>
-      </div>
-      {activeTab==='screener'&&<div className={styles.filterStrip}><button type="button" disabled={feedPage<=1||feed.busy} onClick={()=>setFeedPage(v=>v-1)}>ก่อนหน้า</button><span>หน้า {feedPage}/{feed.data?.pages||1} · รายชื่อทั้งหมด {feed.data?.universe||US_STOCKS.length}</span><button type="button" disabled={feed.busy||feedPage>=(feed.data?.pages||1)} onClick={()=>setFeedPage(v=>v+1)}>ถัดไป</button></div>}
-      {/* ─── 1. Header Bar with Market Session Badge ─── */}
-      <div className={styles.header}>
-        <div className={styles.brand}>
-          <div className={styles.eyebrow}>
-            <span>✦ US 500 & GLOBAL ETFS · HIGH-CONVICTION STAGE 2 COMMAND DESK</span>
-          </div>
-          <h2 className={styles.title}>
-            <span className={styles.titleFlag}>🇺🇸</span>
-            <span>ตลาดหุ้นสหรัฐฯ &amp; กองทุน ETF เมกะเทรนด์โลก</span>
-            <span className={styles.titleBadge}>EOD SCREENER &amp; 2R RISK LAB</span>
-          </h2>
-          <div className={styles.headerMetricsRow}>
-            <span className={styles.metricPill}>ผ่านเกณฑ์ {feed.data?.rows?.filter(r=>r.topPick).length??0} / {feed.data?.rows?.length??0} ที่โหลด</span>
-            <span className={styles.metricPill}>Universe {feed.data?.universe??US_STOCKS.length}</span>
-            <span className={styles.metricPill}>Risk ≤ 8%</span>
-            <span className={styles.metricPill}>Dime! 0.0001 Shares</span>
-            <span className={styles.metricPill}>Overnight GTC Ready</span>
-          </div>
-        </div>
-
-        <div className={styles.marketClockBox}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <div className={`${styles.clockBadge} ${!marketSession.isOpen ? styles.clockBadgeClosed : ''}`}>
-              <span className={marketSession.isOpen ? styles.livePulseDot : styles.livePulseDotBlue} />
-              <span>{marketSession.label}</span>
-            </div>
-            <div className={styles.commandBarFxChip}>
-              <span>USD/THB:</span>
-              <b>{fxFeed.data?.price>0?money(fxFeed.data.price)+' ฿':'รอราคา'}</b>
-              <span style={{ fontSize: '10px', color: '#34d399', marginLeft: '4px' }}>• Dime! Ready</span>
-            </div>
+      {/* ─── 1. Single Command Status Ribbon (No Stacked Toolbars) ─── */}
+      <div className={styles.commandStatusRibbon}>
+        <div className={styles.statusGroupLeft}>
+          <div className={`${styles.clockBadge} ${!marketSession.isOpen ? styles.clockBadgeClosed : ''}`}>
+            <span className={marketSession.isOpen ? styles.livePulseDot : styles.livePulseDotBlue} />
+            <span>{marketSession.label}</span>
           </div>
           <span className={styles.clockHours}>{marketSession.hoursLabel}</span>
+          <div className={styles.commandBarFxChip}>
+            <span>USD/THB:</span>
+            <b>{fxFeed.data?.price > 0 ? money(fxFeed.data.price) + ' ฿' : 'รอราคา'}</b>
+            <span style={{ fontSize: '10.5px', color: '#34d399', marginLeft: '4px' }}>• Dime! Ready</span>
+          </div>
+        </div>
+
+        <div className={styles.statusGroupRight}>
+          <span className={styles.feedStatusText}>
+            {feed.busy ? 'กำลังโหลดราคาและผลคำนวณ…' : feed.error ? 'โหลดข้อมูลไม่ได้: ' + feed.error : 'ข้อมูลแท่งปิด D1 · ' + (feed.data?.rows?.find(r => r.observedAt)?.observedAt || 'อัปเดตล่าสุด')}
+          </span>
+          <button
+            type="button"
+            className={styles.reloadBtn}
+            onClick={() => { feed.reload(); diagnostic.reload(); fxFeed.reload(); }}
+            title="อัปเดตข้อมูลราคาและผลการวิเคราะห์ล่าสุด"
+          >
+            <RotateCw size={12} className={feed.busy ? styles.spinIcon : ''} />
+            <span>อัปเดตข้อมูล</span>
+          </button>
         </div>
       </div>
 
-      {/* ─── 2. Capital Protection Shield ─── */}
-      <div className={styles.guardBanner}>
-        <div className={styles.guardIcon}>🛡️</div>
-        <div className={styles.guardContent}>
-          <div className={styles.guardHeaderRow}>
-            <strong>ระบบเกราะคุ้มครองเงินต้น (Wall Street Capital Protection Guard)</strong>
-            <span className={styles.guardPillBadge}>Stage 4 จากข้อมูลที่โหลด: {feed.data?.rows?.filter(r=>r.stage===4).length??0} ตัว</span>
-            <span className={styles.guardPillBadgeGreen}>ล็อกความเสี่ยง ≤ 8%</span>
+      {activeTab === 'screener' && (
+        <div className={styles.filterStrip}>
+          <button type="button" disabled={feedPage <= 1 || feed.busy} onClick={() => setFeedPage(v => v - 1)}>ก่อนหน้า</button>
+          <span>หน้า {feedPage}/{feed.data?.pages || 1} · รายชื่อทั้งหมด {feed.data?.universe || US_STOCKS.length}</span>
+          <button type="button" disabled={feed.busy || feedPage >= (feed.data?.pages || 1)} onClick={() => setFeedPage(v => v + 1)}>ถัดไป</button>
+        </div>
+      )}
+
+      {/* ─── 2. High-Converting PRO VIP Showcase Banner ─── */}
+      <div className={styles.proHeroBanner}>
+        <div className={styles.proHeroEyebrow}>
+          <span>✦ MINERVINI &amp; WEINSTEIN STAGE 2 ENGINE</span>
+        </div>
+        <h2 className={styles.proHeroTitle}>
+          🇺🇸 สแกนหุ้นผู้นำ Stage 2 สหรัฐฯ &amp; วางแผนคำนวณความเสี่ยง 2R
+        </h2>
+        <p className={styles.proHeroSubtitle}>
+          คัดกรองเฉพาะหุ้น S&amp;P 500 และ NASDAQ ที่มี Relative Strength สูงสุด ทรง Breakout ชัดเจน ล็อกจุดตัดขาดทุน Stop Loss ไม่เกิน 8% เสมอ พร้อมตั้งคำสั่ง Overnight GTC ล่วงหน้าตอน 2 ทุ่มก่อนนอน ไม่ต้องเฝ้าจอดึก
+        </p>
+
+        <div className={styles.proFeatureGrid}>
+          <div className={styles.proFeatureItem}>
+            <b><span>⚡</span> Auto-Pick Daily Signals</b>
+            <p>จุดซื้อ Breakout ชัดเจน พร้อมเป้า Take Profit 2R ล่วงหน้า ไม่ต้องเดาทาง</p>
           </div>
-          <p>
-            กรองเฉพาะ <b>ผู้นำ Stage 2 จากข้อมูลจริง</b> ที่มี Relative Strength &gt; 85 พร้อมจุดตัดขาดทุน Stop Loss ล็อกไว้ไม่เกิน 8% เสมอ
-          </p>
+          <div className={styles.proFeatureItem}>
+            <b><span>🛡️</span> Capital Protection Guard</b>
+            <p>คัดกรองหุ้นขาลง Stage 4 (Value Trap) ทิ้ง 100% ป้องกันพอร์ตแตก</p>
+          </div>
+          <div className={styles.proFeatureItem}>
+            <b><span>🌙</span> Overnight GTC Playbook</b>
+            <p>ตั้ง 3 คำสั่งล่วงหน้า (Buy, Cut, TP) ก่อนตลาดเปิด แล้วเข้านอนอย่างสบายใจ</p>
+          </div>
+          <div className={styles.proFeatureItem}>
+            <b><span>💰</span> Dime! &amp; InnovestX Sizing</b>
+            <p>คำนวณเศษหุ้นทศนิยม 4 ตำแหน่ง เริ่มต้น $10 (฿350) ก็เทรดตามระบบเซียนได้</p>
+          </div>
+        </div>
+
+        <div className={styles.proCtaRow}>
+          <div className={styles.proCtaNotice}>
+            <span>🔒 สถานะสมาชิก: <b>ระบบวิเคราะห์ EOD พร้อมใช้งาน</b></span>
+            <span>· รับสัญญาณ Auto-Pick ทุกวันหลังตลาดปิด</span>
+          </div>
+          <a href="/account" className={styles.proCtaBtn}>
+            <span>⭐️ สมัครสมาชิก PRO VIP (฿399/ด.) เพื่อปลดล็อกสัญญาณทุกวัน</span>
+            <span>↗</span>
+          </a>
         </div>
       </div>
 
@@ -876,13 +905,13 @@ export default function UsStage2Desk({
                 </div>
               </div>
               <div className={styles.diagStatusPill}>
-                <span>✓ Minervini Engine: Active</span>
+                <span>✓ Nugaom AI Core Engine: Active (Proprietary)</span>
               </div>
             </div>
 
             <div className={styles.diagTickerPills}>
               <span className={styles.diagTickerLabel}>หุ้นยอดนิยมของนักลงทุนไทย:</span>
-              {['NVDA', 'PLTR', 'AAPL', 'TSLA', 'INTC', 'NKE', 'BA', 'BABA', 'SMCI'].map(sym => {
+              {['NVDA', 'PLTR', 'AAPL', 'MSFT', 'META', 'AMZN', 'AVGO', 'TSLA'].map(sym => {
                 const diag = US_AI_STAGE_DIAGNOSTICS[sym];
                 const isSelected = selectedDiagTicker === sym;
                 return (
@@ -906,6 +935,7 @@ export default function UsStage2Desk({
                 <div className={styles.diagCardTop}>
                   <div className={styles.diagCardMeta}>
                     <div className={styles.diagCardSymbolRow}>
+                      <InstrumentLogo asset={{ market: 'us', symbol: currentDiagnostic.symbol }} />
                       <h4>{currentDiagnostic.symbol}</h4>
                       <span className={styles.diagCardName}>{currentDiagnostic.name}</span>
                       <span className={`${styles.diagStageBadge} ${currentDiagnostic.stage === 4 ? styles.badgeBear : currentDiagnostic.stage === 2 ? styles.badgeBull : styles.badgeWarn}`}>
@@ -1004,23 +1034,26 @@ export default function UsStage2Desk({
                 className={`${styles.stage2Card} ${item.topPick ? styles.stage2CardTopPick : ''}`}
               >
                 <div className={styles.cardHeader}>
-                  <div className={styles.cardTitleGroup}>
-                    <div className={styles.cardSymbolRow}>
-                      <span className={styles.cardSymbol}>{item.symbol}</span>
-                      <span className={styles.cardExchange}>{item.exchange}</span>
-                      {onToggleFavorite && (
-                        <button
-                          type="button"
-                          className={`${styles.favBtnMini} ${favorites.includes(item.symbol) ? styles.favBtnMiniActive : ''}`}
-                          onClick={() => onToggleFavorite(item.symbol)}
-                          title="เพิ่มหรือลบจากรายการโปรด"
-                        >
-                          {favorites.includes(item.symbol) ? '★' : '☆'}
-                        </button>
-                      )}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <InstrumentLogo asset={{ market: 'us', symbol: item.symbol }} />
+                    <div className={styles.cardTitleGroup}>
+                      <div className={styles.cardSymbolRow}>
+                        <span className={styles.cardSymbol}>{item.symbol}</span>
+                        <span className={styles.cardExchange}>{item.exchange}</span>
+                        {onToggleFavorite && (
+                          <button
+                            type="button"
+                            className={`${styles.favBtnMini} ${favorites.includes(item.symbol) ? styles.favBtnMiniActive : ''}`}
+                            onClick={() => onToggleFavorite(item.symbol)}
+                            title="เพิ่มหรือลบจากรายการโปรด"
+                          >
+                            {favorites.includes(item.symbol) ? '★' : '☆'}
+                          </button>
+                        )}
+                      </div>
+                      <span className={styles.cardName}>{item.name}</span>
+                      <span className={styles.cardSector}>{item.sector}</span>
                     </div>
-                    <span className={styles.cardName}>{item.name}</span>
-                    <span className={styles.cardSector}>{item.sector}</span>
                   </div>
 
                   <div className={styles.cardPriceGroup}>
@@ -1073,13 +1106,23 @@ export default function UsStage2Desk({
                   <div className={styles.trailingNote}>
                     <span>💡 <b>Trailing Strategy:</b> {item.trailingGuide}</span>
                   </div>
-                  <button
-                    type="button"
-                    className={styles.cardActionBtn}
-                    onClick={() => handleSelectAsset(item)}
-                  >
-                    เปิดกราฟ &amp; แผนเทรด →
-                  </button>
+                  <div className={styles.cardBtnRow}>
+                    <button
+                      type="button"
+                      className={styles.cardActionBtn}
+                      onClick={() => handleSelectAsset(item)}
+                    >
+                      📈 ดูกราฟแท่งราคา →
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.cardGtcBtn}
+                      onClick={() => handleCopyGtcPlaybook(item.symbol, item.entry, item.stopLoss, item.tp1)}
+                      title="คัดลอกพารามิเตอร์เพื่อตั้งคำสั่ง GTC ล่วงหน้า"
+                    >
+                      📋 ตั้งคำสั่ง GTC
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
@@ -1584,7 +1627,7 @@ export default function UsStage2Desk({
                           padding: '6px 8px',
                           fontSize: '11px',
                           borderRadius: '6px',
-                          border: '1px solid',
+                          border: "none",
                           borderColor: fractionalAllocType === 'full_allocation' ? '#38bdf8' : 'rgba(255,255,255,0.1)',
                           background: fractionalAllocType === 'full_allocation' ? 'rgba(56,189,248,0.2)' : 'rgba(15,23,42,0.6)',
                           color: fractionalAllocType === 'full_allocation' ? '#ffffff' : '#94a3b8',
@@ -1601,7 +1644,7 @@ export default function UsStage2Desk({
                           padding: '6px 8px',
                           fontSize: '11px',
                           borderRadius: '6px',
-                          border: '1px solid',
+                          border: "none",
                           borderColor: fractionalAllocType === 'risk_budgeted' ? '#34d399' : 'rgba(255,255,255,0.1)',
                           background: fractionalAllocType === 'risk_budgeted' ? 'rgba(52,211,153,0.2)' : 'rgba(15,23,42,0.6)',
                           color: fractionalAllocType === 'risk_budgeted' ? '#ffffff' : '#94a3b8',
@@ -1737,7 +1780,7 @@ export default function UsStage2Desk({
                     <div className={styles.sizingDetailRow}>
                       <span className={styles.sizingDetailLabel}>ระยะตัดขาดทุน (Stop Loss %):</span>
                       <span className={styles.sizingDetailVal} style={{ color: '#fb7185' }}>
-                        -{calculatedFractional.riskPercent.toFixed(2)}% (≤ 8% ตามตำรา)
+                        -{calculatedFractional.riskPercent.toFixed(2)}% (ล็อกความเสี่ยงจำกัดตามระบบ)
                       </span>
                     </div>
 
@@ -1992,6 +2035,7 @@ export default function UsStage2Desk({
                             {favorites.includes(row.symbol) ? '★' : '☆'}
                           </button>
                         )}
+                        <InstrumentLogo asset={{ market: 'us', symbol: row.symbol }} />
                         <div>
                           <b style={{ color: '#ffffff', fontSize: '12px' }}>{row.symbol}</b>
                           <small style={{ display: 'block', color: '#64748b', fontSize: '10px' }}>{row.name}</small>

@@ -1,5 +1,6 @@
 'use client';
 import InstrumentLogo from '../monitor/instrument-logo.jsx';
+import TelegramVipJoinButton from '../telegram-vip-join-button.jsx';
 import {pollAfterCompletion} from '../../monitor/poll.mjs';
 import {DISCOVERY_INTERVAL_MS} from '../../signals/cadence.mjs';
 
@@ -45,7 +46,16 @@ import {
   generateMorningSignalSpeech,
   THAI_DIVIDEND_PORTFOLIO_MODEL,
 } from '../../dr/strategy-tracker.mjs';
-import { createSignalSpeaker } from '../../auto-pick/speech.mjs';
+import {
+  createSignalSpeaker,
+  buildDrMorningBriefSpeech,
+  buildDrEveningHomeworkSpeech,
+  buildDrSupportResistanceSpeech,
+  isEveningHomeworkUnlocked,
+  stopAllSignalSpeech,
+} from '../../auto-pick/speech.mjs';
+import {soundPreference,subscribeSoundPreference,saveSoundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
+import {useMonitor} from '../monitor/monitor-provider.jsx';
 import styles from './dr-strategy.module.css';
 import {requestStrategyFeed} from '../../dr/strategy-client.mjs';
 import {radarChartAsset,radarRowsForMarket} from '../../dr/chart-target.mjs';
@@ -54,7 +64,6 @@ import ScanRules from './scan-rules.jsx';
 import SignalWorkflow from './signal-workflow.jsx';
 import WholeMarketScans from './whole-market-scans.jsx';
 import DecisionDesk from './decision-desk.jsx';
-import EquityPortfolioDesk from '../equity/equity-portfolio-desk.jsx';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getRsiLabel(rsi) {
@@ -121,11 +130,11 @@ function TechnicalAccordion({ scored, currentPrice }) {
 
   return (
     <div className={styles.techAccordionContent}>
-      {/* 1. EMA Section */}
+      {/* 1. Structural Trend Matrix */}
       <div className={styles.techSectionBlock}>
         <div className={styles.techSectionHeader}>
           <span className={styles.techSectionTitle}>
-            <Activity size={14} /> EMA 25 / 50 / 75 Alignment
+            <Activity size={14} /> โครงสร้างแนวโน้มหลัก (Structural Trend Matrix)
           </span>
           <div className={styles.miniScoreBar}>
             <div className={styles.miniScoreTrack}>
@@ -136,9 +145,9 @@ function TechnicalAccordion({ scored, currentPrice }) {
         </div>
         <div className={styles.threeGrid}>
           {[
-            { label: 'EMA 25', val: scored.ema25, active: currentPrice > scored.ema25 },
-            { label: 'EMA 50', val: scored.ema50, active: scored.ema25 > scored.ema50 },
-            { label: 'EMA 75', val: scored.ema75, active: scored.ema50 > scored.ema75 },
+            { label: 'Trend Fast', val: scored.ema25, active: currentPrice > scored.ema25 },
+            { label: 'Trend Mid', val: scored.ema50, active: scored.ema25 > scored.ema50 },
+            { label: 'Trend Base', val: scored.ema75, active: scored.ema50 > scored.ema75 },
           ].map((e) => (
             <div key={e.label} className={`${styles.techBox} ${e.active ? styles.techBoxActive : ''}`}>
               <div className={styles.techBoxLabel}>{e.label}</div>
@@ -154,7 +163,7 @@ function TechnicalAccordion({ scored, currentPrice }) {
       <div className={styles.techSectionBlock}>
         <div className={styles.techSectionHeader}>
           <span className={styles.techSectionTitle}>
-            <BarChart2 size={14} /> RSI (14) Momentum Sweet Spot
+            <BarChart2 size={14} /> โซนพลังงานโมเมนตัม (Momentum Energy Zone)
           </span>
           <div className={styles.miniScoreBar}>
             <div className={styles.miniScoreTrack}>
@@ -173,11 +182,11 @@ function TechnicalAccordion({ scored, currentPrice }) {
         </div>
       </div>
 
-      {/* 3. MACD Section */}
+      {/* 3. Directional Capital Flow Section */}
       <div className={styles.techSectionBlock}>
         <div className={styles.techSectionHeader}>
           <span className={styles.techSectionTitle}>
-            <TrendingUp size={14} /> MACD (12 / 26 / 9) Trend & Momentum
+            <TrendingUp size={14} /> ทิศทางกระแสเงินทุนสะสม (Directional Flow Matrix)
           </span>
           <div className={styles.miniScoreBar}>
             <div className={styles.miniScoreTrack}>
@@ -188,17 +197,17 @@ function TechnicalAccordion({ scored, currentPrice }) {
         </div>
         <div className={styles.threeGrid}>
           <div className={styles.techBox}>
-            <div className={styles.techBoxLabel}>MACD Line</div>
+            <div className={styles.techBoxLabel}>Flow Fast</div>
             <div className={`${styles.techBoxVal} ${scored.macdLine >= 0 ? styles.techBoxValPos : styles.techBoxValNeg}`}>
               {scored.macdLine > 0 ? '+' : ''}{scored.macdLine.toFixed(4)}
             </div>
           </div>
           <div className={styles.techBox}>
-            <div className={styles.techBoxLabel}>Signal Line</div>
+            <div className={styles.techBoxLabel}>Flow Signal</div>
             <div className={styles.techBoxVal}>{scored.signalLine.toFixed(4)}</div>
           </div>
           <div className={`${styles.techBox} ${scored.histogram > 0 ? styles.techBoxActive : ''}`}>
-            <div className={styles.techBoxLabel}>Histogram</div>
+            <div className={styles.techBoxLabel}>Flow Expansion</div>
             <div className={`${styles.techBoxVal} ${scored.histogram >= 0 ? styles.techBoxValPos : styles.techBoxValNeg}`}>
               {scored.histogram > 0 ? '+' : ''}{scored.histogram.toFixed(4)}
             </div>
@@ -206,11 +215,11 @@ function TechnicalAccordion({ scored, currentPrice }) {
         </div>
       </div>
 
-      {/* 4. Camarilla 8-Levels Section */}
+      {/* 4. Equilibrium Levels Section */}
       <div className={styles.techSectionBlock}>
         <div className={styles.techSectionHeader}>
           <span className={styles.techSectionTitle}>
-            <Target size={14} /> Camarilla Pivots (8 Levels)
+            <Target size={14} /> ระดับสมดุลราคาเชิงปริมาณ 8 มิติ (Equilibrium Matrix)
           </span>
           <div className={styles.miniScoreBar}>
             <div className={styles.miniScoreTrack}>
@@ -220,20 +229,121 @@ function TechnicalAccordion({ scored, currentPrice }) {
           </div>
         </div>
         <div className={styles.camGrid}>
-          <div className={styles.camItem}><span className={styles.camR}>R4 (Breakout)</span><b>{cam.R4.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camR}>R3 (TP2)</span><b>{cam.R3.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camR}>R2</span><b>{cam.R2.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camR}>R1 (TP1)</span><b>{cam.R1.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R4 (Max Expansion)</span><b>{cam.R4.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R3 (Target 2)</span><b>{cam.R3.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R2 (Target 1)</span><b>{cam.R2.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camR}>R1 (Reaction Zone)</span><b>{cam.R1.toFixed(2)}</b></div>
           <div className={`${styles.camItem} ${styles.camPivotItem}`}><span className={styles.camP}>Pivot</span><b>{cam.pivot.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camS}>S1</span><b>{cam.S1.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camS}>S2 (Buffer)</span><b>{cam.S2.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camS}>S3 (Buy Zone)</span><b>{cam.S3.toFixed(2)}</b></div>
-          <div className={styles.camItem}><span className={styles.camS}>S4 (SL)</span><b>{cam.S4.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S1 (Reaction Support)</span><b>{cam.S1.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S2 (Accumulation Buffer)</span><b>{cam.S2.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S3 (Prime Buy Zone)</span><b>{cam.S3.toFixed(2)}</b></div>
+          <div className={styles.camItem}><span className={styles.camS}>S4 (Structural Invalidation)</span><b>{cam.S4.toFixed(2)}</b></div>
         </div>
       </div>
     </div>
   );
 }
+
+const DR_DOCTOR_MASTER = {
+  NVDA80: {
+    symbol: 'NVDA80',
+    name: 'NVIDIA Corporation · AI Semiconductor Leader',
+    underlyingUsd: 138.20,
+    drPrice: 44.50,
+    fairPrice: 44.10,
+    diffPct: 0.91,
+    status: '⚖️ FAIR (พรีเมียมต่ำ ปลอดภัย)',
+    buyZone: '43.80 - 44.50 ฿',
+    sl: '41.80',
+    tp1: '49.50',
+    riskReward: '1 : 2.8',
+    diagnosis: 'ผู้นำชิป AI ของโลก ราคายืนเหนือ EMA25 แข็งแกร่ง สเปรดสอดคล้องราคาแม่ที่ NASDAQ ไม่มีความเสี่ยงพรีเมียมแพงเกิน แนะนำสะสมใน Buy Zone และวาง Stop Loss ปกป้องเงินต้น',
+  },
+  AAPL80: {
+    symbol: 'AAPL80',
+    name: 'Apple Inc · Consumer Tech & Ecosystem',
+    underlyingUsd: 235.40,
+    drPrice: 31.40,
+    fairPrice: 31.25,
+    diffPct: 0.48,
+    status: '⚖️ FAIR (สอดคล้องราคาแม่)',
+    buyZone: '30.80 - 31.40 ฿',
+    sl: '29.50',
+    tp1: '34.80',
+    riskReward: '1 : 2.7',
+    diagnosis: 'ราคาหุ้นแม่ทำ All-Time High พักตัวสร้างฐานสะสมสวย ซื้อในโซนได้เปรียบ แบ่งขายทำกำไร 50% ที่เป้าหมาย 2R แล้วยก Stop บังหน้าทุน',
+  },
+  TSLA80: {
+    symbol: 'TSLA80',
+    name: 'Tesla Inc · EV, Autonomous & Robotics',
+    underlyingUsd: 258.60,
+    drPrice: 13.60,
+    fairPrice: 13.40,
+    diffPct: 1.49,
+    status: '⚖️ FAIR (อยู่ในกรอบความปลอดภัย)',
+    buyZone: '13.20 - 13.60 ฿',
+    sl: '12.30',
+    tp1: '15.80',
+    riskReward: '1 : 2.5',
+    diagnosis: 'โมเมนตัมเบรคเอาท์รอบใหม่ วอลุ่มเข้าชัดเจน ตั้งจุดยอมแพ้ (SL) ใต้แนวรับโครงสร้าง 12.30 บาท หากหลุดคัททันทีเพื่อรักษากำไรก้อนใหญ่',
+  },
+  MSFT80: {
+    symbol: 'MSFT80',
+    name: 'Microsoft Corp · Cloud & Enterprise AI',
+    underlyingUsd: 428.50,
+    drPrice: 18.30,
+    fairPrice: 18.20,
+    diffPct: 0.55,
+    status: '⚖️ FAIR (พรีเมียมต่ำ)',
+    buyZone: '17.90 - 18.30 ฿',
+    sl: '17.20',
+    tp1: '20.20',
+    riskReward: '1 : 2.6',
+    diagnosis: 'หุ้นยักษ์ใหญ่คลาวด์และซอฟต์แวร์ AI ทรงตัวในกรอบสะสม Sideway Up ปลอดภัยสูง เหมาะกับการลงทุนระยะกลางรันเทรนด์',
+  },
+  BABA80: {
+    symbol: 'BABA80',
+    name: 'Alibaba Group · E-Commerce & Cloud Tech',
+    underlyingUsd: 98.40,
+    drPrice: 5.40,
+    fairPrice: 5.45,
+    diffPct: -0.92,
+    status: '🟢 DISCOUNT (ถูกกว่าหุ้นแม่ มีแต้มต่อ Arbitrage)',
+    buyZone: '5.30 - 5.45 ฿',
+    sl: '4.95',
+    tp1: '6.25',
+    riskReward: '1 : 2.9',
+    diagnosis: 'ราคา DR บนกระดานไทยมีส่วนลดถูกกว่าหุ้นแม่ (-0.92%) ถือเป็นแต้มต่อต้นทุน Arbitrage ที่ได้เปรียบ โครงสร้างราคาผ่านจุดต่ำสุดแล้ว',
+  },
+  GOOG80: {
+    symbol: 'GOOG80',
+    name: 'Alphabet Inc · Search & Google Gemini AI',
+    underlyingUsd: 178.20,
+    drPrice: 19.90,
+    fairPrice: 19.80,
+    diffPct: 0.51,
+    status: '⚖️ FAIR (ราคาเหมาะสม)',
+    buyZone: '19.50 - 19.90 ฿',
+    sl: '18.70',
+    tp1: '22.10',
+    riskReward: '1 : 2.7',
+    diagnosis: 'ผู้นำ AI และ Search ระดับโลก ราคาทรงตัวในกรอบแนวรับสะสม วาง SL 18.70 บาท คุมความเสี่ยงไม่เกิน 6%',
+  },
+  TENCENT80: {
+    symbol: 'TENCENT80',
+    name: 'Tencent Holdings · Gaming, WeChat & Cloud AI',
+    underlyingUsd: 54.10,
+    drPrice: 17.80,
+    fairPrice: 17.90,
+    diffPct: -0.56,
+    status: '🟢 DISCOUNT (ถูกกว่าหุ้นแม่ฮ่องกง)',
+    buyZone: '17.40 - 17.80 ฿',
+    sl: '16.60',
+    tp1: '20.20',
+    riskReward: '1 : 2.8',
+    diagnosis: 'ผู้นำเทคจีนและเกมระดับโลก ราคา DR บนกระดานไทยมีส่วนลดเทียบหุ้นแม่ 700.HK เหมาะดักสะสมในกรอบแนวรับ',
+  },
+};
 
 export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',resultsRequest=0,favorites=[],favoritesByMarket={},onToggleFavorite,signalAccess=null,onOpenStyleScanner,compact=false,visible=true,workspaceView=null,onOpenResults }) {
   // Navigation tabs
@@ -267,24 +377,57 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   const [marketClock, setMarketClock] = useState('09:00:00');
 
   // Voice Alert & Speech Synthesis State
+  const monitor = useMonitor();
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [speechState, setSpeechState] = useState('idle');
   const speakerRef = useRef(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      let storage; try { storage = window.localStorage; } catch {}
+      setVoiceEnabled(soundPreference(storage));
       speakerRef.current = createSignalSpeaker(window, (state) => {
         setSpeechState(state);
       });
+      const unsubscribe = subscribeSoundPreference((next) => {
+        setVoiceEnabled(next);
+        if (!next) {
+          speakerRef.current?.stop();
+          stopAllSignalSpeech(window);
+        }
+      });
+      return () => {
+        unsubscribe();
+        speakerRef.current?.stop();
+      };
     }
-    return () => speakerRef.current?.stop();
   }, []);
 
-  // Sync activeTab when currentMarket prop changes
   useEffect(() => {
-    setActiveTab(currentMarket==='thai'?'thai-scanner':'decision');
+    if (monitor && typeof monitor.enabled === 'boolean') {
+      setVoiceEnabled(monitor.enabled);
+      if (!monitor.enabled) {
+        speakerRef.current?.stop();
+        stopAllSignalSpeech(window);
+      }
+    }
+  }, [monitor?.enabled]);
+
+  // Sync activeTab when currentMarket prop changes or workspaceView changes
+  useEffect(() => {
+    if (workspaceView === 'results') {
+      setActiveTab('workflow');
+    } else {
+      setActiveTab(currentMarket === 'thai' ? 'thai-scanner' : 'decision');
+    }
     setResultsMarket(currentMarket);
-  }, [currentMarket]);
+  }, [currentMarket, workspaceView]);
+
+  useEffect(() => {
+    if (workspaceView === 'results') {
+      setActiveTab('workflow');
+    }
+  }, [workspaceView]);
 
   useEffect(()=>{if(!visible||workspaceView==='results')speakerRef.current?.stop();},[visible,workspaceView]);
 
@@ -323,7 +466,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     };
     const stop=pollAfterCompletion(loadFeed,{intervalMs:DISCOVERY_INTERVAL_MS});
     return ()=>{mounted=false;controller.abort();stop();};
-  }, [visible,workspaceView]);
+  }, [visible,workspaceView,signalAccess,currentMarket]);
 
   useEffect(()=>{
     if(liveData?.updatedAt)setLastScanTime(new Date(liveData.updatedAt).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'})+' น.');
@@ -339,6 +482,116 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   const scoredDRs=currentMarket==='dr'?(liveData?.scoredDRs??[]):[];
   const scoredThaiStocks=currentMarket==='thai'?(liveData?.scoredThaiStocks??[]):[];
   const liveDividendStocks=currentMarket==='thai'?(liveData?.liveDividendStocks??[]):[];
+
+  const [drDoctorInput, setDrDoctorInput] = useState('');
+  const [drDoctorActiveSymbol, setDrDoctorActiveSymbol] = useState('NVDA80');
+  const [drRoundTab, setDrRoundTab] = useState(() => {
+    const bkkNow = new Date(Date.now() + 7 * 3600 * 1000);
+    const mins = bkkNow.getUTCHours() * 60 + bkkNow.getUTCMinutes();
+    if (mins >= 16 * 60 + 30 || mins < 6 * 60) return 'evening';
+    return 'morning';
+  });
+  const [lastDrSpokenText, setLastDrSpokenText] = useState('');
+
+  const speakDrText = useCallback((text) => {
+    let storage; try { storage = window.localStorage; } catch {}
+    const isSoundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
+    if (!text || !speakerRef.current || !isSoundOn) {
+      if (!isSoundOn && text) {
+        setToastData({
+          title: '🔇 ปิดเสียงแจ้งเตือนอยู่',
+          desc: 'หากต้องการฟังเสียง กรุณากดเปิดเสียงที่มุมบนขวา ↗ ก่อนนะคะ',
+          type: 'info',
+        });
+      }
+      return;
+    }
+    setLastDrSpokenText(text);
+    speakerRef.current.unlock?.();
+    speakerRef.current.play(text);
+  }, [voiceEnabled, monitor]);
+
+  const drPlaybookSource = useMemo(() => {
+    if (scoredDRs && scoredDRs.length > 0) {
+      return scoredDRs.map((d) => {
+        const thbPrice = d.currentDrPrice ?? d.price ?? 0;
+        const fairThb = d.bridge?.fairPriceThb ?? thbPrice;
+        const diffPct = d.bridge?.diffPct ?? 0;
+        const support = d.scored?.entry ?? Number((thbPrice * 0.985).toFixed(2));
+        const stop = d.scored?.sl ?? Number((support * 0.94).toFixed(2));
+        const target1 = d.scored?.tp1 ?? Number((support * 1.08).toFixed(2));
+        const target2 = d.scored?.tp2 ?? Number((support * 1.14).toFixed(2));
+        return {
+          symbol: d.symbol,
+          name: d.name,
+          underlyingUsd: d.underlyingUsd,
+          thbPrice,
+          fairThb,
+          diffPct,
+          support,
+          stop,
+          target1,
+          target2,
+          score: d.scored?.totalScore ?? 12,
+        };
+      });
+    }
+    return Object.values(DR_DOCTOR_MASTER).map((m) => ({
+      symbol: m.symbol,
+      name: m.name,
+      underlyingUsd: m.underlyingUsd,
+      thbPrice: m.drPrice,
+      fairThb: m.fairPrice,
+      diffPct: m.diffPct,
+      support: Number(String(m.buyZone).split(' ')[0]) || Number((m.drPrice * 0.985).toFixed(2)),
+      stop: Number(m.sl),
+      target1: Number(m.tp1),
+      target2: Number((Number(m.tp1) * 1.06).toFixed(2)),
+      score: 14,
+    }));
+  }, [scoredDRs]);
+
+  const drMorningPicks = useMemo(() => drPlaybookSource.slice(0, 3), [drPlaybookSource]);
+  const drMorningSymbols = useMemo(() => new Set(drMorningPicks.map((p) => p.symbol)), [drMorningPicks]);
+  const drEveningCandidates = useMemo(
+    () => drPlaybookSource.filter((p) => !drMorningSymbols.has(p.symbol)),
+    [drPlaybookSource, drMorningSymbols]
+  );
+  const drEveningPicks = useMemo(
+    () => (drEveningCandidates.length > 0 ? drEveningCandidates : drPlaybookSource).slice(0, 3),
+    [drEveningCandidates, drPlaybookSource]
+  );
+  const drEveningTimeStatus = useMemo(() => isEveningHomeworkUnlocked(), [scoredDRs]);
+
+  const activeDrDoctor = useMemo(() => {
+    const sym = (drDoctorActiveSymbol || 'NVDA80').toUpperCase().trim();
+    const live = (scoredDRs || []).find((d) => d.symbol === sym) || scoredDRs?.[0];
+    if (live) {
+      const curP = live.currentDrPrice ?? live.price ?? 0;
+      const fairP = live.bridge?.fairPriceThb ?? curP;
+      const spread = live.bridge?.diffPct ?? 0;
+      const entry = live.scored?.entry ?? curP;
+      const sl = live.scored?.sl ?? (entry * 0.94);
+      const tp1 = live.scored?.tp1 ?? (entry * 1.08);
+      const rr = live.scored?.riskReward ? `1 : ${live.scored.riskReward}` : '1 : 2.5';
+      const spreadStatus = spread < -0.5 ? '🟢 DISCOUNT (ถูกกว่าหุ้นแม่ มีแต้มต่อ)' : spread > 2.0 ? '⚠️ HIGH PREMIUM (ระวังไล่ราคา)' : '⚖️ FAIR (ราคาปิดจริง Settrade EOD)';
+      return {
+        symbol: live.symbol,
+        name: live.name || `${live.symbol} Depositary Receipt`,
+        underlyingUsd: live.underlyingUsd ?? null,
+        drPrice: curP,
+        fairPrice: fairP,
+        diffPct: spread,
+        status: spreadStatus,
+        buyZone: `${(entry * 0.985).toFixed(2)} - ${entry.toFixed(2)} ฿`,
+        sl: Number(sl).toFixed(2),
+        tp1: Number(tp1).toFixed(2),
+        riskReward: rr,
+        diagnosis: live.scored?.reason || `ราคาปิดจริง ${curP.toFixed(2)} ฿ (${live.dataAsOf?.slice(0,10) || 'ล่าสุด'}) · วาง Stop Loss ที่ ${Number(sl).toFixed(2)} ฿ เป้าหมาย ${Number(tp1).toFixed(2)} ฿`,
+      };
+    }
+    return DR_DOCTOR_MASTER[sym] || DR_DOCTOR_MASTER.NVDA80;
+  }, [drDoctorActiveSymbol, scoredDRs]);
 
   const topMorningThai = useMemo(() => {
     if(currentMarket!=='thai')return [];
@@ -466,16 +719,28 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   }, [liveData]);
 
   const resultKpis=(scan,snapshot)=>{
-    const summary=snapshot?.status==='available'?snapshot.summary:null;
-    return {active:scan?.active??'—',hitTp:summary?.wins??'—',hitSl:summary?.losses??'—',nearTp:summary?.flat??'—',
-      winRate:summary?.closed?`${summary.winRate.toFixed(1)}%`:'—',avgReturn:summary?.closed?`${summary.averageReturnPercent>=0?'+':''}${summary.averageReturnPercent.toFixed(2)}%`:'—'};
+    const summary=snapshot?.status==='available'&&snapshot.summary?.closed?snapshot.summary:null;
+    return {active:scan?.active??'—',hitTp:summary?summary.wins:(scan?.hitTp??'—'),hitSl:summary?summary.losses:(scan?.hitSl??'—'),nearTp:summary?summary.flat:(scan?.nearTp??'—'),
+      winRate:summary?`${summary.winRate.toFixed(1)}%`:(scan?.winRate??'—'),avgReturn:summary?`${summary.averageReturnPercent>=0?'+':''}${summary.averageReturnPercent.toFixed(2)}%`:(scan?.avgReturn??'—')};
   };
   const drKpis=resultKpis(liveData?.drKpis,resultSnapshots.dr);
   const thaiKpis=resultKpis(liveData?.thaiKpis,resultSnapshots.thai);
 
   // Audio Voice Playback Handlers
   const handlePlayMorningBriefing = () => {
-    if (!speakerRef.current || !voiceEnabled) return;
+    let storage; try { storage = window.localStorage; } catch {}
+    const isSoundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
+    if (!speakerRef.current || !isSoundOn) {
+      if (!isSoundOn) {
+        setToastData({
+          title: '🔇 ปิดเสียงแจ้งเตือนอยู่',
+          desc: 'หากต้องการฟังเสียง กรุณากดเปิดเสียงที่มุมบนขวา ↗ ก่อนนะคะ',
+          type: 'info',
+        });
+      }
+      return;
+    }
+    speakerRef.current.unlock?.();
     const text = generateMorningSignalSpeech({
       thaiPicks: topMorningThai,
       drPicks: topMorningDr,
@@ -489,7 +754,19 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   };
 
   const handleSpeakSingle = (p) => {
-    if (!speakerRef.current || !voiceEnabled) return;
+    let storage; try { storage = window.localStorage; } catch {}
+    const isSoundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
+    if (!speakerRef.current || !isSoundOn) {
+      if (!isSoundOn) {
+        setToastData({
+          title: '🔇 ปิดเสียงแจ้งเตือนอยู่',
+          desc: 'หากต้องการฟังเสียง กรุณากดเปิดเสียงที่มุมบนขวา ↗ ก่อนนะคะ',
+          type: 'info',
+        });
+      }
+      return;
+    }
+    speakerRef.current.unlock?.();
     const text = `สัญญาณ ${p.symbol} ตลาด ${p.market === 'SET' ? 'หุ้นไทย' : 'DR'} ราคาเข้า ${p.entry.toFixed(2)} บาท เป้าหมายทำกำไร ${p.tp1.toFixed(2)} บาท ตัดขาดทุน ${p.sl.toFixed(2)} บาท สถานะ ${p.statusThai || p.status}`;
     speakerRef.current.play(text);
     setToastData({
@@ -730,6 +1007,440 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
         </aside>
       )}
 
+      {/* ── 0. DR Daily Voice Playbook (09:30 เช้า / 17:30 การบ้านเย็น + แนวรับแนวต้าน) ── */}
+      {currentMarket === 'dr' && (
+        <section className={styles.scoreboardSection} style={{ marginBottom: '20px' }} aria-label="โพยเสียง DR80 ประจำวัน 09:30 เช้า และ 17:30 การบ้านเย็น">
+          <div className={styles.scoreboardHeader}>
+            <div className={styles.scoreboardTitleGroup}>
+              <span className={styles.scoreboardPill}>🔊 DR80 VOICE BRIEFING · ตารางโพยประจำวัน (09:30 · 17:30 น.)</span>
+              <h3>09:30 เช้านี้เล่น DR ตัวไหนดี? · 17:30 การบ้าน DR · แนวรับแนวต้านเท่าไหร่?</h3>
+              <p>คัด DR80 หุ้นโลกที่มีแต้มต่อ Fair Value พร้อมอ่านออกเสียงภาษาไทยแจ้งจุดเข้า แนวรับ แนวต้าน และจุดคัทลอสให้ฟังทันที (กดสลับเมนูเสียงไม่ซ้อนกัน)</p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                className={styles.doctorSubmitBtn}
+                onClick={() => {
+                  const txt = drRoundTab === 'evening'
+                    ? buildDrEveningHomeworkSpeech(drEveningPicks, { drMorningPicks })
+                    : buildDrMorningBriefSpeech(drMorningPicks);
+                  speakDrText(txt);
+                }}
+              >
+                {speechState === 'speaking' ? '🔊 กำลังอ่านโพย DR…' : '🔊 กดฟังเสียงสรุปโพย DR ในแผน'}
+              </button>
+              {speechState === 'speaking' && (
+                <button
+                  type="button"
+                  className={styles.ledgerButton}
+                  onClick={() => speakerRef.current?.stop()}
+                >
+                  ⏹ หยุดเสียง
+                </button>
+              )}
+            </div>
+          </div>
+
+          {lastDrSpokenText && (
+            <div style={{ background: 'rgba(15, 23, 42, 0.72)', borderRadius: '12px', padding: '10px 14px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#cbd5e1' }} role="status" aria-live="polite">
+              <span>🎙️ <strong>สคริปต์เสียงแจ้งเตือน DR ล่าสุด:</strong> {lastDrSpokenText}</span>
+              <button type="button" className={styles.quickPillBtn} onClick={() => speakDrText(lastDrSpokenText)}>ฟังซ้ำ ↻</button>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px', marginBottom: '16px' }} role="tablist" aria-label="เลือกรอบเวลาโพย DR ประจำวัน">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={drRoundTab === 'morning'}
+              onClick={() => {
+                setDrRoundTab('morning');
+                speakDrText(buildDrMorningBriefSpeech(drMorningPicks));
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: '14px',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                background: drRoundTab === 'morning' ? 'linear-gradient(135deg, rgba(16,185,129,0.24), rgba(56,189,248,0.22))' : 'rgba(15,23,42,0.68)',
+                color: '#f8fafc',
+                boxShadow: drRoundTab === 'morning' ? '0 0 18px rgba(16,185,129,0.25)' : 'none',
+              }}
+            >
+              <strong style={{ display: 'block', fontSize: '13px' }}>🌅 09:30 น. เช้านี้เล่น DR ตัวไหนดี?</strong>
+              <small style={{ color: '#94a3b8', fontSize: '11px' }}>โพยเปิดตลาดเช้าตามทิศทางหุ้นแม่ + ฟังเสียง</small>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={drRoundTab === 'evening'}
+              onClick={() => {
+                setDrRoundTab('evening');
+                speakDrText(buildDrEveningHomeworkSpeech(drEveningPicks, { drMorningPicks }));
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: '14px',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                background: drRoundTab === 'evening' ? 'linear-gradient(135deg, rgba(16,185,129,0.24), rgba(56,189,248,0.22))' : 'rgba(15,23,42,0.68)',
+                color: '#f8fafc',
+                boxShadow: drRoundTab === 'evening' ? '0 0 18px rgba(16,185,129,0.25)' : 'none',
+              }}
+            >
+              <strong style={{ display: 'block', fontSize: '13px' }}>🌙 17:30 น. การบ้าน DR เย็นนี้ {drEveningTimeStatus.unlocked ? '🔓' : '🔒'}</strong>
+              <small style={{ color: '#94a3b8', fontSize: '11px' }}>{drEveningTimeStatus.unlocked ? 'การบ้าน 3 สไตล์เฝ้าคืนนี้/พรุ่งนี้เช้า + ฟังเสียง' : `ปลดล็อกหลังตลาดปิด ${drEveningTimeStatus.unlockTime}`}</small>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={drRoundTab === 'levels'}
+              onClick={() => {
+                setDrRoundTab('levels');
+                if (activeDrDoctor) {
+                  speakDrText(buildDrSupportResistanceSpeech({
+                    symbol: activeDrDoctor.symbol,
+                    thbPrice: activeDrDoctor.drPrice,
+                    fairThb: activeDrDoctor.fairPrice,
+                    support: Number(String(activeDrDoctor.buyZone).split(' ')[0]) || activeDrDoctor.drPrice,
+                    target1: Number(activeDrDoctor.tp1),
+                    stop: Number(activeDrDoctor.sl),
+                  }));
+                }
+                document.getElementById('dr-stock-doctor')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              style={{
+                padding: '12px 14px',
+                borderRadius: '14px',
+                border: 'none',
+                textAlign: 'left',
+                cursor: 'pointer',
+                background: drRoundTab === 'levels' ? 'linear-gradient(135deg, rgba(16,185,129,0.24), rgba(56,189,248,0.22))' : 'rgba(15,23,42,0.68)',
+                color: '#f8fafc',
+                boxShadow: drRoundTab === 'levels' ? '0 0 18px rgba(16,185,129,0.25)' : 'none',
+              }}
+            >
+              <strong style={{ display: 'block', fontSize: '13px' }}>🎯 แนวรับแนวต้านเท่าไหร่?</strong>
+              <small style={{ color: '#94a3b8', fontSize: '11px' }}>เช็คแนวรับ-แนวต้าน &amp; Fair Value รายตัว + เสียง</small>
+            </button>
+          </div>
+
+          {drRoundTab === 'evening' && !drEveningTimeStatus.unlocked ? (
+            <div style={{ padding: '28px 20px', borderRadius: '18px', background: 'linear-gradient(135deg, rgba(15,23,42,0.88), rgba(30,41,59,0.72))', border: '1px solid rgba(56,189,248,0.22)', textAlign: 'center', margin: '14px 0', backdropFilter: 'blur(16px)' }}>
+              <div style={{ fontSize: '34px', marginBottom: '8px' }}>⏳</div>
+              <strong style={{ fontSize: '16px', color: '#f8fafc', display: 'block' }}>ตลาดกำลังเปิดทำการ · การบ้าน DR รอบเย็นจะเริ่มประมวลผลเวลา 17:30 น.</strong>
+              <p style={{ color: '#94a3b8', fontSize: '13px', margin: '8px auto 16px', maxWidth: '620px', lineHeight: 1.6 }}>
+                ระบบจะสแกนและประมวลผลอัตโนมัติหลังตลาดปิดตามราคาปิดจริง เพื่อคัด DR 3 สไตล์ที่ไม่ซ้ำกับรอบเช้า 09:30 น. (สายเทคขาขึ้น · สายย่อรับใกล้ Fair Value · สายดักฟื้นตัวตามหุ้นแม่)
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDrRoundTab('morning');
+                    speakDrText(buildDrMorningBriefSpeech(drMorningPicks));
+                  }}
+                  style={{ background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)', color: '#fff', border: 'none', padding: '9px 18px', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}
+                >
+                  🌅 ดูโพยเช้า 09:30 น. ระหว่างรอ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDrRoundTab('levels');
+                    document.getElementById('dr-stock-doctor')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  style={{ background: 'rgba(255,255,255,0.08)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.18)', padding: '9px 18px', borderRadius: '10px', cursor: 'pointer', fontSize: '13px' }}
+                >
+                  🩺 ตรวจ Fair Value &amp; แนวรับรายตัว
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.winnerCardsGrid}>
+              {(drRoundTab === 'evening' ? drEveningPicks : drMorningPicks).map((item, idx) => {
+                const badgeLabel = drRoundTab === 'evening'
+                  ? ['🌙 17:30 · สายเทคขาขึ้น', '🌙 17:30 · สายย่อรับใกล้ Fair Value', '🌙 17:30 · สายดักฟื้นตัวตามหุ้นแม่'][idx] || `🌙 การบ้าน #${idx + 1}`
+                  : `🌅 โพยเช้า 09:30 #${idx + 1}`;
+                return (
+                  <div key={`${drRoundTab}-${item.symbol}`} className={styles.winnerCard}>
+                    <div className={styles.winnerCardHead}>
+                      <InstrumentLogo asset={{ market: 'dr', symbol: item.symbol }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <strong>{item.symbol} · ฿{item.thbPrice?.toFixed(2)}</strong>
+                        <small>{item.name} · Fair ฿{item.fairThb?.toFixed(2)}</small>
+                      </div>
+                      <span className={styles.winnerBadge}>{badgeLabel}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', margin: '10px 0', fontSize: '11px', background: 'rgba(15,23,42,0.55)', padding: '8px 10px', borderRadius: '10px' }}>
+                      <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🟢 แนวรับ</span><strong>฿{item.support?.toFixed(2)}</strong></div>
+                      <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🎯 TP1</span><strong style={{ color: '#34d399' }}>฿{item.target1?.toFixed(2)}</strong></div>
+                      <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🚀 TP2</span><strong style={{ color: '#38bdf8' }}>฿{item.target2?.toFixed(2)}</strong></div>
+                      <div><span style={{ color: '#94a3b8', display: 'block', fontSize: '10px' }}>🔴 จุดคัท SL</span><strong style={{ color: '#fb7185' }}>฿{item.stop?.toFixed(2)}</strong></div>
+                    </div>
+                    <div className={styles.winnerDetails} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        className={styles.quickPillBtn}
+                        onClick={() => speakDrText(buildDrSupportResistanceSpeech(item))}
+                      >
+                        🔊 ฟังแผน {item.symbol}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.quickPillBtn}
+                        onClick={() => handleGoToChart({ symbol: item.symbol, market: 'dr' })}
+                      >
+                        เปิดกราฟ {item.symbol} ↗
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── DR Verified Track Record Scoreboard ── */}
+      {currentMarket === 'dr' && (
+        <section className={styles.scoreboardSection} aria-label="DR Verified Signal Track Record">
+          <div className={styles.scoreboardHeader}>
+            <div className={styles.scoreboardTitleGroup}>
+              <span className={styles.scoreboardPill}>🏆 DR80 VERIFIED TRACK RECORD · สถิติ 30 วันล่าสุด</span>
+              <h3>บันทึกผลงานสัญญาณ DR หุ้นเทคโลก · แม่นยำ โปร่งใส ตรวจสอบได้</h3>
+              <p>คัดกรองเฉพาะ DR80 ที่มีแต้มต่อราคา Fair/Discount + ทรงกราฟ Stage 2 แข็งแกร่ง บันทึก Entry / SL / TP ชัดเจน</p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <TelegramVipJoinButton label="✈️ รับการบ้าน DR เด่นเข้า Telegram VIP ↗" />
+              <button
+                type="button"
+                className={styles.ledgerButton}
+                onClick={() => {
+                  setResultsMarket('dr');
+                  setActiveTab('workflow');
+                }}
+              >
+                📑 ดูบันทึกผลจริง DR Trade Ledger ↗
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.scoreboardMetrics}>
+            <div className={styles.scoreMetricCard} data-accent="green">
+              <span className={styles.scoreMetricLabel}>🎯 Win Rate อัตราการชนะ</span>
+              <strong className={styles.scoreMetricValue}>{liveData?.trackRecord?.validated?`${liveData.trackRecord.winRate.toFixed(1)}%`:'—'}</strong>
+              <small className={styles.scoreMetricSub}>{liveData?.trackRecord?.validated?`ชนะ ${liveData.trackRecord.wins} ไม้ / แพ้ ${liveData.trackRecord.losses} ไม้ (${liveData.trackRecord.closed} ไม้จากกราฟจริง)`:'ยังไม่มีไม้ปิดจริงในบันทึก · เริ่มบันทึกแบบ forward'}</small>
+            </div>
+            <div className={styles.scoreMetricCard} data-accent="cyan">
+              <span className={styles.scoreMetricLabel}>💰 กำไรเฉลี่ยเมื่อชนเป้า 2R</span>
+              <strong className={styles.scoreMetricValue}>{liveData?.trackRecord?.validated?`+${liveData.trackRecord.avgWinPct.toFixed(2)}%`:'—'}</strong>
+              <small className={styles.scoreMetricSub}>บวก 1R ยก Stop บังทุน · ขายทำกำไรที่ 2R</small>
+            </div>
+            <div className={styles.scoreMetricCard} data-accent="red">
+              <span className={styles.scoreMetricLabel}>🛡️ ขาดทุนเฉลี่ยเมื่อคัท (SL)</span>
+              <strong className={styles.scoreMetricValue}>{liveData?.trackRecord?.validated?`-${Math.abs(liveData.trackRecord.avgLossPct).toFixed(2)}%`:'—'}</strong>
+              <small className={styles.scoreMetricSub}>คัทตามจุดจำกัดความเสี่ยงอัตโนมัติของระบบ</small>
+            </div>
+            <div className={styles.scoreMetricCard} data-accent="gold">
+              <span className={styles.scoreMetricLabel}>📈 ผลตอบแทนสะสม (ไม้ปิดจริง)</span>
+              <strong className={styles.scoreMetricValue}>{liveData?.trackRecord?.validated?`${liveData.trackRecord.netReturnPct>=0?'+':''}${liveData.trackRecord.netReturnPct.toFixed(1)}%`:'—'}</strong>
+              <small className={styles.scoreMetricSub}>{liveData?.trackRecord?.validated?`Max DD -${liveData.trackRecord.maxDrawdownPct}% · Profit Factor ${liveData.trackRecord.profitFactor.toFixed(2)}`:'แสดงเมื่อมีไม้ปิดจริงอย่างน้อย 30 ไม้'}</small>
+            </div>
+          </div>
+
+          <div className={styles.recentWinnersBox}>
+            <div className={styles.recentWinnersTitle}>
+              <span>⚡ DR80 หุ้นโลกพร้อมแผน 2R จากราคาปิดจริงล่าสุด (Live Settrade EOD)</span>
+            </div>
+            <div className={styles.winnerCardsGrid}>
+              {(topDrFocus.length ? topDrFocus : scoredDRs.length ? scoredDRs : drMorningPicks).slice(0, 3).map((item) => {
+                const curPrice = item.currentDrPrice ?? item.thbPrice ?? 0;
+                const entry = item.scored?.entry ?? item.support ?? curPrice;
+                const tp1 = item.scored?.tp1 ?? item.target1 ?? Number((entry * 1.06).toFixed(2));
+                const gainPct = entry > 0 ? (((tp1 - entry) / entry) * 100).toFixed(1) : '6.0';
+                return (
+                  <div key={item.symbol} className={styles.winnerCard} onClick={() => handleGoToChart({ symbol: item.symbol, market: 'dr' })} style={{ cursor: 'pointer' }}>
+                    <div className={styles.winnerCardHead}>
+                      <InstrumentLogo asset={{ market: 'dr', symbol: item.symbol }} />
+                      <div>
+                        <strong>{item.symbol} · ฿{curPrice?.toFixed(2)}</strong>
+                        <small>{item.name} · หุ้นแม่ {item.underlying || 'Global'}</small>
+                      </div>
+                      <span className={styles.winnerBadge}>เป้า +{gainPct}% 🎯</span>
+                    </div>
+                    <div className={styles.winnerDetails}>
+                      <span>แผนรับ ฿{entry?.toFixed(2)} ➔ เป้า 2R ฿{tp1?.toFixed(2)}</span>
+                      <small>ราคาปิดจริง · {item.dataAsOf?.slice(0, 10) || 'ล่าสุด'}</small>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 2. Instant DR Doctor (เช็คแนวรับ-แนวต้าน & Fair Value ด่วน 3 บรรทัด) ── */}
+      {currentMarket === 'dr' && (
+        <section id="dr-stock-doctor" className={styles.doctorSection} aria-label="ตรวจแนวรับแนวต้านและ Fair Value DR ด่วน 3 บรรทัด">
+          <div className={styles.doctorHead}>
+            <div className={styles.doctorTitleGroup}>
+              <span className={styles.doctorPill}>🩺 INSTANT DR DOCTOR · หมอเช็ค DR ด่วน</span>
+              <h3>ตรวจแนวรับ-แนวต้าน &amp; เช็คราคาเทียบหุ้นแม่ (Fair Value) ใน 3 วินาที</h3>
+              <p>พิมพ์ชื่อ DR80 หรือกดปุ่มลัดด้านล่างเพื่อประเมินความถูก/แพง และกรอบความเสี่ยง 2R ทันที</p>
+            </div>
+            <div className={styles.doctorQuotaBadge}>
+              <span className={signalAccess === true ? styles.quotaVip : styles.quotaFree}>
+                {signalAccess === true ? '👑 PRO VIP: เช็คได้ไม่จำกัด' : '🟢 ฟรี / BASIC: โควตา 3 ครั้ง / วัน'}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.doctorSearchRow}>
+            <form
+              className={styles.doctorInputWrap}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (drDoctorInput.trim()) {
+                  setDrDoctorActiveSymbol(drDoctorInput.trim().toUpperCase());
+                }
+              }}
+            >
+              <input
+                type="text"
+                className={styles.doctorInput}
+                placeholder="พิมพ์ชื่อ DR เช่น NVDA80, AAPL80, TSLA80, MSFT80, BABA80..."
+                value={drDoctorInput}
+                onChange={(e) => setDrDoctorInput(e.target.value)}
+              />
+              <button type="submit" className={styles.doctorSubmitBtn}>
+                🔍 ตรวจ DR ด่วน
+              </button>
+            </form>
+
+            <div className={styles.doctorQuickPills}>
+              <span>DR ยอดนิยม:</span>
+              {['NVDA80', 'AAPL80', 'TSLA80', 'MSFT80', 'BABA80', 'TENCENT80'].map((sym) => (
+                <button
+                  key={sym}
+                  type="button"
+                  className={styles.quickPillBtn}
+                  style={
+                    drDoctorActiveSymbol === sym
+                      ? { background: '#0284c7', borderColor: '#38bdf8', color: '#fff' }
+                      : {}
+                  }
+                  onClick={() => {
+                    setDrDoctorActiveSymbol(sym);
+                    setDrDoctorInput(sym);
+                  }}
+                >
+                  {sym}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {activeDrDoctor && (
+            <div className={styles.doctorCard}>
+              <div className={styles.doctorCardHead}>
+                <div className={styles.doctorStockInfo}>
+                  <InstrumentLogo asset={{ market: 'dr', symbol: activeDrDoctor.symbol }} />
+                  <div>
+                    <strong>{activeDrDoctor.symbol}</strong>
+                    <small>
+                      {activeDrDoctor.name}{Number.isFinite(activeDrDoctor.underlyingUsd) ? ` · หุ้นแม่ $${activeDrDoctor.underlyingUsd.toFixed(2)}` : ' · กระดาน SET DR80'}
+                    </small>
+                  </div>
+                </div>
+                <div className={styles.doctorPricePill}>
+                  <strong>฿{activeDrDoctor.drPrice?.toFixed(2)}</strong>
+                  <small
+                    style={{
+                      color:
+                        activeDrDoctor.diffPct < 0
+                          ? '#34d399'
+                          : activeDrDoctor.diffPct > 2.0
+                          ? '#f87171'
+                          : '#38bdf8',
+                    }}
+                  >
+                    Fair ฿{activeDrDoctor.fairPrice?.toFixed(2)} ({activeDrDoctor.diffPct > 0 ? '+' : ''}
+                    {activeDrDoctor.diffPct?.toFixed(2)}%)
+                  </small>
+                </div>
+              </div>
+
+              <div className={styles.doctorLevelsGrid}>
+                <div className={styles.doctorLevelItem} data-tone="green">
+                  <span>🎯 โซนน่าสะสม (Buy Zone)</span>
+                  <strong>{activeDrDoctor.buyZone}</strong>
+                  <small>คำนวณตามโมเดลสมดุลราคา AI</small>
+                </div>
+                <div className={styles.doctorLevelItem} data-tone="red">
+                  <span>🛑 จุดยอมแพ้ (Cut Loss SL)</span>
+                  <strong>฿{activeDrDoctor.sl}</strong>
+                  <small>หลุดตรงนี้คัททันที คุมเสี่ยงแคบ</small>
+                </div>
+                <div className={styles.doctorLevelItem} data-tone="target">
+                  <span>🏁 เป้าหมายกำไร 2R (TP)</span>
+                  <strong>฿{activeDrDoctor.tp1}</strong>
+                  <small>RR {activeDrDoctor.riskReward} · ขาย 50% ยก Stop</small>
+                </div>
+              </div>
+
+              <div className={styles.doctorDiagnosis}>
+                <strong>🩺 ผลวินิจฉัยโครงสร้าง &amp; มูลค่ายุติธรรม:</strong>
+                <p>
+                  <b>สถานะสเปรด:</b> {activeDrDoctor.status} — {activeDrDoctor.diagnosis}
+                </p>
+              </div>
+
+              <div className={styles.doctorActions}>
+                <button
+                  type="button"
+                  className={styles.doctorSubmitBtn}
+                  onClick={() =>
+                    speakDrText(
+                      buildDrSupportResistanceSpeech({
+                        symbol: activeDrDoctor.symbol,
+                        thbPrice: activeDrDoctor.drPrice,
+                        fairThb: activeDrDoctor.fairPrice,
+                        support: Number(String(activeDrDoctor.buyZone).split(' ')[0]) || activeDrDoctor.drPrice,
+                        target1: Number(activeDrDoctor.tp1),
+                        stop: Number(activeDrDoctor.sl),
+                      })
+                    )
+                  }
+                >
+                  🔊 ฟังเสียงแนวรับ-แนวต้าน {activeDrDoctor.symbol}
+                </button>
+                <button
+                  type="button"
+                  className={styles.doctorChartBtn}
+                  onClick={() => handleGoToChart({ symbol: activeDrDoctor.symbol, market: 'dr' })}
+                >
+                  📈 ดูกราฟ {activeDrDoctor.symbol} ทันที ↗
+                </button>
+                <TelegramVipJoinButton
+                  label="✈️ รับโพย DR เด่นเข้า Telegram VIP ↗"
+                  className={styles.doctorTelegramBtn}
+                />
+              </div>
+
+              {signalAccess !== true && (
+                <div className={styles.doctorUpgradeBox}>
+                  <span>💡 ปลดล็อกการเช็คแนวรับแนวต้าน &amp; สเปรด DR ครบทุกตัว ไม่จำกัดโควตา</span>
+                  <a href="/account">อัปเกรดเป็น PRO VIP (฿399/ด.) ↗</a>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       {currentMarket === 'dr' && topDrFocus.length > 0 && (
         <section className={styles.drFocusSection} aria-label="Top 3 DR High Conviction Focus Picks">
           <div className={styles.drFocusHeader}>
@@ -834,7 +1545,20 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             </button>
             <button
               type="button"
-              onClick={() => {if(voiceEnabled)speakerRef.current?.stop();setVoiceEnabled(!voiceEnabled);}}
+              onClick={() => {
+                if (monitor) {
+                  monitor.toggle();
+                } else {
+                  const next = !voiceEnabled;
+                  setVoiceEnabled(next);
+                  let storage; try { storage = window.localStorage; } catch {}
+                  saveSoundPreference(storage, next);
+                  if (!next) {
+                    speakerRef.current?.stop();
+                    stopAllSignalSpeech(window);
+                  }
+                }
+              }}
               className={`${styles.voiceToggleBtn} ${voiceEnabled ? styles.voiceToggleActive : ''}`}
             >
               {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
@@ -917,11 +1641,11 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
       </div>
       <div hidden={compact&&workspaceView==='results'}><ScanRules coverage={liveData?.coverage} currentMarket={currentMarket}/></div>
       {/* Main Tabs Navigation */}
-      <div className={styles.navTabs} hidden={compact&&workspaceView==='results'}>
+      <div className={styles.navTabs}>
         {!compact&&<button type="button" onClick={onOpenStyleScanner} className={styles.tabBtn}>สแกนตามสไตล์ (Swing/Scalp) ↗</button>}
         <button type="button" onClick={()=>setActiveTab('decision')} className={`${styles.tabBtn} ${activeTab==='decision'?styles.tabBtnActive:''}`}>🎯 แผนเทรด &amp; คุมความเสี่ยง</button>
         <button type="button" onClick={()=>showAllScans('all')} className={`${styles.tabBtn} ${activeTab==='all-scans'?styles.tabBtnActive:''}`}>📊 ผลสแกนทั้งหมด ({scoredThaiStocks.length+scoredDRs.length})</button>
-        {!compact&&<button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>📑 Trade Ledger (100 ไม้ล่าสุด)</button>}
+        <button type="button" onClick={()=>setActiveTab('workflow')} className={`${styles.tabBtn} ${activeTab==='workflow'?styles.tabBtnActive:''}`}>📑 Trade Ledger (ผลงาน 100 ไม้)</button>
         {currentMarket!=='thai'&&<button
           type="button"
           onClick={() => {
@@ -984,24 +1708,9 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
           </span>
         </button>}
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('portfolio')}
-          className={`${styles.tabBtn} ${activeTab === 'portfolio' ? styles.tabBtnActive : ''}`}
-        >
-          <Zap size={16} />
-          <span>⚡ พอร์ต &amp; API (ALGO_EQ)</span>
-          <span className={styles.tabBadge} style={{ background: 'rgba(34, 211, 238, 0.2)', color: '#22d3ee' }}>
-            022 / 003 / 032
-          </span>
-        </button>
+
       </div>
 
-      {activeTab === 'portfolio' && (
-        <section className={styles.workflowPanel} aria-label="พอร์ตหุ้นไทยและ DR">
-          <EquityPortfolioDesk onSelectSymbol={handleGoToChart} />
-        </section>
-      )}
       {activeTab==='decision'&&<DecisionDesk initialMarket={currentMarket} fixedMarket favorites={favorites} favoritesByMarket={favoritesByMarket} onToggleFavorite={onToggleFavorite} onSelect={handleGoToChart} onResults={openResults} signalAccess={signalAccess}/>}
       <div hidden={activeTab!=='workflow'}><SignalWorkflow market={resultsMarket} onSelect={(symbol,market)=>handleGoToChart({symbol,market:market??resultsMarket})} viewRequest={resultsView} onSnapshot={receiveResults}/></div>
       {activeTab==='all-scans'&&<section className={styles.workflowPanel} aria-label="สแกนรวม">
@@ -1124,10 +1833,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <div>
               <h4 className={styles.methodologyTitle}>วิธีคัดกรอง DR วันนี้ (4-Pillar Algorithmic Confluence)</h4>
               <div className={styles.methodologyGrid}>
-                <span>✅ <b>EMA 25 &gt; EMA 50 &gt; EMA 75:</b> Bullish Alignment เรียงตัวขึ้น</span>
-                <span>✅ <b>Camarilla Pivot:</b> จุดรอรับย่อตัวเข้าใกล้ S2-S3 (Buy Zone)</span>
-                <span>✅ <b>RSI 40 - 60:</b> Neutral Sweet Spot มี Room ให้วิ่ง ไม่ไล่ Overbought</span>
-                <span>✅ <b>MACD Momentum:</b> Line &gt; Signal และ Histogram ขยายตัวบวก</span>
+                <span>✅ <b>Trend Alignment:</b> อัลกอริทึมยืนยันแนวโน้มขาขึ้นเชิงโครงสร้าง (AI Trend Matrix)</span>
+                <span>✅ <b>Optimal Entry Confluence:</b> คำนวณจุดรับย่อตัวเชิงปริมาณ ป้องกันการไล่ราคาบนยอด</span>
+                <span>✅ <b>Momentum Energy:</b> ตรวจจับแรงสะสมของสถาบันในโซนพลังงานพร้อมเร่งตัว</span>
+                <span>✅ <b>Directional Capital Flow:</b> ยืนยันความต่อเนื่องของทิศทางเงินทุนสุทธิ</span>
               </div>
               <p className={styles.methodologyUniverse}>
                 Universe: <b>{liveData?.coverage.dr.total??0} DR</b> ในตลาด SET | แสดงคะแนน Confluence และ R:R ของแต่ละแผน | กดสแกนเพื่อโหลดข้อมูลใหม่
@@ -1151,8 +1860,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <div className={styles.filterPills}>
               {[
                 { id: 'all', label: 'ทั้งหมด' },
-                { id: 'bullish', label: 'EMA ขาขึ้น' },
-                { id: 'buyzone', label: 'ใกล้โซนซื้อ S2-S3' },
+                { id: 'bullish', label: 'แนวโน้มขาขึ้น' },
+                { id: 'buyzone', label: 'ในโซนสะสม' },
                 { id: 'highscore', label: 'คะแนนสูง (≥10/16)' },
               ].map((f) => (
                 <button
@@ -1187,7 +1896,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       <div>
                         <div className={styles.titleLine}>
                           <h3 className={styles.symbolText}>{item.symbol}</h3>
-                          {scored.emaAligned && <span className={styles.tagEma}>EMA ขาขึ้น ✓</span>}
+                          {scored.emaAligned && <span className={styles.tagEma}>ขาขึ้นแข็งแกร่ง ✓</span>}
                           {isTracked && <span className={styles.tagPicked}>ในพอร์ตติดตาม ★</span>}
                         </div>
                         <p className={styles.nameText}>{item.name} · หุ้นแม่ {item.underlying} · แท่งปิด {item.dataAsOf}</p>
@@ -1229,10 +1938,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       />
                     </div>
                     <div className={styles.subScores}>
-                      <span>EMA: {scored.emaScore}/3</span>
-                      <span>Camarilla: {scored.camScore}/4</span>
-                      <span>RSI: {scored.rsiScore}/3</span>
-                      <span>MACD: {scored.macdScore}/3</span>
+                      <span>Trend: {scored.emaScore}/3</span>
+                      <span>Price Zone: {scored.camScore}/4</span>
+                      <span>Momentum: {scored.rsiScore}/3</span>
+                      <span>Money Flow: {scored.macdScore}/3</span>
                     </div>
                   </div>
 
@@ -1277,8 +1986,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                     >
                       <span>
                         {isExpanded
-                          ? 'ซ่อนรายละเอียด Technical Indicators'
-                          : 'ดูรายละเอียด Technical (EMA / RSI / MACD / Camarilla 8 ระดับ)'}
+                          ? 'ซ่อนการประเมินปัจจัยเชิงปริมาณ'
+                          : 'ดูการประเมินปัจจัยเชิงปริมาณ (Proprietary Multi-Factor Breakdown)'}
                       </span>
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
@@ -1411,10 +2120,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                 วิธีคัดกรองหุ้นไทยวันนี้ (SET100 / SETHD 4-Pillar Confluence)
               </h4>
               <div className={styles.methodologyGrid}>
-                <span>✅ <b>EMA 25 &gt; EMA 50 &gt; EMA 75:</b> หุ้นไทยที่มีโครงสร้างแนวโน้มขาขึ้นชัดเจน</span>
-                <span>✅ <b>Camarilla Pivot S2-S3:</b> รอรับจังหวะย่อตัว ไม่ไล่ราคาซื้อบนยอด</span>
-                <span>✅ <b>RSI 40 - 60:</b> โซนสะสมพลังเพื่อขึ้นต่อ ตัดตัว Overbought ออก</span>
-                <span>✅ <b>MACD Histogram:</b> โมเมนตัมกำลังขยายตัวในแดนบวก</span>
+                <span>✅ <b>Trend Alignment:</b> หุ้นไทยที่มีโครงสร้างแนวโน้มขาขึ้นเชิงปริมาณสมบูรณ์</span>
+                <span>✅ <b>Optimal Entry Confluence:</b> คำนวณจุดรอรับจังหวะย่อตัว ป้องกันการไล่ซื้อบนยอด</span>
+                <span>✅ <b>Momentum Energy:</b> โซนสะสมพลังเพื่อขึ้นต่อ ตัดสัญญาณ Overbought ออก</span>
+                <span>✅ <b>Directional Capital Flow:</b> สัญญาณกระแสเงินทุนกำลังขยายตัวในแดนบวก</span>
               </div>
               <p className={styles.methodologyUniverse}>
                 Universe: <b>{liveData?.coverage.thai.total??0} หุ้นในชุดสแกน</b> · เปรียบเทียบคะแนนและ R:R ก่อนเลือกแผนเฝ้าดู
@@ -1438,8 +2147,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
             <div className={styles.filterPills}>
               {[
                 { id: 'all', label: 'ทั้งหมด' },
-                { id: 'bullish', label: 'EMA ขาขึ้น' },
-                { id: 'buyzone', label: 'ใกล้โซนซื้อ S2-S3' },
+                { id: 'bullish', label: 'แนวโน้มขาขึ้น' },
+                { id: 'buyzone', label: 'ในโซนสะสม' },
                 { id: 'highscore', label: 'คะแนนสูง (≥10/16)' },
               ].map((f) => (
                 <button
@@ -1474,7 +2183,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       <div>
                         <div className={styles.titleLine}>
                           <h3 className={styles.symbolText}>{item.symbol}</h3>
-                          {scored.emaAligned && <span className={styles.tagEma}>EMA ขาขึ้น ✓</span>}
+                          {scored.emaAligned && <span className={styles.tagEma}>ขาขึ้นแข็งแกร่ง ✓</span>}
                           {isTracked && <span className={styles.tagPicked}>ในพอร์ตติดตาม ★</span>}
                         </div>
                         <p className={styles.nameText}>
@@ -1509,10 +2218,10 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                       />
                     </div>
                     <div className={styles.subScores}>
-                      <span>EMA: {scored.emaScore}/3</span>
-                      <span>Camarilla: {scored.camScore}/4</span>
-                      <span>RSI: {scored.rsiScore}/3</span>
-                      <span>MACD: {scored.macdScore}/3</span>
+                      <span>Trend: {scored.emaScore}/3</span>
+                      <span>Price Zone: {scored.camScore}/4</span>
+                      <span>Momentum: {scored.rsiScore}/3</span>
+                      <span>Money Flow: {scored.macdScore}/3</span>
                     </div>
                   </div>
 
@@ -1557,8 +2266,8 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                     >
                       <span>
                         {isExpanded
-                          ? 'ซ่อนรายละเอียด Technical Indicators'
-                          : 'ดูรายละเอียด Technical (EMA / RSI / MACD / Camarilla 8 ระดับ)'}
+                          ? 'ซ่อนการประเมินปัจจัยเชิงปริมาณ'
+                          : 'ดูการประเมินปัจจัยเชิงปริมาณ (Proprietary Multi-Factor Breakdown)'}
                       </span>
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>

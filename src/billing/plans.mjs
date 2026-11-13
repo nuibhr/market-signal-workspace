@@ -1,8 +1,8 @@
 export const PAID_FEATURES=['manualDailyScan','autoPickFeed','aiQuestions','communityPosting'];
 // Prices always come from Stripe. This server-only mapping defines the feature entitlement.
 export const MEMBERSHIP_PLANS=[
- {id:'starter',name:'Starter',monthlyBaht:99,aiDailyLimit:10,dailyScanSymbols:8,features:[...PAID_FEATURES],priceEnv:'STRIPE_PRICE_STARTER_MONTHLY'},
- {id:'pro',name:'Pro',monthlyBaht:299,aiDailyLimit:50,dailyScanSymbols:8,features:[...PAID_FEATURES],priceEnv:'STRIPE_PRICE_PRO_MONTHLY'},
+ {id:'starter',name:'Starter',monthlyBaht:159,aiDailyLimit:10,dailyScanSymbols:8,features:[...PAID_FEATURES],priceEnv:'STRIPE_PRICE_STARTER_MONTHLY'},
+ {id:'pro',name:'Pro',monthlyBaht:399,aiDailyLimit:50,dailyScanSymbols:8,features:[...PAID_FEATURES],priceEnv:'STRIPE_PRICE_PRO_MONTHLY'},
  {id:'ultimate',name:'Ultimate',monthlyBaht:599,aiDailyLimit:150,dailyScanSymbols:8,features:[...PAID_FEATURES],priceEnv:'STRIPE_PRICE_ULTIMATE_MONTHLY'},
 ];
 export function configuredPlans(env=process.env) {

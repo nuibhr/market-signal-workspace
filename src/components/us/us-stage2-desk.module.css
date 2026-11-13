@@ -1,4 +1,4 @@
-/* ─── US 500 & GLOBAL ETFS STAGE 2 COMMAND DESK STYLESHEET (CLEAN MAGIC UI AESTHETIC) ─── */
+/* ─── US 500 & GLOBAL ETFS STAGE 2 COMMAND DESK STYLESHEET (BORDERLESS CLEAN FINTECH) ─── */
 .desk {
   --us-cyan: #22d3ee;
   --us-purple: #a855f7;
@@ -6,34 +6,215 @@
   --us-amber: #f59e0b;
   --us-rose: #f43f5e;
   --us-blue: #38bdf8;
-  --us-card-bg: linear-gradient(145deg, rgba(17, 28, 51, 0.8) 0%, rgba(13, 21, 38, 0.9) 100%);
-  --us-border: rgba(255, 255, 255, 0.06);
-  --us-subtle: rgba(255, 255, 255, 0.03);
 
-  background: linear-gradient(150deg, rgba(9, 16, 36, 0.95) 0%, rgba(13, 23, 50, 0.9) 50%, rgba(8, 13, 28, 0.95) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
-  padding: 24px;
-  margin: 10px 0 24px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0 0 24px;
   color: #f1f5f9;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
   position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   scroll-margin-top: 85px;
 }
 
-.desk::before {
+/* ─── 1. Clean Inline Command Status Ribbon (Zero Boxed Frames) ─── */
+.commandStatusRibbon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  padding: 0 0 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.statusGroupLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.statusGroupRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.feedStatusText {
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.reloadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border: none;
+  color: #38bdf8;
+  font-size: 11.5px;
+  font-weight: 750;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.reloadBtn:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+}
+
+.reloadBtn:active {
+  transform: translateY(0);
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── 2. High-Converting PRO VIP Showcase Banner (Clean Editorial, No Inner Boxes) ─── */
+.proHeroBanner {
+  background: linear-gradient(135deg, rgba(14, 27, 54, 0.75) 0%, rgba(9, 16, 36, 0.85) 100%);
+  border: none;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.proHeroBanner::before {
   content: '';
   position: absolute;
-  top: -120px;
-  right: -100px;
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100%;
+  background: radial-gradient(circle at right top, rgba(34, 211, 238, 0.12) 0%, transparent 70%);
   pointer-events: none;
-  z-index: 0;
+}
+
+.proHeroEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.proHeroTitle {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 8px;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+}
+
+.proHeroSubtitle {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  max-width: 900px;
+}
+
+.proFeatureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.proFeatureItem {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.proFeatureItem b {
+  font-size: 12.5px;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.proFeatureItem p {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.proCtaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: none;
+}
+
+.proCtaNotice {
+  font-size: 12px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.proCtaNotice b {
+  color: #34d399;
+}
+
+.proCtaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 800;
+  padding: 10px 20px;
+  border-radius: 12px;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.proCtaBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: #ffffff;
 }
 
 /* ── Header & Executive Status Strip (Seamless, Line-Free) ── */
@@ -116,7 +297,7 @@
   font-weight: 600;
   color: #94a3b8;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   padding: 4px 10px;
   border-radius: 6px;
   white-space: nowrap;
@@ -186,7 +367,7 @@
   align-items: center;
   gap: 14px;
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(34, 211, 238, 0.04) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.18);
+  border: none;
   border-radius: 14px;
   padding: 14px 20px;
   margin: 14px 0 20px;
@@ -215,7 +396,7 @@
   font-weight: 700;
   color: #fda4af;
   background: rgba(244, 63, 94, 0.12);
-  border: 1px solid rgba(244, 63, 94, 0.25);
+  border: none;
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;
@@ -226,7 +407,7 @@
   font-weight: 700;
   color: #34d399;
   background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: none;
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;
@@ -267,46 +448,56 @@
 .filterPills {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 12px;
+  padding: 4px;
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filterPills::-webkit-scrollbar {
+  display: none;
 }
 
 .filterPill {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
-  padding: 7px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
   color: #94a3b8;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .filterPill:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f1f5f9;
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
 }
 
 .filterPillActive {
-  background: rgba(34, 211, 238, 0.16) !important;
-  border-color: rgba(34, 211, 238, 0.4) !important;
+  background: rgba(56, 189, 248, 0.18) !important;
   color: #38bdf8 !important;
   font-weight: 700;
-  box-shadow: 0 4px 14px rgba(34, 211, 238, 0.15);
 }
 
 .searchBox {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: none;
+  border-radius: 10px;
   padding: 7px 14px;
   min-width: 220px;
   transition: all 0.2s ease;
@@ -341,7 +532,7 @@
 
 .stage2Card {
   background: linear-gradient(145deg, rgba(17, 28, 51, 0.75) 0%, rgba(13, 21, 38, 0.85) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 18px;
   padding: 20px;
   display: flex;
@@ -355,12 +546,10 @@
 
 .stage2Card:hover {
   transform: translateY(-3px);
-  border-color: rgba(34, 211, 238, 0.35);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35), 0 0 20px rgba(34, 211, 238, 0.12);
 }
 
 .stage2CardTopPick {
-  border-color: rgba(245, 158, 11, 0.3);
   box-shadow: 0 8px 26px rgba(245, 158, 11, 0.08);
 }
 
@@ -487,37 +676,35 @@
   border: none;
 }
 
-/* ── 2R Blueprint Levels Grid (Soft Micro-Tiles, Zero Cutting Lines) ── */
+/* ── 2R Blueprint Levels (Borderless Clean Financial Data) ── */
 .blueprintGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  border: none; /* Removed outer border */
-  border-radius: 12px;
-  padding: 6px;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  padding: 6px 0;
 }
 
 .blueprintCol {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  background: rgba(255, 255, 255, 0.035);
-  border-radius: 8px;
-  padding: 8px 10px;
-  border: none; /* Removed cell borders */
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .blueprintLabel {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   color: #64748b;
   text-transform: uppercase;
 }
 
 .blueprintVal {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   color: #f1f5f9;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -532,39 +719,47 @@
 }
 
 .blueprintSub {
-  font-size: 9px;
+  font-size: 11px;
   color: #94a3b8;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-/* ── Card Footer Actions (Natural Spacing, No Line) ── */
+/* ── Card Footer Actions (Natural Spacing, Clean Buttons) ── */
 .cardFooter {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 10px;
   padding-top: 4px;
-  border-top: none; /* Removed harsh divider line */
 }
 
 .trailingNote {
-  font-size: 10px;
+  font-size: 11px;
   color: #94a3b8;
+  line-height: 1.4;
 }
 
 .trailingNote b {
   color: #38bdf8;
 }
 
+.cardBtnRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
 .cardActionBtn {
+  flex: 1;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 7px 15px;
+  padding: 8px 14px;
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.16) 0%, rgba(56, 189, 248, 0.24) 100%);
-  border: 1px solid rgba(34, 211, 238, 0.35);
+  border: none;
   border-radius: 9px;
   color: #38bdf8;
   cursor: pointer;
@@ -575,9 +770,30 @@
 .cardActionBtn:hover {
   background: linear-gradient(135deg, rgba(34, 211, 238, 0.28) 0%, rgba(56, 189, 248, 0.38) 100%);
   color: #ffffff;
-  border-color: #38bdf8;
   box-shadow: 0 4px 14px rgba(34, 211, 238, 0.25);
   transform: translateY(-1px);
+}
+
+.cardGtcBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  border-radius: 9px;
+  padding: 8px 12px;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cardGtcBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 /* ─── TAB 2: THEMATIC ETF SECTOR ROTATION DESK ─── */
@@ -589,7 +805,7 @@
 
 .rotationExplainer {
   background: rgba(14, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 18px 22px;
   display: flex;
@@ -635,7 +851,7 @@
 
 .quadrantBox {
   background: var(--us-card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 18px;
   display: flex;
@@ -817,7 +1033,7 @@
 
 .fxControlPanel {
   background: var(--us-card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -875,7 +1091,7 @@
   padding: 6px 12px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -896,7 +1112,7 @@
 /* ── FX Outcome Summary Box (Floating Glass Surface) ── */
 .fxOutcomeBox {
   background: linear-gradient(145deg, rgba(14, 23, 42, 0.8) 0%, rgba(17, 30, 59, 0.8) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -956,7 +1172,7 @@
 
 .fxPrescription {
   background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: none;
   border-radius: 12px;
   padding: 14px;
 }
@@ -1008,7 +1224,7 @@
 
 .sizingCard {
   background: var(--us-card-bg);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -1052,7 +1268,7 @@
 
 .inputField input {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: none;
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 13px;
@@ -1081,7 +1297,7 @@
   padding: 5px 10px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   color: #94a3b8;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1102,7 +1318,7 @@
 /* ── Sizing Result Visual Card ── */
 .sizingResultCard {
   background: linear-gradient(145deg, rgba(14, 23, 42, 0.8) 0%, rgba(17, 30, 59, 0.8) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: none;
   border-radius: 16px;
   padding: 20px;
   display: flex;
@@ -1186,7 +1402,7 @@
 
 .tableContainer {
   overflow-x: auto;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 14px;
   background: rgba(10, 18, 34, 0.5);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
@@ -1213,7 +1429,7 @@
 
 .screenerTable td {
   padding: 11px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03); /* Ultra soft */
+  border-bottom: none; /* Ultra soft */
   color: #cbd5e1;
 }
 
@@ -1243,14 +1459,12 @@
   color: #f59e0b;
 }
 
-/* ─── AI STAGE HEALTH DIAGNOSTIC BAR (NO HARSH CUTTING LINES) ─── */
+/* ─── AI STAGE HEALTH DIAGNOSTIC (BORDERLESS MODERN FLOW) ─── */
 .diagBar {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(24, 34, 54, 0.75) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
-  padding: 18px 22px;
-  margin-bottom: 22px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 24px;
 }
 
 .diagHeader {
@@ -1311,76 +1525,86 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 2px 8px;
+  margin-bottom: 14px;
+  width: 100%;
+}
+
+.diagTickerPills::-webkit-scrollbar {
+  display: none;
 }
 
 .diagTickerLabel {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #94a3b8;
-  margin-right: 4px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .diagTickerChip {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  padding: 6px 13px;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 14px;
   color: #cbd5e1;
-  font-size: 11px;
+  font-size: 11.5px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
 }
 
 .diagTickerChip:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
+  color: #ffffff;
 }
 
 .diagTickerChipActive {
-  background: rgba(56, 189, 248, 0.18) !important;
-  border-color: rgba(56, 189, 248, 0.45) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.2) !important;
+  color: #38bdf8 !important;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.25);
 }
 
-/* Removed harsh 3px border-left lines that sliced the screen */
 .diagTickerChipBull {
-  border-left: 1px solid rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .diagTickerChipWarn {
-  border-left: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.08);
 }
 
 .diagTickerChipBear {
-  border-left: 1px solid rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.08);
 }
 
 .diagCard {
-  border-radius: 14px;
-  padding: 18px 20px;
+  border-radius: 16px;
+  padding: 20px 22px;
   transition: all 0.25s ease;
+  border: none;
 }
 
 .diagCardBull {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.09) 0%, rgba(6, 78, 59, 0.15) 100%);
-  border: 1px solid rgba(16, 185, 129, 0.22);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .diagCardWarn {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.09) 0%, rgba(120, 53, 15, 0.15) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.22);
+  background: rgba(245, 158, 11, 0.08);
 }
 
 .diagCardBear {
-  background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(136, 19, 55, 0.18) 100%);
-  border: 1px solid rgba(244, 63, 94, 0.25);
+  background: rgba(244, 63, 94, 0.08);
 }
 
 .diagCardTop {
@@ -1551,13 +1775,12 @@
 
 /* ─── OVERNIGHT GTC SMART ORDER PLAYBOOK ─── */
 .gtcPlaybookCard {
-  background: linear-gradient(140deg, rgba(15, 23, 42, 0.85) 0%, rgba(26, 22, 58, 0.75) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(15, 23, 42, 0.7);
+  border: none;
   border-radius: 18px;
-  padding: 20px 24px;
+  padding: 22px;
   margin-top: 24px;
   margin-bottom: 20px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.3);
 }
 
 .gtcHeader {
@@ -1613,10 +1836,10 @@
 }
 
 .gtcStepBox {
-  background: rgba(255, 255, 255, 0.035);
-  border: none; /* Removed harsh border */
-  border-radius: 12px;
-  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 2px solid #38bdf8;
+  border-radius: 0 10px 10px 0;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
 }
@@ -1714,7 +1937,7 @@
 .brokerChip {
   padding: 6px 13px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 8px;
   color: #cbd5e1;
   font-size: 11px;
@@ -1730,7 +1953,6 @@
 
 .brokerChipActive {
   background: rgba(245, 158, 11, 0.18) !important;
-  border-color: #f59e0b !important;
   color: #fbbf24 !important;
   font-weight: 700;
 }
@@ -1745,7 +1967,7 @@
   flex: 1;
   padding: 8px 14px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 8px;
   color: #94a3b8;
   font-size: 11px;
@@ -1757,7 +1979,6 @@
 
 .modeBtnActive {
   background: rgba(34, 211, 238, 0.18) !important;
-  border-color: #22d3ee !important;
   color: #ffffff !important;
   font-weight: 700;
 }
@@ -1774,7 +1995,7 @@
 .quickBudgetBtn {
   padding: 5px 10px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: none;
   border-radius: 6px;
   color: #94a3b8;
   font-size: 10px;
@@ -1789,7 +2010,6 @@
 
 .quickBudgetBtnActive {
   background: rgba(52, 211, 153, 0.2) !important;
-  border-color: #34d399 !important;
   color: #34d399 !important;
   font-weight: 700;
 }
@@ -1895,5 +2115,21 @@
   }
   .focusGrid {
     grid-template-columns: 1fr;
+  }
+  .blueprintGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .proHeroBanner {
+    padding: 18px 16px;
+  }
+  .proHeroTitle {
+    font-size: 19px;
+  }
+  .proCtaRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .proCtaBtn {
+    justify-content: center;
   }
 }

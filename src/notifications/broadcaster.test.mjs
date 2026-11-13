@@ -4,9 +4,17 @@ import {
   formatTelegramTradeMessage,
   formatTelegramEaSignalMessage,
   formatTelegramAdminAnnouncement,
+  formatTelegramMarketPlaybookMessage,
+  resolveTelegramCategoryDestination,
   sendTelegramMessage,
   verifyTelegramBot,
-  sendLineBroadcast
+  createTelegramInviteLink,
+  kickTelegramChatMember,
+  unbanTelegramChatMember,
+  sendLineBroadcast,
+  resolveTelegramStaffLeadDestination,
+  formatTelegramStockOrbSignalMessage,
+  broadcastAutoPickEvent
 } from './broadcaster.mjs';
 
 test('formatTelegramEaSignalMessage formats Pro Copy EA signal with lock profit and lot size', () => {
@@ -70,6 +78,76 @@ test('formatTelegramTradeMessage generates correct HTML formatting with Entry, S
   assert.ok(message.includes('2,751.5'));
   assert.ok(message.includes('1 : 2.0'));
   assert.ok(message.includes('https://example.com/forex?symbol=XAUUSD'));
+});
+
+test('formatTelegramStockOrbSignalMessage formats ENTRY, TARGET, STOP correctly', () => {
+  const entryMsg = formatTelegramStockOrbSignalMessage({
+    symbol: 'DELTA',
+    market: 'thai',
+    eventType: 'ENTRY',
+    price: 191.0,
+    stopLoss: 180.0,
+    targetPrice: 207.0,
+    detail: 'แท่ง 15m ปิดเหนือกรอบเปิด 190.0 + ยืนเหนือ VWAP',
+  });
+  assert.ok(entryMsg.includes('สัญญาณซื้อ 15m ORB คอนเฟิร์ม'));
+  assert.ok(entryMsg.includes('#DELTA'));
+  assert.ok(entryMsg.includes('191.00'));
+  assert.ok(entryMsg.includes('180.00'));
+  assert.ok(entryMsg.includes('207.00'));
+
+  const targetMsg = formatTelegramStockOrbSignalMessage({
+    symbol: 'DELTA',
+    market: 'thai',
+    eventType: 'TARGET',
+    price: 207.0,
+  });
+  assert.ok(targetMsg.includes('ปิดทำกำไรตามเป้า WIN +2R'));
+  assert.ok(targetMsg.includes('207.00'));
+  assert.ok(targetMsg.includes('Trade Ledger'));
+
+  const stopMsg = formatTelegramStockOrbSignalMessage({
+    symbol: 'DELTA',
+    market: 'thai',
+    eventType: 'STOP',
+    price: 180.0,
+  });
+  assert.ok(stopMsg.includes('ตัดขาดทุนตามวินัย STOP LOSS'));
+  assert.ok(stopMsg.includes('180.00'));
+});
+
+test('broadcastAutoPickEvent sends Telegram message on ENTRY and ignores WAIT events', async () => {
+  let sentPayload = null;
+  const mockSend = async (payload) => {
+    sentPayload = payload;
+    return { ok: true, messageId: 888 };
+  };
+
+  const pick = {
+    symbol: 'ADVANC',
+    market: 'thai',
+    entryPrice: 342.0,
+    plan: { entry: 339.0, stopLoss: 325.0, tp1: 367.0 },
+  };
+
+  const ignored = await broadcastAutoPickEvent(pick, { type: 'DATA_GAP' }, { env: { TELEGRAM_BOT_TOKEN: 'tok', TELEGRAM_CHAT_ID: 'chat' } });
+  assert.equal(ignored.sent, false);
+  assert.equal(ignored.reason, 'IGNORED_EVENT_TYPE');
+
+  const res = await broadcastAutoPickEvent(
+    pick,
+    { type: 'ENTRY', price: 342.0, detail: '15m ORB VWAP 340.5' },
+    {
+      env: { TELEGRAM_BOT_TOKEN: 'tok123', TELEGRAM_CHAT_ID: '-1004434206194' },
+      send: mockSend,
+    }
+  );
+
+  assert.equal(res.sent, true);
+  assert.equal(res.messageId, 888);
+  assert.ok(sentPayload.text.includes('#ADVANC'));
+  assert.ok(sentPayload.text.includes('342.00'));
+  assert.equal(sentPayload.chatId, '-1004434206194');
 });
 
 test('sendTelegramMessage throws on missing credentials', async () => {
@@ -145,4 +223,176 @@ test('sendLineBroadcast sends broadcast message to LINE API', async () => {
 
   assert.equal(res.success, true);
   assert.equal(calledHeaders.Authorization, 'Bearer line_token_123');
+});
+
+test('createTelegramInviteLink creates a one-time invite link with member_limit 1', async () => {
+  let calledUrl = '';
+  let calledBody = null;
+  const mockFetcher = async (url, options) => {
+    calledUrl = url;
+    calledBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      json: async () => ({
+        ok: true,
+        result: {
+          invite_link: 'https://t.me/+AbCdEfGh123',
+          name: 'VIP - Member 01',
+          member_limit: 1,
+        }
+      })
+    };
+  };
+
+  const res = await createTelegramInviteLink({
+    token: 'test_token',
+    chatId: '-100987654',
+    name: 'VIP - Member 01',
+    memberLimit: 1,
+    fetcher: mockFetcher,
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(res.inviteLink, 'https://t.me/+AbCdEfGh123');
+  assert.equal(calledUrl, 'https://api.telegram.org/bottest_token/createChatInviteLink');
+  assert.equal(calledBody.chat_id, '-100987654');
+  assert.equal(calledBody.name, 'VIP - Member 01');
+  assert.equal(calledBody.member_limit, 1);
+});
+
+test('kickTelegramChatMember bans and unbans to kick user out without permanent ban', async () => {
+  const calls = [];
+  const mockFetcher = async (url, options) => {
+    calls.push({ url, body: JSON.parse(options.body) });
+    return {
+      ok: true,
+      json: async () => ({ ok: true, result: true })
+    };
+  };
+
+  const res = await kickTelegramChatMember({
+    token: 'test_token',
+    chatId: '-100987654',
+    userId: '123456789',
+    fetcher: mockFetcher,
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(res.kicked, true);
+  assert.equal(calls.length, 2);
+  // Call 1: banChatMember
+  assert.equal(calls[0].url, 'https://api.telegram.org/bottest_token/banChatMember');
+  assert.equal(calls[0].body.chat_id, '-100987654');
+  assert.equal(calls[0].body.user_id, '123456789');
+  // Call 2: unbanChatMember with only_if_banned: true
+  assert.equal(calls[1].url, 'https://api.telegram.org/bottest_token/unbanChatMember');
+  assert.equal(calls[1].body.chat_id, '-100987654');
+  assert.equal(calls[1].body.user_id, '123456789');
+  assert.equal(calls[1].body.only_if_banned, true);
+});
+
+test('unbanTelegramChatMember unbans user', async () => {
+  let calledUrl = '';
+  let calledBody = null;
+  const mockFetcher = async (url, options) => {
+    calledUrl = url;
+    calledBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      json: async () => ({ ok: true, result: true })
+    };
+  };
+
+  const res = await unbanTelegramChatMember({
+    token: 'test_token',
+    chatId: '-100987654',
+    userId: '123456789',
+    fetcher: mockFetcher,
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(res.unbanned, true);
+  assert.equal(calledUrl, 'https://api.telegram.org/bottest_token/unbanChatMember');
+  assert.equal(calledBody.user_id, '123456789');
+  assert.equal(calledBody.only_if_banned, true);
+});
+
+test('formatTelegramMarketPlaybookMessage separates Thai, DR, and TFEX categories with clear headers and hashtags', () => {
+  const thaiMsg = formatTelegramMarketPlaybookMessage({
+    category: 'thai',
+    round: 'morning_0930',
+    regime: 'ตลาดเอื้อ (Stage 2 Bullish)',
+    picks: [
+      { symbol: 'DELTA', name: 'Delta Electronics', entry: 118.5, target: 127.0, stop: 114.0, note: 'Stage 2 Leader' },
+      { symbol: 'CPALL', name: 'CP ALL', entry: 61.5, target: 65.5, stop: 59.0, note: 'Pullback แนวรับ' },
+    ],
+    appOrigin: 'https://nugaom.ai',
+  });
+  assert.ok(thaiMsg.includes('[🇹🇭 โพยหุ้นไทย SET100]'));
+  assert.ok(thaiMsg.includes('09:30 น.'));
+  assert.ok(thaiMsg.includes('#หุ้นไทย'));
+  assert.ok(thaiMsg.includes('DELTA'));
+  assert.ok(thaiMsg.includes('https://nugaom.ai/thai'));
+
+  const drMsg = formatTelegramMarketPlaybookMessage({
+    category: 'dr',
+    round: 'evening_1730',
+    regime: 'Global Tech',
+    picks: [
+      { symbol: 'NVDA80', name: 'NVIDIA DR', entry: 23.8, target: 26.2, stop: 22.9, note: 'Premium +0.4%' },
+    ],
+    appOrigin: 'https://nugaom.ai',
+  });
+  assert.ok(drMsg.includes('[🌐 โพย DR80 หุ้นโลก]'));
+  assert.ok(drMsg.includes('17:30 น.'));
+  assert.ok(drMsg.includes('#DR80'));
+  assert.ok(drMsg.includes('NVDA80'));
+  assert.ok(drMsg.includes('https://nugaom.ai/dr'));
+
+  const tfexMsg = formatTelegramMarketPlaybookMessage({
+    category: 'tfex',
+    round: 'evening_1730',
+    regime: 'SET50 Index Futures',
+    picks: [
+      { symbol: 'S50M26', name: 'SET50 Futures', entry: 912.5, target: 924.0, stop: 906.0, note: 'Long ตามเทรนด์' },
+    ],
+    appOrigin: 'https://nugaom.ai',
+  });
+  assert.ok(tfexMsg.includes('[⚡ โพย TFEX &amp; SET50 Futures]'));
+  assert.ok(tfexMsg.includes('17:30 น.'));
+  assert.ok(tfexMsg.includes('#TFEX'));
+  assert.ok(tfexMsg.includes('S50M26'));
+});
+
+test('resolveTelegramCategoryDestination supports dedicated category chatId and topic threadId', () => {
+  const dest = resolveTelegramCategoryDestination('dr', {
+    TELEGRAM_CHAT_ID: '-100111',
+    TELEGRAM_CHAT_ID_DR: '-100222',
+    TELEGRAM_THREAD_ID_DR: '42',
+  });
+  assert.equal(dest.chatId, '-100222');
+  assert.equal(dest.messageThreadId, 42);
+});
+
+test('resolveTelegramStaffLeadDestination isolates broker staff channels and falls back to staff channel, never customer channel', () => {
+  // Pi specific
+  const piDest = resolveTelegramStaffLeadDestination('003', {
+    TELEGRAM_CHAT_ID: '-100_CUSTOMER',
+    TELEGRAM_CHAT_ID_LEADS_PI: '-100_PI_STAFF',
+    TELEGRAM_CHAT_ID_STAFF: '-100_ALL_STAFF',
+  });
+  assert.equal(piDest.chatId, '-100_PI_STAFF');
+
+  // ASL falls back to central staff channel
+  const aslDest = resolveTelegramStaffLeadDestination('050', {
+    TELEGRAM_CHAT_ID: '-100_CUSTOMER',
+    TELEGRAM_CHAT_ID_STAFF: '-100_ALL_STAFF',
+  });
+  assert.equal(aslDest.chatId, '-100_ALL_STAFF');
+
+  // If no staff channel configured, it returns null and NEVER leaks to customer channel
+  const leakProtected = resolveTelegramStaffLeadDestination('022', {
+    TELEGRAM_CHAT_ID: '-100_CUSTOMER',
+  });
+  assert.equal(leakProtected.chatId, null);
 });

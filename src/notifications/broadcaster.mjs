@@ -94,21 +94,252 @@ ${body}
 🔗 <b>เข้าสู่ระบบสมาชิก VIP:</b> <a href="${appOrigin}/account">เปิด Nugaom Member Portal ↗</a>`;
 }
 
-export async function sendTelegramMessage({ token, chatId, text, parseMode = 'HTML', fetcher = fetch } = {}) {
+export const TELEGRAM_MARKET_CATEGORIES = Object.freeze({
+  thai: {
+    id: 'thai',
+    badge: '🇹🇭 โพยหุ้นไทย SET100',
+    hashtag: '#หุ้นไทย #SET100',
+    path: '/thai',
+    envChatKey: 'TELEGRAM_CHAT_ID_THAI',
+    envThreadKey: 'TELEGRAM_THREAD_ID_THAI',
+    scheduleNote: '09:30 โพยเช้า · 13:30 โพยบ่าย · 17:30 การบ้านเย็น',
+  },
+  dr: {
+    id: 'dr',
+    badge: '🌐 โพย DR80 หุ้นโลก',
+    hashtag: '#DR80 #หุ้นต่างประเทศ',
+    path: '/dr',
+    envChatKey: 'TELEGRAM_CHAT_ID_DR',
+    envThreadKey: 'TELEGRAM_THREAD_ID_DR',
+    scheduleNote: '09:30 โพยเช้า · 13:30 โพยบ่าย · 17:30 การบ้านเย็น (เทียบ Fair Value)',
+  },
+  tfex: {
+    id: 'tfex',
+    badge: '⚡ โพย TFEX & SET50 Futures',
+    hashtag: '#TFEX #S50 #GO',
+    path: '/tfex',
+    envChatKey: 'TELEGRAM_CHAT_ID_TFEX',
+    envThreadKey: 'TELEGRAM_THREAD_ID_TFEX',
+    scheduleNote: '09:30 เปิดตลาดเช้า · 13:30 เปิดตลาดบ่าย · แจ้งเตือน LONG/SHORT',
+  },
+  us: {
+    id: 'us',
+    badge: '🇺🇸 โพยหุ้นอเมริกา S&P 500',
+    hashtag: '#USStocks #Stage2 #Dime',
+    path: '/us',
+    envChatKey: 'TELEGRAM_CHAT_ID_US',
+    envThreadKey: 'TELEGRAM_THREAD_ID_US',
+    scheduleNote: '19:30 ตั้งคำสั่ง GTC ล่วงหน้า · 06:00 สรุปปิดตลาดสหรัฐฯ',
+  },
+  forex: {
+    id: 'forex',
+    badge: '🥇 โพย Forex & Gold (Pro Copy EA)',
+    hashtag: '#XAUUSD #Forex #ProCopyEA',
+    path: '/forex',
+    envChatKey: 'TELEGRAM_CHAT_ID_FOREX',
+    envThreadKey: 'TELEGRAM_THREAD_ID_FOREX',
+    scheduleNote: 'แจ้งเตือนเรียลไทม์ 4 จังหวะ (Entry / Lock Profit / TP1 / TP2)',
+  },
+});
+
+export const TELEGRAM_ROUND_LABELS = Object.freeze({
+  morning_0930: '🌅 รอบเช้า 09:30 น. · เช้านี้เล่นอะไรดี?',
+  evening_1730: '🌙 รอบเย็น 17:30 น. · หุ้นการบ้านเฝ้าพรุ่งนี้ (คัดชุดใหม่ไม่ซ้ำรอบเช้า)',
+});
+
+export function resolveTelegramCategoryDestination(category = 'thai', env = process.env, explicitThreadId = null) {
+  const cat = TELEGRAM_MARKET_CATEGORIES[category] || TELEGRAM_MARKET_CATEGORIES.thai;
+  const chatId = (cat.envChatKey && env?.[cat.envChatKey]) ? env[cat.envChatKey] : env?.TELEGRAM_CHAT_ID;
+  const rawThread = explicitThreadId ?? (cat.envThreadKey ? env?.[cat.envThreadKey] : null);
+  const parsedThread = Number(rawThread);
+  const messageThreadId = Number.isInteger(parsedThread) && parsedThread > 0 ? parsedThread : null;
+  return { chatId, messageThreadId, categoryMeta: cat };
+}
+
+export function resolveTelegramStaffLeadDestination(brokerId, env = process.env) {
+  let chatId = null;
+  let threadId = null;
+
+  // 1. Broker-specific dedicated staff channel
+  if (brokerId === '003') {
+    chatId = env?.TELEGRAM_CHAT_ID_LEADS_PI || env?.TELEGRAM_CHAT_ID_PI || null;
+    threadId = env?.TELEGRAM_THREAD_ID_LEADS_PI || null;
+  } else if (brokerId === '022') {
+    chatId = env?.TELEGRAM_CHAT_ID_LEADS_TRINITY || env?.TELEGRAM_CHAT_ID_TRINITY || null;
+    threadId = env?.TELEGRAM_THREAD_ID_LEADS_TRINITY || null;
+  } else if (brokerId === '050') {
+    chatId = env?.TELEGRAM_CHAT_ID_LEADS_ASL || env?.TELEGRAM_CHAT_ID_ASL || null;
+    threadId = env?.TELEGRAM_THREAD_ID_LEADS_ASL || null;
+  }
+
+  // 2. Central staff / marketing leads channel
+  if (!chatId) {
+    chatId = env?.TELEGRAM_CHAT_ID_STAFF || env?.TELEGRAM_CHAT_ID_ADMIN || env?.TELEGRAM_CHAT_ID_LEADS || null;
+    threadId = env?.TELEGRAM_THREAD_ID_STAFF || env?.TELEGRAM_THREAD_ID_ADMIN || env?.TELEGRAM_THREAD_ID_LEADS || null;
+  }
+
+  const parsedThread = Number(threadId);
+  const messageThreadId = Number.isInteger(parsedThread) && parsedThread > 0 ? parsedThread : null;
+
+  return { chatId, messageThreadId };
+}
+
+export function formatTelegramMarketPlaybookMessage({
+  category = 'thai',
+  round = 'morning_0930',
+  picks = [],
+  regime = 'ตลาดเอื้อ (SET100 / Global)',
+  appOrigin = 'https://nugaom-ai-pick.nuibhr1.workers.dev',
+} = {}) {
+  const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cat = TELEGRAM_MARKET_CATEGORIES[category] || TELEGRAM_MARKET_CATEGORIES.thai;
+  const roundTitle = TELEGRAM_ROUND_LABELS[round] || TELEGRAM_ROUND_LABELS.morning_0930;
+  const dateStr = new Date().toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok', dateStyle: 'medium' });
+  const unit = category === 'us' || category === 'forex' ? '$' : category === 'tfex' ? 'จุด' : '฿';
+
+  const lines = (picks || []).slice(0, 5).map((item, idx) => {
+    const sym = esc(item.symbol || '—');
+    const rawEntry = item.entry ?? '—';
+    const rawTp = item.tp1 ?? item.target ?? '—';
+    const rawSl = item.sl ?? item.stop ?? '—';
+    const entry = Number.isFinite(Number(rawEntry)) ? Number(rawEntry).toLocaleString('en-US', { maximumFractionDigits: 2 }) : esc(rawEntry);
+    const tp1 = Number.isFinite(Number(rawTp)) ? Number(rawTp).toLocaleString('en-US', { maximumFractionDigits: 2 }) : esc(rawTp);
+    const sl = Number.isFinite(Number(rawSl)) ? Number(rawSl).toLocaleString('en-US', { maximumFractionDigits: 2 }) : esc(rawSl);
+    const note = item.note ? ` · <i>${esc(item.note)}</i>` : '';
+    return `${idx + 1}. <b><code>#${sym}</code></b>${note}\n   🟢 แนวรับ/จุดเข้า: <code>${entry} ${unit}</code> | 🎯 เป้า TP1: <code>${tp1} ${unit}</code> | 🔴 จุดคัท SL: <code>${sl} ${unit}</code>`;
+  });
+
+  return `📣 <b>[${esc(cat.badge)}]</b>\n<b>${esc(roundTitle)}</b>
+────────────────────────
+📅 <b>ประจำวันที่:</b> ${esc(dateStr)}
+📊 <b>ภาวะตลาด:</b> ${esc(regime)}
+
+${lines.length ? lines.join('\n\n') : '• กำลังอัปเดตรายชื่อเข้าแผนรอบล่าสุด'}
+────────────────────────
+💡 <b>วินัย 2R Management:</b> ตั้งรับที่โซนแนวรับ ไม่ไล่ราคา แบ่งขายล็อกกำไร 50% ที่ TP1 และยก Stop บังทุนเสมอ
+🏷️ <b>หมวดหมู่:</b> ${esc(cat.hashtag)}
+🔗 <b>เปิดกราฟ &amp; ฟังเสียงอ่านโพย:</b> <a href="${appOrigin}${cat.path}">เปิดหน้า ${esc(cat.badge)} ↗</a>`;
+}
+
+export function formatTelegramStockOrbSignalMessage({
+  symbol,
+  market = 'thai',
+  eventType,
+  price,
+  stopLoss,
+  targetPrice,
+  detail = '',
+  appOrigin = 'https://nugaom-ai-pick.nuibhr1.workers.dev',
+} = {}) {
+  const isThai = market === 'thai';
+  const marketName = isThai ? '🇹🇭 หุ้นไทย (SET100)' : '🌐 DR หุ้นต่างประเทศ';
+  const timeStr = new Date().toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
+  const path = isThai ? '/thai' : '/dr';
+
+  if (eventType === 'ENTRY') {
+    return `⚡ <b>[NUGAOM AI · สัญญาณซื้อ 15m ORB คอนเฟิร์ม]</b> ⚡
+────────────────────────
+🏆 <b>สินทรัพย์:</b> <code>#${symbol}</code> (${marketName})
+📊 <b>สถานะ:</b> 🟢 <b>BUY (แท่ง 15 นาทีปิดยืนยันเข้าซื้อ)</b>
+⏱️ <b>เวลา:</b> ${timeStr} น.
+
+🎯 <b>ราคาเข้าซื้อ (Entry):</b> <code>${Number(price).toFixed(2)} บาท</code>
+🛑 <b>จุดตัดขาดทุน (SL):</b> <code>${Number(stopLoss).toFixed(2)} บาท</code> (คุมเสี่ยง ~2%)
+🏁 <b>เป้าทำกำไร (TP):</b> <code>${Number(targetPrice).toFixed(2)} บาท</code> (R:R ≥ 1.5–2.0 เท่า)
+💡 <b>เงื่อนไข:</b> ${detail || 'แท่ง 15m ปิดเหนือกรอบเปิด + ยืนเหนือ VWAP'}
+────────────────────────
+🔒 <i>วางแผนตามกรอบและรักษาวินัย Stop Loss อย่างเคร่งครัด</i>
+🔗 <b>ดูกราฟและแผน:</b> <a href="${appOrigin}${path}?symbol=${encodeURIComponent(symbol)}">เปิด Nugaom Workspace ↗</a>`;
+  }
+
+  if (eventType === 'TARGET') {
+    return `🎯 <b>[NUGAOM AI · ปิดทำกำไรตามเป้า WIN +2R]</b> 🎯
+────────────────────────
+🏆 <b>สินทรัพย์:</b> <code>#${symbol}</code> (${marketName})
+📊 <b>ผลลัพธ์:</b> 🟢 <b>TARGET HIT (ชนเป้าหมายทำกำไร)</b>
+⏱️ <b>เวลาปิดสถานะ:</b> ${timeStr} น.
+
+💰 <b>ราคาเป้าหมาย (TP):</b> <code>${Number(price || targetPrice).toFixed(2)} บาท</code>
+📈 <b>สถิติผลงาน:</b> +2.0R (กำไร 2 เท่าของความเสี่ยงตามแผน)
+────────────────────────
+✅ <i>ระบบบันทึกผลงานลงใน Trade Ledger เพื่อความโปร่งใสเรียบร้อยแล้ว</i>
+🔗 <b>เปิดดู Trade Ledger:</b> <a href="${appOrigin}${path}">เปิดดูผลงานย้อนหลัง ↗</a>`;
+  }
+
+  if (eventType === 'STOP') {
+    return `🛑 <b>[NUGAOM AI · ตัดขาดทุนตามวินัย STOP LOSS]</b> 🛑
+────────────────────────
+🏆 <b>สินทรัพย์:</b> <code>#${symbol}</code> (${marketName})
+📊 <b>ผลลัพธ์:</b> 🔴 <b>STOP HIT (แตะจุดคัทลอส)</b>
+⏱️ <b>เวลาตัดขาดทุน:</b> ${timeStr} น.
+
+🛑 <b>ราคาตัดขาดทุน (SL):</b> <code>${Number(price || stopLoss).toFixed(2)} บาท</code>
+📉 <b>ผลการตัดขาดทุน:</b> -1.0R (ตัดขาดทุนตามแผน รักษาเงินต้นพอร์ตใหญ่)
+────────────────────────
+🔒 <i>การตัดขาดทุนตามแผนคือหัวใจสำคัญของการสร้างกำไรยั่งยืนในระยะยาว</i>
+🔗 <b>เปิดดู Trade Ledger:</b> <a href="${appOrigin}${path}">เปิดดูผลงานย้อนหลัง ↗</a>`;
+  }
+
+  return null;
+}
+
+export async function broadcastAutoPickEvent(pick, event, { env = process.env, send = sendTelegramMessage, appOrigin = null } = {}) {
+  if (!['ENTRY', 'TARGET', 'STOP'].includes(event?.type)) return { sent: false, reason: 'IGNORED_EVENT_TYPE' };
+  const dest = resolveTelegramCategoryDestination(pick.market || 'thai', env);
+  if (!dest.chatId || !env.TELEGRAM_BOT_TOKEN) return { sent: false, reason: 'TELEGRAM_NOT_CONFIGURED' };
+
+  const plan = pick.plan || {};
+  const price = Number.isFinite(event.price) ? event.price : (event.type === 'ENTRY' ? (pick.entryPrice || plan.entry) : (event.type === 'TARGET' ? plan.tp1 : plan.stopLoss));
+  const stopLoss = plan.stopLoss ?? pick.stopLoss;
+  const targetPrice = plan.tp1 ?? pick.targetPrice;
+
+  const text = formatTelegramStockOrbSignalMessage({
+    symbol: pick.symbol,
+    market: pick.market || 'thai',
+    eventType: event.type,
+    price,
+    stopLoss,
+    targetPrice,
+    detail: event.detail,
+    appOrigin: appOrigin || env.APP_ORIGIN || 'https://nugaom-ai-pick.nuibhr1.workers.dev',
+  });
+
+  if (!text) return { sent: false, reason: 'NO_MESSAGE' };
+
+  try {
+    const res = await send({
+      token: env.TELEGRAM_BOT_TOKEN,
+      chatId: dest.chatId,
+      messageThreadId: dest.messageThreadId,
+      text,
+      parseMode: 'HTML',
+    });
+    return { sent: true, messageId: res.messageId };
+  } catch (err) {
+    return { sent: false, error: err.message };
+  }
+}
+
+export async function sendTelegramMessage({ token, chatId, messageThreadId = null, text, parseMode = 'HTML', fetcher = fetch } = {}) {
   if (!token || !chatId) {
     throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  }
+
+  const payload = {
+    chat_id: chatId,
+    text,
+    parse_mode: parseMode,
+    disable_web_page_preview: false,
+  };
+  if (Number.isInteger(Number(messageThreadId)) && Number(messageThreadId) > 0) {
+    payload.message_thread_id = Number(messageThreadId);
   }
 
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
   const response = await fetcher(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text,
-      parse_mode: parseMode,
-      disable_web_page_preview: false,
-    }),
+    body: JSON.stringify(payload),
     signal: AbortSignal.timeout(10000),
   });
 
@@ -135,6 +366,110 @@ export async function verifyTelegramBot({ token, fetcher = fetch } = {}) {
   } catch (err) {
     return { valid: false, error: err.message };
   }
+}
+
+export async function createTelegramInviteLink({
+  token,
+  chatId,
+  name,
+  expireDate,
+  memberLimit = 1,
+  createsJoinRequest = false,
+  fetcher = fetch
+} = {}) {
+  if (!token || !chatId) {
+    throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  }
+
+  const url = `https://api.telegram.org/bot${token}/createChatInviteLink`;
+  const body = {
+    chat_id: chatId,
+    creates_join_request: Boolean(createsJoinRequest),
+  };
+  if (name) body.name = String(name).slice(0, 32);
+  if (Number.isFinite(memberLimit) && memberLimit > 0) body.member_limit = memberLimit;
+  if (Number.isFinite(expireDate) && expireDate > 0) body.expire_date = Math.floor(expireDate / 1000);
+
+  const response = await fetcher(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.ok) {
+    const errorMsg = data.description || `HTTP_${response.status}`;
+    throw Object.assign(new Error(errorMsg), { code: 'TELEGRAM_INVITE_FAILED', details: data });
+  }
+
+  return {
+    success: true,
+    inviteLink: data.result?.invite_link,
+    name: data.result?.name,
+    memberLimit: data.result?.member_limit,
+    expireDate: data.result?.expire_date,
+  };
+}
+
+export async function kickTelegramChatMember({ token, chatId, userId, fetcher = fetch } = {}) {
+  if (!token || !chatId) {
+    throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  }
+  if (!userId) {
+    throw Object.assign(new Error('TELEGRAM_USER_ID_REQUIRED'), { code: 'TELEGRAM_USER_ID_REQUIRED' });
+  }
+
+  // Step 1: Ban the member to kick them out immediately
+  const banUrl = `https://api.telegram.org/bot${token}/banChatMember`;
+  const banResponse = await fetcher(banUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, user_id: userId }),
+    signal: AbortSignal.timeout(10000),
+  });
+
+  const banData = await banResponse.json().catch(() => ({}));
+  if (!banResponse.ok || !banData.ok) {
+    const errorMsg = banData.description || `HTTP_${banResponse.status}`;
+    throw Object.assign(new Error(errorMsg), { code: 'TELEGRAM_KICK_FAILED', details: banData });
+  }
+
+  // Step 2: Unban immediately with only_if_banned: true so they can rejoin in the future when renewed!
+  const unbanUrl = `https://api.telegram.org/bot${token}/unbanChatMember`;
+  await fetcher(unbanUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, user_id: userId, only_if_banned: true }),
+    signal: AbortSignal.timeout(8000),
+  }).catch(() => {});
+
+  return { success: true, kicked: true, userId };
+}
+
+export async function unbanTelegramChatMember({ token, chatId, userId, fetcher = fetch } = {}) {
+  if (!token || !chatId) {
+    throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  }
+  if (!userId) {
+    throw Object.assign(new Error('TELEGRAM_USER_ID_REQUIRED'), { code: 'TELEGRAM_USER_ID_REQUIRED' });
+  }
+
+  const unbanUrl = `https://api.telegram.org/bot${token}/unbanChatMember`;
+  const response = await fetcher(unbanUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, user_id: userId, only_if_banned: true }),
+    signal: AbortSignal.timeout(8000),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.ok) {
+    const errorMsg = data.description || `HTTP_${response.status}`;
+    throw Object.assign(new Error(errorMsg), { code: 'TELEGRAM_UNBAN_FAILED', details: data });
+  }
+
+  return { success: true, unbanned: true, userId };
 }
 
 export async function sendLineBroadcast({ channelAccessToken, text, fetcher = fetch } = {}) {

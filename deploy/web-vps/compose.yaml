@@ -1,0 +1,33 @@
+name: nugaom-workspace
+services:
+ app:
+  image: nugaom-workspace-web:${WEB_RELEASE:?Set WEB_RELEASE}
+  build:
+   context: ../..
+   dockerfile: deploy/web-vps/Dockerfile
+  restart: unless-stopped
+  init: true
+  env_file: /etc/nugaom-workspace/web.env
+  mem_limit: ${WEB_MEMORY_LIMIT:-768m}
+  cpus: ${WEB_CPU_LIMIT:-0.65}
+  stop_grace_period: 90s
+  volumes:
+   - web_data:/var/lib/nugaom
+  networks:
+   proxy:
+    aliases: [nugaom-workspace-web]
+  logging:
+   driver: json-file
+   options: {max-size: '10m', max-file: '3'}
+  healthcheck:
+   test: ['CMD', 'node', '-e', 'fetch("http://127.0.0.1:3000/api/health",{headers:{"x-nugaom-origin-secret":process.env.VPS_ORIGIN_SECRET}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))']
+   interval: 45s
+   timeout: 30s
+   start_period: 60s
+   retries: 3
+networks:
+ proxy:
+  external: true
+  name: ${PROXY_NETWORK:-nugaom-forex-customer_default}
+volumes:
+ web_data:

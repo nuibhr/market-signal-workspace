@@ -1,4 +1,4 @@
-import {createSignalSpeaker} from '../auto-pick/speech.mjs';
+import {createSignalSpeaker, stopAllSignalSpeech} from '../auto-pick/speech.mjs';
 // One browser adapter queues all markets. Muting changes delivery only.
 export function createMonitorAudio(browser,{onState=()=>{},visible=()=>true,setTimer=setTimeout,clearTimer=clearTimeout}={}) {
   let enabled=false,paused=false,current=null,timer=null;
@@ -17,7 +17,8 @@ export function createMonitorAudio(browser,{onState=()=>{},visible=()=>true,setT
   });
   return {
     supported:speaker.supported,
-    enable(value){enabled=value;paused=false;if(!value){clearTimer(timer);queue.splice(0).forEach(p=>p.done('muted'));current?.done('interrupted');current=null;speaker.stop();}else drain();},
+    unlock(){speaker.unlock?.();if(enabled&&paused){paused=false;drain();}},
+    enable(value){enabled=value;paused=false;if(!value){clearTimer(timer);queue.splice(0).forEach(p=>p.done('muted'));current?.done('interrupted');current=null;speaker.stop();stopAllSignalSpeech(browser);}else drain();},
     play(text,done=()=>{},eligible=()=>true,key=null){if(!enabled){done('muted');return false;}queue.push({text,done,eligible,key});drain();return true;},
     cancel(key){if(!key)return;for(let i=queue.length-1;i>=0;i--)if(queue[i].key===key)queue.splice(i,1)[0].done('interrupted');if(current?.key===key){clearTimer(timer);const p=current;current=null;speaker.stop();p.done('interrupted');drain();}},
     has(key){return Boolean(key&&(current?.key===key||queue.some(p=>p.key===key)));},

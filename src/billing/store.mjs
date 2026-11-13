@@ -2,9 +2,14 @@ import {randomUUID,createHash} from 'node:crypto';
 import {storage,operation as op} from '../storage/database.mjs';
 import {configuredPlans,stripeMode,validMonthlyPrice} from './plans.mjs';
 import {stripeClient,billingOrigin,stripeRedirect} from './client.mjs';
+import {demoEnabled,isDemoIdentity} from '../membership/demo-policy.mjs';
 const idOf=v=>typeof v==='string'?v:v?.id;
 export async function withBilling(member){
   if(!member)return null;
+  if(isDemoIdentity(member)){
+    const access=demoEnabled()?await storage.first('SELECT role,expires_at FROM demo_access WHERE member_id=? AND expires_at>?',member.id,new Date().toISOString()):null;
+    return {...member,billing:null,demo:access?{role:access.role,expiresAt:access.expires_at}:null};
+  }
   let mode;try{mode=stripeMode();}catch{return {...member,billing:null};}
   const rows=await storage.all('SELECT * FROM billing_subscriptions WHERE member_id=? AND mode=? ORDER BY paid_until DESC',member.id,mode);
   const now=Date.now();
@@ -40,6 +45,7 @@ async function ensureCustomer(member,stripe,mode){
 }
 export async function checkout(member,planId,{stripe=stripeClient(),now=Math.floor(Date.now()/1000)}={}){
   if(!member)throw Error('LOGIN_REQUIRED');
+  if(isDemoIdentity(member)&&(!member.demo||stripeMode()!=='test'))throw Error('DEMO_BILLING_TEST_ONLY');
   const plan=configuredPlans().find(p=>p.id===planId);
   if(!plan)throw Error('INVALID_PLAN');
   await listPlans({stripe});
@@ -72,6 +78,7 @@ export async function checkout(member,planId,{stripe=stripeClient(),now=Math.flo
 }
 export async function portal(member,{stripe=stripeClient()}={}){
   if(!member)throw Error('LOGIN_REQUIRED');
+  if(isDemoIdentity(member)&&(!member.demo||stripeMode()!=='test'))throw Error('DEMO_BILLING_TEST_ONLY');
   const configuration=process.env.STRIPE_PORTAL_CONFIGURATION_ID?.trim();
   if(configuration&&!/^bpc_[A-Za-z0-9]+$/.test(configuration))throw Error('INVALID_BILLING_CONFIG');
   const row=await storage.first('SELECT customer_id FROM billing_customers WHERE member_id=? AND mode=?',member.id,stripeMode());

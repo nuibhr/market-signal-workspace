@@ -1,0 +1,15 @@
+{
+  "at": "2026-10-25T02:50:35.163Z",
+  "protectedSourceHashesMatched": 565,
+  "appCodeChangedDuringAudit": false,
+  "baselineCommit": "b2f8cb233f397cf1c0452982d9a0e2d87a15f8d7",
+  "featureRows": 16,
+  "financialModelFormulaChecks": "PASS",
+  "calculatorScriptSyntax": "PASS",
+  "calculatorInitialCasesAndChangedLicense": "PASS",
+  "calculatorResetAndInvalidInput": "PASS",
+  "calculatorBrowserVisualTest": "NOT_RUN",
+  "latestProductionFullBrowserTest": "BLOCKED: automatic approval review reported workspace credits exhausted",
+  "loadBenchmark100To5000": "NOT_RUN; model assumptions only",
+  "localReportLinksValid": 4
+}

@@ -17,7 +17,7 @@ export default function Mt5PriceChart({ instrument, bars, chartStyle, plan = nul
         layout: {
           background: { type: ColorType.Solid, color: "#09111d" },
           textColor: "#8291a8",
-          fontFamily: "system-ui",
+          fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Sukhumvit Set", "Prompt", Inter, sans-serif',
         },
         grid: {
           vertLines: { color: "#172334" },

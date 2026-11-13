@@ -1,0 +1,37 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const dir=mkdtempSync(join(tmpdir(),'line-trial-'));
+process.env.DATABASE_PATH=join(dir,'fixture.sqlite');process.env.STORAGE_PROVIDER='sqlite';
+process.env.TRIAL_ENROLLMENT_ENABLED='true';
+const {startTrial,upsertLineMember,trialEnrollment}=await import('./store.mjs');
+const {membershipFor}=await import('./rights.mjs');
+const {storage}=await import('../storage/database.mjs');
+let seq=0;const member=()=>upsertLineMember({lineId:'U'+(++seq).toString(16).padStart(32,'0'),displayName:'Trial fixture'});
+test.after(async()=>{const {sharedDatabase}=await import('../storage/sqlite.mjs');sharedDatabase().close();rmSync(dir,{recursive:true,force:true});});
+test('LINE-only trial runs for 14 days without broker data; concurrent retries grant once',async()=>{
+ const m=await member();assert.equal(trialEnrollment(m).canStart,true);
+ const attempts=await Promise.allSettled([startTrial(m),startTrial(m),startTrial(m)]);
+ assert.equal(attempts.filter(a=>a.status==='fulfilled').length,1);
+ const row=await storage.first('SELECT * FROM members WHERE id=?',m.id);
+ assert.equal(Date.parse(row.trial_ends_at)-Date.parse(row.trial_started_at),14*86400000);
+ assert.equal(row.portfolio_hash,null);assert.equal(row.portfolio_status,'missing');
+ assert.equal(membershipFor(row).tier,'trial');assert.equal(membershipFor(row).limits.dailyScanSymbols,8);
+ assert.equal(trialEnrollment(row).canStart,false);
+ assert.equal((await storage.first("SELECT COUNT(*) AS n FROM membership_events WHERE member_id=? AND event_type='trial_started'",m.id)).n,1);
+ await storage.run('UPDATE members SET trial_ends_at=? WHERE id=?',new Date(Date.now()-1000).toISOString(),m.id);
+ assert.equal(membershipFor(await storage.first('SELECT * FROM members WHERE id=?',m.id)).tier,'expired');
+ await assert.rejects(startTrial(m),/TRIAL_ALREADY_USED/);
+});
+test('closed enrollment, anonymous, demo and existing paid membership cannot start trial',async()=>{
+ const m=await member();process.env.TRIAL_ENROLLMENT_ENABLED='false';
+ assert.equal(trialEnrollment(m).canStart,false);await assert.rejects(startTrial(m),/TRIAL_ENROLLMENT_CLOSED/);
+ process.env.TRIAL_ENROLLMENT_ENABLED='true';
+ await assert.rejects(startTrial(null),/TRIAL_NOT_AVAILABLE/);
+ await assert.rejects(startTrial({...m,demo:{role:'onboarding'}}),/TRIAL_NOT_AVAILABLE/);
+ await storage.run('UPDATE members SET subscription_ends_at=? WHERE id=?',new Date(Date.now()+86400000).toISOString(),m.id);
+ await assert.rejects(startTrial(m),/TRIAL_NOT_AVAILABLE/);
+ assert.equal((await storage.first('SELECT trial_started_at FROM members WHERE id=?',m.id)).trial_started_at,null);
+});

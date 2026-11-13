@@ -8,7 +8,8 @@ import MarketNavigation from './market-navigation.jsx';
 import {marketPage,marketHref} from '../markets/market-pages.mjs';
 import SignalDesk from './signal-desk.jsx';
 import {SoundControl} from './monitor/monitor-provider.jsx';
-import { BookOpen, Layers3, Newspaper, Radar, Waves } from 'lucide-react';
+import InstrumentLogo from './monitor/instrument-logo.jsx';
+import { ArrowRight, BookOpen, Layers3, Maximize2, Newspaper, Radar, RotateCw, Sparkles, Waves } from 'lucide-react';
 import { ALL_ASSETS, MARKET_ASSETS, MARKET_GROUPS, TFEX_SYMBOLS } from '../markets/catalog.mjs';
 import { formatQuotePrice } from '../markets/quote-format.mjs';
 import { analyzeCandles } from '../analysis/technical.mjs';
@@ -30,8 +31,9 @@ import ProToolsNav from './pro-tools-nav.jsx';
 import ThaiScreenerDashboard from './thai/thai-screener-dashboard.jsx';
 import ThaiWorkspaceNav,{THAI_VIEWS,thaiViewForHash} from './thai/thai-workspace-nav.jsx';
 import thaiWorkspaceStyles from './thai/thai-workspace.module.css';
-import TfexTerminal from './tfex/tfex-terminal.jsx';
 import EquityPortfolioDesk from './equity/equity-portfolio-desk.jsx';
+import TfexTerminal from './tfex/tfex-terminal.jsx';
+import OwnerDataPreview from './owner-data-preview.jsx';
 import UsStage2Desk from './us/us-stage2-desk.jsx';
 import UsWorkspaceNav from './us/us-workspace-nav.jsx';
 
@@ -127,35 +129,26 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const [rights, setRights] = useState(null);
   const [memberAccount, setMemberAccount] = useState(null);
   const [accountReady,setAccountReady]=useState(false);
+  const [ownerPreview,setOwnerPreview]=useState(false);
+  useEffect(()=>{const c=new AbortController();fetch('/api/owner-preview/status',{cache:'no-store',signal:c.signal}).then(r=>r.json()).then(v=>{if(!c.signal.aborted)setOwnerPreview(v.active===true);}).catch(()=>{});return()=>c.abort();},[]);
   const {favorites,favoritesByMarket,toggleFavorite}=useMemberFavorites({ready:accountReady,memberId:memberAccount?.id,marketId,onNotice:setFavoriteNotice});
   const [accountConfigured, setAccountConfigured] = useState(false);
   const [marketQuote, setMarketQuote] = useState(null);
   const [quoteState, setQuoteState] = useState('idle');
-  const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('nugaom-theme');
-      const initial = (saved === 'dark' || saved === 'light') ? saved : 'dark';
-      setTheme(initial);
+      localStorage.setItem('nugaom-theme', 'dark');
       if (typeof document !== 'undefined') {
-        document.documentElement.setAttribute('data-theme', initial);
-        if (document.body) document.body.setAttribute('data-theme', initial);
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.classList.remove('theme-light-glass');
+        if (document.body) {
+          document.body.setAttribute('data-theme', 'dark');
+          document.body.classList.remove('theme-light-glass');
+        }
       }
     } catch {}
   }, []);
-
-  function toggleTheme() {
-    const next = theme === 'light' ? 'dark' : 'light';
-    setTheme(next);
-    try {
-      localStorage.setItem('nugaom-theme', next);
-      if (typeof document !== 'undefined') {
-        document.documentElement.setAttribute('data-theme', next);
-        if (document.body) document.body.setAttribute('data-theme', next);
-      }
-    } catch {}
-  }
 
   const market = MARKETS.find(item => item.id === activeMarket) ?? MARKETS[0];
   const asset = selectedAsset ?? market;
@@ -168,12 +161,21 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   const hasCandleConnection = hasSettradeConnection || hasTfexConnection || asset.id === 'us' || asset.id === 'forex';
   const hasRealQuote = hasQuoteConnection && quoteState === 'available' && marketQuote?.instrumentId === asset.instrumentId;
   const hasRealBars = hasCandleConnection && liveState === 'available' && liveSeries?.instrumentId === asset.instrumentId && liveSeries?.timeframe === timeframe && (liveSeries?.bars?.length ?? 0) > 0;
+  const barChangePercent = hasRealBars && liveSeries.bars.length >= 2 && liveSeries.bars.at(-2)?.close > 0
+    ? ((liveSeries.bars.at(-1).close - liveSeries.bars.at(-2).close) / liveSeries.bars.at(-2).close) * 100
+    : null;
   const displayedPrice = hasSettradeConnection
     ? hasRealBars ? displayNumber(liveSeries.quote?.price ?? liveSeries.bars.at(-1).close) : '—'
-    : hasQuoteConnection ? hasRealQuote ? formatQuotePrice(marketQuote.price, asset) : hasRealBars ? formatQuotePrice(liveSeries.bars.at(-1).close, asset) : '—' : '—';
-  const displayedChange = hasSettradeConnection
-    ? hasRealBars && typeof liveSeries.quote?.changePercent === 'number' ? `${liveSeries.quote.changePercent >= 0 ? '+' : ''}${displayNumber(liveSeries.quote.changePercent)}%` : '—'
-    : hasQuoteConnection ? hasRealQuote && typeof marketQuote.changePercent === 'number' ? `${marketQuote.changePercent >= 0 ? '+' : ''}${displayNumber(marketQuote.changePercent)}%` : '—' : '—';
+    : hasQuoteConnection ? hasRealQuote ? formatQuotePrice(marketQuote.price, asset) : hasRealBars ? formatQuotePrice(liveSeries.bars.at(-1).close, asset) : '—'
+    : hasRealBars ? formatQuotePrice(liveSeries.bars.at(-1).close, asset) : '—';
+  const resolvedChangePercent = hasSettradeConnection
+    ? (typeof liveSeries?.quote?.changePercent === 'number' ? liveSeries.quote.changePercent : barChangePercent)
+    : hasQuoteConnection && hasRealQuote && typeof marketQuote?.changePercent === 'number'
+      ? marketQuote.changePercent
+      : barChangePercent;
+  const displayedChange = typeof resolvedChangePercent === 'number' && Number.isFinite(resolvedChangePercent)
+    ? `${resolvedChangePercent >= 0 ? '+' : ''}${displayNumber(resolvedChangePercent)}%`
+    : '—';
   const displayBars = hasRealBars ? liveSeries.bars : null;
   const latestBar = hasRealBars ? liveSeries.bars.at(-1) : null;
   const latestBarLabel = hasRealBars ? formatLatestBar(liveSeries) : '—';
@@ -203,14 +205,40 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     const controller = new AbortController();
     fetch('/api/membership', { cache: 'no-store', signal: controller.signal })
       .then(response => response.ok ? response.json() : null)
-      .then(payload => { if (!controller.signal.aborted) { setRights(payload?.rights ?? null); setMemberAccount(payload?.account ?? null); setAccountConfigured(Boolean(payload?.configured)); setAccountReady(Boolean(payload)); } })
+      .then(async payload => {
+        if (controller.signal.aborted) return;
+        let finalPayload = payload;
+        if (payload?.demoEnabled && !payload?.rights?.authenticated) {
+          try {
+            const demoRes = await fetch('/api/auth/demo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: 'ultimate' }),
+              signal: controller.signal,
+            });
+            if (demoRes.ok) {
+              const refreshed = await fetch('/api/membership', { cache: 'no-store', signal: controller.signal });
+              if (refreshed.ok) {
+                finalPayload = await refreshed.json();
+                setReloadNonce(v => v + 1);
+              }
+            }
+          } catch {}
+        }
+        if (!controller.signal.aborted) {
+          setRights(finalPayload?.rights ?? null);
+          setMemberAccount(finalPayload?.account ?? null);
+          setAccountConfigured(Boolean(finalPayload?.configured));
+          setAccountReady(Boolean(finalPayload));
+        }
+      })
       .catch(() => {});
     return () => controller.abort();
   }, []);
 
   function chooseThaiView(view,{history=true,scroll=true}={}){
     const target=THAI_VIEWS.find(item=>item.id===view)??THAI_VIEWS[0];
-    setThaiView(target.id);setActiveNav(target.id==='chart'?'chart':target.id==='results'?'results':'overview');setPopup(null);
+    setThaiView(target.id);setActiveNav(target.id==='chart'?'chart':target.id==='results'?'results':target.id==='portfolio'?'portfolio':'overview');setPopup(null);
     if(target.id==='results')setResultsRequest(v=>v+1);
     if(history&&window.location.hash!==target.hash)window.history.pushState(null,'',target.hash);
     if(!scroll)return;
@@ -229,6 +257,10 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     if (id === 'risk' || id === 'financial') { window.location.href = '/risk'; return; }
     if (id === 'calendar-page' || id === 'calendar') { window.location.href = '/calendar'; return; }
     if (id === 'developers') { window.location.href = '/developers'; return; }
+    if (id === 'portfolio' || id === 'open-account') {
+      window.location.href = '/open-account';
+      return;
+    }
     setActiveNav(id);
     if(marketId==='thai'&&['search','favorites','watchlist','overview','chart'].includes(id)){
       setPopup(null);if(['favorites','watchlist'].includes(id))setFavoritesOpenRequest(v=>v+1);
@@ -283,11 +315,18 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   }
 
   function selectAsset(item, frame = '1d') {
-    if (item.id !== marketId) {
-      router.push(`${marketHref(item.id, item.symbol)}#chart-panel`);
+    if (!item) return;
+    if (typeof item === 'string') {
+      const resolved = ALL_ASSETS.find(a => a.symbol === item && a.id === marketId) ?? ALL_ASSETS.find(a => a.symbol === item);
+      if (resolved) return selectAsset(resolved, frame);
       return;
     }
-    const fullAsset = ALL_ASSETS.find(a => a.symbol === item.symbol && a.id === item.id) ?? item;
+    const targetMarket = item.id || (item.market ? String(item.market).toLowerCase() : marketId);
+    if (targetMarket !== marketId) {
+      router.push(`${marketHref(targetMarket, item.symbol)}#chart-panel`);
+      return;
+    }
+    const fullAsset = ALL_ASSETS.find(a => a.symbol === item.symbol && a.id === targetMarket) ?? { ...item, id: targetMarket };
     setActiveMarket(fullAsset.id);
     setSelectedAsset(fullAsset);
     setTimeframe(fullAsset.id === 'us' ? '1d' : frame);
@@ -327,7 +366,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     async function loadCandles() {
       const startedAt = performance.now();
       try {
-        const payload = await loadChartCandles(asset, timeframe, { signal: controller.signal });
+        const payload = await loadChartCandles(asset, timeframe, { signal: controller.signal, ownerPreview });
         if (!controller.signal.aborted) { setLiveSeries(payload); setLiveState('available'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
       } catch (error) {
         if (!controller.signal.aborted) { setLiveSeries(null); setLiveState('unavailable'); setLiveError(error.code || error.message || 'SOURCE_UNAVAILABLE'); setChartLoadMs(Math.round(performance.now() - startedAt)); }
@@ -335,7 +374,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
     }
     loadCandles();
     return () => controller.abort();
-  }, [asset.instrumentId, hasCandleConnection, hasSettradeConnection, timeframe, reloadNonce]);
+  }, [asset.instrumentId, hasCandleConnection, hasSettradeConnection, timeframe, reloadNonce, ownerPreview]);
 
   useEffect(() => {
     if (!hasRealBars || !hasSettradeConnection && !hasTfexConnection) return undefined;
@@ -475,29 +514,22 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
   }, [popup]);
 
   return (
-    <div className={`app-frame market-workspace monitor-workspace market-${marketId} ${theme === 'light' ? 'theme-light-glass' : ''}`} data-theme={theme} style={{'--market-accent':page.accent,'--market-rgb':page.rgb}}>
-      <AmbientLiquidGlass isLight={theme === 'light'} />
-      {theme === 'dark' && <AmbientDepth />}
+    <div className={`app-frame market-workspace monitor-workspace market-${marketId}`} data-theme="dark" style={{'--market-accent':page.accent,'--market-rgb':page.rgb}}>
+      <AmbientLiquidGlass isLight={false} />
+      <AmbientDepth />
       <WorkspaceSidebar marketId={marketId} activeNav={activeNav} onNavigate={navigateTo} rights={rights} account={memberAccount} loginHref={loginHref} hasRealBars={hasRealBars} favoriteCount={favoriteAssets.length} />
 
       <main className="main-area">
         <header className="topbar">
-          <div className="topbar-context"><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
+          <div className="topbar-context" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <InstrumentLogo asset={{ market: marketId, symbol: asset.symbol }} />
+            <div><small>กำลังดู / CURRENT SYMBOL</small><strong>{asset.symbol}</strong><span>{market.label}</span></div>
+          </div>
           <div className="topbar-search-area"><SymbolSearch marketId={marketId} onSelect={selectAsset} /></div>
           <div className="topbar-actions">
-            <button
-              type="button"
-              className={`theme-glass-toggle ${theme === 'light' ? 'light-mode' : 'dark-mode'}`}
-              onClick={toggleTheme}
-              title={theme === 'light' ? 'เปลี่ยนเป็น Magic Dark' : 'เปลี่ยนเป็น Liquid Glass Light'}
-              aria-label={theme === 'light' ? 'สลับเป็นโหมดมืด Magic Dark' : 'สลับเป็นโหมดสว่าง Liquid Glass'}
-            >
-              <span className="theme-glass-icon">{theme === 'light' ? '☀️' : '🌙'}</span>
-              <span>{theme === 'light' ? 'Liquid Glass' : 'Magic Dark'}</span>
-            </button>
             <a className="monitor-account" href={loginHref}>บัญชีสมาชิก ↗</a>
             <SoundControl/>
-            <div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? 'YAHOO HISTORY' : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div>
+            <div className="market-clock"><i className={hasRealBars || hasRealQuote ? 'status-dot connected' : 'status-dot'} /> {hasRealBars ? `${liveSeries.fallback ? 'DELAYED / BACKUP' : liveSeries.chartOnly ? liveSeries.source : hasSettradeConnection ? 'SETTRADE' : liveSeries.source} · ${TIMEFRAME_LABELS[timeframe]}` : hasRealQuote ? `${hasTfexConnection ? 'TFEX' : 'FMP'} · QUOTE` : 'DATA · PREVIEW'}</div>
           </div>
         </header>
 
@@ -505,18 +537,23 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           <MarketNavigation current={marketId}/>
           {marketId==='thai'&&<ThaiWorkspaceNav view={thaiView} symbol={asset.symbol} onNavigate={chooseThaiView} onOpenScanner={()=>navigateTo('scanner')}/>}
           {marketId==='us'&&<UsWorkspaceNav activeTab={usTab} symbol={asset.symbol} onTabChange={setUsTab} onScrollToChart={scrollToChart}/>}
-          {marketId!=='thai'&&marketId!=='us'&&<ProToolsNav current={marketId} />}
-          {marketId!=='thai'&&marketId!=='tfex'&&marketId!=='us'&&<section id="section-overview" className="workspace-intro nugaom-welcome">
+          {!['thai','us','dr','tfex'].includes(marketId)&&<ProToolsNav current={marketId} />}
+          {!['thai','tfex','us','dr'].includes(marketId)&&<section id="section-overview" className="workspace-intro nugaom-welcome">
             <div className="welcome-main">
               <span className="eyebrow">{page.eyebrow}</span>
               <h1>{page.title}</h1>
               <p>{page.description}</p>
-              <button className="welcome-explore" onClick={() => navigateTo('daily')}>เปิดเครื่องมือ →</button>
+              <button className="welcome-explore" onClick={() => navigateTo('daily')}>
+                <Sparkles size={14} className="welcome-explore-sparkle" />
+                <span>เปิดเครื่องมือ</span>
+                <ArrowRight size={14} className="welcome-explore-arrow" />
+              </button>
             </div>
           </section>}
 
-          {marketId==='thai'&&<div id="section-portfolio" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='portfolio'}><EquityPortfolioDesk onSelectSymbol={symbol=>selectLedgerSymbol(symbol,'thai')}/></div>}
-          {marketId==='thai'&&<div id="section-overview" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='stage2'}><ThaiScreenerDashboard compact visible={thaiView==='stage2'} signalAccess={accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} onOpenStyleScanner={()=>navigateTo('scanner')} onResults={()=>navigateTo('results')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
+          {ownerPreview&&<OwnerDataPreview market={marketId} onSelect={selectLedgerSymbol}/>}
+          {marketId==='thai'&&<div id="section-overview" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='stage2'}><ThaiScreenerDashboard apiUrl={ownerPreview?'/api/owner-preview?market=thai&view=thai':'/api/thai-screener'} ownerPreview={ownerPreview} compact visible={thaiView==='stage2'} signalAccess={ownerPreview?true:accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} onOpenStyleScanner={()=>navigateTo('scanner')} onResults={()=>navigateTo('results')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
+          {marketId==='thai'&&<div id="section-portfolio" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='portfolio'}><EquityPortfolioDesk onSelectSymbol={selectAsset}/></div>}
           {['thai','dr'].includes(marketId) && (
             <div className={thaiWorkspaceStyles.panel} hidden={marketId==='thai'&&!['radar','results'].includes(thaiView)}>
             <DrStrategyRadar
@@ -538,13 +575,14 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           )}
           {marketId==='tfex' && (
             <div id="section-overview">
-              <TfexTerminal selectedSymbol={asset.symbol} onSelect={selectAsset} />
+              <TfexTerminal key={`tfex-${Boolean(rights?.authenticated)}`} selectedSymbol={asset.symbol} onSelect={selectAsset} />
             </div>
           )}
           {marketId==='us' && (
             <div id="section-overview">
               {usTab !== 'chart' && (
                 <UsStage2Desk
+                  key={`us-${Boolean(rights?.authenticated)}`}
                   selectedSymbol={asset.symbol}
                   onSelect={selectAsset}
                   favorites={favorites}
@@ -572,7 +610,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
 
           {marketId!=='thai'&&marketId!=='us'&&<div className="favorite-strip"><span>★ หุ้นโปรด</span>{favoriteAssets.length ? favoriteAssets.slice(0,8).map(item => <button key={item.instrumentId} onClick={() => selectAsset(item)}>{item.symbol}{item.sectionId==='US_ETFS'&&<small> ETF</small>}</button>) : <small>เก็บตัวที่สนใจ แล้วติดตามราคาและแนวโน้มต่อได้</small>}<button className="favorite-overview" onClick={()=>navigateTo('favorites')}>ดูหุ้นโปรด ({favoriteAssets.length})</button><button className="favorite-toggle" aria-label={`${favorites.includes(asset.symbol)?'เลิกติดตาม':'ติดตาม'} ${asset.symbol} จากกราฟ`} aria-pressed={favorites.includes(asset.symbol)} onClick={() => toggleFavorite(asset.symbol)}>{favorites.includes(asset.symbol) ? '★ บันทึกแล้ว' : '☆ เพิ่มหุ้นโปรด'}</button></div>}
 
-          {(marketId !== 'us' || usTab === 'chart') && <>
+          {(marketId !== 'us' || usTab === 'chart') && !(marketId === 'thai' && thaiView === 'portfolio') && <>
             {marketId === 'us' && usTab === 'chart' && (
               <div style={{
                 display: 'flex',
@@ -580,8 +618,9 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
                 justifyContent: 'space-between',
                 gap: '12px',
                 background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.12) 0%, rgba(168, 85, 247, 0.15) 100%)',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                borderRadius: '12px',
+                border: 'none',
+                boxShadow: 'inset 0 1px 1px rgba(56, 189, 248, 0.28)',
+                borderRadius: '14px',
                 padding: '12px 18px',
                 margin: '12px 0 16px',
                 flexWrap: 'wrap',
@@ -623,9 +662,61 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
             <article id="chart-panel" className="panel chart-panel">
               <div className="chart-header"><div className="chart-header-name"><span className="eyebrow">PRICE CHART / {market.label.toUpperCase()}</span><h2>{asset.symbol} {asset.name !== asset.symbol && <small>{asset.name}</small>}</h2></div><span className={hasRealBars ? 'real-pill' : hasTfexConnection ? 'quote-only-pill' : 'demo-pill'}>{hasRealBars ? liveSeries.chartOnly?'HISTORY':'REAL OHLC' : hasTfexConnection ? liveState === 'loading' ? 'LOADING OHLC' : hasRealQuote ? 'QUOTE · NO OHLC' : 'OHLC UNAVAILABLE' : hasCandleConnection ? liveState === 'loading' ? 'LOADING' : 'NO FEED' : 'NO FEED'}</span></div>
               <div className="chart-meta-row"><span>◉ {sourceLabel}</span><span>{displaySection(asset.sectionId)}</span><span>{hasRealBars ? `${TIMEFRAME_LABELS[timeframe]} ล่าสุด ${latestBarLabel}` : 'ยังไม่ใช้ตัดสินสัญญาณ'}</span>{hasRealBars && <span>ประวัติ {liveSeries.bars.length.toLocaleString('th-TH')} แท่ง · ตั้งแต่ {formatHistoryStart(liveSeries.bars[0], timeframe)}</span>}{asset.id === 'thai' && <a href={`https://finance.yahoo.com/quote/${encodeURIComponent(`${asset.symbol}.BK`)}/history/`} target="_blank" rel="noopener noreferrer" title="เปิด Yahoo เพื่อดูย้อนหลังแยกต่างหาก แผนและเสียงแจ้งเตือนในแอปใช้ข้อมูล Settrade">ดูย้อนหลังใน Yahoo ↗</a>}</div>
-              <div className="timeframe-bar"><span>{hasTfexConnection ? 'TFEX OHLC' : 'TIMEFRAME'}</span><div className="timeframe-switch">{[['15m','15m'],['1h','1H'],['4h','4H'],['1d','1D']].map(([id,label]) => <button key={id} className={timeframe === id ? 'selected' : ''} disabled={['us','forex'].includes(asset.id)&&id==='4h'} onClick={() => setTimeframe(id)}>{label}</button>)}</div><div className="chart-tools-end"><button aria-label={chartRange === 'recent' ? 'ดูประวัติกราฟทั้งหมด' : 'กลับไปดูแท่งล่าสุด'} aria-pressed={chartRange === 'all'} disabled={!hasRealBars} onClick={() => setChartRange(value => value === 'recent' ? 'all' : 'recent')}>{chartRange === 'recent' ? 'ดูทั้งหมด' : 'ดูล่าสุด'}</button><button aria-label="เปิดกราฟขนาดใหญ่" onClick={() => setPopup('chart')}>⤢</button><button aria-label={hasTfexConnection ? 'รีเฟรชกราฟ TFEX' : 'รีเฟรชแท่งราคา'} disabled={!hasCandleConnection && !hasTfexConnection} onClick={() => setReloadNonce(value => value + 1)}>↻</button></div></div>
+              <div className="timeframe-bar">
+                <span className="timeframe-label">{hasTfexConnection ? 'TFEX OHLC' : 'TIMEFRAME'}</span>
+                <div className="timeframe-switch">
+                  {[['15m','15m'],['1h','1H'],['4h','4H'],['1d','1D']].map(([id,label]) => (
+                    <button key={id} className={timeframe === id ? 'selected' : ''} disabled={['us','forex'].includes(asset.id)&&id==='4h'} onClick={() => setTimeframe(id)}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="chart-tools-end">
+                  <button
+                    type="button"
+                    className={`chart-tool-btn chart-range-btn ${chartRange === 'all' ? 'active' : ''}`}
+                    aria-label={chartRange === 'recent' ? 'ดูประวัติกราฟทั้งหมด' : 'กลับไปดูแท่งล่าสุด'}
+                    aria-pressed={chartRange === 'all'}
+                    disabled={!hasRealBars}
+                    onClick={() => setChartRange(value => value === 'recent' ? 'all' : 'recent')}
+                  >
+                    {chartRange === 'recent' ? 'ดูทั้งหมด' : 'ดูล่าสุด'}
+                  </button>
+                  <button
+                    type="button"
+                    className="chart-tool-btn chart-expand-btn"
+                    aria-label="เปิดกราฟขนาดใหญ่"
+                    title="ขยายดูกราฟเต็มหน้าจอ (Fullscreen)"
+                    onClick={() => setPopup('chart')}
+                  >
+                    <Maximize2 size={13} />
+                    <span>ขยายกราฟ</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="chart-tool-btn chart-refresh-btn"
+                    aria-label={hasTfexConnection ? 'รีเฟรชกราฟ TFEX' : 'รีเฟรชแท่งราคา'}
+                    title="รีเฟรชแท่งราคาและข้อมูลล่าสุด"
+                    disabled={!hasCandleConnection && !hasTfexConnection}
+                    onClick={() => setReloadNonce(value => value + 1)}
+                  >
+                    <RotateCw size={13} className={hasCandleConnection && liveState === 'loading' ? 'animate-spin' : ''} />
+                    <span>รีเฟรช</span>
+                  </button>
+                </div>
+              </div>
               <div className="indicator-strip"><span>CHART</span><button className={chartStyle === 'candles' ? 'selected' : ''} aria-pressed={chartStyle === 'candles'} onClick={() => setChartStyle('candles')}>Candles</button><button className={chartStyle === 'line' ? 'selected' : ''} aria-pressed={chartStyle === 'line'} onClick={() => setChartStyle('line')}>Line</button><span>OVERLAYS</span>{[['ema20', 'EMA 20'], ['ema50', 'EMA 50'], ['sma20', 'SMA 20'], ['bollinger', 'Bollinger'], ['donchian', 'Donchian 20'], ['vwap', 'VWAP*'], ['volume', 'Volume'], ['levels', 'แนวรับ / ต้าน']].map(([key, label]) => <button key={key} className={chartIndicators[key] ? 'selected' : ''} disabled={!analysis || key === 'volume' && asset.id==='forex' || key === 'vwap' && !analysis?.vwapSeries?.length} aria-pressed={Boolean(chartIndicators[key])} title={key === 'vwap' ? 'VWAP สะสมเฉพาะแท่งที่โหลดและมี Volume' : undefined} onClick={() => toggleIndicator(key)}>{label}</button>)}<button onClick={() => setIndicators(Object.fromEntries(Object.keys(DEFAULT_INDICATORS).map(key => [key, false])))}>ล้าง</button><button onClick={() => { setIndicators(DEFAULT_INDICATORS); setChartStyle('candles'); }}>ค่าเริ่มต้น</button></div>
-              {liveState === 'unavailable' && <p role="alert" className="chart-data-note">DATA UNAVAILABLE · {liveError || 'SOURCE_UNAVAILABLE'}{liveError === 'DISPLAY_RIGHTS_NOT_CONFIRMED' ? ' · ยังไม่ยืนยันสิทธิแสดงข้อมูลใน environment นี้' : ''}</p>}
+              {liveState === 'unavailable' && (
+                <p role="alert" className="chart-data-note">
+                  {liveError === 'MEMBERSHIP_REQUIRED' ? (
+                    <span>
+                      🔒 <b>ต้องใช้สิทธิสมาชิกเพื่อดูกราฟเต็ม</b> · กรุณา <a href="/account" style={{ color: '#38bdf8', textDecoration: 'underline', fontWeight: 700 }}>เข้าสู่ระบบหรือเปิด Demo สมาชิกที่นี่ ↗</a>
+                    </span>
+                  ) : (
+                    <>DATA UNAVAILABLE · {liveError || 'SOURCE_UNAVAILABLE'}{liveError === 'DISPLAY_RIGHTS_NOT_CONFIRMED' ? ' · ยังไม่ยืนยันสิทธิแสดงข้อมูลใน environment นี้' : ''}</>
+                  )}
+                </p>
+              )}
               {hasRealBars && liveSeries.session && <p role="status" className="chart-data-note">SET / mai · {liveSeries.quote?.marketStatus ? `สถานะจากผู้ให้บริการ ${liveSeries.quote.marketStatus}` : `ตามปฏิทิน ${liveSeries.session.scheduledSession}`} · Asia/Bangkok{!liveSeries.quote?.observedAt ? ' · ไม่ทราบความหน่วง quote (ผู้ให้บริการไม่ส่ง timestamp)' : ''}</p>}
               <CandlestickChart symbol={asset.symbol} timeframe={timeframe} bars={displayBars} analysis={analysis} indicators={chartIndicators} chartStyle={chartStyle} chartRange={chartRange} loading={hasCandleConnection && liveState === 'loading'} unavailable={hasCandleConnection && liveState === 'unavailable'} source={sourceLabel} />
               {hasTfexConnection && <div className="tfex-quote-note">กราฟใช้แท่ง OHLCV ที่มีเวลาแท่งจาก TFEX Open API · เวลา quote ล่าสุดอาจไม่ระบุ · AutoPick ยังรอยืนยันสัญญานำ วันหมดอายุ และความเสี่ยงต่อสัญญา</div>}
@@ -657,7 +748,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           <div className="modal-heading"><div><span className="eyebrow">{popup === 'search' ? 'NUGAOM AI PICK / SYMBOL UNIVERSE' : FEATURE_ITEMS.some(([key]) => key === popup) ? 'NUGAOM AI PICK / CONNECTED WORKSPACE' : 'NUGAOM AI PICK / WORKSPACE'}</span><h2 id="popup-title">{popup === 'search' ? 'ค้นหาสินทรัพย์' : popup === 'chart' ? `${asset.symbol} · กราฟ` : { membership: 'สิทธิสมาชิก', financial: 'Financial Check', learn: 'เริ่มต้นใช้งาน', roadmap: 'สถานะและแผนพัฒนา', calendar: 'ปฏิทินเศรษฐกิจ', dividends: 'ปันผลหุ้นไทย · XD', results: 'ประวัติ & ผลงานสัญญาณ' }[popup] ?? FEATURE_ITEMS.find(([key]) => key === popup)?.[2] ?? 'เครื่องมือกราฟ'}</h2></div><button className="modal-close" aria-label="ปิดหน้าต่าง" onClick={() => setPopup(null)}>×</button></div>
           {ANALYSIS_FEATURE_ITEMS.some(([key]) => key === popup) && <nav className="feature-modal-nav" aria-label="สลับเครื่องมือวิเคราะห์">{ANALYSIS_FEATURE_ITEMS.map(([key, , label]) => { const FeatureIcon = FEATURE_ICONS[key]; return <button key={key} className={popup === key ? 'selected' : ''} onClick={() => setPopup(key)}><span><FeatureIcon size={14} /></span>{label}</button>; })}</nav>}
           {popup === 'results' && <SignalResults isModal sectionId="modal-results" onClose={() => setPopup(null)} onSelect={selectLedgerSymbol} loginHref={loginHref} />}
-          {popup === 'scanner' && (rights?.capabilities?.manualDailyScan ? <MarketScanner asset={asset} market={market} favorites={favorites} timeframe={timeframe} onSelect={selectAsset} /> : <div className="scanner-member-lock"><h3>Market Scanner สำหรับสมาชิก</h3><p>เข้าสู่ระบบ LINE และแจ้งเลขพอร์ตเพื่อรับสิทธิทดลอง 14 วัน</p><a href="/account">เปิดบัญชีของฉัน ↗</a></div>)}
+          {popup === 'scanner' && (rights?.capabilities?.manualDailyScan ? <MarketScanner asset={asset} market={market} favorites={favorites} timeframe={timeframe} onSelect={selectAsset} /> : <div className="scanner-member-lock"><h3>Market Scanner สำหรับสมาชิก</h3><p>เข้าสู่ระบบ LINE เพื่อตรวจสิทธิ์สมาชิก</p><a href="/account">เปิดบัญชีของฉัน ↗</a></div>)}
           {popup === 'multi-tf' && <MultiTimeframe asset={asset} onSelectFrame={selectFrame} />}
           {popup === 'volume' && <VolumePulse asset={asset} bars={displayBars} timeframe={timeframe} onOpenScanner={() => setPopup('scanner')} />}
           {popup === 'news' && <NewsFeedState onOpenGuide={() => setPopup('news-guide')} onOpenCalendar={() => setPopup('calendar')} />}

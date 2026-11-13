@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "records": {
+      "type": "array",
+      "items": {
+        "if": {
+          "properties": {
+            "projection": {
+              "const": "FULL"
+            }
+          },
+          "required": [
+            "projection"
+          ]
+        },
+        "then": {
+          "properties": {
+            "data": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "price": {
+                  "type": "number"
+                },
+                "open": {
+                  "type": "number"
+                },
+                "high": {
+                  "type": "number"
+                },
+                "low": {
+                  "type": "number"
+                },
+                "close": {
+                  "type": "number"
+                },
+                "volume": {
+                  "type": "number"
+                },
+                "changePct": {
+                  "type": "number"
+                },
+                "bid": {
+                  "type": "number"
+                },
+                "ask": {
+                  "type": "number"
+                },
+                "score": {
+                  "type": "number"
+                },
+                "entry": {
+                  "type": "number"
+                },
+                "tp1": {
+                  "type": "number"
+                },
+                "tp2": {
+                  "type": "number"
+                },
+                "stopLoss": {
+                  "type": "number"
+                },
+                "openInterest": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "timeframe": {
+                  "enum": [
+                    "15m",
+                    "1h",
+                    "4h",
+                    "1d"
+                  ]
+                },
+                "bars": {
+                  "type": "array",
+                  "maxItems": 1000,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "time",
+                      "open",
+                      "high",
+                      "low",
+                      "close"
+                    ],
+                    "properties": {
+                      "time": {
+                        "type": [
+                          "number",
+                          "string"
+                        ]
+                      },
+                      "open": {
+                        "type": "number"
+                      },
+                      "high": {
+                        "type": "number"
+                      },
+                      "low": {
+                        "type": "number"
+                      },
+                      "close": {
+                        "type": "number"
+                      },
+                      "volume": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

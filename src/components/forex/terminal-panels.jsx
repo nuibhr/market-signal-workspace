@@ -638,13 +638,18 @@ export function Journal({
     </section>
   );
 }
-export function Alerts({ enabled = {}, onChange }) {
+export function Alerts({ enabled = {}, onChange, viewer = null }) {
   const [telegramToken, setTelegramToken] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
   const [sending, setSending] = useState(false);
   const [testResult, setTestResult] = useState(null);
-  const [showGuide, setShowGuide] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteResult, setInviteResult] = useState(null);
+  const [voicePlaying, setVoicePlaying] = useState(false);
+  const [showAdminConfig, setShowAdminConfig] = useState(false);
   const [activeTab, setActiveTab] = useState("telegram");
+
+  const isAdminOrOwner = Boolean(viewer?.isAdmin || viewer?.dataOwner);
 
   useEffect(() => {
     try {
@@ -664,14 +669,40 @@ export function Alerts({ enabled = {}, onChange }) {
     } catch {}
   };
 
-  const handleTestSend = async () => {
-    if (!telegramToken.trim() || !telegramChatId.trim()) {
-      setTestResult({
-        ok: false,
-        error: "กรุณาระบุ Telegram Bot Token และ Chat ID / Channel ก่อนกดทดสอบ",
+  const handleClaimVipInvite = async () => {
+    setInviteLoading(true);
+    setInviteResult(null);
+    try {
+      const res = await fetch("/api/alerts/telegram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create-invite",
+          memberName: viewer?.displayName || viewer?.email || "VIP Member",
+        }),
       });
-      return;
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(
+          data.error ||
+            "ไม่สามารถออกลิงก์เชิญได้ กรุณาเข้าสู่ระบบและตรวจสอบสิทธิ์แพ็กเกจ Pro VIP (฿999/เดือน)"
+        );
+      }
+      setInviteResult({
+        ok: true,
+        inviteLink: data.inviteLink,
+        message:
+          data.message ||
+          "สร้างลิงก์เข้าห้อง Telegram VIP ส่วนกลางสำเร็จ (ใช้ได้ 1 ครั้ง / 1 คน)",
+      });
+    } catch (err) {
+      setInviteResult({ ok: false, error: err.message });
+    } finally {
+      setInviteLoading(false);
     }
+  };
+
+  const handleTestSend = async () => {
     setSending(true);
     setTestResult(null);
     try {
@@ -680,8 +711,8 @@ export function Alerts({ enabled = {}, onChange }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "test",
-          token: telegramToken.trim(),
-          chatId: telegramChatId.trim(),
+          token: telegramToken.trim() || undefined,
+          chatId: telegramChatId.trim() || undefined,
           signal: {
             symbol: "XAUUSD",
             side: "LONG",
@@ -702,7 +733,7 @@ export function Alerts({ enabled = {}, onChange }) {
       }
       setTestResult({
         ok: true,
-        message: data.message || "ส่งข้อความสัญญาณทดสอบเข้า Telegram สำเร็จ!",
+        message: data.message || "ส่งข้อความสัญญาณเข้าห้อง Telegram VIP สำเร็จ!",
       });
     } catch (err) {
       setTestResult({ ok: false, error: err.message });
@@ -711,17 +742,69 @@ export function Alerts({ enabled = {}, onChange }) {
     }
   };
 
+  const handleTestVoice = async () => {
+    if (voicePlaying) return;
+    setVoicePlaying(true);
+    const sampleText =
+      "แจ้งเตือนสัญญาณทองคำ เอ็กซ์เอยู ยูเอสดี ฝั่งซื้อ ลอง จุดเข้าอ้างอิง 2720.50 จุดตัดขาดทุน 2704 เป้าหมายทำกำไร 2753.50 โปรดคุมความเสี่ยงตามแผนค่ะ";
+    try {
+      const url = `/api/tts?text=${encodeURIComponent(sampleText)}`;
+      const audio = new Audio(url);
+      audio.onended = () => setVoicePlaying(false);
+      audio.onerror = () => {
+        if (typeof window !== "undefined" && "speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(sampleText);
+          u.lang = "th-TH";
+          u.rate = 1.0;
+          u.onend = () => setVoicePlaying(false);
+          u.onerror = () => setVoicePlaying(false);
+          window.speechSynthesis.speak(u);
+        } else {
+          setVoicePlaying(false);
+        }
+      };
+      await audio.play();
+    } catch {
+      setVoicePlaying(false);
+    }
+  };
+
   return (
     <section className={styles.panel} aria-label="ศูนย์การแจ้งเตือนสัญญาณเทรด">
       <PanelHeading
         icon={Bell}
-        title="AI ALERTS · ศูนย์แจ้งเตือนสัญญาณสด"
-        label="LIVE BROADCAST"
+        title="AI ALERTS · ศูนย์แจ้งเตือนห้อง Telegram VIP & เสียงน้องนักออม"
+        label="CENTRAL VIP ROOM"
       />
 
       <div className={styles.alertHeaderPill}>
         <span className={styles.liveDot} />
-        <span>ระบบ Cloud แจ้งเตือนเรียลไทม์ 24 ชม. ไม่ต้องเปิดคอม</span>
+        <span>
+          ห้องกลุ่ม Telegram VIP ส่วนกลางของระบบเรา · สแกนแท่งเทียนปิดจริงทุก 15 นาที · มีระบบคัดออกอัตโนมัติ (Auto-Kick) เมื่อหมดโปร
+        </span>
+      </div>
+
+      {/* สรุปชัดเจน: แผนของอะไร / แจ้งเตือนยังไงเวลาไหน / ห้องกลุ่มใคร */}
+      <div className={styles.alertExplainGrid}>
+        <article className={styles.alertExplainCard}>
+          <strong>📌 1. แผนของอะไร?</strong>
+          <p>
+            แผนสแกนเนอร์เดย์เทรด <b>15 นาที (XAUUSD ทองคำ &amp; คู่เงินหลัก)</b> และแผน <b>Pro Suite EA ล็อคกำไร 3 สเต็ป</b> (จุดเข้า Entry ➔ เลื่อน SL บังหน้าทุน +0.5R ➔ แบ่งปิด TP1 50% &amp; ปล่อย Runner ชน TP2) โดยเก็บสูตรการสแกนเป็นความลับของระบบ
+          </p>
+        </article>
+        <article className={styles.alertExplainCard}>
+          <strong>⏱️ 2. แจ้งเตือนยังไง &amp; เวลาไหน?</strong>
+          <p>
+            บอทส่วนกลางสแกนอัตโนมัติทุกๆ <b>15 นาทีทันทีที่แท่งเทียนปิดจริง</b> (<code>xx:00, xx:15, xx:30, xx:45 น.</code> จันทร์–ศุกร์) เน้นเซสชันสภาพคล่องสูง <b>เอเชีย 06:00–11:00 น.</b> และ <b>ลอนดอน/นิวยอร์ก 13:00–23:00 น.</b>
+          </p>
+        </article>
+        <article className={styles.alertExplainCard}>
+          <strong>👑 3. ห้องกลุ่มใคร? (เรา หรือ ลูกค้า)</strong>
+          <p>
+            เป็น <b>ห้องกลุ่ม Telegram VIP ส่วนกลางของระบบเรา</b> ลูกค้าไม่ต้องสร้างบอทหรือใส่ Token เอง เพียงกดรับ <b>ลิงก์เชิญแบบใช้ได้ 1 ครั้ง (One-Time Invite Link)</b> และระบบจะเตะออกอัตโนมัติเมื่อหมดอายุสมาชิก
+          </p>
+        </article>
       </div>
 
       <div className={styles.channelTabs}>
@@ -731,7 +814,7 @@ export function Alerts({ enabled = {}, onChange }) {
           onClick={() => setActiveTab("telegram")}
           className={activeTab === "telegram" ? styles.channelTabActive : styles.channelTab}
         >
-          <Send size={13} /> Telegram (แนะนำ · ฟรี 100%)
+          <Send size={14} /> ห้อง Telegram VIP ส่วนกลาง (แนะนำ)
         </button>
         <button
           type="button"
@@ -739,7 +822,7 @@ export function Alerts({ enabled = {}, onChange }) {
           onClick={() => setActiveTab("voice")}
           className={activeTab === "voice" ? styles.channelTabActive : styles.channelTab}
         >
-          <Volume2 size={13} /> เสียงน้องนักออม
+          <Volume2 size={14} /> เสียงพูดภาษาไทย "น้องนักออม"
         </button>
         <button
           type="button"
@@ -747,92 +830,159 @@ export function Alerts({ enabled = {}, onChange }) {
           onClick={() => setActiveTab("line")}
           className={activeTab === "line" ? styles.channelTabActive : styles.channelTab}
         >
-          <ShieldCheck size={13} /> LINE Official
+          <ShieldCheck size={14} /> ทำไมถึงใช้ Telegram แทน LINE
         </button>
       </div>
 
       {activeTab === "telegram" && (
         <div className={styles.telegramBox}>
           <div className={styles.telegramBadge}>
-            <span className={styles.costBadge}>0 บาท · ไม่จำกัดข้อความ</span>
-            <small>เด้งเข้ามือถือเสี้ยววินาที</small>
+            <span className={styles.costBadge}>👑 สิทธิ์สมาชิก Pro VIP (฿999/เดือน)</span>
+            <small>ลิงก์เชิญส่วนตัวเข้าได้ 1 คน · ห้ามส่งต่อ · หมดโปรเตะออกอัตโนมัติ</small>
           </div>
 
-          <div className={styles.inputStack}>
-            <label className={styles.inputLabel}>
-              <span>Telegram Bot Token</span>
-              <input
-                type="password"
-                className={styles.textInput}
-                placeholder="เช่น 123456789:ABCdefGhIJKlmNoPQRstUVwxyZ"
-                value={telegramToken}
-                onChange={(e) => handleSaveCredentials(e.target.value, telegramChatId)}
-              />
-            </label>
-
-            <label className={styles.inputLabel}>
-              <span>Telegram Chat ID หรือ @ชื่อแชนแนล</span>
-              <input
-                type="text"
-                className={styles.textInput}
-                placeholder="เช่น @MySignalChannel หรือ -1001234567890"
-                value={telegramChatId}
-                onChange={(e) => handleSaveCredentials(telegramToken, e.target.value)}
-              />
-            </label>
+          <div className={styles.vipInviteHero}>
+            <div>
+              <strong>เข้าห้องกลุ่มสัญญาณสด Telegram VIP (Forex &amp; Gold 15m)</strong>
+              <p>
+                สมาชิกไม่ต้องตั้งค่าบอทเอง กดปุ่มด้านล่างเพื่อรับลิงก์เข้าห้อง VIP ส่วนกลางของระบบ หรือจัดการสิทธิ์ได้ที่หน้าบัญชีสมาชิก
+              </p>
+            </div>
+            <div className={styles.btnRow}>
+              <button
+                type="button"
+                className={styles.dispatchBtn}
+                onClick={handleClaimVipInvite}
+                disabled={inviteLoading}
+              >
+                <Send size={15} />
+                {inviteLoading
+                  ? "กำลังออกลิงก์เชิญ VIP…"
+                  : "🔗 รับลิงก์เข้าห้อง Telegram VIP (ใช้ได้ 1 ครั้ง / 1 คน)"}
+              </button>
+              <a href="/account" className={styles.guideToggle}>
+                ไปที่หน้าบัญชีสมาชิก / อัปเกรด Pro VIP ↗
+              </a>
+            </div>
           </div>
 
-          <div className={styles.btnRow}>
-            <button
-              type="button"
-              className={styles.dispatchBtn}
-              onClick={handleTestSend}
-              disabled={sending}
-            >
-              <Send size={14} />
-              {sending ? "กำลังยิงสัญญาณ…" : "ทดสอบส่งสัญญาณเข้า Telegram ทันที"}
-            </button>
-            <button
-              type="button"
-              className={styles.guideToggle}
-              onClick={() => setShowGuide((v) => !v)}
-            >
-              {showGuide ? "ซ่อนวิธีสร้างบอท" : "📖 วิธีสร้างบอทใน 2 นาที"}
-            </button>
-          </div>
-
-          {testResult && (
+          {inviteResult && (
             <div
-              className={testResult.ok ? styles.successBox : styles.errorBox}
+              className={inviteResult.ok ? styles.successBox : styles.errorBox}
               role="status"
             >
-              {testResult.ok ? (
-                <>
-                  <CheckCircle2 size={16} />
-                  <span>{testResult.message}</span>
-                </>
+              {inviteResult.ok ? (
+                <div style={{ display: "grid", gap: "6px", width: "100%" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CheckCircle2 size={16} />
+                    <span>{inviteResult.message}</span>
+                  </div>
+                  {inviteResult.inviteLink && (
+                    <a
+                      href={inviteResult.inviteLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.dispatchBtn}
+                      style={{ width: "fit-content", marginTop: "4px" }}
+                    >
+                      🚀 กดเข้าห้องกลุ่ม Telegram VIP ทันที <ExternalLink size={14} />
+                    </a>
+                  )}
+                </div>
               ) : (
                 <>
                   <AlertCircle size={16} />
-                  <span>{testResult.error}</span>
+                  <span>{inviteResult.error}</span>
                 </>
               )}
             </div>
           )}
 
-          {showGuide && (
+          {isAdminOrOwner && (
             <div className={styles.guideBox}>
-              <strong>วิธีตั้งค่า Telegram Bot เพื่อรับสัญญาณฟรี:</strong>
-              <ol>
-                <li>เปิดแอป Telegram ค้นหา <code>@BotFather</code> แล้วพิมพ์ <code>/newbot</code> เพื่อสร้างบอทและรับ <b>HTTP API Token</b></li>
-                <li>สร้าง Telegram Channel หรือ Group ของคุณ แล้วกดเพิ่มบอทที่คุณสร้างให้เป็น <b>Administrator</b></li>
-                <li>ใส่ <b>Bot Token</b> และ <b>@ชื่อแชนแนล</b> ในช่องด้านบน แล้วกดปุ่มทดสอบได้ทันที!</li>
-              </ol>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <strong>🛠️ แผงควบคุมเจ้าของระบบ (Admin Broadcast Control)</strong>
+                <div className={styles.btnRow} style={{ marginTop: 0 }}>
+                  <button
+                    type="button"
+                    className={styles.dispatchBtn}
+                    onClick={handleTestSend}
+                    disabled={sending}
+                  >
+                    <Send size={14} />
+                    {sending
+                      ? "กำลังยิงสัญญาณเข้าห้อง VIP…"
+                      : "📡 ทดสอบยิงสัญญาณเข้าห้อง Telegram VIP ส่วนกลาง"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.guideToggle}
+                    onClick={() => setShowAdminConfig((v) => !v)}
+                  >
+                    {showAdminConfig ? "ซ่อนตั้งค่า Token สำรอง" : "⚙️ ตั้งค่า Token สำรอง (เฉพาะ Admin)"}
+                  </button>
+                </div>
+              </div>
+
+              {showAdminConfig && (
+                <div className={styles.inputStack} style={{ marginTop: "12px" }}>
+                  <label className={styles.inputLabel}>
+                    <span>Admin Override Bot Token (เว้นว่างไว้เพื่อใช้ค่าส่วนกลางของ Server)</span>
+                    <input
+                      type="password"
+                      className={styles.textInput}
+                      placeholder="ใช้ค่า TELEGRAM_BOT_TOKEN ของระบบอัตโนมัติ"
+                      value={telegramToken}
+                      onChange={(e) => handleSaveCredentials(e.target.value, telegramChatId)}
+                    />
+                  </label>
+                  <label className={styles.inputLabel}>
+                    <span>Admin Override Chat ID ห้องกลุ่ม VIP</span>
+                    <input
+                      type="text"
+                      className={styles.textInput}
+                      placeholder="ใช้ค่า TELEGRAM_CHAT_ID ของระบบอัตโนมัติ"
+                      value={telegramChatId}
+                      onChange={(e) => handleSaveCredentials(telegramToken, e.target.value)}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {testResult && (
+                <div
+                  className={testResult.ok ? styles.successBox : styles.errorBox}
+                  style={{ marginTop: "10px" }}
+                  role="status"
+                >
+                  {testResult.ok ? (
+                    <>
+                      <CheckCircle2 size={16} />
+                      <span>{testResult.message}</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle size={16} />
+                      <span>{testResult.error}</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           <div className={styles.previewCard}>
-            <span className={styles.previewKicker}>ตัวอย่างข้อความที่ลูกค้าจะได้รับใน Telegram:</span>
+            <span className={styles.previewKicker}>
+              ตัวอย่างสัญญาณที่แจ้งเตือนเข้าห้องกลุ่ม Telegram VIP ส่วนกลาง:
+            </span>
             <pre className={styles.previewText}>
 {`⚡ NUGAOM AI · สัญญาณเดย์เทรด 15m คมชัด ⚡
 ────────────────────────
@@ -841,12 +991,11 @@ export function Alerts({ enabled = {}, onChange }) {
 ⏱️ เวลาแท่งปิด: 14:15 น. (15 นาที)
 
 🎯 จุดเข้า (Entry): 2,720.50
+🛡️ จุดล็อคกำไรบังทุน (+0.5R): 2,728.75
 🛑 จุดตัดขาดทุน (SL): 2,704.00
-🏁 เป้าหมายทำกำไร (TP 2R): 2,753.50
-⚖️ Risk/Reward Ratio: 1 : 2.0 (ระยะเสี่ยง: 16.50)
+🏁 เป้าหมายทำกำไร (TP1 / TP2): 2,753.50 (1 : 2.0R)
 ────────────────────────
-💡 วินัยคุมพอร์ต: คุมความเสี่ยงไม่เกิน 1–2% ของเงินทุน
-🔗 เปิดดูกราฟสด: https://nugaom.com/forex ↗`}
+💡 วินัยคุมพอร์ต: แบ่งปิด 50% ที่ TP1 และเลื่อน SL บังหน้าทุนอัตโนมัติ`}
             </pre>
           </div>
         </div>
@@ -857,16 +1006,31 @@ export function Alerts({ enabled = {}, onChange }) {
           <div className={styles.voiceHeader}>
             <Volume2 size={24} className={styles.voiceIcon} />
             <div>
-              <strong>น้องนักออม · Voice Synthesizer</strong>
-              <small>เสียงพูดภาษาไทยแจ้งจุดเข้า Entry / SL / TP อัตโนมัติ</small>
+              <strong>น้องนักออม · Thai Neural TTS Voice Alert</strong>
+              <small>เสียงพูดภาษาไทยแจ้งจุดเข้า Entry / SL / TP อัตโนมัติทั้งบนมือถือและคอมพิวเตอร์</small>
             </div>
           </div>
           <p className={styles.voiceDesc}>
-            ระบบจะส่งเสียงพูดภาษาไทยแจ้งพิกัดจุดเข้าและเป้าหมายทันทีที่แท่ง 15m ปิดและเงื่อนไขเทรดผ่านเกณฑ์ โดยผู้ใช้สามารถเปิดหน้านี้ทิ้งไว้บน iPad หรือคอมพิวเตอร์เพื่อฟังเสียงเตือนขณะทำงานได้ทันที
+            เมื่อเปิดหน้ากระดานเทรดทิ้งไว้บนมือถือ, iPad หรือคอมพิวเตอร์ ทันทีที่แท่งเทียน 15 นาทีปิดและมีสัญญาณเข้าเงื่อนไข หรือราคาชนจุดขยับ SL บังทุน / ชน TP ระบบจะพูดแจ้งเตือนเป็นภาษาไทยชัดเจนโดยไม่ต้องจ้องจอตลอดเวลา
           </p>
           <div className={styles.voiceSample}>
-            <span>ตัวอย่างเสียงประกาศ:</span>
-            <em>"XAUUSD ฟอเร็กซ์ LONG เข้าไม้ ราคาอ้างอิง 2720 จุดตัดขาดทุน 2704 เป้าหมาย 2753"</em>
+            <span>ตัวอย่างเสียงประกาศภาษาไทย:</span>
+            <em>
+              "แจ้งเตือนสัญญาณทองคำ XAUUSD ฝั่งซื้อ LONG จุดเข้าอ้างอิง 2720.50 จุดตัดขาดทุน 2704 เป้าหมายทำกำไร 2753.50 โปรดคุมความเสี่ยงตามแผนค่ะ"
+            </em>
+          </div>
+          <div className={styles.btnRow} style={{ marginTop: "12px" }}>
+            <button
+              type="button"
+              className={styles.dispatchBtn}
+              onClick={handleTestVoice}
+              disabled={voicePlaying}
+            >
+              <Volume2 size={15} />
+              {voicePlaying
+                ? "🔊 กำลังพูดแจ้งเตือน…"
+                : "🔊 กดทดสอบฟังเสียงน้องนักออม (TTS ภาษาไทย)"}
+            </button>
           </div>
         </div>
       )}
@@ -874,11 +1038,11 @@ export function Alerts({ enabled = {}, onChange }) {
       {activeTab === "line" && (
         <div className={styles.lineBox}>
           <div className={styles.lineNotice}>
-            <ShieldCheck size={18} />
+            <ShieldCheck size={20} />
             <div>
-              <strong>การแจ้งเตือนผ่าน LINE Official Account (Messaging API)</strong>
+              <strong>ทำไมเราจึงใช้ห้องกลุ่ม Telegram VIP ส่วนกลางแทน LINE?</strong>
               <p>
-                LINE Notify ปิดให้บริการถาวรแล้ว (มี.ค. 2025) การส่งผ่าน LINE OA ในแพ็กเกจฟรีจำกัดเพียง 300–500 ข้อความ/เดือน หากมีผู้ใช้หลายคนส่งสัญญาณทุกวันจะเกินโควตาทันที แนะนำให้ใช้ <b>Telegram Channel</b> เป็นช่องทางหลักเนื่องจากฟรี 100% ไม่จำกัดจำนวนข้อความ
+                เนื่องจาก LINE Notify ยุติการให้บริการแล้ว และการส่งข้อความผ่าน LINE OA มีข้อจำกัดโควตาข้อความรายเดือน ระบบจึงใช้ <b>ห้องกลุ่ม Telegram VIP ส่วนกลาง</b> เพื่อให้ส่งสัญญาณเทรด 15 นาที + แจ้งเตือนขยับ SL บังหน้าทุนได้รวดเร็วระดับเสี้ยววินาที ไม่จำกัดจำนวนข้อความ และบริหารจัดการสิทธิ์สมาชิก (One-Time Link &amp; Auto-Kick) ได้อัตโนมัติ 100%
               </p>
             </div>
           </div>
@@ -887,10 +1051,10 @@ export function Alerts({ enabled = {}, onChange }) {
 
       <div className={styles.alertRows}>
         {[
-          ["Price", "Price alert", "ติดตามระดับราคาที่สนใจ"],
-          ["AI", "AI 15m signal", "ติดตามสัญญาณใหม่จากระบบแท่ง 15m"],
-          ["News", "Economic news", "เหตุการณ์เศรษฐกิจสำคัญ"],
-          ["Voice", "Thai voice announcement", "เปิดระบบเสียงน้องนักออม"],
+          ["Price", "Price & Structure Alert", "แจ้งเตือนเมื่อราคาแตะจุดเข้า Entry หรือจุดขยับ SL บังหน้าทุน (+0.5R)"],
+          ["AI", "AI 15m Candle-Close Signal", "แจ้งเตือนเมื่อแท่งเทียน 15 นาทีปิดจริงและผ่านเกณฑ์สแกนเนอร์"],
+          ["News", "High-Impact Economic News", "แจ้งเตือนก่อนข่าวสำคัญ (CPI, Non-Farm, FOMC) เพื่อลดความเสี่ยง"],
+          ["Voice", "เสียงพูดภาษาไทย (น้องนักออม)", "อ่านสัญญาณและแผนเทรดด้วยเสียงภาษาไทยอัตโนมัติ"],
         ].map(([key, label, description]) => (
           <div key={key}>
             <span className={styles.alertIcon}>

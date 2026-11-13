@@ -20,7 +20,7 @@ const {withBilling,applyStripeEvent,checkout,portal,listPlans}=await import('./s
 const {webhookHandler}=await import('./webhook.mjs');
 const signer=new Stripe('sk_test_fixture_only');
 const end=Math.floor(Date.now()/1000)+86400*20;
-const price=id=>({id:`price_${id}`,active:true,livemode:false,currency:'thb',unit_amount:{starter:9900,pro:29900,ultimate:59900}[id],type:'recurring',recurring:{interval:'month',interval_count:1,usage_type:'licensed'}});
+const price=id=>({id:`price_${id}`,active:true,livemode:false,currency:'thb',unit_amount:{starter:15900,pro:39900,ultimate:59900}[id],type:'recurring',recurring:{interval:'month',interval_count:1,usage_type:'licensed'}});
 async function fixture(plan='starter'){
  const id=randomUUID(),customer=`cus_${id}`;
  const m=await memberStore.upsertLineMember({lineId:`fixture-${id}`,displayName:'Billing test only'});
@@ -36,7 +36,7 @@ test('monthly prices require exact approved THB amounts, mode and interval',asyn
  const p=configuredPlans()[0];assert.ok(validMonthlyPrice(price('starter'),p,'test'));
  for(const change of [{unit_amount:19900},{currency:'usd'},{livemode:true},{recurring:{interval:'year',interval_count:1}},{active:false}])assert.equal(validMonthlyPrice({...price('starter'),...change},p,'test'),false);
  assert.throws(()=>configuredPlans({...process.env,STRIPE_PRICE_PRO_MONTHLY:'price_starter'}),/INVALID_BILLING_CONFIG/);
- const f=await fixture();assert.deepEqual((await listPlans({stripe:f.stripe})).map(p=>p.amount),[9900,29900,59900]);
+ const f=await fixture();assert.deepEqual((await listPlans({stripe:f.stripe})).map(p=>p.amount),[15900,39900,59900]);
 });
 test('paid webhook preserves member identity and enables the matching scanner/AI package',async()=>{
  const f=await fixture('pro');await applyStripeEvent(f.event(),{stripe:f.stripe});

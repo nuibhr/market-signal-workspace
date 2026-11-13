@@ -9,6 +9,7 @@ const yf = new YahooFinance({suppressNotices:['yahooSurvey'],versionCheck:false,
   fetch:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(8000)}),queue:{concurrency:4}});
 const native = createSettradeClient();
 export async function loadScanSeries(asset, { env=process.env, client=native, backup=loadChartBackup, now=Date.now() }={}) {
+  if(env.SHARED_MARKET_DATA_MODE==='daily')return backup(asset,'1d');
   if (client.configuration.configured && (env.NODE_ENV!=='production'||env.SETTRADE_DISPLAY_RIGHTS_CONFIRMED==='true')) {
     try {
       const series=await client.getCandles(asset.symbol,'1d',750);
@@ -73,7 +74,7 @@ export async function generateStrategyFeed({loadSeries=loadScanSeries,quotes=sym
   const quoteSymbols=[...new Set(['USDTHB=X','HKDTHB=X',...DR_SPECS.map(s=>s.underlying),])];
   let rawQuotes=[];
   const quoteDisplayAllowed=env.NODE_ENV!=='production'||env.YAHOO_DISPLAY_RIGHTS_CONFIRMED==='true';
-  try { if(markets.includes('dr')&&quoteDisplayAllowed)rawQuotes=await quotes(quoteSymbols); } catch { /* Quotes and candles fail independently. */ }
+  try { if(env.SHARED_MARKET_DATA_MODE!=='daily'&&markets.includes('dr')&&quoteDisplayAllowed)rawQuotes=await quotes(quoteSymbols); } catch { /* Quotes and candles fail independently. */ }
   const quoteMap=new Map((Array.isArray(rawQuotes)?rawQuotes:[]).map(q=>[q.symbol,q]));
   const price=symbol=>{const n=quoteMap.get(symbol)?.regularMarketPrice;return positive(n)?n:null;};
   const liveUsdThb=price('USDTHB=X'),liveHkdThb=price('HKDTHB=X');

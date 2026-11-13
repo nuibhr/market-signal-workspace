@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {readTelegramSettings} from '../forex/telegram-settings.mjs';
+import {readTelegramSettings} from '../../notifications/telegram-settings.mjs';
 import {
   Send,
   Bot,
@@ -16,6 +16,10 @@ import {
   Lock,
   Target,
   ExternalLink,
+  UserMinus,
+  UserPlus,
+  Copy,
+  Check,
 } from 'lucide-react';
 import styles from './admin-telegram-vip.module.css';
 
@@ -88,22 +92,185 @@ const ANNOUNCEMENT_TEMPLATES = [
   },
 ];
 
+const MARKET_PLAYBOOK_PRESETS = {
+  thai: {
+    label: '🇹🇭 หุ้นไทย SET100',
+    hashtag: '#หุ้นไทย #SET100',
+    envHint: 'TELEGRAM_CHAT_ID_THAI / TELEGRAM_THREAD_ID_THAI',
+    picks: [
+      { symbol: 'DELTA', entry: 126.5, tp1: 139.5, sl: 120.0, note: 'Stage 2 วอลุ่มเข้าจ่อเบรก' },
+      { symbol: 'ADVANC', entry: 281.0, tp1: 305.0, sl: 269.0, note: 'ย่อรับแนวรับ ปันผลแกร่ง' },
+      { symbol: 'GULF', entry: 61.5, tp1: 67.5, sl: 58.5, note: 'โครงสร้างขาขึ้นชนะตลาด SET' },
+    ],
+  },
+  dr: {
+    label: '🌐 DR80 หุ้นโลก',
+    hashtag: '#DR80 #หุ้นต่างประเทศ',
+    envHint: 'TELEGRAM_CHAT_ID_DR / TELEGRAM_THREAD_ID_DR',
+    picks: [
+      { symbol: 'NVDA80', entry: 43.8, tp1: 49.5, sl: 41.8, note: 'Fair Value สอดคล้องหุ้นแม่ NASDAQ' },
+      { symbol: 'AAPL80', entry: 30.8, tp1: 34.8, sl: 29.5, note: 'สะสมโซนรับปลอดภัย' },
+      { symbol: 'BABA80', entry: 5.35, tp1: 6.25, sl: 4.95, note: 'Discount ถูกกว่าหุ้นแม่ฮ่องกง' },
+    ],
+  },
+  tfex: {
+    label: '⚡ TFEX & SET50',
+    hashtag: '#TFEX #S50 #GO',
+    envHint: 'TELEGRAM_CHAT_ID_TFEX / TELEGRAM_THREAD_ID_TFEX',
+    picks: [
+      { symbol: 'S50Z26', entry: 912.5, tp1: 924.0, sl: 906.5, note: 'LONG ยืนเหนือแนวรับโครงสร้าง 15m/1H' },
+      { symbol: 'GOZ26', entry: 2722.0, tp1: 2748.0, sl: 2709.0, note: 'Gold Online Futures ย่อรับตามเทรนด์' },
+    ],
+  },
+  us: {
+    label: '🇺🇸 หุ้นอเมริกา US',
+    hashtag: '#USStocks #Stage2 #Dime',
+    envHint: 'TELEGRAM_CHAT_ID_US / TELEGRAM_THREAD_ID_US',
+    picks: [
+      { symbol: 'NVDA', entry: 138.0, tp1: 156.0, sl: 129.0, note: 'Stage 2 Leader · ตั้ง GTC 19:30 น.' },
+      { symbol: 'PLTR', entry: 61.5, tp1: 71.0, sl: 56.8, note: 'High RS Momentum · Dime! Fractional' },
+    ],
+  },
+  forex: {
+    label: '🥇 Forex & Gold',
+    hashtag: '#XAUUSD #Forex #ProCopyEA',
+    envHint: 'TELEGRAM_CHAT_ID_FOREX / TELEGRAM_THREAD_ID_FOREX',
+    picks: [
+      { symbol: 'XAUUSD', entry: 2724.5, tp1: 2742.0, sl: 2712.0, note: 'Gold London/NY Pullback · 2R' },
+      { symbol: 'EURUSD', entry: 1.0845, tp1: 1.0875, sl: 1.0825, note: 'Dynamic Envelope Rebound' },
+    ],
+  },
+};
+
 export default function AdminTelegramVip() {
   const [telegramConfig,setTelegramConfig]=useState(null);
-  const [activeTab, setActiveTab] = useState('signals'); // 'signals' | 'announcements' | 'logs'
+  const [activeTab, setActiveTab] = useState('categories'); // 'categories' | 'signals' | 'announcements' | 'members' | 'logs'
   const [botStatus, setBotStatus] = useState({ configured: false, loading: true });
   const [selectedSignal, setSelectedSignal] = useState(PRESET_SIGNALS[0]);
   const [pricesReviewed,setPricesReviewed]=useState(false);
   const [stage, setStage] = useState('ENTRY'); // 'ENTRY' | 'LOCK_PROFIT' | 'TP1' | 'TP2'
+  const [playbookCategory, setPlaybookCategory] = useState('thai');
+  const [playbookRound, setPlaybookRound] = useState('morning_0930');
+  const [topicThreadId, setTopicThreadId] = useState('');
   
   // Custom Announcement State
   const [announcementTitle, setAnnouncementTitle] = useState(ANNOUNCEMENT_TEMPLATES[0].title);
   const [announcementBody, setAnnouncementBody] = useState(ANNOUNCEMENT_TEMPLATES[0].body);
 
+  // Member Management & Auto-Kick State
+  const [inviteMemberName, setInviteMemberName] = useState('');
+  const [createdInviteLink, setCreatedInviteLink] = useState(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [generatingInvite, setGeneratingInvite] = useState(false);
+
+  const [kickUserId, setKickUserId] = useState('');
+  const [kickingMember, setKickingMember] = useState(false);
+
+  const [batchKickInput, setBatchKickInput] = useState('');
+  const [batchKicking, setBatchKicking] = useState(false);
+
   // Dispatching state
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState(null);
   const [historyLogs, setHistoryLogs] = useState([]);
+
+  async function handleGenerateInvite() {
+    if (generatingInvite) return;
+    setGeneratingInvite(true);
+    setToast(null);
+    try {
+      const payload = {
+        action: 'create-invite',
+        memberName: inviteMemberName.trim() || 'VIP Member',
+        memberLimit: 1,
+        ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
+      };
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.ok && data.inviteLink) {
+        setCreatedInviteLink(data.inviteLink);
+        setToast({ type: 'ok', msg: `🎉 สร้าง One-Time Invite Link 1 สิทธิ์สำเร็จ: ${data.inviteLink}` });
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: data.error || 'สร้างลิงก์ไม่สำเร็จ' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setGeneratingInvite(false);
+    }
+  }
+
+  async function handleKickMember() {
+    if (kickingMember || !kickUserId.trim()) return;
+    if (!confirm(`ยืนยันการเตะ Telegram User ID: ${kickUserId} ออกจากกลุ่ม VIP? (บอทจะสั่งเตะออก แต่ไม่แบนถาวร)`)) return;
+    setKickingMember(true);
+    setToast(null);
+    try {
+      const payload = {
+        action: 'kick-member',
+        userId: kickUserId.trim(),
+        ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
+      };
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setToast({ type: 'ok', msg: `✅ เตะสมาชิก User ID: ${kickUserId} ออกจากกลุ่ม VIP เรียบร้อยแล้ว (ไม่แบนถาวร)` });
+        setKickUserId('');
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: data.error || 'เตะสมาชิกไม่สำเร็จ' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setKickingMember(false);
+    }
+  }
+
+  async function handleBatchKick() {
+    if (batchKicking) return;
+    const userIds = batchKickInput.split(/[\n, ]+/).map(s => s.trim()).filter(Boolean);
+    if (!userIds.length) {
+      setToast({ type: 'err', msg: 'กรุณาระบุ Telegram User ID อย่างน้อย 1 รายการ' });
+      return;
+    }
+    if (!confirm(`ยืนยันการเตะสมาชิกหมดโปร ${userIds.length} คนออกจากกลุ่ม VIP?`)) return;
+    setBatchKicking(true);
+    setToast(null);
+    try {
+      const payload = {
+        action: 'auto-kick-expired',
+        userIds,
+        ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
+      };
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setToast({ type: 'ok', msg: `✅ สั่งบอทเตะสมาชิกหมดโปรสำเร็จ ${data.kickedCount} / ${userIds.length} คน` });
+        setBatchKickInput('');
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: data.error || 'ทำรายการไม่สำเร็จ' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setBatchKicking(false);
+    }
+  }
 
   useEffect(() => {
     const cfg=readTelegramSettings(window.localStorage);setTelegramConfig(cfg);fetchBotStatus(cfg);
@@ -212,6 +379,43 @@ export default function AdminTelegramVip() {
     }
   }
 
+  async function handleDispatchPlaybook() {
+    if (sending) return;
+    setSending(true);
+    setToast(null);
+    const preset = MARKET_PLAYBOOK_PRESETS[playbookCategory] || MARKET_PLAYBOOK_PRESETS.thai;
+    try {
+      const payload = {
+        ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
+        action: 'market-playbook',
+        operationId: crypto.randomUUID(),
+        category: playbookCategory,
+        round: playbookRound,
+        picks: preset.picks,
+        topicThreadId: topicThreadId ? Number(topicThreadId) : null,
+      };
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+      if (result.ok) {
+        setToast({
+          type: 'ok',
+          msg: `🚀 ส่งโพย [${preset.label}] รอบ ${playbookRound === 'morning_0930' ? '09:30 น.' : '17:30 น.'} เข้า Telegram VIP สำเร็จ!`,
+        });
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: result.error || 'ส่งโพยแยกหมวดหมู่ไม่สำเร็จ' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <div className={styles.telegramVip}>
       {/* Top HUD Cards */}
@@ -263,6 +467,12 @@ export default function AdminTelegramVip() {
       {/* Segmented Navigation Bar */}
       <div className={styles.segmentedBar}>
         <button
+          className={`${styles.segmentBtn} ${activeTab === 'categories' ? styles.segmentBtnActive : ''}`}
+          onClick={() => { setActiveTab('categories'); setToast(null); }}
+        >
+          <Target size={16} /> แยกหมวดหมู่โพย (หุ้นไทย · DR · TFEX · US · Forex)
+        </button>
+        <button
           className={`${styles.segmentBtn} ${activeTab === 'signals' ? styles.segmentBtnActive : ''}`}
           onClick={() => { setActiveTab('signals'); setToast(null); }}
         >
@@ -275,12 +485,111 @@ export default function AdminTelegramVip() {
           <Megaphone size={16} /> บรอดแคสต์ประกาศสำคัญ VIP
         </button>
         <button
+          className={`${styles.segmentBtn} ${activeTab === 'members' ? styles.segmentBtnActive : ''}`}
+          onClick={() => { setActiveTab('members'); setToast(null); }}
+        >
+          <UserMinus size={16} /> สมาชิก VIP &amp; ระบบเตะคนหมดโปร (Auto-Kick)
+        </button>
+        <button
           className={`${styles.segmentBtn} ${activeTab === 'logs' ? styles.segmentBtnActive : ''}`}
           onClick={() => { setActiveTab('logs'); setToast(null); }}
         >
           <History size={16} /> ประวัติการส่ง ({historyLogs.length})
         </button>
       </div>
+
+      {activeTab === 'categories' && (
+        <div className={styles.dispatchCard}>
+          <div className={styles.cardHead}>
+            <div>
+              <h3 className={styles.cardTitle}>
+                <Target size={18} color="#34d399" /> ระบบแยกหมวดหมู่แจ้งเตือน Telegram (หุ้นไทย · DR80 · TFEX · US · Forex)
+              </h3>
+              <p className={styles.cardSub}>
+                จำแนกหมวดหมู่ได้ 3 รูปแบบพร้อมกัน: ① ป้ายหัวข้อ + Hashtag อัตโนมัติ (<code>#หุ้นไทย</code>, <code>#DR80</code>, <code>#TFEX</code>) · ② แยก Topic ในห้อง Supergroup เดียว (<code>message_thread_id</code>) · ③ แยกห้องแชทตามตลาด (<code>TELEGRAM_CHAT_ID_THAI</code> / <code>_DR</code> / <code>_TFEX</code>)
+              </p>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block', marginBottom: '0.45rem', fontWeight: 600 }}>
+              1. เลือกหมวดหมู่ตลาดที่ต้องการส่งโพย:
+            </label>
+            <div className={styles.stageSelector}>
+              {Object.entries(MARKET_PLAYBOOK_PRESETS).map(([key, item]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`${styles.stagePill} ${playbookCategory === key ? styles.stagePillActive : ''}`}
+                  onClick={() => setPlaybookCategory(key)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '14px' }}>
+            <label style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block', marginBottom: '0.45rem', fontWeight: 600 }}>
+              2. เลือกรอบเวลาแจ้งเตือนประจำวัน (09:30 · 17:30 น.):
+            </label>
+            <div className={styles.stageSelector}>
+              {[
+                { id: 'morning_0930', label: '🌅 09:30 น. โพยเช้า (เช้านี้เล่นอะไรดี?)' },
+                { id: 'evening_1730', label: '🌙 17:30 น. หุ้นการบ้านเย็นนี้ (คัดไม่ซ้ำรอบเช้า · เฝ้าพรุ่งนี้)' },
+              ].map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  className={`${styles.stagePill} ${playbookRound === r.id ? styles.stagePillActive : ''}`}
+                  onClick={() => setPlaybookRound(r.id)}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '14px' }}>
+            <label style={{ fontSize: '0.78rem', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>Topic Thread ID (สำหรับกลุ่มเปิด Topics · เว้นว่างเพื่อส่งห้องหลัก):</span>
+              <input
+                type="number"
+                min="1"
+                placeholder="เช่น 2, 5, 8"
+                value={topicThreadId}
+                onChange={(e) => setTopicThreadId(e.target.value)}
+                style={{ width: '120px', padding: '6px 10px', borderRadius: '8px', background: 'rgba(15,23,42,0.8)', color: '#fff', border: 'none' }}
+              />
+            </label>
+            <small style={{ color: '#94a3b8', fontSize: '0.74rem' }}>
+              ENV แยกห้อง/Topic อัตโนมัติ: <code>{MARKET_PLAYBOOK_PRESETS[playbookCategory]?.envHint}</code>
+            </small>
+          </div>
+
+          <div className={styles.previewBox} style={{ marginBottom: '14px' }}>
+            <span className={styles.previewBadge}>Preview · {MARKET_PLAYBOOK_PRESETS[playbookCategory]?.label}</span>
+            {`📣 [${MARKET_PLAYBOOK_PRESETS[playbookCategory]?.label}]
+${playbookRound === 'morning_0930' ? '🌅 รอบเช้า 09:30 น. · เช้านี้เล่นอะไรดี?' : '🌙 รอบเย็น 17:30 น. · หุ้นการบ้านเฝ้าพรุ่งนี้ (คัดชุดใหม่ไม่ซ้ำรอบเช้า)'}
+────────────────────────
+${(MARKET_PLAYBOOK_PRESETS[playbookCategory]?.picks || []).map((p, i) => `${i + 1}. #${p.symbol} (${p.note})\n   🟢 แนวรับ/จุดเข้า: ${p.entry} | 🎯 TP1: ${p.tp1} | 🔴 จุดคัท SL: ${p.sl}`).join('\n')}
+────────────────────────
+🏷️ หมวดหมู่: ${MARKET_PLAYBOOK_PRESETS[playbookCategory]?.hashtag}`}
+          </div>
+
+          <div className={styles.actionRow}>
+            <button
+              type="button"
+              className={styles.dispatchBtn}
+              onClick={handleDispatchPlaybook}
+              disabled={sending}
+            >
+              <Send size={16} />
+              {sending ? 'กำลังส่งเข้า Telegram...' : `🚀 ส่งโพย ${MARKET_PLAYBOOK_PRESETS[playbookCategory]?.label} เข้า Telegram ทันที`}
+            </button>
+          </div>
+        </div>
+      )}
 
       {activeTab==='signals'&&<div className={styles.hudCard}>
         <strong>ระดับราคาสำหรับส่งจริง</strong><p>พรีเซ็ตเป็นค่าตั้งต้น ปรับ Entry / SL / เป้าหมายตามข้อมูลปัจจุบันก่อนส่ง</p>
@@ -469,7 +778,164 @@ ${stage === 'ENTRY' ? '1. เปิดแอป MT4/MT5 กรอก Entry, SL, 
         </div>
       )}
 
-      {/* Tab 3: History Logs */}
+      {/* Tab: VIP Membership Access & Auto-Kick */}
+      {activeTab === 'members' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Card 1: Generate 1-Time VIP Invite Link */}
+          <div className={styles.dispatchCard}>
+            <div className={styles.cardHead}>
+              <div>
+                <h3 className={styles.cardTitle}>
+                  <UserPlus size={18} color="#22d3ee" /> สร้างลิงก์เข้ากลุ่ม VIP เฉพาะคน (One-Time Invite Link)
+                </h3>
+                <p className={styles.cardSub}>
+                  สร้างลิงก์เชิญเข้ากลุ่มแบบจำกัด 1 สิทธิ์ (Member Limit: 1) ลิงก์จะหมดอายุทันทีเมื่อมีคนกดเข้า 1 คน ป้องกันการแอบนำไปแชร์ต่อ
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ flex: '1', minWidth: '240px' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: '6px', fontWeight: 600 }}>
+                  ชื่อสมาชิก / รหัสลูกค้า / หมายเหตุ
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น สมชาย ใจดี (Pro 399฿)"
+                  value={inviteMemberName}
+                  onChange={e => setInviteMemberName(e.target.value)}
+                  className={styles.inputField}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <button
+                type="button"
+                className={styles.dispatchBtn}
+                style={{ background: 'linear-gradient(135deg, #0284c7, #0369a1)', padding: '10px 18px' }}
+                disabled={generatingInvite || !botStatus.configured}
+                onClick={handleGenerateInvite}
+              >
+                <UserPlus size={16} /> {generatingInvite ? 'กำลังสร้างลิงก์…' : 'สร้างลิงก์ 1 สิทธิ์'}
+              </button>
+            </div>
+
+            {createdInviteLink && (
+              <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#6ee7b7', fontWeight: 700, textTransform: 'uppercase' }}>
+                    🎉 ONE-TIME INVITE LINK พร้อมใช้งาน:
+                  </span>
+                  <code style={{ fontSize: '0.9rem', color: '#38bdf8', wordBreak: 'break-all' }}>{createdInviteLink}</code>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className={styles.dispatchBtn}
+                    style={{ padding: '6px 12px', fontSize: '0.75rem', background: copiedLink ? '#059669' : '#334155' }}
+                    onClick={() => {
+                      navigator.clipboard?.writeText(createdInviteLink);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                  >
+                    {copiedLink ? <Check size={14} /> : <Copy size={14} />} {copiedLink ? 'คัดลอกแล้ว' : 'คัดลอกลิงก์'}
+                  </button>
+                  <a
+                    href={createdInviteLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.dispatchBtn}
+                    style={{ padding: '6px 12px', fontSize: '0.75rem', background: '#0284c7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <ExternalLink size={14} /> เปิด Telegram
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Card 2: Auto-Kick Expired Member */}
+          <div className={styles.dispatchCard}>
+            <div className={styles.cardHead}>
+              <div>
+                <h3 className={styles.cardTitle}>
+                  <UserMinus size={18} color="#f43f5e" /> สั่งบอทเตะสมาชิกหมดโปร (Auto-Kick Desk)
+                </h3>
+                <p className={styles.cardSub}>
+                  เตะสมาชิกที่ขาดต่ออายุออกจากกลุ่ม VIP ทันที โดยใช้ระบบ <code>banChatMember</code> และ <code>unbanChatMember</code> เพื่อไม่ให้เป็นการแบนถาวร (สมาชิกสามารถกลับเข้ากลุ่มได้เมื่อต่ออายุใหม่)
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div style={{ flex: '1', minWidth: '240px' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: '6px', fontWeight: 600 }}>
+                  Telegram User ID ของสมาชิกที่ต้องการเตะ
+                </label>
+                <input
+                  type="text"
+                  placeholder="เช่น 123456789 (ตัวเลข User ID ของ Telegram)"
+                  value={kickUserId}
+                  onChange={e => setKickUserId(e.target.value)}
+                  className={styles.inputField}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <button
+                type="button"
+                className={styles.dispatchBtn}
+                style={{ background: 'linear-gradient(135deg, #e11d48, #be123c)', padding: '10px 18px' }}
+                disabled={kickingMember || !kickUserId.trim() || !botStatus.configured}
+                onClick={handleKickMember}
+              >
+                <UserMinus size={16} /> {kickingMember ? 'กำลังเตะ…' : 'เตะออกจากกลุ่ม VIP'}
+              </button>
+            </div>
+
+            <div style={{ marginTop: '14px', padding: '12px', borderRadius: '8px', background: 'rgba(30, 41, 59, 0.45)', fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.6 }}>
+              💡 <strong>หลักการทำงานของบอท:</strong> บอทจะทำการแบนและปลดแบนในเสี้ยววินาที ทำให้สมาชิกหลุดออกจากกลุ่ม VIP ทันที แต่จะไม่ติด Blacklist ในกลุ่ม ทำให้สามารถใช้ลิงก์ใหม่กลับเข้ามาได้ทันทีเมื่อชำระเงินต่ออายุในรอบถัดไป
+            </div>
+          </div>
+
+          {/* Card 3: Batch Kick Expired Members */}
+          <div className={styles.dispatchCard}>
+            <div className={styles.cardHead}>
+              <div>
+                <h3 className={styles.cardTitle}>
+                  <UserMinus size={18} color="#f59e0b" /> เตะสมาชิกหมดโปรแบบชุด (Batch Auto-Kick)
+                </h3>
+                <p className={styles.cardSub}>
+                  วางรายการ Telegram User ID ของสมาชิกที่หมดโปรหลายคนพร้อมกัน (คั่นด้วยบรรทัดใหม่หรือเครื่องหมายจุลภาค)
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <textarea
+                rows={3}
+                placeholder="100123456&#10;100654321&#10;100987654"
+                value={batchKickInput}
+                onChange={e => setBatchKickInput(e.target.value)}
+                className={styles.inputField}
+                style={{ width: '100%', fontFamily: 'monospace' }}
+              />
+              <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className={styles.dispatchBtn}
+                  style={{ background: 'linear-gradient(135deg, #d97706, #b45309)', padding: '10px 18px' }}
+                  disabled={batchKicking || !batchKickInput.trim() || !botStatus.configured}
+                  onClick={handleBatchKick}
+                >
+                  <UserMinus size={16} /> {batchKicking ? 'กำลังเตะเป็นชุด…' : 'เตะสมาชิกที่หมดโปรทั้งหมด'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: History Logs */}
       {activeTab === 'logs' && (
         <div className={styles.dispatchCard}>
           <div className={styles.cardHead}>

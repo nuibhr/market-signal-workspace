@@ -1,0 +1,6 @@
+FROM node:24-bookworm-slim
+WORKDIR /app
+COPY --chown=node:node scanner.mjs ./scanner.mjs
+USER node
+ENV NODE_ENV=production STORAGE_PROVIDER=scanner-http
+CMD ["node","scanner.mjs"]

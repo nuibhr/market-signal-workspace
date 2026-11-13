@@ -1,3 +1,4 @@
+import {requireDataOwner} from '../../../market-data/contracts/v1/owner-server.mjs';
 import { rateLimit, readJsonBody, requestErrorResponse } from '../../../security/request-guard.mjs';
 import { currentMember, privateHeaders, sameOrigin } from '../../../membership/server.mjs';
 import { storage } from '../../../storage/database.mjs';
@@ -11,6 +12,7 @@ export const runtime='nodejs'; export const dynamic='force-dynamic';
 const client=createSettradeClient();
 async function member(){const m=await currentMember();return m&&membershipFor(m).capabilities.manualDailyScan?m:null;}
 export async function POST(request){
+ const denied=await requireDataOwner(request);if(denied)return denied;
  if(!sameOrigin(request))return Response.json({code:'INVALID_ORIGIN'},{status:403,headers:privateHeaders});
  const m=await member();if(!m)return Response.json({code:'MEMBERSHIP_REQUIRED'},{status:403,headers:privateHeaders});
  const limited=(await rateLimit('holdings-write',m.id,10));if(limited)return limited;
@@ -28,7 +30,8 @@ export async function POST(request){
  if(!saved)return Response.json({code:'LIMIT_20'},{status:400,headers:privateHeaders});
  return Response.json({ok:true},{headers:privateHeaders});
 }
-export async function GET(){
+export async function GET(request){
+ const denied=await requireDataOwner(request);if(denied)return denied;
  const m=await member();if(!m)return Response.json({code:'MEMBERSHIP_REQUIRED'},{status:403,headers:privateHeaders});
  const limited=(await rateLimit('holdings-read',m.id,30));if(limited)return limited;
  const rows=(await storage.all('SELECT market,symbol,cost,quantity FROM customer_holdings WHERE member_id=? ORDER BY updated_at DESC',m.id));const results=[];

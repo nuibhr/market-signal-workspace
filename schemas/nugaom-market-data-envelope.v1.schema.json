@@ -1,0 +1,1412 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nugaom:market-data-envelope:v1",
+  "title": "Nugaom Canonical Market Data Envelope v1",
+  "description": "Proposal only. Shared response contract for Thai SET/mai, DR, US equities/ETFs, TFEX, and Forex/CFD. Runtime adoption and provider rights are not implied.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/marketDataEnvelope"
+    },
+    {
+      "$ref": "#/$defs/apiError"
+    }
+  ],
+  "$defs": {
+    "isoDateTimeOrNull": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nonNegativeIntegerOrNull": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "market": {
+      "type": "string",
+      "enum": [
+        "thai",
+        "dr",
+        "us",
+        "tfex",
+        "forex"
+      ]
+    },
+    "marketDataMode": {
+      "type": "string",
+      "enum": [
+        "REALTIME_STREAM",
+        "REALTIME_POLL",
+        "DELAYED",
+        "EOD",
+        "HISTORICAL",
+        "REFERENCE",
+        "SYNTHETIC",
+        "UNKNOWN"
+      ]
+    },
+    "dataState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "availability",
+        "freshness",
+        "usability",
+        "provider",
+        "rights",
+        "codes"
+      ],
+      "properties": {
+        "availability": {
+          "type": "string",
+          "enum": [
+            "AVAILABLE",
+            "PARTIAL",
+            "UNAVAILABLE"
+          ]
+        },
+        "freshness": {
+          "type": "string",
+          "enum": [
+            "FRESH",
+            "STALE",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "usability": {
+          "type": "string",
+          "enum": [
+            "SIGNAL_ELIGIBLE",
+            "CHART_ONLY",
+            "DISPLAY_ONLY",
+            "BLOCKED"
+          ]
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "READY",
+            "DEGRADED",
+            "UNAVAILABLE",
+            "NOT_CONFIGURED",
+            "UNKNOWN"
+          ]
+        },
+        "rights": {
+          "type": "string",
+          "enum": [
+            "CONFIRMED",
+            "UNCONFIRMED",
+            "DENIED",
+            "EXPIRED",
+            "UNKNOWN"
+          ]
+        },
+        "codes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "AVAILABLE",
+              "PARTIAL",
+              "STALE",
+              "UNAVAILABLE",
+              "CHART_ONLY",
+              "DISPLAY_ONLY",
+              "SIGNAL_ELIGIBLE",
+              "BLOCKED",
+              "DISPLAY_RIGHTS_NOT_CONFIRMED",
+              "DISPLAY_RIGHTS_DENIED",
+              "DISPLAY_RIGHTS_EXPIRED",
+              "SOURCE_NOT_CONFIGURED",
+              "SOURCE_UNAVAILABLE",
+              "SOURCE_TIMEOUT",
+              "SOURCE_RATE_LIMITED",
+              "PROVIDER_DEGRADED",
+              "UNKNOWN_FRESHNESS",
+              "MISSING_SOURCE_TIMESTAMP",
+              "INVALID_TIMESTAMP",
+              "FUTURE_TIMESTAMP",
+              "STALE_QUOTE",
+              "STALE_BAR",
+              "INCOMPLETE_BAR",
+              "WRONG_SESSION",
+              "INSUFFICIENT_HISTORY",
+              "INVALID_OHLC",
+              "DUPLICATE_DATA",
+              "QUALITY_REJECTED",
+              "NOT_MAPPED",
+              "MISSING_UNDERLYING",
+              "MISSING_FX",
+              "AS_OF_NOT_ALIGNED",
+              "CURRENCY_MISMATCH",
+              "BROKER_PERMISSION_DENIED",
+              "WARMUP_REQUIRED",
+              "ENTITLEMENT_REQUIRED",
+              "INVALID_MARKET",
+              "INVALID_SYMBOL",
+              "PARTIAL_DATA",
+              "UNKNOWN"
+            ]
+          }
+        }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "basis",
+        "ageSeconds",
+        "maxAgeSeconds",
+        "evaluatedAt",
+        "policyId"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "FRESH",
+            "STALE",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "enum": [
+            "DATA_AS_OF",
+            "OBSERVED_AT",
+            "BAR_CLOSE_AT",
+            "HEARTBEAT_AT",
+            "UNKNOWN"
+          ]
+        },
+        "ageSeconds": {
+          "$ref": "#/$defs/nonNegativeIntegerOrNull"
+        },
+        "maxAgeSeconds": {
+          "$ref": "#/$defs/nonNegativeIntegerOrNull"
+        },
+        "evaluatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "policyId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      }
+    },
+    "timestamps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dataAsOf",
+        "observedAt",
+        "receivedAt",
+        "generatedAt"
+      ],
+      "properties": {
+        "dataAsOf": {
+          "$ref": "#/$defs/isoDateTimeOrNull"
+        },
+        "observedAt": {
+          "$ref": "#/$defs/isoDateTimeOrNull"
+        },
+        "receivedAt": {
+          "$ref": "#/$defs/isoDateTimeOrNull"
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "closed",
+        "timezone",
+        "calendarId"
+      ],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "PRE_OPEN",
+            "POST_CLOSE",
+            "CLOSED",
+            "HALTED",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "closed": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "timezone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "calendarId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "status",
+        "rightsStatus",
+        "dataMode"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "EXCHANGE",
+            "LICENSED_VENDOR",
+            "BROKER_API",
+            "REFERENCE",
+            "INTERNAL_INGEST",
+            "CACHE",
+            "UNKNOWN"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "READY",
+            "DEGRADED",
+            "UNAVAILABLE",
+            "NOT_CONFIGURED",
+            "UNKNOWN"
+          ]
+        },
+        "rightsStatus": {
+          "type": "string",
+          "enum": [
+            "CONFIRMED",
+            "UNCONFIRMED",
+            "DENIED",
+            "EXPIRED",
+            "UNKNOWN"
+          ]
+        },
+        "dataMode": {
+          "$ref": "#/$defs/marketDataMode"
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "disclosureScope",
+        "catalogTotal",
+        "computedTotal",
+        "availableTotal",
+        "visibleTotal",
+        "staleTotal",
+        "unavailableTotal",
+        "chartOnlyTotal",
+        "visibleFullCards",
+        "visibleRedactedSamples"
+      ],
+      "properties": {
+        "disclosureScope": {
+          "type": "string",
+          "enum": [
+            "PUBLIC_CATALOG",
+            "ENTITLED_PROJECTION",
+            "OWNER_INTERNAL"
+          ]
+        },
+        "catalogTotal": {
+          "$ref": "#/$defs/nonNegativeIntegerOrNull"
+        },
+        "catalogVersion": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "catalogAsOf": {
+          "$ref": "#/$defs/isoDateTimeOrNull"
+        },
+        "computedTotal": {
+          "$ref": "#/$defs/nonNegativeIntegerOrNull"
+        },
+        "availableTotal": {
+          "$ref": "#/$defs/nonNegativeIntegerOrNull"
+        },
+        "visibleTotal": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "staleTotal": {
+          "$ref": "#/$defs/nonNegativeIntegerOrNull"
+        },
+        "unavailableTotal": {
+          "$ref": "#/$defs/nonNegativeIntegerOrNull"
+        },
+        "chartOnlyTotal": {
+          "$ref": "#/$defs/nonNegativeIntegerOrNull"
+        },
+        "visibleFullCards": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "visibleRedactedSamples": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "entitlement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tier",
+        "selectedMarket",
+        "maxFullCards",
+        "fullCardsReturned",
+        "redactedSampleLimit",
+        "redactedSamplesReturned",
+        "resolvedServerSide"
+      ],
+      "properties": {
+        "tier": {
+          "type": "string",
+          "enum": [
+            "GUEST",
+            "TRIAL",
+            "STARTER",
+            "PRO",
+            "ULTIMATE"
+          ]
+        },
+        "selectedMarket": {
+          "$ref": "#/$defs/market"
+        },
+        "maxFullCards": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "fullCardsReturned": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "redactedSampleLimit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "redactedSamplesReturned": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "resolvedServerSide": {
+          "const": true
+        }
+      }
+    },
+    "instrument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instrumentId",
+        "symbol",
+        "market",
+        "assetType"
+      ],
+      "properties": {
+        "instrumentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbol": {
+          "type": "string",
+          "minLength": 1
+        },
+        "market": {
+          "$ref": "#/$defs/market"
+        },
+        "assetType": {
+          "type": "string",
+          "enum": [
+            "EQUITY",
+            "DR",
+            "ETF",
+            "FUTURE",
+            "OPTION",
+            "FX_PAIR",
+            "CFD",
+            "INDEX",
+            "OTHER"
+          ]
+        },
+        "displayName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "currency": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "exchange": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "underlying": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "instrumentId",
+            "symbol",
+            "market",
+            "currency",
+            "mappingStatus"
+          ],
+          "properties": {
+            "instrumentId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "symbol": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "market": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/market"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "currency": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "mappingStatus": {
+              "type": "string",
+              "enum": [
+                "MAPPED",
+                "NOT_MAPPED",
+                "UNKNOWN"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "providerId",
+        "type",
+        "dataMode",
+        "sourceTimestampKnown",
+        "isLiveFeed",
+        "rightsStatus"
+      ],
+      "properties": {
+        "providerId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "EXCHANGE",
+            "LICENSED_VENDOR",
+            "BROKER_API",
+            "REFERENCE",
+            "INTERNAL_INGEST",
+            "CACHE",
+            "UNKNOWN"
+          ]
+        },
+        "dataMode": {
+          "$ref": "#/$defs/marketDataMode"
+        },
+        "sourceTimestampKnown": {
+          "type": "boolean"
+        },
+        "isLiveFeed": {
+          "type": "boolean"
+        },
+        "rightsStatus": {
+          "type": "string",
+          "enum": [
+            "CONFIRMED",
+            "UNCONFIRMED",
+            "DENIED",
+            "EXPIRED",
+            "UNKNOWN"
+          ]
+        },
+        "fallback": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "isLiveFeed": {
+                "const": true
+              }
+            },
+            "required": [
+              "isLiveFeed"
+            ]
+          },
+          "then": {
+            "properties": {
+              "dataMode": {
+                "enum": [
+                  "REALTIME_STREAM",
+                  "REALTIME_POLL"
+                ]
+              },
+              "sourceTimestampKnown": {
+                "const": true
+              },
+              "rightsStatus": {
+                "const": "CONFIRMED"
+              },
+              "fallback": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "fallback": {
+                "const": true
+              }
+            },
+            "required": [
+              "fallback"
+            ]
+          },
+          "then": {
+            "properties": {
+              "isLiveFeed": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "dataMode": {
+                "enum": [
+                  "DELAYED",
+                  "EOD",
+                  "HISTORICAL",
+                  "REFERENCE",
+                  "SYNTHETIC",
+                  "UNKNOWN"
+                ]
+              }
+            },
+            "required": [
+              "dataMode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "isLiveFeed": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "chart",
+        "signal",
+        "performance",
+        "execution"
+      ],
+      "properties": {
+        "chart": {
+          "type": "boolean"
+        },
+        "signal": {
+          "type": "boolean"
+        },
+        "performance": {
+          "type": "boolean"
+        },
+        "execution": {
+          "const": false
+        }
+      }
+    },
+    "fullRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection",
+        "instrument",
+        "dataKind",
+        "status",
+        "timestamps",
+        "freshness",
+        "session",
+        "source",
+        "eligibility",
+        "statusCodes",
+        "data"
+      ],
+      "properties": {
+        "projection": {
+          "const": "FULL"
+        },
+        "instrument": {
+          "$ref": "#/$defs/instrument"
+        },
+        "dataKind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "$ref": "#/$defs/dataState"
+        },
+        "timestamps": {
+          "$ref": "#/$defs/timestamps"
+        },
+        "freshness": {
+          "$ref": "#/$defs/freshness"
+        },
+        "session": {
+          "$ref": "#/$defs/session"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "eligibility": {
+          "$ref": "#/$defs/eligibility"
+        },
+        "statusCodes": {
+          "$ref": "#/$defs/statusCodes"
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "properties": {
+                  "freshness": {
+                    "enum": [
+                      "STALE",
+                      "UNKNOWN"
+                    ]
+                  }
+                }
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "eligibility": {
+                "properties": {
+                  "signal": {
+                    "const": false
+                  },
+                  "performance": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "properties": {
+                  "usability": {
+                    "const": "CHART_ONLY"
+                  }
+                }
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "eligibility": {
+                "properties": {
+                  "signal": {
+                    "const": false
+                  },
+                  "performance": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "properties": {
+                  "usability": {
+                    "const": "BLOCKED"
+                  }
+                }
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "eligibility": {
+                "properties": {
+                  "chart": {
+                    "const": false
+                  },
+                  "signal": {
+                    "const": false
+                  },
+                  "performance": {
+                    "const": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "redactedRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projection",
+        "instrument",
+        "status",
+        "timestamps",
+        "freshness",
+        "session",
+        "source",
+        "eligibility",
+        "statusCodes",
+        "data"
+      ],
+      "properties": {
+        "projection": {
+          "const": "REDACTED"
+        },
+        "instrument": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "symbol",
+            "market"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "minLength": 1
+            },
+            "market": {
+              "$ref": "#/$defs/market"
+            }
+          }
+        },
+        "status": {
+          "$ref": "#/$defs/dataState"
+        },
+        "timestamps": {
+          "$ref": "#/$defs/timestamps"
+        },
+        "freshness": {
+          "$ref": "#/$defs/freshness"
+        },
+        "session": {
+          "$ref": "#/$defs/session"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "eligibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "chart",
+            "signal",
+            "performance",
+            "execution"
+          ],
+          "properties": {
+            "chart": {
+              "const": false
+            },
+            "signal": {
+              "const": false
+            },
+            "performance": {
+              "const": false
+            },
+            "execution": {
+              "const": false
+            }
+          }
+        },
+        "statusCodes": {
+          "$ref": "#/$defs/statusCodes"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "changePct": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "statusCodes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "AVAILABLE",
+          "PARTIAL",
+          "STALE",
+          "UNAVAILABLE",
+          "CHART_ONLY",
+          "DISPLAY_ONLY",
+          "SIGNAL_ELIGIBLE",
+          "BLOCKED",
+          "DISPLAY_RIGHTS_NOT_CONFIRMED",
+          "DISPLAY_RIGHTS_DENIED",
+          "DISPLAY_RIGHTS_EXPIRED",
+          "SOURCE_NOT_CONFIGURED",
+          "SOURCE_UNAVAILABLE",
+          "SOURCE_TIMEOUT",
+          "SOURCE_RATE_LIMITED",
+          "PROVIDER_DEGRADED",
+          "UNKNOWN_FRESHNESS",
+          "MISSING_SOURCE_TIMESTAMP",
+          "INVALID_TIMESTAMP",
+          "FUTURE_TIMESTAMP",
+          "STALE_QUOTE",
+          "STALE_BAR",
+          "INCOMPLETE_BAR",
+          "WRONG_SESSION",
+          "INSUFFICIENT_HISTORY",
+          "INVALID_OHLC",
+          "DUPLICATE_DATA",
+          "QUALITY_REJECTED",
+          "NOT_MAPPED",
+          "MISSING_UNDERLYING",
+          "MISSING_FX",
+          "AS_OF_NOT_ALIGNED",
+          "CURRENCY_MISMATCH",
+          "BROKER_PERMISSION_DENIED",
+          "WARMUP_REQUIRED",
+          "ENTITLEMENT_REQUIRED",
+          "INVALID_MARKET",
+          "INVALID_SYMBOL",
+          "PARTIAL_DATA",
+          "UNKNOWN"
+        ]
+      }
+    },
+    "marketDataEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "requestId",
+        "snapshotId",
+        "market",
+        "selectedScope",
+        "status",
+        "timestamps",
+        "freshness",
+        "session",
+        "providers",
+        "coverage",
+        "entitlement",
+        "records"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "nugaom.market-data.v1"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "snapshotId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "market": {
+          "$ref": "#/$defs/market"
+        },
+        "selectedScope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "market",
+            "kind"
+          ],
+          "properties": {
+            "market": {
+              "$ref": "#/$defs/market"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "MARKET_SCAN",
+                "SYMBOL_LOOKUP",
+                "CHART",
+                "REFERENCE"
+              ]
+            },
+            "scanId": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "status": {
+          "$ref": "#/$defs/dataState"
+        },
+        "timestamps": {
+          "$ref": "#/$defs/timestamps"
+        },
+        "freshness": {
+          "$ref": "#/$defs/freshness"
+        },
+        "session": {
+          "$ref": "#/$defs/session"
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/provider"
+          }
+        },
+        "coverage": {
+          "$ref": "#/$defs/coverage"
+        },
+        "entitlement": {
+          "$ref": "#/$defs/entitlement"
+        },
+        "records": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/fullRecord"
+              },
+              {
+                "$ref": "#/$defs/redactedRecord"
+              }
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "tier": {
+                    "const": "GUEST"
+                  }
+                },
+                "required": [
+                  "tier"
+                ]
+              }
+            },
+            "required": [
+              "entitlement"
+            ]
+          },
+          "then": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "maxFullCards": {
+                    "const": 0
+                  },
+                  "fullCardsReturned": {
+                    "const": 0
+                  },
+                  "redactedSampleLimit": {
+                    "const": 1
+                  }
+                }
+              },
+              "records": {
+                "maxItems": 1,
+                "items": {
+                  "$ref": "#/$defs/redactedRecord"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "tier": {
+                    "const": "TRIAL"
+                  }
+                },
+                "required": [
+                  "tier"
+                ]
+              }
+            },
+            "required": [
+              "entitlement"
+            ]
+          },
+          "then": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "maxFullCards": {
+                    "const": 8
+                  },
+                  "fullCardsReturned": {
+                    "maximum": 8
+                  },
+                  "redactedSampleLimit": {
+                    "const": 0
+                  },
+                  "redactedSamplesReturned": {
+                    "const": 0
+                  }
+                }
+              },
+              "records": {
+                "maxItems": 8,
+                "items": {
+                  "$ref": "#/$defs/fullRecord"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "tier": {
+                    "const": "STARTER"
+                  }
+                },
+                "required": [
+                  "tier"
+                ]
+              }
+            },
+            "required": [
+              "entitlement"
+            ]
+          },
+          "then": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "maxFullCards": {
+                    "const": 3
+                  },
+                  "fullCardsReturned": {
+                    "maximum": 3
+                  },
+                  "redactedSampleLimit": {
+                    "const": 0
+                  },
+                  "redactedSamplesReturned": {
+                    "const": 0
+                  }
+                }
+              },
+              "records": {
+                "maxItems": 3,
+                "items": {
+                  "$ref": "#/$defs/fullRecord"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "tier": {
+                    "const": "PRO"
+                  }
+                },
+                "required": [
+                  "tier"
+                ]
+              }
+            },
+            "required": [
+              "entitlement"
+            ]
+          },
+          "then": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "maxFullCards": {
+                    "const": 5
+                  },
+                  "fullCardsReturned": {
+                    "maximum": 5
+                  },
+                  "redactedSampleLimit": {
+                    "const": 0
+                  },
+                  "redactedSamplesReturned": {
+                    "const": 0
+                  }
+                }
+              },
+              "records": {
+                "maxItems": 5,
+                "items": {
+                  "$ref": "#/$defs/fullRecord"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "tier": {
+                    "const": "ULTIMATE"
+                  }
+                },
+                "required": [
+                  "tier"
+                ]
+              }
+            },
+            "required": [
+              "entitlement"
+            ]
+          },
+          "then": {
+            "properties": {
+              "entitlement": {
+                "properties": {
+                  "maxFullCards": {
+                    "const": 8
+                  },
+                  "fullCardsReturned": {
+                    "maximum": 8
+                  },
+                  "redactedSampleLimit": {
+                    "const": 0
+                  },
+                  "redactedSamplesReturned": {
+                    "const": 0
+                  }
+                }
+              },
+              "records": {
+                "maxItems": 8,
+                "items": {
+                  "$ref": "#/$defs/fullRecord"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "apiError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "requestId",
+        "generatedAt",
+        "error"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "nugaom.api-error.v1"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "messageKey",
+            "retryable"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": [
+                "INVALID_REQUEST",
+                "INVALID_MARKET",
+                "INVALID_SYMBOL",
+                "INVALID_VIEW",
+                "AUTHENTICATION_REQUIRED",
+                "FORBIDDEN",
+                "OWNER_ONLY",
+                "MEMBERSHIP_REQUIRED",
+                "INVALID_ORIGIN",
+                "NOT_FOUND",
+                "CONFLICT",
+                "REPLAYED_REQUEST",
+                "STALE_WRITE",
+                "INVALID_DATA_REQUEST",
+                "RATE_LIMITED",
+                "PROVIDER_UNAVAILABLE",
+                "DISPLAY_RIGHTS_NOT_CONFIRMED",
+                "SOURCE_NOT_CONFIGURED",
+                "INTERNAL_ERROR"
+              ]
+            },
+            "messageKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retryable": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    }
+  }
+}

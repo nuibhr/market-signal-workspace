@@ -1,0 +1,265 @@
+{
+  "at": "2026-10-25T02:13:25.356Z",
+  "roles": [
+    {
+      "requestedRole": "onboarding",
+      "httpStatus": 200,
+      "rights": {
+        "tier": "onboarding",
+        "label": "รอแจ้งเลขพอร์ต",
+        "authenticated": true,
+        "planId": null,
+        "planName": null,
+        "billingSource": "demo",
+        "expiresAt": "2026-10-25T04:13:26.283Z",
+        "capabilities": {
+          "symbolSearch": true,
+          "marketChart": true,
+          "manualDailyScan": false,
+          "autoPickFeed": false,
+          "aiQuestions": false,
+          "localWatchlist": true,
+          "multiTimeframe": true,
+          "serverAlerts": false,
+          "savedCloudWorkspace": false,
+          "deepScan": false,
+          "communityPosting": false
+        },
+        "limits": {
+          "dailyScanSymbols": 0,
+          "freeAiQuestionsDaily": 0,
+          "extraAiQuestionCredits": 1,
+          "allowExtraAiCredits": false
+        }
+      }
+    },
+    {
+      "requestedRole": "trial",
+      "httpStatus": 200,
+      "rights": {
+        "tier": "trial",
+        "label": "ทดลองใช้ฟรี",
+        "authenticated": true,
+        "planId": null,
+        "planName": "ทดลองใช้ฟรี",
+        "billingSource": "demo",
+        "expiresAt": "2026-10-25T04:13:26.283Z",
+        "capabilities": {
+          "symbolSearch": true,
+          "marketChart": true,
+          "manualDailyScan": true,
+          "autoPickFeed": true,
+          "aiQuestions": true,
+          "localWatchlist": true,
+          "multiTimeframe": true,
+          "serverAlerts": false,
+          "savedCloudWorkspace": false,
+          "deepScan": false,
+          "communityPosting": true
+        },
+        "limits": {
+          "dailyScanSymbols": 8,
+          "freeAiQuestionsDaily": 5,
+          "extraAiQuestionCredits": 1,
+          "allowExtraAiCredits": false
+        }
+      }
+    },
+    {
+      "requestedRole": "starter",
+      "httpStatus": 200,
+      "rights": {
+        "tier": "subscriber",
+        "label": "สมาชิก",
+        "authenticated": true,
+        "planId": "starter",
+        "planName": "Starter",
+        "billingSource": "demo",
+        "expiresAt": "2026-10-25T04:13:26.283Z",
+        "capabilities": {
+          "symbolSearch": true,
+          "marketChart": true,
+          "manualDailyScan": true,
+          "autoPickFeed": true,
+          "aiQuestions": true,
+          "localWatchlist": true,
+          "multiTimeframe": true,
+          "serverAlerts": false,
+          "savedCloudWorkspace": false,
+          "deepScan": false,
+          "communityPosting": true
+        },
+        "limits": {
+          "dailyScanSymbols": 8,
+          "freeAiQuestionsDaily": 10,
+          "extraAiQuestionCredits": 1,
+          "allowExtraAiCredits": false
+        }
+      }
+    },
+    {
+      "requestedRole": "pro",
+      "httpStatus": 200,
+      "rights": {
+        "tier": "subscriber",
+        "label": "สมาชิก",
+        "authenticated": true,
+        "planId": "pro",
+        "planName": "Pro",
+        "billingSource": "demo",
+        "expiresAt": "2026-10-25T04:13:26.283Z",
+        "capabilities": {
+          "symbolSearch": true,
+          "marketChart": true,
+          "manualDailyScan": true,
+          "autoPickFeed": true,
+          "aiQuestions": true,
+          "localWatchlist": true,
+          "multiTimeframe": true,
+          "serverAlerts": false,
+          "savedCloudWorkspace": false,
+          "deepScan": false,
+          "communityPosting": true
+        },
+        "limits": {
+          "dailyScanSymbols": 8,
+          "freeAiQuestionsDaily": 50,
+          "extraAiQuestionCredits": 1,
+          "allowExtraAiCredits": false
+        }
+      }
+    },
+    {
+      "requestedRole": "ultimate",
+      "httpStatus": 200,
+      "rights": {
+        "tier": "subscriber",
+        "label": "สมาชิก",
+        "authenticated": true,
+        "planId": "ultimate",
+        "planName": "Ultimate",
+        "billingSource": "demo",
+        "expiresAt": "2026-10-25T04:13:26.283Z",
+        "capabilities": {
+          "symbolSearch": true,
+          "marketChart": true,
+          "manualDailyScan": true,
+          "autoPickFeed": true,
+          "aiQuestions": true,
+          "localWatchlist": true,
+          "multiTimeframe": true,
+          "serverAlerts": false,
+          "savedCloudWorkspace": false,
+          "deepScan": false,
+          "communityPosting": true
+        },
+        "limits": {
+          "dailyScanSymbols": 8,
+          "freeAiQuestionsDaily": 150,
+          "extraAiQuestionCredits": 1,
+          "allowExtraAiCredits": false
+        }
+      }
+    },
+    {
+      "requestedRole": "expired",
+      "httpStatus": 200,
+      "rights": {
+        "tier": "expired",
+        "label": "สิทธิหมดอายุ",
+        "authenticated": true,
+        "planId": null,
+        "planName": null,
+        "billingSource": "demo",
+        "expiresAt": "2026-10-25T04:13:26.283Z",
+        "capabilities": {
+          "symbolSearch": true,
+          "marketChart": true,
+          "manualDailyScan": false,
+          "autoPickFeed": false,
+          "aiQuestions": false,
+          "localWatchlist": true,
+          "multiTimeframe": true,
+          "serverAlerts": false,
+          "savedCloudWorkspace": false,
+          "deepScan": false,
+          "communityPosting": false
+        },
+        "limits": {
+          "dailyScanSymbols": 0,
+          "freeAiQuestionsDaily": 0,
+          "extraAiQuestionCredits": 1,
+          "allowExtraAiCredits": false
+        }
+      }
+    }
+  ],
+  "markets": [
+    {
+      "market": "thai",
+      "httpStatus": 200,
+      "available": 145,
+      "total": 150,
+      "executionEligible": false,
+      "sourceTimesPresent": true
+    },
+    {
+      "market": "dr",
+      "httpStatus": 200,
+      "available": 141,
+      "total": 141,
+      "executionEligible": false,
+      "sourceTimesPresent": true
+    },
+    {
+      "market": "us",
+      "httpStatus": 200,
+      "available": 599,
+      "total": 600,
+      "executionEligible": false,
+      "sourceTimesPresent": true
+    },
+    {
+      "market": "forex",
+      "httpStatus": 200,
+      "available": 17,
+      "total": 19,
+      "executionEligible": false,
+      "sourceTimesPresent": true
+    },
+    {
+      "market": "tfex",
+      "httpStatus": 200,
+      "available": 14,
+      "total": 16,
+      "executionEligible": false,
+      "sourceTimesPresent": true
+    }
+  ],
+  "guestSharedStatus": 403,
+  "manualSharedScan": {
+    "httpStatus": 409,
+    "code": "PERSONAL_DATA_CONNECTION_REQUIRED"
+  },
+  "lineStart": {
+    "httpStatus": 307,
+    "host": "access.line.me",
+    "redirectUri": "https://nugaom-ai-pick.nuibhr1.workers.dev/api/auth/line/callback",
+    "humanConsentTested": false
+  },
+  "stripe": {
+    "configured": true,
+    "mode": "test",
+    "plansReady": [
+      "starter",
+      "pro",
+      "ultimate"
+    ],
+    "checkout": {
+      "httpStatus": 200,
+      "host": "checkout.stripe.com",
+      "openedStatus": 200,
+      "paymentSubmitted": false
+    }
+  }
+}

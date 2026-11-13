@@ -1,0 +1,7 @@
+{
+ "$schema":"../../node_modules/wrangler/config-schema.json",
+ "name":"nugaom-ai-pick","account_id":"84140dea513079cc7dc4166a4c71b2ee",
+ "main":"vps-proxy.mjs","compatibility_date":"2026-10-07","compatibility_flags":["global_fetch_strictly_public"],"workers_dev":true,
+ "vars":{"VPS_ORIGIN":"https://workspace.76.13.20.122.sslip.io"},
+ "observability":{"enabled":true,"head_sampling_rate":1}
+}

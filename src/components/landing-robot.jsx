@@ -39,12 +39,29 @@ export default function LandingRobot() {
   return <section ref={root} className="ng-robot-hero" aria-labelledby="robot-hero-title">
     <div className="ng-robot-grid" aria-hidden="true" />
     <div className="ng-robot-copy">
-      <span className="ng-robot-eyebrow"><span /> YOUR PERSONAL MARKET RADAR</span>
+      <span className="ng-robot-eyebrow"><span /> NUGAOM AI PICK · INTELLIGENT MARKET RADAR</span>
       <h1 id="robot-hero-title">มองตลาด<br />ให้<span>เห็นจังหวะ</span></h1>
-      <p>พบกับน้องนักออม AI ผู้ช่วยสแกนตลาด<br className="ng-desktop-break" /> ติดตามสัญญาณ และทบทวนทุกการตัดสินใจ<br className="ng-desktop-break" /> ในพื้นที่เดียวของคุณ</p>
-      <div className="ng-robot-actions"><Link href="/account" className="ng-robot-primary">เริ่มต้นด้วย LINE <ArrowUpRight size={20} /></Link><a href="#discover" className="ng-robot-secondary">สำรวจตลาด <span>↗</span></a></div>
-      <div className="ng-robot-market-links" aria-label="ตลาดและพื้นที่สมาชิก"><Link href="/thai">หุ้นไทย</Link><Link href="/dr">DR</Link><Link href="/tfex">TFEX</Link><Link href="/forex">Forex / CFD</Link><Link href="/community">ชุมชนและทีม</Link></div>
-      <div className="ng-robot-caption"><ScanLine size={15} /><span>สแกนตามเงื่อนไข · แจ้งเตือนผ่านเว็บ · คุณเป็นผู้ตัดสินใจ</span></div>
+      <p>พบกับน้องนักออม AI ผู้ช่วยสแกนหุ้นไทย DR และ Forex<br className="ng-desktop-break" /> เชื่อมต่อพอร์ตพันธมิตร ติดตามสัญญาณสด และทบทวนทุกการตัดสินใจ<br className="ng-desktop-break" /> ในพื้นที่บัญชาการระดับโลกของคุณ</p>
+      <div className="ng-robot-actions">
+        <Link href="/thai" className="ng-robot-primary">เปิดกระดานหุ้นไทย <ArrowUpRight size={20} /></Link>
+        <Link href="/account" className="ng-robot-secondary-btn">เริ่มต้นด้วย LINE <span>↗</span></Link>
+        <a href="#official-channels" className="ng-robot-secondary">ช่องทางติดต่อ &amp; โซเชียล <span>↓</span></a>
+      </div>
+      <div className="ng-robot-market-links" aria-label="ตลาดหลักและพื้นที่สมาชิก">
+        <Link href="/thai" className="is-featured market-pill-thai">
+          <span className="pill-dot" />
+          🇹🇭 หุ้นไทย
+          <em>ยอดนิยม</em>
+        </Link>
+        <Link href="/dr" className="is-featured market-pill-dr">
+          <span className="pill-dot" />
+          🌐 DR หุ้นโลก
+          <em>GLOBAL</em>
+        </Link>
+        <Link href="/tfex">📈 TFEX</Link>
+        <Link href="/us">🇺🇸 หุ้นสหรัฐฯ &amp; ETFs</Link>
+      </div>
+      <div className="ng-robot-caption"><ScanLine size={15} /><span>สแกนตามเงื่อนไขจริง · เชื่อมพอร์ต บล.พาย &amp; ทรีนีตี้ · คุณเป็นผู้ตัดสินใจ</span></div>
     </div>
 
     <div className="ng-robot-visual">

@@ -23,6 +23,14 @@ test('native D1 preserves LINE profile, 14-day trial, monthly renewal, credits a
   const {membershipFor}=await import('./rights.mjs');
   try{await withD1Database(proxy.env.DB,async()=>{
     const admin=await member.upsertLineMember({lineId:process.env.ADMIN_LINE_IDS,displayName:'Fixture admin'});
+    process.env.TRIAL_ENROLLMENT_ENABLED='true';
+    const lineOnly=await member.upsertLineMember({lineId:'U'+'d'.repeat(32),displayName:'LINE-only trial fixture'});
+    const attempts=await Promise.allSettled([member.startTrial(lineOnly),member.startTrial(lineOnly)]);
+    assert.equal(attempts.filter(r=>r.status==='fulfilled').length,1);
+    const lineTrial=await storage.first('SELECT * FROM members WHERE id=?',lineOnly.id);
+    assert.equal(membershipFor(lineTrial).tier,'trial');assert.equal(lineTrial.portfolio_hash,null);
+    assert.equal(Date.parse(lineTrial.trial_ends_at)-Date.parse(lineTrial.trial_started_at),14*86400000);
+    assert.equal((await storage.first("SELECT COUNT(*) AS n FROM membership_events WHERE member_id=? AND event_type='trial_started'",lineOnly.id)).n,1);
     let customer=await member.upsertLineMember({lineId:'U'+'b'.repeat(32),displayName:'Fixture customer',pictureUrl:'https://example.com/avatar.png'});
     assert.equal(membershipFor(customer).tier,'onboarding');
     customer=await member.submitPortfolio(customer,'FIXTURE','12345678');
@@ -99,7 +107,7 @@ test('native D1 preserves LINE profile, 14-day trial, monthly renewal, credits a
     const paid=await member.upsertLineMember({lineId:'U'+'c'.repeat(32),displayName:'D1 billing fixture'});
     await storage.run('INSERT INTO billing_customers VALUES(?,?,?)',paid.id,'test','cus_d1_fixture');
     const end=Math.floor(Date.now()/1000)+86400;
-    const price={id:'price_starter',active:true,livemode:false,currency:'thb',unit_amount:9900,type:'recurring',recurring:{interval:'month',interval_count:1,usage_type:'licensed'}};
+    const price={id:'price_starter',active:true,livemode:false,currency:'thb',unit_amount:15900,type:'recurring',recurring:{interval:'month',interval_count:1,usage_type:'licensed'}};
     await billing.applyStripeEvent({id:'evt_d1_paid',type:'invoice.paid',created:1,livemode:false,data:{object:{subscription:'sub_d1_fixture'}}},{stripe:{subscriptions:{retrieve:async()=>({id:'sub_d1_fixture',customer:'cus_d1_fixture',status:'active',livemode:false,items:{data:[{price,quantity:1,current_period_end:end}]},latest_invoice:{status:'paid',lines:{data:[{price,period:{end}}]}}})}}});
     assert.equal(membershipFor(await billing.withBilling(paid)).planId,'starter');
     const {adminMemberships}=await import('../admin/operations.mjs');

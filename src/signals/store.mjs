@@ -5,6 +5,7 @@ import { ACTIVE_SIGNAL_STATES, SIGNAL_RULE, candidateViews, signalId, summarizeS
 import { signalUniverse } from './data.mjs';
 import {buildDecisionBrief} from './decision-brief.mjs';
 import {discoveryIntervalMs,ACTIVE_MONITOR_INTERVAL_MS} from './cadence.mjs';
+import {scanAgeMinutes,sharedDaily,sharedCached} from '../market-data/shared-policy.mjs';
 const json = row => ({ ...JSON.parse(row.payload_json), revision:row.revision });
 const fault = code => Object.assign(new Error(code), { code });
 export function defaultSignalCosts(asset) { return asset.id === 'thai' ? thaiResearchCosts(asset.sectionId?.startsWith('MAI')?'small':'large') : asset.id === 'dr' ? drResearchCosts() : null; }
@@ -61,8 +62,8 @@ export async function saveReferenceAdvance(previous, signal, events) {
 export async function signalDeskFeed(memberId, { market='thai',page=1,query='',mode='all',favorites=null,after=null,recordId=null } = {}) {
   const profile = await usCostProfile(memberId), profileId = market==='us'?profile?.id??'unconfigured':'standard';
   const universe = signalUniverse(market), known=new Set(universe.map(a=>a.symbol));
-  const snapshots = (await storage.all('SELECT * FROM signal_desk_observations WHERE market=?',market)).map(r=>JSON.parse(r.payload_json)).filter(r=>known.has(r.symbol));
-  const maximumScanAgeMinutes=market==='us'?60:20;
+  const snapshots = await sharedCached(`signal-observations:${market}`,async()=>(await storage.all('SELECT * FROM signal_desk_observations WHERE market=?',market)).map(r=>JSON.parse(r.payload_json)).filter(r=>known.has(r.symbol)));
+  const maximumScanAgeMinutes=scanAgeMinutes(market);
   const bySymbol = new Map(snapshots.map(s=>[s.symbol,Date.now()-Date.parse(s.checkedAt)>maximumScanAgeMinutes*60000?{...s,status:'UNAVAILABLE',code:'SCAN_STALE'}:s]));
   const requested = universe.filter(a=>(!query||`${a.symbol} ${a.name}`.toLowerCase().includes(query.toLowerCase()))&&(!favorites||favorites.includes(a.symbol)));
   const rows = requested.flatMap(asset => candidateViews(bySymbol.get(asset.symbol) || { market, symbol:asset.symbol,name:asset.name,status:'UNAVAILABLE',code:'NOT_SCANNED_YET' },market==='us'?profile?.costs:defaultSignalCosts(asset))).filter(row=>mode==='all'||row.mode===mode);
@@ -78,7 +79,7 @@ export async function signalDeskFeed(memberId, { market='thai',page=1,query='',m
   const record=recordId?records.find(s=>s.id===recordId)??null:null;
   const recordEvents=record?await storage.all('SELECT * FROM signal_desk_events WHERE signal_id=? ORDER BY seq',record.id):[];
   const projectEvent=(r,m)=>({...JSON.parse(r.payload_json),id:r.id,seq:r.seq,signalId:r.signal_id,ledger:'swing',side:'LONG',symbol:r.symbol,market:r.market,mode:m});
-  return { status:'available',ruleVersion:SIGNAL_RULE,notificationScope:`swing:${memberId}:${market}`,market,usCosts:profile,
+  return { status:'available',dataMode:sharedDaily()?'daily-snapshot':'continuous',ruleVersion:SIGNAL_RULE,notificationScope:`swing:${memberId}:${market}`,market,usCosts:profile,
     decisionBrief:buildDecisionBrief(rows),
     cadence:{discoveryMinutes:discoveryIntervalMs(market)/60000,monitorMinutes:ACTIVE_MONITOR_INTERVAL_MS/60000,queuedWakeMinutes:5},
     costs:market==='us'?profile?.costs:defaultSignalCosts({id:market}), scannedAt:new Date().toISOString(),
