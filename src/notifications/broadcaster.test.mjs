@@ -12,7 +12,9 @@ import {
   kickTelegramChatMember,
   unbanTelegramChatMember,
   sendLineBroadcast,
-  resolveTelegramStaffLeadDestination
+  resolveTelegramStaffLeadDestination,
+  formatTelegramStockOrbSignalMessage,
+  broadcastAutoPickEvent
 } from './broadcaster.mjs';
 
 test('formatTelegramEaSignalMessage formats Pro Copy EA signal with lock profit and lot size', () => {
@@ -76,6 +78,76 @@ test('formatTelegramTradeMessage generates correct HTML formatting with Entry, S
   assert.ok(message.includes('2,751.5'));
   assert.ok(message.includes('1 : 2.0'));
   assert.ok(message.includes('https://example.com/forex?symbol=XAUUSD'));
+});
+
+test('formatTelegramStockOrbSignalMessage formats ENTRY, TARGET, STOP correctly', () => {
+  const entryMsg = formatTelegramStockOrbSignalMessage({
+    symbol: 'DELTA',
+    market: 'thai',
+    eventType: 'ENTRY',
+    price: 191.0,
+    stopLoss: 180.0,
+    targetPrice: 207.0,
+    detail: 'แท่ง 15m ปิดเหนือกรอบเปิด 190.0 + ยืนเหนือ VWAP',
+  });
+  assert.ok(entryMsg.includes('สัญญาณซื้อ 15m ORB คอนเฟิร์ม'));
+  assert.ok(entryMsg.includes('#DELTA'));
+  assert.ok(entryMsg.includes('191.00'));
+  assert.ok(entryMsg.includes('180.00'));
+  assert.ok(entryMsg.includes('207.00'));
+
+  const targetMsg = formatTelegramStockOrbSignalMessage({
+    symbol: 'DELTA',
+    market: 'thai',
+    eventType: 'TARGET',
+    price: 207.0,
+  });
+  assert.ok(targetMsg.includes('ปิดทำกำไรตามเป้า WIN +2R'));
+  assert.ok(targetMsg.includes('207.00'));
+  assert.ok(targetMsg.includes('Trade Ledger'));
+
+  const stopMsg = formatTelegramStockOrbSignalMessage({
+    symbol: 'DELTA',
+    market: 'thai',
+    eventType: 'STOP',
+    price: 180.0,
+  });
+  assert.ok(stopMsg.includes('ตัดขาดทุนตามวินัย STOP LOSS'));
+  assert.ok(stopMsg.includes('180.00'));
+});
+
+test('broadcastAutoPickEvent sends Telegram message on ENTRY and ignores WAIT events', async () => {
+  let sentPayload = null;
+  const mockSend = async (payload) => {
+    sentPayload = payload;
+    return { ok: true, messageId: 888 };
+  };
+
+  const pick = {
+    symbol: 'ADVANC',
+    market: 'thai',
+    entryPrice: 342.0,
+    plan: { entry: 339.0, stopLoss: 325.0, tp1: 367.0 },
+  };
+
+  const ignored = await broadcastAutoPickEvent(pick, { type: 'DATA_GAP' }, { env: { TELEGRAM_BOT_TOKEN: 'tok', TELEGRAM_CHAT_ID: 'chat' } });
+  assert.equal(ignored.sent, false);
+  assert.equal(ignored.reason, 'IGNORED_EVENT_TYPE');
+
+  const res = await broadcastAutoPickEvent(
+    pick,
+    { type: 'ENTRY', price: 342.0, detail: '15m ORB VWAP 340.5' },
+    {
+      env: { TELEGRAM_BOT_TOKEN: 'tok123', TELEGRAM_CHAT_ID: '-1004434206194' },
+      send: mockSend,
+    }
+  );
+
+  assert.equal(res.sent, true);
+  assert.equal(res.messageId, 888);
+  assert.ok(sentPayload.text.includes('#ADVANC'));
+  assert.ok(sentPayload.text.includes('342.00'));
+  assert.equal(sentPayload.chatId, '-1004434206194');
 });
 
 test('sendTelegramMessage throws on missing credentials', async () => {

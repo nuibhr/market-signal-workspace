@@ -221,6 +221,105 @@ ${lines.length ? lines.join('\n\n') : '• กำลังอัปเดตร�
 🔗 <b>เปิดกราฟ &amp; ฟังเสียงอ่านโพย:</b> <a href="${appOrigin}${cat.path}">เปิดหน้า ${esc(cat.badge)} ↗</a>`;
 }
 
+export function formatTelegramStockOrbSignalMessage({
+  symbol,
+  market = 'thai',
+  eventType,
+  price,
+  stopLoss,
+  targetPrice,
+  detail = '',
+  appOrigin = 'https://nugaom-ai-pick.nuibhr1.workers.dev',
+} = {}) {
+  const isThai = market === 'thai';
+  const marketName = isThai ? '🇹🇭 หุ้นไทย (SET100)' : '🌐 DR หุ้นต่างประเทศ';
+  const timeStr = new Date().toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' });
+  const path = isThai ? '/thai' : '/dr';
+
+  if (eventType === 'ENTRY') {
+    return `⚡ <b>[NUGAOM AI · สัญญาณซื้อ 15m ORB คอนเฟิร์ม]</b> ⚡
+────────────────────────
+🏆 <b>สินทรัพย์:</b> <code>#${symbol}</code> (${marketName})
+📊 <b>สถานะ:</b> 🟢 <b>BUY (แท่ง 15 นาทีปิดยืนยันเข้าซื้อ)</b>
+⏱️ <b>เวลา:</b> ${timeStr} น.
+
+🎯 <b>ราคาเข้าซื้อ (Entry):</b> <code>${Number(price).toFixed(2)} บาท</code>
+🛑 <b>จุดตัดขาดทุน (SL):</b> <code>${Number(stopLoss).toFixed(2)} บาท</code> (คุมเสี่ยง ~2%)
+🏁 <b>เป้าทำกำไร (TP):</b> <code>${Number(targetPrice).toFixed(2)} บาท</code> (R:R ≥ 1.5–2.0 เท่า)
+💡 <b>เงื่อนไข:</b> ${detail || 'แท่ง 15m ปิดเหนือกรอบเปิด + ยืนเหนือ VWAP'}
+────────────────────────
+🔒 <i>วางแผนตามกรอบและรักษาวินัย Stop Loss อย่างเคร่งครัด</i>
+🔗 <b>ดูกราฟและแผน:</b> <a href="${appOrigin}${path}?symbol=${encodeURIComponent(symbol)}">เปิด Nugaom Workspace ↗</a>`;
+  }
+
+  if (eventType === 'TARGET') {
+    return `🎯 <b>[NUGAOM AI · ปิดทำกำไรตามเป้า WIN +2R]</b> 🎯
+────────────────────────
+🏆 <b>สินทรัพย์:</b> <code>#${symbol}</code> (${marketName})
+📊 <b>ผลลัพธ์:</b> 🟢 <b>TARGET HIT (ชนเป้าหมายทำกำไร)</b>
+⏱️ <b>เวลาปิดสถานะ:</b> ${timeStr} น.
+
+💰 <b>ราคาเป้าหมาย (TP):</b> <code>${Number(price || targetPrice).toFixed(2)} บาท</code>
+📈 <b>สถิติผลงาน:</b> +2.0R (กำไร 2 เท่าของความเสี่ยงตามแผน)
+────────────────────────
+✅ <i>ระบบบันทึกผลงานลงใน Trade Ledger เพื่อความโปร่งใสเรียบร้อยแล้ว</i>
+🔗 <b>เปิดดู Trade Ledger:</b> <a href="${appOrigin}${path}">เปิดดูผลงานย้อนหลัง ↗</a>`;
+  }
+
+  if (eventType === 'STOP') {
+    return `🛑 <b>[NUGAOM AI · ตัดขาดทุนตามวินัย STOP LOSS]</b> 🛑
+────────────────────────
+🏆 <b>สินทรัพย์:</b> <code>#${symbol}</code> (${marketName})
+📊 <b>ผลลัพธ์:</b> 🔴 <b>STOP HIT (แตะจุดคัทลอส)</b>
+⏱️ <b>เวลาตัดขาดทุน:</b> ${timeStr} น.
+
+🛑 <b>ราคาตัดขาดทุน (SL):</b> <code>${Number(price || stopLoss).toFixed(2)} บาท</code>
+📉 <b>ผลการตัดขาดทุน:</b> -1.0R (ตัดขาดทุนตามแผน รักษาเงินต้นพอร์ตใหญ่)
+────────────────────────
+🔒 <i>การตัดขาดทุนตามแผนคือหัวใจสำคัญของการสร้างกำไรยั่งยืนในระยะยาว</i>
+🔗 <b>เปิดดู Trade Ledger:</b> <a href="${appOrigin}${path}">เปิดดูผลงานย้อนหลัง ↗</a>`;
+  }
+
+  return null;
+}
+
+export async function broadcastAutoPickEvent(pick, event, { env = process.env, send = sendTelegramMessage, appOrigin = null } = {}) {
+  if (!['ENTRY', 'TARGET', 'STOP'].includes(event?.type)) return { sent: false, reason: 'IGNORED_EVENT_TYPE' };
+  const dest = resolveTelegramCategoryDestination(pick.market || 'thai', env);
+  if (!dest.chatId || !env.TELEGRAM_BOT_TOKEN) return { sent: false, reason: 'TELEGRAM_NOT_CONFIGURED' };
+
+  const plan = pick.plan || {};
+  const price = Number.isFinite(event.price) ? event.price : (event.type === 'ENTRY' ? (pick.entryPrice || plan.entry) : (event.type === 'TARGET' ? plan.tp1 : plan.stopLoss));
+  const stopLoss = plan.stopLoss ?? pick.stopLoss;
+  const targetPrice = plan.tp1 ?? pick.targetPrice;
+
+  const text = formatTelegramStockOrbSignalMessage({
+    symbol: pick.symbol,
+    market: pick.market || 'thai',
+    eventType: event.type,
+    price,
+    stopLoss,
+    targetPrice,
+    detail: event.detail,
+    appOrigin: appOrigin || env.APP_ORIGIN || 'https://nugaom-ai-pick.nuibhr1.workers.dev',
+  });
+
+  if (!text) return { sent: false, reason: 'NO_MESSAGE' };
+
+  try {
+    const res = await send({
+      token: env.TELEGRAM_BOT_TOKEN,
+      chatId: dest.chatId,
+      messageThreadId: dest.messageThreadId,
+      text,
+      parseMode: 'HTML',
+    });
+    return { sent: true, messageId: res.messageId };
+  } catch (err) {
+    return { sent: false, error: err.message };
+  }
+}
+
 export async function sendTelegramMessage({ token, chatId, messageThreadId = null, text, parseMode = 'HTML', fetcher = fetch } = {}) {
   if (!token || !chatId) {
     throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });

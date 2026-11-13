@@ -10,6 +10,7 @@ import { createSettradeClient } from '../market-data/settrade.mjs';
 import { SCANNER_RUNTIME_VERSION } from './runtime-version.mjs';
 import { MAX_SOURCE_FAILURES, isSourceFailure, retryDelayMs, coveragePhase, cutoffDisposition } from './coverage-policy.mjs';
 import { PERFORMANCE_WINDOW, recordedOutcome, summarizeRecordedTrades } from './signal-performance.mjs';
+import { broadcastAutoPickEvent } from '../notifications/broadcaster.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex').slice(0, 32);
 const json = value => JSON.stringify(value ?? null);
@@ -183,7 +184,15 @@ export async function saveAdvance(pick,events) {
       pick.lastChecked15m??pick.lastCheckedBar??null,new Date().toISOString(),json(pick.plan),mutation,pick.id,pick.revision??0),
     ...events.map(event=>eventOperation(pick.id,event,mutation)),
   ]);
-  return Boolean(results[0].changes);
+  const saved = Boolean(results[0].changes);
+  if (saved && Array.isArray(events) && events.length) {
+    for (const event of events) {
+      if (['ENTRY', 'TARGET', 'STOP'].includes(event?.type)) {
+        broadcastAutoPickEvent(pick, event).catch(() => {});
+      }
+    }
+  }
+  return saved;
 }
 
 export async function signalFeed() {
