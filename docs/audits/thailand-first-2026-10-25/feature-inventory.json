@@ -1,0 +1,209 @@
+{
+  "commit": "b2f8cb233f397cf1c0452982d9a0e2d87a15f8d7",
+  "features": [
+    {
+      "id": "A",
+      "feature": "Thai Stock Opportunity Scanner",
+      "verifiedCurrentState": "PARTIAL_VERIFIED_DAILY",
+      "evidenceFiles": [
+        "src/signals/thai-screener.mjs",
+        "src/scanner/daily.mjs"
+      ],
+      "testSource": "src/signals/thai-screener.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row A",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "B",
+      "feature": "DR Opportunity Scanner",
+      "verifiedCurrentState": "PARTIAL_VERIFIED_DAILY_MISSING_VERIFIED_UNDERLYING_CONTEXT",
+      "evidenceFiles": [
+        "src/dr/strategy-feed.mjs",
+        "src/app/api/dr-strategy/feed/route.js"
+      ],
+      "testSource": "src/dr/strategy-feed.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row B",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "C",
+      "feature": "MT5 Forex Scanner and Risk Monitor",
+      "verifiedCurrentState": "ADAPTER_AND_FIXTURE_TESTS_REAL_CUSTOMER_PENDING",
+      "evidenceFiles": [
+        "src/forex-mt5/store.mjs",
+        "src/forex-mt5/runtime-policy.mjs"
+      ],
+      "testSource": "src/daytrade/runtime.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row C",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "D",
+      "feature": "Unified Personal Portfolio",
+      "verifiedCurrentState": "PARTIAL_SEPARATE_VIEWS",
+      "evidenceFiles": [
+        "src/market-data/broker-portfolio.mjs",
+        "src/app/api/equity/portfolio/route.js"
+      ],
+      "testSource": "src/market-data/broker-portfolio.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row D",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "E",
+      "feature": "Broker Read-Only Connections",
+      "verifiedCurrentState": "PARTIAL_ADAPTERS_NOT_UNIVERSAL",
+      "evidenceFiles": [
+        "src/market-data/broker-portfolio.mjs",
+        "src/forex-mt5/store.mjs"
+      ],
+      "testSource": "src/market-data/broker-portfolio.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row E",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "F",
+      "feature": "Personal Watchlists",
+      "verifiedCurrentState": "IMPLEMENTED_SERVER_500_LIMIT_NOT_TIERED",
+      "evidenceFiles": [
+        "src/membership/favorites.mjs",
+        "src/app/api/favorites/route.js"
+      ],
+      "testSource": null,
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row F",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "G",
+      "feature": "Smart Price and Strategy Alerts",
+      "verifiedCurrentState": "PARTIAL_MANUAL_NOT_PERSONAL_SCHEDULER",
+      "evidenceFiles": [
+        "src/notifications/handlers.mjs",
+        "src/membership/rights.mjs"
+      ],
+      "testSource": "src/notifications/handlers.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row G",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "H",
+      "feature": "AI Portfolio Explanation",
+      "verifiedCurrentState": "RESEARCH_REAL_PORTFOLIO_CONTEXT_NOT_VERIFIED",
+      "evidenceFiles": [
+        "src/app/api/assistant/route.js",
+        "src/analysis/bigdata-research.mjs"
+      ],
+      "testSource": "src/analysis/bigdata-research.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row H",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "I",
+      "feature": "Transparent Performance History",
+      "verifiedCurrentState": "PARTIAL_RESEARCH_AND_OBSERVED_SIGNALS_NOT_BROKER_FILLS",
+      "evidenceFiles": [
+        "src/backtest/swing-replay.mjs",
+        "src/signals/schema.mjs"
+      ],
+      "testSource": "src/signals/model.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row I",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "J",
+      "feature": "Portfolio Risk and Exposure",
+      "verifiedCurrentState": "P0_LIVE_ENRICHMENT_HAS_UNVERIFIED_DIAGNOSTICS",
+      "evidenceFiles": [
+        "src/app/api/equity/portfolio/route.js",
+        "src/market-data/broker-portfolio.mjs"
+      ],
+      "testSource": "src/market-data/broker-portfolio.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row J",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "K",
+      "feature": "Daily Market Briefings",
+      "verifiedCurrentState": "PARTIAL_NEWS_CREDIT_BLOCKED_NO_VERIFIED_DIGEST_SERVICE",
+      "evidenceFiles": [
+        "src/app/api/news/route.js",
+        "src/market-data/shared-policy.mjs"
+      ],
+      "testSource": null,
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row K",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "L",
+      "feature": "Weekly Portfolio Reviews",
+      "verifiedCurrentState": "END_TO_END_SERVICE_NOT_VERIFIED",
+      "evidenceFiles": [],
+      "testSource": null,
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row L",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "M",
+      "feature": "Multi-Strategy Scanner",
+      "verifiedCurrentState": "PARTIAL_EXISTING_ENGINES_NOT_NEW_PERSONAL_PRODUCT",
+      "evidenceFiles": [
+        "src/signals/model.mjs",
+        "src/daytrade/native-research.mjs"
+      ],
+      "testSource": "src/daytrade/native-research.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row M",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "N",
+      "feature": "Custom Alert Builder",
+      "verifiedCurrentState": "END_TO_END_SERVICE_NOT_VERIFIED",
+      "evidenceFiles": [],
+      "testSource": null,
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row N",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "O",
+      "feature": "Portfolio Event Notifications",
+      "verifiedCurrentState": "PARTIAL_GENERIC_NOTIFICATION_COMPONENTS",
+      "evidenceFiles": [
+        "src/notifications/handlers.mjs",
+        "src/notifications/record-signal.mjs"
+      ],
+      "testSource": "src/notifications/handlers.test.mjs",
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row O",
+      "proposedNotImplemented": true
+    },
+    {
+      "id": "P",
+      "feature": "Subscription and Billing Dashboard",
+      "verifiedCurrentState": "TEST_CHECKOUT_VERIFIED_LIVE_DELIVERY_PENDING",
+      "evidenceFiles": [
+        "src/billing/store.mjs",
+        "src/billing/webhook.mjs"
+      ],
+      "testSource": null,
+      "testLimitation": "Unit/fixture tests and code evidence are not live broker, customer LINE, load, or full service acceptance.",
+      "proposedAcceptanceAndCosts": "audit.md section 3; row P",
+      "proposedNotImplemented": true
+    }
+  ],
+  "productionAPIEvidence": "../vps-final-api-checks.json",
+  "fullSystemReadiness": "NO_GO"
+}

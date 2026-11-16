@@ -10,4 +10,6 @@ test('native scanning is independent of enabling CFD pairing but never falls bac
   assert.equal(cloud.enabled,false);assert.equal(cloud.disabledReason,'NODE_RECEIVER_REQUIRED');
  }
  assert.equal(daytradeRuntime('thai',{FOREX_MT5_DATABASE_PATH:'same.sqlite',DATABASE_PATH:'same.sqlite'}).enabled,false);
+ assert.equal(daytradeRuntime('forex',{NODE_ENV:'production',STORAGE_PROVIDER:'d1-http',FOREX_MT5_ENABLED:'true',FOREX_MT5_PERSISTENT_STORAGE:'true',FOREX_MT5_DATABASE_PATH:'/var/lib/nugaom/forex/bridge.sqlite'}).enabled,true);
+ assert.equal(daytradeRuntime('forex',{STORAGE_PROVIDER:'d1-http',FOREX_MT5_ENABLED:'true'}).enabled,false,'Remote membership storage does not imply persistent private broker storage');
 });

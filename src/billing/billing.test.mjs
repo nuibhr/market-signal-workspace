@@ -9,34 +9,43 @@ const dir=mkdtempSync(join(tmpdir(),'nugaom-billing-'));
 process.env.DATABASE_PATH=join(dir,'fixture.sqlite');
 process.env.STRIPE_SECRET_KEY='sk_test_fixture_only';
 process.env.STRIPE_WEBHOOK_SECRET='whsec_fixture_only';
-process.env.STRIPE_PRICE_STARTER_MONTHLY='price_starter';process.env.STRIPE_PRICE_PRO_MONTHLY='price_pro';process.env.STRIPE_PRICE_ULTIMATE_MONTHLY='price_ultimate';
+process.env.STRIPE_PRICE_STARTER_MONTHLY='price_starter';process.env.STRIPE_PRICE_PRO_MONTHLY='price_pro';
+process.env.STRIPE_PRICE_STARTER_ANNUAL='price_starterAnnual';process.env.STRIPE_PRICE_PRO_ANNUAL='price_proAnnual';
 process.env.APP_ORIGIN='http://localhost:3000';process.env.SESSION_SECRET='fixture-session-secret-at-least-32-characters';
 const {storage}=await import('../storage/database.mjs');
 const {sharedDatabase}=await import('../storage/sqlite.mjs');
 const {membershipFor}=await import('../membership/rights.mjs');
 const memberStore=await import('../membership/store.mjs');
-const {configuredPlans,validMonthlyPrice}=await import('./plans.mjs');
+const {configuredPlans,validMonthlyPrice,validAnnualPrice}=await import('./plans.mjs');
 const {withBilling,applyStripeEvent,checkout,portal,listPlans}=await import('./store.mjs');
 const {webhookHandler}=await import('./webhook.mjs');
 const signer=new Stripe('sk_test_fixture_only');
 const end=Math.floor(Date.now()/1000)+86400*20;
-const price=id=>({id:`price_${id}`,active:true,livemode:false,currency:'thb',unit_amount:{starter:9900,pro:29900,ultimate:59900}[id],type:'recurring',recurring:{interval:'month',interval_count:1,usage_type:'licensed'}});
-async function fixture(plan='starter'){
+const price=(id,interval='month')=>({id:interval==='year'?`price_${id}Annual`:`price_${id}`,active:true,livemode:false,currency:'thb',unit_amount:interval==='year'?{starter:159000,pro:399000}[id]:{starter:15900,pro:39900}[id],type:'recurring',recurring:{interval,interval_count:1,usage_type:'licensed'}});
+async function fixture(plan='starter',interval='month'){
  const id=randomUUID(),customer=`cus_${id}`;
  const m=await memberStore.upsertLineMember({lineId:`fixture-${id}`,displayName:'Billing test only'});
  await storage.run('INSERT INTO billing_customers VALUES(?,?,?)',m.id,'test',customer);
- const sub={id:`sub_${id}`,customer,livemode:false,status:'active',cancel_at_period_end:false,items:{data:[{price:price(plan),quantity:1,current_period_end:end}]},latest_invoice:{status:'paid',lines:{data:[{price:price(plan),period:{end}}]}}};
- const stripe={webhooks:signer.webhooks,subscriptions:{retrieve:async()=>sub,list:async()=>({data:[],has_more:false})},prices:{retrieve:async id=>price(id.replace('price_',''))},checkout:{sessions:{create:async()=>({id:'cs_fixture',url:'https://checkout.stripe.com/c/pay/fixture'})}},billingPortal:{sessions:{create:async()=>({url:'https://billing.stripe.com/p/session/fixture'})}}};
+ const p=price(plan,interval);
+ const sub={id:`sub_${id}`,customer,livemode:false,status:'active',cancel_at_period_end:false,items:{data:[{price:p,quantity:1,current_period_end:end}]},latest_invoice:{status:'paid',lines:{data:[{price:p,period:{end}}]}}};
+ const stripe={webhooks:signer.webhooks,subscriptions:{retrieve:async()=>sub,list:async()=>({data:[],has_more:false})},prices:{retrieve:async pid=>{const annual=pid.endsWith('Annual');return price(pid.replace('price_','').replace('Annual',''),annual?'year':'month');}},checkout:{sessions:{create:async()=>({id:'cs_fixture',url:'https://checkout.stripe.com/c/pay/fixture'})}},billingPortal:{sessions:{create:async()=>({url:'https://billing.stripe.com/p/session/fixture'})}}};
  const event=(type='invoice.paid',created=Math.floor(Date.now()/1000),eventId=`evt_${randomUUID()}`)=>({id:eventId,created,type,livemode:false,data:{object:type.startsWith('customer.subscription')?sub:{subscription:sub.id}}});
  return {m,sub,stripe,event};
 }
 test.after(()=>{sharedDatabase().close();rmSync(dir,{recursive:true,force:true});});
-test('monthly prices require exact approved THB amounts, mode and interval',async()=>{
- assert.deepEqual(configuredPlans().map(x=>x.aiDailyLimit),[10,50,150]);
- const p=configuredPlans()[0];assert.ok(validMonthlyPrice(price('starter'),p,'test'));
+test('monthly and annual prices require exact approved THB amounts, mode and interval',async()=>{
+ assert.deepEqual(configuredPlans().map(x=>x.aiDailyLimit),[10,50]);
+ const p=configuredPlans()[0];assert.ok(validMonthlyPrice(price('starter'),p,'test'));assert.ok(validAnnualPrice(price('starter','year'),p,'test'));
  for(const change of [{unit_amount:19900},{currency:'usd'},{livemode:true},{recurring:{interval:'year',interval_count:1}},{active:false}])assert.equal(validMonthlyPrice({...price('starter'),...change},p,'test'),false);
  assert.throws(()=>configuredPlans({...process.env,STRIPE_PRICE_PRO_MONTHLY:'price_starter'}),/INVALID_BILLING_CONFIG/);
- const f=await fixture();assert.deepEqual((await listPlans({stripe:f.stripe})).map(p=>p.amount),[9900,29900,59900]);
+ const f=await fixture();const catalog=await listPlans({stripe:f.stripe});assert.deepEqual(catalog.map(p=>p.amount),[15900,39900]);assert.deepEqual(catalog.map(p=>p.annualAmount),[159000,399000]);
+});
+test('annual checkout and webhook map cleanly to PRO VIP entitlement',async()=>{
+ const f=await fixture('pro','year');let chosenPrice='';
+ f.stripe.checkout.sessions.create=async body=>{chosenPrice=body.line_items[0].price;return {id:'cs_yr',url:'https://checkout.stripe.com/c/pay/yr'};};
+ await checkout(f.m,'pro',{interval:'year',stripe:f.stripe});assert.equal(chosenPrice,'price_proAnnual');
+ await applyStripeEvent(f.event(),{stripe:f.stripe});
+ const rights=membershipFor(await withBilling(f.m));assert.equal(rights.planId,'pro');assert.equal(rights.capabilities.telegramVip,true);assert.equal(rights.limits.freeAiQuestionsDaily,50);
 });
 test('paid webhook preserves member identity and enables the matching scanner/AI package',async()=>{
  const f=await fixture('pro');await applyStripeEvent(f.event(),{stripe:f.stripe});
@@ -55,12 +64,12 @@ test('duplicates and old events cannot restore canceled access; cancel-at-period
 test('unpaid invoices and unrelated customer metadata do not grant or upgrade membership',async()=>{
  const f=await fixture();f.sub.latest_invoice.status='open';await applyStripeEvent(f.event(),{stripe:f.stripe});assert.equal(membershipFor(await withBilling(f.m)).tier,'onboarding');
  f.sub.latest_invoice.status='paid';await applyStripeEvent(f.event('invoice.paid',10000000000),{stripe:f.stripe});
- f.sub.items.data[0].price=price('ultimate'); // An old Starter invoice does not pay for an Ultimate upgrade.
+ f.sub.items.data[0].price=price('pro'); // An old Starter invoice does not pay for a Pro upgrade.
  await applyStripeEvent(f.event('customer.subscription.updated',10000000001),{stripe:f.stripe});assert.equal(membershipFor(await withBilling(f.m)).planId,'starter');
- f.sub.latest_invoice.lines.data[0].price=price('ultimate');await applyStripeEvent(f.event('invoice.paid',10000000002),{stripe:f.stripe});assert.equal(membershipFor(await withBilling(f.m)).planId,'ultimate');
+ f.sub.latest_invoice.lines.data[0].price=price('pro');await applyStripeEvent(f.event('invoice.paid',10000000002),{stripe:f.stripe});assert.equal(membershipFor(await withBilling(f.m)).planId,'pro');
  f.sub.customer='cus_unknown';f.sub.metadata={member_id:f.m.id};assert.equal((await applyStripeEvent(f.event(),{stripe:f.stripe})).ignored,true);
 });
-for(const [plan,limit] of [['starter',10],['pro',50],['ultimate',150]])test(`${plan}: atomic ${limit}-question daily cap, failure refund, reset time and no extra credit charge`,async()=>{
+for(const [plan,limit] of [['starter',10],['pro',50]])test(`${plan}: atomic ${limit}-question daily cap, failure refund, reset time and no extra credit charge`,async()=>{
  const f=await fixture(plan);await applyStripeEvent(f.event(),{stripe:f.stripe});
  const day=(await memberStore.aiQuota(f.m)).day,conversation=randomUUID();
  await storage.run('INSERT INTO ai_credit_accounts VALUES(?,20)',f.m.id);
@@ -126,8 +135,11 @@ test('admin directory, subscriber filter and detail agree with the Stripe entitl
 });
 
 test('Stripe community entitlement follows the same current package and expiry',async()=>{
- const f=await fixture('starter');await applyStripeEvent(f.event(),{stripe:f.stripe});
+ const basic=await fixture('starter');await applyStripeEvent(basic.event(),{stripe:basic.stripe});
  const {communityAccess,mutateCommunity}=await import('../community/store.mjs');
+ assert.equal((await communityAccess(basic.m)).rooms,false);
+ await assert.rejects(mutateCommunity(basic.m,{action:'send',operationId:randomUUID(),kind:'room',channelId:'lounge',body:'Basic cannot post'}),/MEMBERSHIP_REQUIRED/);
+ const f=await fixture('pro');await applyStripeEvent(f.event(),{stripe:f.stripe});
  assert.equal((await communityAccess(f.m)).rooms,true);
  await mutateCommunity(f.m,{action:'send',operationId:randomUUID(),kind:'room',channelId:'lounge',body:'Stripe fixture message'});
  await storage.run('UPDATE billing_subscriptions SET paid_until=? WHERE member_id=?',new Date(Date.now()-1000).toISOString(),f.m.id);

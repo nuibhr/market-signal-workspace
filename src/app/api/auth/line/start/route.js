@@ -1,6 +1,6 @@
 import { rateLimit } from '../../../../../security/request-guard.mjs';
 import { createHash } from 'node:crypto';
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server.js';
 import { isConfigured, createLineFlow } from '../../../../../membership/store.mjs';
 import { OAUTH_COOKIE, authBase, secureCookie } from '../../../../../membership/server.mjs';
 

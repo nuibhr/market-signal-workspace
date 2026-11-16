@@ -2,9 +2,15 @@ import {dirname,resolve} from 'node:path';
 import {AsyncLocalStorage} from 'node:async_hooks';
 
 const context=new AsyncLocalStorage();
-let local,platform;
+let local,platform,web;
 const operation=(sql,...params)=>({sql,params});
 export {operation};
+
+// The VPS scanner receives a narrow HTTP adapter, never a customer DB binding.
+export function withScannerDatabase(adapter,action){
+  if(adapter?.kind!=='scanner-http')throw Error('SCANNER_ADAPTER_REQUIRED');
+  return context.run(adapter,action);
+}
 
 function d1Adapter(binding){
   if(!binding?.prepare||!binding?.batch)throw new Error('D1_BINDING_REQUIRED');
@@ -32,6 +38,10 @@ export function withD1Database(binding,action){
 async function adapter(){
   if(context.getStore())return context.getStore();
   const mode=process.env.STORAGE_PROVIDER||'sqlite';
+  if(mode==='d1-http'){
+    if(!web)web=import('./web-client.mjs').then(({createWebBridgeClient})=>createWebBridgeClient({url:process.env.WEB_BRIDGE_URL,secret:process.env.WEB_BRIDGE_SECRET}).storage).catch(error=>{web=undefined;throw error;});
+    return web;
+  }
   if(mode==='d1'){
     // OpenNext installs this request-scoped getter (see cloudflare/init.js).
     // Read only the active request binding; the development helper also imports

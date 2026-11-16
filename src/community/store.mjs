@@ -39,7 +39,7 @@ function stripeRoomGate(){
  try{const mode=stripeMode(),plans=configuredPlans().filter(p=>p.features.includes('communityPosting'));if(!plans.length)return '0';
  return `EXISTS(SELECT 1 FROM billing_subscriptions bs WHERE bs.member_id=members.id AND bs.mode='${mode}' AND bs.plan_id IN (${plans.map(p=>`'${p.id}'`).join(',')}) AND bs.status IN ('active','past_due') AND bs.paid_until>strftime('%Y-%m-%dT%H:%M:%fZ','now'))`;}catch{return '0';}
 }
-const roomGate=()=>`(?=1 OR EXISTS(SELECT 1 FROM community_staff WHERE member_id=?) OR EXISTS(SELECT 1 FROM members WHERE id=? AND (subscription_ends_at>? OR (trial_ends_at>? AND portfolio_status<>'missing') OR ${stripeRoomGate()})))`;
+const roomGate=()=>`(?=1 OR EXISTS(SELECT 1 FROM community_staff WHERE member_id=?) OR EXISTS(SELECT 1 FROM members WHERE id=? AND (subscription_ends_at>? OR ${stripeRoomGate()})))`;
 
 export async function communityOverview(actor,{team=false,page=1}={}) {
   const a=await communityAccess(actor);
@@ -155,7 +155,7 @@ export async function mutateCommunity(actor,body) {
     if(body.kind==='thread') {
       queries.push(op(`INSERT INTO community_messages(id,thread_id,sender_id,sender_kind,body,created_at) SELECT ?,t.id,?,CASE WHEN t.member_id=? THEN 'member' ELSE 'team' END,?,? FROM support_threads t WHERE t.id=? AND t.status<>'closed' AND ${recipientGate()} AND ${absent} ON CONFLICT(id) DO NOTHING`,body.operationId,actorId,actorId,normalized.body,now,channel.id,actorId,Number(a.admin),actorId,body.operationId));
     } else {
-      queries.push(op(`INSERT INTO community_messages(id,room_id,sender_id,sender_kind,body,created_at) SELECT ?,r.id,?,?,?,? FROM community_rooms r WHERE r.id=? AND (r.locked=0 OR ?=1) AND ${roomGate()} AND ${absent} ON CONFLICT(id) DO NOTHING`,body.operationId,actorId,a.admin||a.roles.length?'team':'member',normalized.body,now,channel.id,Number(a.admin),Number(a.admin),actorId,actorId,now,now,body.operationId));
+      queries.push(op(`INSERT INTO community_messages(id,room_id,sender_id,sender_kind,body,created_at) SELECT ?,r.id,?,?,?,? FROM community_rooms r WHERE r.id=? AND (r.locked=0 OR ?=1) AND ${roomGate()} AND ${absent} ON CONFLICT(id) DO NOTHING`,body.operationId,actorId,a.admin||a.roles.length?'team':'member',normalized.body,now,channel.id,Number(a.admin),Number(a.admin),actorId,actorId,now,body.operationId));
     }
     queries.push(record('EXISTS(SELECT 1 FROM community_messages WHERE id=? AND sender_id=?)',[body.operationId,actorId]));
   } else {

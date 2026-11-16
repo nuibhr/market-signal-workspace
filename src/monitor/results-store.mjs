@@ -1,3 +1,4 @@
+import {projectLedger} from '../market-data/contracts/v1/legacy-ledger.mjs';
 import {storage} from '../storage/database.mjs';
 import {SIGNAL_RULE} from '../signals/model.mjs';
 import {receiverConfiguration} from '../forex-mt5/runtime-policy.mjs';
@@ -6,7 +7,7 @@ import {forwardEvents} from './view.mjs';
 import {projectTrade,combineResults,RESULT_SCOPE_STATES} from './results.mjs';
 const rawStates=status=>({WAITING:['WAITING','WAITING_FOR_ENTRY'],OPEN:['OPEN'],RUNNER:['RUNNER'],CLOSED:['CLOSED','TARGET','EXIT'],STOP:['STOP'],EXPIRED:['EXPIRED'],REVIEW:['REVIEW','AMBIGUOUS']})[status]??[];
 // Every query remains in the authorized source scope. No ledger rows are copied or mutated.
-async function readSource({ledger,db=storage,where=[],params=[],market,status='all',scope='history',limit=107}) {
+async function readSource({ledger,db=storage,where=[],params=[],market,status='all',scope='history',limit=107,customerProjection=null}) {
  const day=ledger==='daytrade',swing=ledger==='swing',table=day?'daytrade_forward':swing?'signal_desk_signals':'auto_pick_signals';
  const body=day?'body':'payload_json',field=name=>day?`json_extract(body,'$.${name}')`:swing?`json_extract(payload_json,'$.${name}')`:({publishedAt:'published_at',enteredAt:'entered_at',exitedAt:'exited_at',entryPrice:'entry_price',exitPrice:'exit_price'})[name]??name;
  const statusField=day?field('status'):'status',marketField=day?field('market'):'market';
@@ -20,6 +21,10 @@ async function readSource({ledger,db=storage,where=[],params=[],market,status='a
   `status IN ('TARGET','STOP','EXIT') AND entry_price>0 AND exit_price>0 AND julianday(exited_at)>=julianday(entered_at)`;
  const order=field('publishedAt'),exitOrder=field(day?'exitTime':'exitedAt');
  const parse=r=>{if(day||swing)return projectTrade(JSON.parse(r[body]),ledger);return projectTrade({id:r.id,market:r.market,symbol:r.symbol,status:r.status,publishedAt:r.published_at,enteredAt:r.entered_at,exitedAt:r.exited_at,entryPrice:r.entry_price,exitPrice:r.exit_price,plan:JSON.parse(r.plan_json)},ledger);};
+ if(customerProjection){
+  const selected=await db.all(`SELECT * FROM ${table} WHERE ${base} AND ${day?"json_extract(body,'$.symbol')":'symbol'} IN (SELECT value FROM json_each(?)) ORDER BY ${order} DESC,id LIMIT ?`,...params,JSON.stringify(customerProjection.symbols),customerProjection.cap);
+  return {ledger,rows:selected.map(parse),closed:[],total:selected.length};
+ }
  const readClosed=async()=>{
   const valid=[];
   for(let offset=0;valid.length<100;offset+=100){
@@ -39,9 +44,10 @@ async function readSource({ledger,db=storage,where=[],params=[],market,status='a
  return {ledger,rows:rows.map(parse),closed,total:count.n,counts:Object.fromEntries(groups.map(r=>[r.state,r.n])),entered:entered.n};
 }
 export async function tradeResults(memberId,options={}, {env=process.env,getStore=storeFor}={}) {
- const {market='all',strategy='all',status='all',scope='history'}=options;
+ const {market='all'}=options,customerProjection=options.customerProjection;
+ const strategy=customerProjection?'all':options.strategy??'all',status=customerProjection?'all':options.status??'all',scope=customerProjection?'history':options.scope??'history';
  const page=Math.max(1,Math.min(10000,Math.floor(Number(options.page)||1))),pageSize=7,limit=page*pageSize+100;
- const common={market,status,scope,limit},parts=[];
+ const common={market,status,scope,limit,customerProjection},parts=[];
  if(['all','swing'].includes(strategy)){
   const where=[`rule_version=?`,`(market IN ('thai','dr') AND cost_profile='standard' OR market='us' AND cost_profile IN (SELECT profile_id FROM signal_desk_profile_access WHERE member_id=?))`];
   parts.push(await readSource({ledger:'swing',...common,where,params:[SIGNAL_RULE,memberId]}));
@@ -55,12 +61,13 @@ export async function tradeResults(memberId,options={}, {env=process.env,getStor
  if(['all','scalp'].includes(strategy)){
   const config=receiverConfiguration(env);
   if(!config.disabledReason){
-   const store=getStore(config),connection=store.connection(`member:${memberId}`),scopes=['native:thai','native:dr','native:tfex'];
+   const store=getStore(config),connection=customerProjection?customerProjection.ownerConnection:store.connection(`member:${memberId}`),scopes=['native:thai','native:dr','native:tfex'];
    if(config.enabled&&connection&&config.servers.includes(connection.server))scopes.push(`mt5:${connection.owner}:${connection.server}`);
    const db={all:async(sql,...p)=>store.db.prepare(sql).all(...p),first:async(sql,...p)=>store.db.prepare(sql).get(...p)};
    parts.push(await readSource({ledger:'daytrade',db,...common,where:[`scope IN (${scopes.map(()=>'?').join(',')})`,`COALESCE(json_extract(body,'$.origin'),'forward')!='replay'`],params:scopes}));
   }else parts.push({ledger:'daytrade',status:config.disabledReason||'SCANNER_DISABLED',rows:[],closed:[],total:0});
  }
+ if(customerProjection)return projectLedger(parts,{market,...customerProjection,query:options});
  const result=combineResults(parts,{page,pageSize,scope,status,tradeKey:options.tradeKey});
  result.market=market;result.strategy=strategy;result.updatedAt=new Date().toISOString();
  result.window={limit:100,market,strategy,basis:'latest-complete-exits',statusIndependent:true};

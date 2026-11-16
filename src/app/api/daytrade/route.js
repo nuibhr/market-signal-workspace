@@ -1,5 +1,4 @@
-import {currentMember} from '../../../membership/server.mjs';
-import {createDaytradeHandlers} from '../../../daytrade/handlers.mjs';
+import {legacyScanHandler} from '../../../market-data/contracts/v1/legacy-scan-server.mjs';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
-export const {GET}=createDaytradeHandlers({currentMember});
+export const GET=legacyScanHandler('daytrade','us');

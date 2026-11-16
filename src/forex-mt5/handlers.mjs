@@ -15,11 +15,11 @@ const headers = {
   "X-Content-Type-Options": "nosniff",
 };
 const cookieName = "forex_local_session";
-export function createForexHandlers({currentMember,cookieStore,isLoginConfigured,env=process.env,getStore=storeFor}) {
+export function createForexHandlers({currentMember,cookieStore,isLoginConfigured,env=process.env,getStore=storeFor,ownerPrefix="member",allowLocalSession=true}) {
   async function ownerFor(request, config) {
     const member=await currentMember(request);
-    if(member)return `member:${member.id}`;
-    if(config.local&&developmentTransport(request,env))
+    if(member)return `${ownerPrefix}:${member.id}`;
+    if(allowLocalSession&&config.local&&developmentTransport(request,env))
       return getStore(config).localOwner((await cookieStore(request)).get(cookieName)?.value);
     return null;
   }
@@ -165,7 +165,27 @@ export function createForexHandlers({currentMember,cookieStore,isLoginConfigured
         const token = request.headers
           .get("authorization")
           ?.match(/^Bearer ([A-Za-z0-9_-]{43})$/)?.[1];
-        return Response.json(store.ingest(token, body, config, Date.now(), request.headers.get("x-forex-retry") === "same-packet"), { headers });
+        const result = store.ingest(token, body, config, Date.now(), request.headers.get("x-forex-retry") === "same-packet");
+        try {
+          if (Array.isArray(body.quotes)) {
+            const xau = body.quotes.find(q => /xau/i.test(q.broker_symbol || q.symbol || ""));
+            if (xau) {
+              const price = Number(xau.bid ?? xau.price ?? xau.close);
+              if (price > 0) {
+                import("../app/api/forex/studio/broadcaster.mjs").then(({ studioBroadcaster }) => {
+                  studioBroadcaster.emit("market_tick", {
+                    type: "tick",
+                    symbol: "XAU/USD",
+                    price,
+                    time: Math.floor(Date.now() / 1000),
+                    status: "live_mt5",
+                  });
+                }).catch(() => {});
+              }
+            }
+          }
+        } catch {}
+        return Response.json(result, { headers });
       }
       sameSite(request);
       fail(
@@ -173,7 +193,7 @@ export function createForexHandlers({currentMember,cookieStore,isLoginConfigured
         "UNSUPPORTED_FIELDS",
       );
       if (body.action === "local-session") {
-        fail(config.local && developmentTransport(request,env), "FORBIDDEN", 403);
+        fail(allowLocalSession && config.local && developmentTransport(request,env), "FORBIDDEN", 403);
         // The development server must be bound to loopback; this path never opens in production.
         store.limit("local-session", "loopback", 10, 3600000);
         const token = store.localSession();

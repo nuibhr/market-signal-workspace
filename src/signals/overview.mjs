@@ -12,6 +12,7 @@ export function validateSetIndexQuote(q,now=Date.now()){
  return {symbol:'SET',price:q.regularMarketPrice,changePercent:q.regularMarketChangePercent,time,priceAt:new Date(time).toISOString(),source:'Yahoo Finance · SET Index',basis:'provider-quote-minimum-15m'};
 }
 export async function signalMarketOverview(market){
+ if(process.env.SHARED_MARKET_DATA_MODE==='daily')return {index:null,marketStatus:'ข้อมูลส่วนกลางรอบรายวัน',marketStatusAt:null};
  if(!['thai','dr'].includes(market))return null;
  if(cached?.until>Date.now())return cached.value;
  if(pending)return pending;

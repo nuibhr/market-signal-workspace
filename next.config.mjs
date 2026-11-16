@@ -1,4 +1,5 @@
 const headers = [
+  ...(process.env.NUGAOM_REVIEW_MODE === 'true' ? [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }] : []),
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'X-Frame-Options', value: 'DENY' },
@@ -27,5 +28,11 @@ export default {
     './src/forex-mt5/connector.mq5', './src/forex-mt5/connector.ex5',
     './src/forex-mt5/customer-relay.zip',
   ] },
+  async redirects() {
+    return [
+      { source: '/dr-strategy', destination: '/dr', permanent: true },
+      { source: '/thai-dividend', destination: '/thai', permanent: true },
+    ];
+  },
   async headers() { return [{ source: '/:path*', headers }]; },
 };

@@ -1,12 +1,22 @@
 'use client';
+import { TrendingUp, Radar, ShieldCheck, CandlestickChart, Award } from 'lucide-react';
+import InstrumentLogo from '../monitor/instrument-logo.jsx';
 import styles from './thai-workspace.module.css';
 
+const VIEW_ICONS = {
+  stage2: TrendingUp,
+  radar: Radar,
+  portfolio: ShieldCheck,
+  chart: CandlestickChart,
+  results: Award,
+};
+
 export const THAI_VIEWS = [
-  { id: 'portfolio', hash: '#section-portfolio', label: '⚡ พอร์ต & API (ALGO_EQ)', note: 'ซิงค์ Trinity 022 / Pi 003 / InnovestX' },
-  { id: 'stage2', hash: '#section-auto-pick', label: 'Stage 2 Screener', note: 'Trend Template หุ้นขาขึ้น' },
-  { id: 'radar', hash: '#section-radar', label: 'Strategy Radar', note: 'เรดาร์สัญญาณ & แผนเฝ้า' },
-  { id: 'chart', hash: '#chart-panel', label: 'Interactive Chart', note: 'กราฟเทคนิค & อินดิเคเตอร์' },
-  { id: 'results', hash: '#section-results', label: 'Trade Ledger', note: 'ประวัติ & ผลลัพธ์ 100 ไม้' },
+  { id: 'stage2', hash: '#section-auto-pick', label: 'สแกนหุ้นขาขึ้น (Stage 2)', note: 'คัดหุ้นเด่น & เช็คแนวรับแนวต้าน' },
+  { id: 'radar', hash: '#section-radar', label: 'เรดาร์สัญญาณสด (Radar)', note: 'แผนเฝ้ารายวัน & เสียงแจ้งเตือน' },
+  { id: 'portfolio', hash: '/open-account', label: 'เปิดพอร์ต 3 โบรกเกอร์ (VIP ฟรี)', note: 'พาย 003 · ทรีนีตี้ 022 · เอเอสแอล 050' },
+  { id: 'chart', hash: '#chart-panel', label: 'กราฟเทคนิค (Chart)', note: 'แท่งเทียน & อินดิเคเตอร์' },
+  { id: 'results', hash: '#section-results', label: 'บันทึกผลงาน (Trade Ledger)', note: 'ประวัติ & สถิติชนะ 100 ไม้' },
 ];
 
 export function thaiViewForHash(hash) {
@@ -17,31 +27,50 @@ export default function ThaiWorkspaceNav({ view = 'stage2', symbol, onNavigate, 
   return (
     <section id="thai-workspace-navigation" className={styles.toolbar} aria-label="พื้นที่ทำงานหุ้นไทย">
       <div className={styles.heading}>
-        <div>
-          <h1>หุ้นไทย <small>SET100 + mai</small></h1>
-          <p>เลือกเครื่องมือวิเคราะห์ และเปิดกราฟหุ้นที่สนใจ</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img
+            src="/nugaom-mascot.png"
+            alt="โลโก้ Nugaom AI"
+            width="42"
+            height="42"
+            style={{ borderRadius: '12px', objectFit: 'cover', flexShrink: 0, boxShadow: '0 4px 12px rgba(0,0,0,0.35)' }}
+          />
+          <div>
+            <h1>หุ้นไทย <small>SET100 + mai</small></h1>
+            <p>เลือกเครื่องมือวิเคราะห์ โพยเช้า 09:30 · การบ้านเย็น 17:30 (สแกนคัดไม่ซ้ำรอบเช้า) และเปิดกราฟหุ้นที่สนใจ</p>
+          </div>
         </div>
         <span className={styles.symbol}>
-          กำลังวิเคราะห์ <b>{symbol}</b>
+          {symbol ? <InstrumentLogo asset={{ market: 'thai', symbol }} /> : null}
+          <span>กำลังวิเคราะห์ <b>{symbol}</b></span>
         </span>
       </div>
       <div className={styles.row}>
         <nav aria-label="เลือกเครื่องมือหุ้นไทย" className={styles.views}>
-          {THAI_VIEWS.map((v) => (
-            <a
-              key={v.id}
-              href={v.hash}
-              aria-current={view === v.id ? 'location' : undefined}
-              onClick={(event) => {
-                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-                event.preventDefault();
-                onNavigate(v.id);
-              }}
-            >
-              <b>{v.label}</b>
-              <small>{v.note}</small>
-            </a>
-          ))}
+          {THAI_VIEWS.map((v) => {
+            const Icon = VIEW_ICONS[v.id];
+            return (
+              <a
+                key={v.id}
+                href={v.hash}
+                aria-current={view === v.id ? 'location' : undefined}
+                onClick={(event) => {
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                  if (v.id === 'portfolio') {
+                    event.preventDefault();
+                    window.location.href = '/open-account';
+                    return;
+                  }
+                  event.preventDefault();
+                  onNavigate(v.id);
+                }}
+              >
+                {Icon && <Icon size={15} style={{ opacity: 0.85, flexShrink: 0 }} />}
+                <b>{v.label}</b>
+                <small>{v.note}</small>
+              </a>
+            );
+          })}
         </nav>
         <button type="button" className={styles.scan} onClick={onOpenScanner}>
           สแกนตามสไตล์ (Multi-Strategy) ↗

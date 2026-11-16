@@ -36,7 +36,6 @@ export default function DaytradeWorkspace({ market = 'thai', initialSymbol = nul
             {name}
           </Link>
         ))}
-        <Link href="/forex">เชื่อม MT5 ↗</Link>
       </nav>
       {isRadar ? (
         <div style={{ maxWidth: '1440px', margin: '0 auto', width: '100%', padding: '0 1rem 3rem' }}>

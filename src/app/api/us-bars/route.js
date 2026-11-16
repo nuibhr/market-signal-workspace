@@ -1,12 +1,13 @@
+import {chartHandler} from '../../../market-data/contracts/v1/chart-runtime.mjs';
 import { assessDailySeries } from '../../../market-data/settrade.mjs';
 import { newYorkParts } from '../../../market-data/fmp-us.mjs';
-import { getUsDailyBars, usEodRights } from '../../../market-data/us-eod.mjs';
+import { getUsDailyBars } from '../../../market-data/us-eod.mjs';
 import { ALL_ASSETS } from '../../../markets/catalog.mjs';
 import { rememberChartSnapshot } from '../../../market-data/delayed-candles.mjs';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const HEADERS = { 'Cache-Control': 'private, no-store' };
-export async function GET(request) {
+async function readLegacyChart(request,{allowedProviders=[]}={}) {
   const params = new URL(request.url).searchParams;
   const symbol = params.get('symbol')?.trim().toUpperCase() ?? '';
   const timeframe = params.get('timeframe') ?? '1d';
@@ -14,12 +15,12 @@ export async function GET(request) {
   const asset = ALL_ASSETS.find(item => item.id === 'us' && item.symbol === symbol);
   if (!asset) return Response.json({status:'unavailable',code:'INSTRUMENT_NOT_CONNECTED'}, {status:404,headers:HEADERS});
   if (timeframe !== '1d') return Response.json({status:'unavailable',code:'TIMEFRAME_NOT_AVAILABLE'}, {status:422,headers:HEADERS});
-  if (!usEodRights().fmp && !usEodRights().yahoo)
+  if (!allowedProviders.length)
     return Response.json({status:'unavailable',code:'DISPLAY_RIGHTS_NOT_CONFIRMED'}, {status:503,headers:HEADERS});
   try {
     // The chart, scanner and holdings use the same validated closed daily bars.
     const isEtf = asset.sectionId === 'US_ETFS';
-    const series = await getUsDailyBars(symbol, {assetKind:isEtf?'etf':'stock'});
+    const series = await getUsDailyBars(symbol, {assetKind:isEtf?'etf':'stock',allowedProviders});
     const assessment = assessDailySeries(series);
     const payload = { ...series, status:'available', instrumentId:asset.instrumentId, market:'US',
       latestTime:null, freshness:assessment.freshness, signalEligible:!isEtf&&assessment.signalEligible, quote:null,
@@ -32,3 +33,5 @@ export async function GET(request) {
     return Response.json({status:'unavailable',code}, {status:503,headers:HEADERS});
   }
 }
+
+export const GET=chartHandler(readLegacyChart, 'us');

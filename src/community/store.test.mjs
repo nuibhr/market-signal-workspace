@@ -25,7 +25,8 @@ async function verifyFlow(t) {
   const members=[];
   for(const [letter,name] of [['a','Admin'],['b','Member'],['c','Other member'],['d','Marketing'],['e','Analyst'],['f','Expired']]) members.push(await upsertLineMember({lineId:'U'+letter.repeat(32),displayName:'Fixture '+name}));
   const [admin,member,other,marketing,analyst,expired]=members;
-  for(const actor of [member,other])await storage.run("UPDATE members SET trial_ends_at=?,portfolio_status='verified' WHERE id=?",new Date(Date.now()+86400000).toISOString(),actor.id);
+  for(const actor of [member,other])await storage.run("UPDATE members SET subscription_ends_at=?,portfolio_status='verified' WHERE id=?",new Date(Date.now()+86400000).toISOString(),actor.id);
+  await storage.run("UPDATE members SET trial_ends_at=? WHERE id=?",new Date(Date.now()+86400000).toISOString(),expired.id);
   await change(admin,{action:'role',memberId:marketing.id,role:'marketing',enabled:true});
   await change(admin,{action:'role',memberId:analyst.id,role:'analyst',enabled:true});
   let roomMessage,threadId;
@@ -135,7 +136,7 @@ async function verifyFlow(t) {
     await assert.rejects(mutateCommunity(expired,{...threadBody,operationId:randomUUID()}),{message:'THREAD_CLOSED'});
   });
   await t.test('fresh membership state and validation prevent stale access and malformed messages',async()=>{
-    await storage.run("UPDATE members SET trial_ends_at=? WHERE id=?",new Date(Date.now()-1000).toISOString(),member.id);
+    await storage.run("UPDATE members SET subscription_ends_at=? WHERE id=?",new Date(Date.now()-1000).toISOString(),member.id);
     await assert.rejects(read(member,'room','lounge'),{message:'MEMBERSHIP_REQUIRED'});
     await assert.rejects(change(admin,{action:'send',kind:'room',channelId:'lounge',body:'x'.repeat(2001)}),{message:'INVALID_COMMUNITY_INPUT'});
     await assert.rejects(change(admin,{action:'role',memberId:other.id,role:'admin',enabled:true}),{message:'INVALID_COMMUNITY_INPUT'});

@@ -12,7 +12,7 @@ test('invalid XML, oversized responses and entity declarations are refused; unda
 });
 test('public RSS cache coalesces visitors, refreshes once per minute and surfaces publisher failures without fallback headlines',async()=>{
   let clock=100000,calls=0,fail=false;
-  const read=createPublicNewsFeed({now:()=>clock,fetcher:async(url,options)=>{calls++;assert.equal(options.headers.Authorization,undefined);if(fail)return new Response('no',{status:503});return new Response(xml.replaceAll('www.cnbc.com',url.includes('infoquest')?'www.infoquest.co.th':'www.cnbc.com'));}});
+  const read=createPublicNewsFeed({now:()=>clock,fetcher:async(url,options)=>{calls++;assert.equal(options.headers.Authorization,undefined);if(fail)return new Response('no',{status:503});return new Response(xml.replaceAll('www.cnbc.com',url.includes('kaohoon')?'www.kaohoon.com':url.includes('infoquest')?'www.infoquest.co.th':'www.cnbc.com'));}});
   const [a,b]=await Promise.all([read(),read()]);assert.equal(a.status,'available');assert.equal(b.markets.length,2);assert.equal(calls,2);await read();assert.equal(calls,2);
   clock+=60001;fail=true;const broken=await read();assert.equal(calls,4);assert.equal(broken.status,'unavailable');assert.ok(broken.markets.every(m=>m.articles.length===0));
 });

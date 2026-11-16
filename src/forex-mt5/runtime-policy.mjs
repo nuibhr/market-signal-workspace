@@ -5,7 +5,7 @@ import {configuration} from './protocol.mjs';
 // the existing D1 app; enabling a flag cannot create an ephemeral Forex store.
 export function receiverConfiguration(env=process.env) {
   const config=configuration(env);
-  const nodeStorage=(env.STORAGE_PROVIDER||'sqlite')==='sqlite'&&env.NUGAOM_CLOUD_BUILD!=='true'&&env.AUTO_PICK_RUNTIME!=='cloudflare';
+  const nodeStorage=((env.STORAGE_PROVIDER||'sqlite')==='sqlite'||env.STORAGE_PROVIDER==='d1-http'&&env.FOREX_MT5_PERSISTENT_STORAGE==='true')&&env.NUGAOM_CLOUD_BUILD!=='true'&&env.AUTO_PICK_RUNTIME!=='cloudflare';
   const separateDatabase=config.databasePath===':memory:'||resolve(config.databasePath)!==resolve(env.DATABASE_PATH||'./data/nugaom.sqlite');
   const disabledReason=!nodeStorage?'NODE_RECEIVER_REQUIRED':!separateDatabase?'SEPARATE_DATABASE_REQUIRED':null;
   return {...config,enabled:config.enabled&&!disabledReason,disabledReason,

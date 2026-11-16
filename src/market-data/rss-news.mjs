@@ -1,7 +1,7 @@
 import {XMLParser,XMLValidator} from 'fast-xml-parser';
 const LIMIT=256000,TTL=60000;
 export const PUBLIC_NEWS_FEEDS=[
-  {id:'thai',label:'ข่าวไทย / เศรษฐกิจ',source:'InfoQuest',url:'https://www.infoquest.co.th/feed',host:'www.infoquest.co.th'},
+  {id:'thai',label:'ข่าวหุ้นไทย',source:'ข่าวหุ้นธุรกิจ',url:'https://www.kaohoon.com/feed',host:'www.kaohoon.com'},
   {id:'us',label:'ข่าว US / ตลาดโลก',source:'CNBC',url:'https://www.cnbc.com/id/100003114/device/rss/rss.html',host:'www.cnbc.com'},
 ];
 const decode=text=>text.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi,(all,key)=>{

@@ -1,10 +1,12 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   Activity,
   ArrowUpRight,
   BarChart3,
-  BellRing,
-  CheckCircle2,
+  Briefcase,
   Clock,
   Compass,
   Cpu,
@@ -22,376 +24,344 @@ import {
 
 export const CORE_PRODUCTS = [
   {
-    id: 'multi-scanner',
+    id: 'thai-stage2',
     number: '01',
-    title: 'Multi-Market Realtime Scanner',
-    subtitle: 'สแกนตลาดหุ้นไทย & DR พร้อมกัน อัตโนมัติ',
-    tagline: 'ตรวจจับโอกาสทั่วกระดานหุ้นไทย SET100, mai และ DR80/DR23',
-    badge: 'REALTIME CORE',
-    accent: '#0284c7',
+    category: 'thai',
+    title: 'สแกนหุ้นไทย Stage 2 & เรดาร์สด',
+    subtitle: 'SET100 & mai · คัดหุ้นขาขึ้นแข็งแกร่ง',
+    tagline: 'สแกนหาหุ้นไทยทรงขาขึ้น Stage 2 พร้อมแนวรับ-แนวต้าน และแจ้งเตือนเสียงสด',
+    badge: 'THAI STAGE 2',
+    accent: '#72dfb3',
+    rgb: '114, 223, 179',
     icon: Scan,
-    targetUrl: '/dr-strategy',
-    features: [
-      'สแกนตลาดหุ้นไทยและ DR พร้อมกันในแผงควบคุมเดียว',
-      'จัดอันดับด้วย AI Score, ATR Volatility และ RVOL',
-      'ตัวกรอง Multi-Criteria ตามสไตล์ Daytrade และ Swing',
-    ],
-    highlights: [
-      { label: 'โฟกัสกระดานไทย & DR', desc: 'ครอบคลุมหุ้นไทย SET100, mai, DR80/DR23 และ TFEX S50' },
-      { label: 'จัดอันดับด้วยคะแนน', desc: 'เรียงลำดับความแข็งแกร่งของ Setup ชัดเจน ไม่ต้องไล่ดูกราฟทีละตัว' },
-      { label: 'Causal Closed Bar', desc: 'คำนวณจากข้อมูลจริงที่ยืนยันแล้ว ปราศจากการมโนตัวเลข' },
-    ],
-    whatsInside: [
-      'ตัวสแกน Multi-Market พร้อมระบบคัดกรอง',
-      'DR80/DR23 Scanner พร้อมโหมดเรียงตามคะแนน 16 แต้ม',
-      'ตัววัด Momentum และสภาพคล่องรายตัว',
-      'ปุ่มลัดส่งตรงเข้าสู่กราฟวิเคราะห์แบบ Real-time',
-    ],
+    targetUrl: '/thai',
+    visualType: 'stage2-chart',
+    metrics: ['SET100 + mai', 'Stage 2 Leader', 'Entry / 2R / Stop'],
   },
   {
-    id: 'signal-radar',
+    id: 'thai-portfolio',
     number: '02',
-    title: 'Closed-Bar Signal Engine',
-    subtitle: 'สัญญาณเทรดที่อธิบายเหตุผลได้ทุกไม้',
-    tagline: 'แผนเทรด Entry / Target / Stop Loss จากแท่งเทียนที่ปิดแล้วจริง',
-    badge: 'TRUTHFUL SIGNALS',
-    accent: '#10b981',
-    icon: Activity,
-    targetUrl: '/thai#section-auto-pick',
-    features: [
-      'แผนเข้า-ออกครบ: Entry, Target (2R), Invalidation Stop',
-      'ไม่มี Synthetic Win: สัญญาณไม่แตะเป้าหรือชน Stop บันทึกตามจริง',
-      'ยืนยันด้วยแท่งเทียนปิดรอบ ป้องกัน False Breakout',
-    ],
-    highlights: [
-      { label: 'แผนครบทุกเงื่อนไข', desc: 'กำหนดราคาเข้า จุดทำกำไร และจุดตัดขาดทุนชัดเจนก่อนส่งสัญญาณ' },
-      { label: 'ไม่เคลมเกินจริง', desc: 'บันทึกประวัติการเทรดแบบตามราคาจริง ไม่มีการนับ Win Rate ปลอม' },
-      { label: 'Multi-Timeframe Confirm', desc: 'วิเคราะห์ร่วมระหว่าง Timeframe ใหญ่และเล็กเพื่อเพิ่มความแม่นยำ' },
-    ],
-    whatsInside: [
-      'กระดาน Auto-Pick สัญญาณเทรดสด',
-      'ประวัติการเดินทางของสัญญาณ (Signal Journey)',
-      'การแจ้งเตือนจังหวะเปลี่ยนสถานะ (Pending → Active → Closed)',
-      'แผนภูมิเปรียบเทียบสถิติและ Drawdown รายเดือน',
-    ],
+    category: 'thai',
+    title: 'เชื่อมตารางพอร์ตหุ้นไทย & พันธมิตร',
+    subtitle: 'Settrade Open API · บล.พาย (003) & ทรีนีตี้ (022)',
+    tagline: 'ตรวจสุขภาพพอร์ตจริง เฝ้าระวังจุด Trailing Stop และเปิดบัญชีกับ 2 โบรกเกอร์พันธมิตร',
+    badge: 'PORTFOLIO DESK',
+    accent: '#38bdf8',
+    rgb: '56, 189, 248',
+    icon: Briefcase,
+    targetUrl: '/thai#section-portfolio',
+    visualType: 'portfolio-allocation',
+    metrics: ['Pi Securities 003', 'Trinity 022', 'Stage Health Score'],
   },
   {
     id: 'dr-bridge',
     number: '03',
-    title: 'DR Strategy Tracker & Thai Dividend Radar',
-    subtitle: 'เจาะลึก DR ด้วย Camarilla + FX Bridge & หุ้นปันผล SETHD',
-    tagline: 'Camarilla 8 ระดับ, EMA 25/50/75, Indicative Arbitrage และพอร์ตปันผลไทยมีวินัย',
-    badge: 'THAI & DR ECOSYSTEM',
-    accent: '#f59e0b',
+    category: 'dr',
+    title: 'DR Strategy & Arbitrage Radar',
+    subtitle: 'หุ้นเทคโนโลยีโลกในกระดานไทยด้วยเงินบาท',
+    tagline: 'วัดคะแนนเทคนิค 16 แต้ม คำนวณส่วนต่างราคา DR เทียบหุ้นแม่ และแนวรับ Camarilla',
+    badge: 'GLOBAL DR80',
+    accent: '#f2be62',
+    rgb: '242, 190, 98',
     icon: Compass,
-    targetUrl: '/dr-strategy',
-    features: [
-      'สแกน DR80 ด้วยคะแนนเต็ม 16 แต้ม (Camarilla + EMA 25/50/75 + RSI + MACD)',
-      'คำนวณ Indicative Fair Value และ Arbitrage Spread (Premium / Discount %)',
-      'เรดาร์หุ้นปันผลไทย SETHD มีวินัย พร้อมโมเดลจัดสรรพอร์ต 5 ระดับ',
-    ],
-    highlights: [
-      { label: 'Camarilla 8 Levels', desc: 'ระบุ Buy Zone ที่ S2-S3 พร้อมจุดตัดขาดทุน S4 และเป้าหมาย R1/R3' },
-      { label: 'FX & Arbitrage Bridge', desc: 'เห็นชัดว่า DR ถูกกว่าหรือแพงกว่าหุ้นแม่ในตลาดโลกกี่เปอร์เซ็นต์' },
-      { label: 'พอร์ตปันผลไทย SETHD', desc: 'ปฏิทินวัน XD, Dividend Yield % และ Payout Safety Score' },
-    ],
-    whatsInside: [
-      'แดชบอร์ด DR80 Technical Radar พร้อมแผงคะแนน 16 แต้ม',
-      'เครื่องคำนวณ Indicative Price & Arbitrage Sandbox สด',
-      'ตารางสแกนหุ้นปันผลไทย SETHD ชั้นนำ (TISCO, SCB, ADVANC, PTT ฯลฯ)',
-      'โมเดลสัดส่วนพอร์ตปันผล 5 ระดับ (Defensive, Growth, Financials, REIT, Cash)',
-    ],
+    targetUrl: '/dr',
+    visualType: 'dr-arbitrage',
+    metrics: ['Camarilla 8 จุด', 'FX Fair Value', 'AI Score 16/16'],
   },
   {
     id: 'mt5-telemetry',
     number: '04',
-    title: 'Forex MT5 Telemetry Bridge',
-    subtitle: 'ศูนย์รวมข้อมูล Forex ผ่าน MT5 ไร้ความเสี่ยง',
-    tagline: 'ตรวจวัดสถานะ Heartbeat, Latency และความสดใหม่ของโควทแบบ Read-Only',
-    badge: 'INSTITUTIONAL BRIDGE',
-    accent: '#8b5cf6',
+    category: 'forex',
+    title: 'Forex & Gold MT5 Command Desk',
+    subtitle: 'สแกนคู่เงินหลัก & ทองคำ XAUUSD ตลอด 24 ชม.',
+    tagline: 'เชื่อมต่อ MT5 แบบ Read-Only ปลอดภัย 100% วัดความเสถียรฟีดราคาและสแกนจุดเข้า 2R',
+    badge: '24H MT5 LIVE',
+    accent: '#bc9bff',
+    rgb: '188, 155, 255',
     icon: Cpu,
     targetUrl: '/forex',
-    features: [
-      'Read-Only Bridge: ปลอดภัย 100% ไม่เก็บพาสเวิร์ด ไม่ส่งคำสั่งแทน',
-      'ตรวจวัด Latency และ Heartbeat สม่ำเสมอทุก 30 วินาที',
-      'นโยบาย Closed Bar Policy ชัดเจน แยกชัดเจนระหว่าง Live กับ Stale',
-    ],
-    highlights: [
-      { label: 'ความปลอดภัยสูงสุด', desc: 'สถาปัตยกรรม Fail-Closed ไร้สิทธิ์การถอนเงินหรือส่งคำสั่งซื้อขาย' },
-      { label: 'Telemetry วัดความเสถียร', desc: 'แสดง Ping, Active Symbols และความสดของฟีดราคาตลอดเวลา' },
-      { label: 'สัญญาณระดับสถาบัน', desc: 'ใช้ข้อมูลแท่งเทียนดิบจากเซิร์ฟเวอร์โบรกเกอร์ที่เชื่อมต่อ' },
-    ],
-    whatsInside: [
-      'Forex Connection Panel พร้อมตัววัดสถานะเซิร์ฟเวอร์',
-      'กราฟิกสัญญาณและกรอบเวลา 15m / 1h / 4h',
-      'เครื่องมือวิเคราะห์ความผันผวนของคู่เงินหลักและทองคำ (XAU/USD)',
-      'ระบบสำรองข้อมูลแคชกรณีเครือข่ายขาดการเชื่อมต่อ',
-    ],
+    visualType: 'forex-telemetry',
+    metrics: ['XAUUSD & Majors', 'Read-Only Safe', '15m / 1H / 4H'],
   },
   {
     id: 'risk-manager',
     number: '05',
-    title: 'Risk & Position Manager',
-    subtitle: 'คุมความเสี่ยงทุกไม้ คำนวณ Lot แม่นยำ',
-    tagline: 'คำนวณขนาดออเดอร์ (Shares, Contracts, Lots) ตามวงเงินความเสี่ยงและความคุ้มค่า 2R',
-    badge: 'RISK MATH',
-    accent: '#0d9488',
+    category: 'pro',
+    title: 'Risk & Position Sizing Calculator',
+    subtitle: 'คำนวณจำนวนหุ้น · สัญญา TFEX · Lot Forex',
+    tagline: 'คุมความเสี่ยง 0.5%–2% ต่อไม้ คำนวณจุดตัดขาดทุนและเป้าหมายกำไร 2R/3R อัตโนมัติ',
+    badge: '2R RISK MATH',
+    accent: '#2dd4bf',
+    rgb: '45, 212, 191',
     icon: BarChart3,
     targetUrl: '/risk',
-    features: [
-      'คำนวณ Lot Size / จำนวนหุ้น / สัญญา TFEX อัตโนมัติ',
-      'กำหนดความเสี่ยง 0.5% - 2% ต่อไม้ เพื่อความยั่งยืนของพอร์ต',
-      'คำนวณเป้าหมายกำไร 2R/3R และแสดงอัตราส่วน Risk:Reward ชัดเจน',
-    ],
-    highlights: [
-      { label: 'ครอบคลุม 5 ตลาด', desc: 'หุ้นไทย (Board lot 100), TFEX S50, หุ้นสหรัฐฯ, ทองคำ และ Forex' },
-      { label: 'เห็นตัวเลขจริงก่อนเข้า', desc: 'ทราบผลขาดทุนสูงสุด (Max Loss) และกำไรที่เป้าหมายเป็นบาท/ดอลลาร์ทันที' },
-      { label: 'คำเตือนความเสี่ยง', desc: 'แจ้งเตือนเมื่อระยะ Stop Loss กว้างเกินไปหรือขนาดออเดอร์ไม่ปลอดภัย' },
-    ],
-    whatsInside: [
-      'เครื่องคำนวณ Position Sizing รายตลาด',
-      'ตัวคำนวณ Risk / Reward Ratio แบบ Real-time',
-      'การประเมินเงินมัดจำ (Margin Requirement)',
-      'บันทึกพารามิเตอร์การเทรดก่อนส่งคำสั่ง',
-    ],
+    visualType: 'risk-bars',
+    metrics: ['Position Sizing', 'Max Loss Control', '2R / 3R Target'],
   },
   {
-    id: 'economic-calendar',
+    id: 'voice-ledger',
     number: '06',
-    title: 'Economic Calendar & Macro Impact',
-    subtitle: 'รับมือข่าวเศรษฐกิจและดอกเบี้ยก่อนใคร',
-    tagline: 'ปฏิทินเศรษฐกิจระดับสถาบัน วิเคราะห์ผลกระทบรายตลาดและข้อควรระวังก่อนเทรด',
-    badge: 'MACRO INTEL',
-    accent: '#ea580c',
-    icon: Newspaper,
-    targetUrl: '/calendar',
-    features: [
-      'คัดกรองเฉพาะเหตุการณ์สำคัญสูง (High Impact) เช่น Fed, กนง., CPI',
-      'AI วิเคราะห์ก่อน-หลังประกาศ พร้อมบอกว่ากระทบสินทรัพย์ใด',
-      'Actionable Caution: คำแนะนำความเสี่ยงก่อนและหลังตัวเลขออก',
-    ],
-    highlights: [
-      { label: 'โฟกัสตลาดที่เราเทรด', desc: 'ระบุชัดเจนว่าข่าวกระทบ SET, S50, US Equity, ทองคำ หรือ Forex' },
-      { label: 'Forecast vs Previous', desc: 'เปรียบเทียบตัวเลขคาดการณ์กับครั้งก่อนหน้าอย่างรวดเร็ว' },
-      { label: 'ปลอดภัยรอบข่าว', desc: 'ลดความเสี่ยงจากการถูกลากพอร์ตช่วงสเปรดกว้าง' },
-    ],
-    whatsInside: [
-      'ปฏิทินเศรษฐกิจพร้อมตัวกรองระดับผลกระทบ',
-      'ระบบแจ้งเตือนช่วงเวลาสำคัญ (เวลาไทย)',
-      'บทวิเคราะห์ผลกระทบต่อสภาพคล่องและทัศนคติของตลาด',
-      'ป้ายกำกับสินทรัพย์ที่ได้รับผลกระทบโดยตรง',
-    ],
-  },
-  {
-    id: 'developer-api',
-    number: '07',
-    title: 'Developer API & Structure Playground',
-    subtitle: 'Structure API สำหรับคนเขียน EA และบอท',
-    tagline: 'ส่งแท่งเทียน 40-500 แท่ง รับโครงสร้าง SMC, BOS, Order Block และแผน 2R เป็น JSON',
-    badge: 'DEVELOPER SUITE',
-    accent: '#0891b2',
-    icon: Cpu,
-    targetUrl: '/developers',
-    features: [
-      'POST JSON แท่งเทียน OHLCV รับผลลัพธ์โครงสร้างใน ~15ms',
-      'ตรวจจับ Swing High/Low, BOS, CHoCH, Order Block และ FVG',
-      'สร้างแผนเทรด 2R อัตโนมัติพร้อมเหตุผล Invalidation',
-    ],
-    highlights: [
-      { label: 'Bring Your Own Candles', desc: 'สินทรัพย์และ Timeframe ใดก็ได้ที่คุณมีข้อมูล ไม่เก็บข้อมูลของคุณ' },
-      { label: 'ตัวอย่างพร้อมใช้ 3 ภาษา', desc: 'cURL สำหรับ Terminal, Python Requests, และ MQL5 สำหรับ MT5' },
-      { label: 'Playground ทดสอบสด', desc: 'แก้ไขแท่งเทียนและกดวิเคราะห์โครงสร้างบนหน้าเว็บได้ทันที' },
-    ],
-    whatsInside: [
-      'Interactive API Playground & JSON Editor',
-      'Endpoint: POST /api/developers/structure',
-      'ตัวอย่างโค้ด MQL5 สำหรับ EA เพื่อดึงแผนเทรดอัตโนมัติ',
-      'คำนวณ Breakeven Win Rate ที่ต้องการ (33.3% สำหรับ 2R)',
-    ],
-  },
-  {
-    id: 'speech-queue',
-    number: '08',
-    title: 'Voice Alert & Speech Queue',
-    subtitle: 'เสียงแจ้งเตือนน้องนักออมอัจฉริยะ',
-    tagline: 'อ่านเหตุการณ์ตลาดและข่าวด่วนภาษาไทย จัดคิวเสียง Web Audio ไม่ทับซ้อน',
-    badge: 'SMART AUDIO',
-    accent: '#ec4899',
+    category: 'pro',
+    title: 'เสียงน้องนักออม AI & บันทึกผลงานจริง',
+    subtitle: 'Thai Voice Alert & Immutable Audit Ledger',
+    tagline: 'อ่านสัญญาณเตือนด้วยเสียงภาษาไทย พร้อมสมุดบันทึกสถิติชนะ/แพ้โปร่งใส ตรวจสอบได้ทุกไม้',
+    badge: 'VOICE & AUDIT',
+    accent: '#f472b6',
+    rgb: '244, 114, 182',
     icon: Volume2,
-    targetUrl: '/markets',
-    features: [
-      'เสียงสังเคราะห์ภาษาไทยเป็นธรรมชาติ (Thai TTS)',
-      'Speech Queue ป้องกันเสียงพูดซ้อนทับกันเมื่อมีสัญญาณเข้าพร้อมกัน',
-      'แจ้งเตือนข่าวด่วนความสำคัญสูง (Breaking News) ทันเหตุการณ์',
-    ],
-    highlights: [
-      { label: 'ไม่ต้องนั่งเฝ้าจอ', desc: 'ระบบอ่านชื่อหุ้น ทิศทาง และราคาเป้าหมายให้ฟังทันทีที่เกิดสัญญาณ' },
-      { label: 'Web Audio Queue', desc: 'จัดลำดับความสำคัญของเสียง สัญญาณเทรดมาก่อน ข่าวทั่วไปมาทีหลัง' },
-      { label: 'เปิด-ปิดแยกอิสระ', desc: 'ปรับแต่งระดับเสียง ปิดเฉพาะบางตลาด หรือเปิดฟังทั้งหมดยามขับรถ' },
-    ],
-    whatsInside: [
-      'ตัวควบคุม Sound Monitor Pill ด้านบนของแอป',
-      'ตัวแปลงข้อความเป็นเสียงสังเคราะห์ความละเอียดสูง',
-      'ฟีดข่าว Macro Breaking News สรุปประเด็นสั้น',
-      'บันทึกประวัติการแจ้งเตือนเสียงย้อนหลัง',
-    ],
-  },
-  {
-    id: 'coach-audit',
-    number: '09',
-    title: 'Coach & Signal Audit Ledger',
-    subtitle: 'ระบบตรวจสอบผลงานย้อนหลังแบบ Immutable',
-    tagline: 'บันทึกประวัติสัญญาณและพอร์ตโค้ชที่แก้ไขย้อนหลังไม่ได้',
-    badge: 'TRANSPARENCY',
-    accent: '#0284c7',
-    icon: ShieldCheck,
-    targetUrl: '/coaches',
-    features: [
-      'บัญชีแยกประเภทผลงานแบบ Append-Only แก้ไขตัวเลขในอดีตไม่ได้',
-      'แยกประวัติพอร์ตโค้ช (Paper Trading) ออกจากสถิติระบบอัตโนมัติ',
-      'Audit Activity Log แสดง Timestamp และเหตุผลการปรับสถานะทุกขั้นตอน',
-    ],
-    highlights: [
-      { label: 'ความโปร่งใส 100%', desc: 'ตรวจสอบได้ทุกไม้ว่าส่งเวลาใด ราคาใด และปิดผลด้วยเหตุผลใด' },
-      { label: 'มุมมอง Coach พรีเมียม', desc: 'ติดตามแนวคิดการจัดพอร์ตและมุมมองตลาดจากผู้เชี่ยวชาญ' },
-      { label: 'ตัวกรองหลายมิติ', desc: 'ค้นหาผลงานตามประเภทตลาด ฝั่ง Long/Short หรือระดับผลตอบแทน' },
-    ],
-    whatsInside: [
-      'Coach Dashboard พร้อมสถิติพอร์ตจำลอง',
-      'Audit Activity Log บันทึกทุกธุรกรรมแบบเรียงตามเวลา',
-      'ตัวกรองค้นหาประวัติรายสินทรัพย์',
-      'สรุป Drawdown และ Profit Factor ตามสูตรมาตรฐานสากล',
-    ],
+    targetUrl: '/thai',
+    visualType: 'voice-wave',
+    metrics: ['เสียงพากย์ไทย AI', 'บันทึกผล 100 ไม้', 'โปร่งใส 100%'],
   },
 ];
 
 export const PRO_ANALYSIS_TOOLS = [
   {
     id: 'smc-structure',
-    title: 'Smart Money & Structure Engine',
-    dimension: 'มิติที่ 1',
-    category: 'Market Structure',
-    desc: 'จับโครงสร้างราคา Break of Structure (BOS), Change of Character (CHoCH) และ Order Block บนกราฟแท่งเทียน',
+    title: 'Smart Money Structure',
+    dimension: '01',
+    desc: 'จับจุด BOS, CHoCH และ Order Block อัตโนมัติ',
     icon: Layers,
-    badge: 'STRUCTURE',
+    accent: '#38bdf8',
     link: '/developers',
   },
   {
     id: 'causal-trend',
-    title: 'Causal Trend & RVOL Filter',
-    dimension: 'มิติที่ 2',
-    category: 'Volume & Momentum',
-    desc: 'คำนวณ Relative Volume และแนวโน้มอย่างเป็นเหตุเป็นผล ปราศจากการดึงข้อมูลในอนาคต (No Look-ahead Bias)',
+    title: 'Stage 2 & RVOL Filter',
+    dimension: '02',
+    desc: 'สแกนวอลุ่มเข้าผิดปกติและเทรนด์ขาขึ้นจริง',
     icon: TrendingUp,
-    badge: 'MOMENTUM',
-    link: '/daytrade',
+    accent: '#72dfb3',
+    link: '/thai',
   },
   {
     id: 'risk-calculator',
-    title: 'Dynamic 2R Risk/Reward Engine',
-    dimension: 'มิติที่ 3',
-    category: 'Risk Management',
-    desc: 'คำนวณตำแหน่ง Stop Loss และ Take Profit อัตโนมัติโดยอิงจาก Average True Range (ATR) รักษาอัตราผลตอบแทนขั้นต่ำ 2R',
+    title: '2R Dynamic Sizing',
+    dimension: '03',
+    desc: 'คำนวณ Stop Loss ด้วย ATR รักษาความคุ้มค่า 2R',
     icon: BarChart3,
-    badge: 'RISK MATH',
+    accent: '#f2be62',
     link: '/risk',
   },
   {
     id: 'macro-sentiment',
-    title: 'Realtime Macro & RSS Intelligence',
-    dimension: 'มิติที่ 4',
-    category: 'News & Sentiment',
-    desc: 'ดึงข้อมูลข่าวสารตลาดและปฏิทินเศรษฐกิจ คัดกรองเฉพาะหัวข้อที่มีผลกระทบต่อสินทรัพย์จริง พร้อมแจ้งเตือนข่าวด่วน',
+    title: 'ปฏิทินเศรษฐกิจ & ข่าวด่วน',
+    dimension: '04',
+    desc: 'แจ้งเตือนตัวเลข Fed, กนง., CPI ก่อนตลาดผันผวน',
     icon: Newspaper,
-    badge: 'MACRO',
+    accent: '#ff9970',
     link: '/calendar',
   },
   {
     id: 'mtf-confluence',
-    title: 'Multi-Timeframe Confluence',
-    dimension: 'มิติที่ 5',
-    category: 'Multi-Frame',
-    desc: 'ตรวจสอบความสอดคล้องระหว่างกรอบเวลารายวัน (Day), 4 ชั่วโมง (4H) และ 15 นาที (15M) ก่อนยืนยันแผนเทรด',
+    title: 'Multi-Timeframe Sync',
+    dimension: '05',
+    desc: 'เช็คความสอดคล้อง Day / 4H / 15m ในหน้าเดียว',
     icon: Clock,
-    badge: 'CONFLUENCE',
-    link: '/thai#section-auto-pick',
+    accent: '#bc9bff',
+    link: '/dr',
   },
   {
     id: 'ledger-telemetry',
-    title: 'Next-Action & Account Telemetry',
-    dimension: 'มิติที่ 6',
-    category: 'Account Intelligence',
-    desc: 'วิเคราะห์สถานะบัญชี โควต้าการใช้งาน และแนะนำขั้นตอนถัดไป (Next Action) ที่เหมาะสมสำหรับพอร์ตของคุณ',
+    title: 'บันทึกผลงานสัญญาณย้อนหลัง',
+    dimension: '06',
+    desc: 'ตรวจสอบประวัติเข้า-ออกจริง ไม่มีการแต่งตัวเลข',
     icon: LineChart,
-    badge: 'TELEMETRY',
-    link: '/account',
+    accent: '#f472b6',
+    link: '/thai',
   },
 ];
 
+const FILTER_TABS = [
+  { id: 'all', label: '✨ ทั้งหมด (6 ไฮไลต์)' },
+  { id: 'thai', label: '🇹🇭 หุ้นไทย & เชื่อมพอร์ต' },
+  { id: 'dr', label: '🌐 DR หุ้นโลก' },
+  { id: 'forex', label: '⚡ Forex & MT5' },
+  { id: 'pro', label: '🛡️ คุมความเสี่ยง & AI' },
+];
+
+function ProductVisualArt({ type, accent }) {
+  if (type === 'stage2-chart') {
+    return (
+      <svg viewBox="0 0 320 110" className="ng-prod-svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="g-stage2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={accent} stopOpacity="0.38" />
+            <stop offset="100%" stopColor={accent} stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+        <path d="M12 88 L55 78 L95 82 L135 58 L175 62 L218 32 L260 36 L304 14 L304 102 L12 102 Z" fill="url(#g-stage2)" />
+        <path d="M12 88 L55 78 L95 82 L135 58 L175 62 L218 32 L260 36 L304 14" fill="none" stroke={accent} strokeWidth="2.5" strokeLinecap="round" />
+        <line x1="12" y1="48" x2="308" y2="48" stroke="rgba(255,255,255,0.16)" strokeDasharray="4 4" />
+        <circle cx="218" cy="32" r="5" fill={accent} />
+        <circle cx="304" cy="14" r="6" fill="#ffffff" stroke={accent} strokeWidth="3" />
+        <rect x="200" y="8" width="84" height="20" rx="10" fill="rgba(15,23,42,0.85)" />
+        <text x="242" y="21" textAnchor="middle" fill={accent} fontSize="9.5" fontWeight="800" fontFamily="monospace">STAGE 2 BREAK</text>
+      </svg>
+    );
+  }
+  if (type === 'portfolio-allocation') {
+    return (
+      <svg viewBox="0 0 320 110" className="ng-prod-svg" aria-hidden="true">
+        <rect x="16" y="20" width="136" height="72" rx="14" fill="rgba(16,185,129,0.12)" />
+        <text x="30" y="42" fill="#72dfb3" fontSize="10" fontWeight="800" fontFamily="monospace">PI SECURITIES (003)</text>
+        <text x="30" y="64" fill="#ffffff" fontSize="15" fontWeight="800">฿928,250</text>
+        <text x="30" y="80" fill="#72dfb3" fontSize="10" fontWeight="700">+11.02% · Stage A</text>
+        <rect x="166" y="20" width="138" height="72" rx="14" fill="rgba(56,189,248,0.12)" />
+        <text x="180" y="42" fill="#38bdf8" fontSize="10" fontWeight="800" fontFamily="monospace">TRINITY (022)</text>
+        <rect x="180" y="52" width="110" height="8" rx="4" fill="rgba(255,255,255,0.1)" />
+        <rect x="180" y="52" width="78" height="8" rx="4" fill="#38bdf8" />
+        <text x="180" y="78" fill="#cbd5e1" fontSize="10" fontWeight="700">Settrade API Synced</text>
+      </svg>
+    );
+  }
+  if (type === 'dr-arbitrage') {
+    return (
+      <svg viewBox="0 0 320 110" className="ng-prod-svg" aria-hidden="true">
+        <rect x="18" y="26" width="88" height="58" rx="14" fill="rgba(242,190,98,0.14)" />
+        <text x="62" y="50" textAnchor="middle" fill="#f2be62" fontSize="12" fontWeight="800">NVDA80</text>
+        <text x="62" y="68" textAnchor="middle" fill="#ffffff" fontSize="10" fontFamily="monospace">THB BOARD</text>
+        <path d="M116 55 L198 55" stroke="#f2be62" strokeWidth="2" strokeDasharray="4 4" />
+        <rect x="128" y="42" width="60" height="24" rx="12" fill="#0f172a" />
+        <text x="158" y="57" textAnchor="middle" fill="#72dfb3" fontSize="9.5" fontWeight="800" fontFamily="monospace">-0.4% DISC</text>
+        <rect x="208" y="26" width="94" height="58" rx="14" fill="rgba(56,189,248,0.14)" />
+        <text x="255" y="50" textAnchor="middle" fill="#38bdf8" fontSize="12" fontWeight="800">NASDAQ</text>
+        <text x="255" y="68" textAnchor="middle" fill="#ffffff" fontSize="10" fontFamily="monospace">FAIR VALUE</text>
+      </svg>
+    );
+  }
+  if (type === 'forex-telemetry') {
+    return (
+      <svg viewBox="0 0 320 110" className="ng-prod-svg" aria-hidden="true">
+        <path d="M12 60 L55 60 L72 30 L90 86 L108 42 L125 68 L142 58 L205 58 L222 24 L240 82 L258 50 L308 50" fill="none" stroke={accent} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="222" cy="24" r="5" fill="#72dfb3" />
+        <rect x="18" y="14" width="96" height="22" rx="11" fill="rgba(188,155,255,0.18)" />
+        <text x="66" y="28" textAnchor="middle" fill="#e9d5ff" fontSize="9.5" fontWeight="800" fontFamily="monospace">XAUUSD · 18ms</text>
+      </svg>
+    );
+  }
+  if (type === 'risk-bars') {
+    return (
+      <svg viewBox="0 0 320 110" className="ng-prod-svg" aria-hidden="true">
+        <rect x="20" y="24" width="280" height="24" rx="12" fill="rgba(16,185,129,0.18)" />
+        <rect x="20" y="24" width="190" height="24" rx="12" fill="#10b981" />
+        <text x="32" y="40" fill="#050914" fontSize="10" fontWeight="800" fontFamily="monospace">TARGET +2.0R (+฿12,000)</text>
+        <rect x="20" y="60" width="280" height="22" rx="11" fill="rgba(244,63,94,0.16)" />
+        <rect x="20" y="60" width="85" height="22" rx="11" fill="#f43f5e" />
+        <text x="116" y="75" fill="#fda4af" fontSize="10" fontWeight="800" fontFamily="monospace">RISK -1.0R (MAX 1.5%)</text>
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 320 110" className="ng-prod-svg" aria-hidden="true">
+      {[28, 46, 64, 82, 100, 118, 136, 154, 172, 190, 208, 226, 244, 262, 280].map((x, idx) => {
+        const heights = [22, 38, 56, 34, 68, 48, 28, 62, 74, 44, 30, 58, 40, 26, 18];
+        const h = heights[idx % heights.length];
+        return (
+          <rect
+            key={x}
+            x={x}
+            y={(110 - h) / 2}
+            width="8"
+            height={h}
+            rx="4"
+            fill={idx % 2 === 0 ? accent : '#38bdf8'}
+            opacity={0.85}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function ProductsShowcase() {
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const visibleProducts =
+    activeFilter === 'all'
+      ? CORE_PRODUCTS
+      : CORE_PRODUCTS.filter((item) => item.category === activeFilter);
+
   return (
     <section id="products-suite" className="ng-section ng-products-suite" aria-labelledby="products-title">
       <div className="ng-section-heading">
         <div>
-          <span className="ng-kicker">02 / PRODUCTS &amp; ANALYSIS ECOSYSTEM</span>
+          <span className="ng-kicker">02 / VISUAL PRODUCT ECOSYSTEM</span>
           <h2 id="products-title">
-            ผลิตภัณฑ์ระดับสถาบัน<br />
-            <span>ครบ จบ ในแพลตฟอร์มเดียว</span>
+            เครื่องมือเทรดเกรดมือโปร<br />
+            <span>เข้าใจง่าย เห็นภาพชัดในคลิกเดียว</span>
           </h2>
         </div>
         <p>
-          ระบบนิเวศการลงทุนที่ออกแบบมาให้โปร่งใส ตรวจสอบย้อนกลับได้ทุกมิติ
-          ตั้งแต่สแกนเนอร์ สัญญาณเทรด ไปจนถึงเครื่องมือวิเคราะห์ระดับโปร
+          ย่อความซับซ้อนให้เป็นกราฟิกที่อ่านง่าย เลือกหมวดเครื่องมือที่สนใจแล้วกดเปิดใช้งานจริงได้ทันที
         </p>
       </div>
 
-      {/* Grid of Core Products */}
+      {/* Interactive Category Filter Capsule Bar */}
+      <div className="ng-prod-filter-bar" role="tablist" aria-label="กรองหมวดหมู่ผลิตภัณฑ์">
+        {FILTER_TABS.map((tab) => {
+          const isSelected = activeFilter === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              className={`ng-prod-filter-pill${isSelected ? ' is-active' : ''}`}
+              onClick={() => setActiveFilter(tab.id)}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Visual Bento Cards Grid */}
       <div className="ng-products-grid">
-        {CORE_PRODUCTS.map((prod) => {
+        {visibleProducts.map((prod) => {
           const IconComp = prod.icon;
           return (
-            <article key={prod.id} className="ng-product-card" style={{ '--prod-accent': prod.accent }}>
+            <article
+              key={prod.id}
+              className="ng-product-card"
+              style={{ '--prod-accent': prod.accent, '--prod-rgb': prod.rgb }}
+            >
               <div className="ng-product-card-header">
                 <div className="ng-product-badge-row">
                   <span className="ng-product-num">{prod.number}</span>
-                  <span className="ng-product-badge">{prod.badge}</span>
+                  <span className="ng-product-badge" style={{ color: prod.accent }}>
+                    {prod.badge}
+                  </span>
                 </div>
                 <div className="ng-product-icon-wrap" style={{ color: prod.accent }}>
-                  <IconComp size={24} />
+                  <IconComp size={20} />
                 </div>
               </div>
 
+              {/* Visual SVG Dashboard Preview */}
+              <Link href={prod.targetUrl} className="ng-prod-visual-box" aria-label={`เปิด ${prod.title}`}>
+                <ProductVisualArt type={prod.visualType} accent={prod.accent} />
+              </Link>
+
               <div className="ng-product-card-body">
                 <h3 className="ng-product-title">{prod.title}</h3>
-                <h4 className="ng-product-subtitle">{prod.subtitle}</h4>
+                <h4 className="ng-product-subtitle" style={{ color: prod.accent }}>
+                  {prod.subtitle}
+                </h4>
                 <p className="ng-product-tagline">{prod.tagline}</p>
 
-                <div className="ng-product-features-box">
-                  <div className="ng-product-box-title">จุดเด่นสำคัญ:</div>
-                  <ul className="ng-product-features-list">
-                    {prod.features.map((feat, idx) => (
-                      <li key={idx}>
-                        <CheckCircle2 size={14} className="ng-check-icon" />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="ng-product-highlights-box">
-                  <div className="ng-product-box-title">ความสามารถในระบบ (What's Inside):</div>
-                  <div className="ng-product-pills">
-                    {prod.whatsInside.slice(0, 3).map((item, idx) => (
-                      <span key={idx} className="ng-inside-pill">{item}</span>
-                    ))}
-                  </div>
+                <div className="ng-product-pills">
+                  {prod.metrics.map((item, idx) => (
+                    <span key={idx} className="ng-inside-pill">
+                      {item}
+                    </span>
+                  ))}
                 </div>
               </div>
 
               <div className="ng-product-card-footer">
                 <Link href={prod.targetUrl} className="ng-product-action-btn">
-                  <span>เปิดใช้งานผลิตภัณฑ์</span>
+                  <span>เข้าใช้งานทันที</span>
                   <ArrowUpRight size={16} />
                 </Link>
               </div>
@@ -400,21 +370,18 @@ export default function ProductsShowcase() {
         })}
       </div>
 
-      {/* Pro Analysis Suite Section */}
-      <div id="pro-analysis-suite" className="ng-pro-analysis-wrap" style={{ scrollMarginTop: '80px' }}>
+      {/* Pro Analysis 6-Dimension Visual Strip */}
+      <div id="pro-analysis-suite" className="ng-pro-analysis-wrap" style={{ scrollMarginTop: '88px' }}>
         <div className="ng-pro-analysis-banner">
           <div className="ng-pro-banner-content">
             <span className="ng-pro-badge">
-              <Sparkles size={14} /> PRO ANALYSIS SUITE
+              <Sparkles size={14} /> 6-DIMENSION PRO SUITE
             </span>
-            <h3>ชุดเครื่องมือวิเคราะห์เชิงลึกระดับสถาบัน</h3>
-            <p>
-              ครอบคลุมทั้ง 6 มิติหลักของการวิเคราะห์ตลาด ออกแบบมาให้ทำงานสอดประสานกัน
-              เพิ่มความแม่นยำในการคัดกรองความน่าจะเป็นสูง
-            </p>
+            <h3>6 มิติวิเคราะห์ตลาดครบวงจร</h3>
+            <p>คลิกเลือกมิติที่ต้องการเพื่อเปิดหน้าเครื่องมือวิเคราะห์ได้ทันที</p>
           </div>
           <Link href="/markets" className="ng-pro-hub-link">
-            ดูภาพรวมใน Workspace Hub <ArrowUpRight size={16} />
+            เปิดดูทุกตลาดใน Hub <ArrowUpRight size={16} />
           </Link>
         </div>
 
@@ -422,22 +389,18 @@ export default function ProductsShowcase() {
           {PRO_ANALYSIS_TOOLS.map((tool) => {
             const ToolIcon = tool.icon;
             return (
-              <Link key={tool.id} href={tool.link} className="ng-tool-card" style={{ textDecoration: 'none' }}>
-                <div className="ng-tool-header">
-                  <span className="ng-tool-dimension">{tool.dimension}</span>
-                  <span className="ng-tool-category">{tool.category}</span>
-                </div>
+              <Link key={tool.id} href={tool.link} className="ng-tool-card">
                 <div className="ng-tool-icon-row">
-                  <div className="ng-tool-icon">
-                    <ToolIcon size={20} />
+                  <div className="ng-tool-icon" style={{ color: tool.accent }}>
+                    <ToolIcon size={18} />
                   </div>
-                  <h4>{tool.title}</h4>
+                  <div>
+                    <span className="ng-tool-dimension">{tool.dimension}</span>
+                    <h4>{tool.title}</h4>
+                  </div>
+                  <ArrowUpRight size={15} style={{ marginLeft: 'auto', color: tool.accent }} />
                 </div>
                 <p>{tool.desc}</p>
-                <div style={{ marginTop: 'auto', paddingTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', fontSize: '11px', fontWeight: '700', color: '#0284c7' }}>
-                  <span>เปิดเครื่องมือนี้</span>
-                  <ArrowUpRight size={13} />
-                </div>
               </Link>
             );
           })}
@@ -448,19 +411,20 @@ export default function ProductsShowcase() {
       <div className="ng-mobile-ready-banner">
         <div className="ng-mobile-ready-left">
           <div className="ng-mobile-icon-circle">
-            <Smartphone size={28} />
+            <Smartphone size={26} />
           </div>
           <div>
-            <h4>รองรับการใช้งานบนมือถืออย่างสมบูรณ์แบบ (PWA &amp; Mobile First)</h4>
-            <p>
-              ใช้งานผ่านสมาร์ตโฟนได้ทุกระบบด้วยความลื่นไหลระดับ Native App
-              พร้อม Mobile Bottom Navigation Bar และโหมดคอนทราสต์ชัดเจนแม้อยู่กลางแจ้ง
-            </p>
+            <h4>รองรับมือถือ &amp; แท็บเล็ตเต็มรูปแบบ (PWA Ready)</h4>
+            <p>เปิดกราฟ ฟังเสียงแจ้งเตือนน้องนักออม AI และเช็คพอร์ตได้ทุกที่ตลอด 24 ชม.</p>
           </div>
         </div>
         <div className="ng-mobile-ready-right">
-          <span className="ng-pwa-pill"><Radio size={14} /> Realtime Push &amp; Voice</span>
-          <span className="ng-pwa-pill"><ShieldCheck size={14} /> 100% Fail-Closed Safe</span>
+          <Link href="/thai" className="ng-pwa-pill">
+            <Radio size={14} /> เปิดกระดานหุ้นไทย
+          </Link>
+          <Link href="/account" className="ng-pwa-pill">
+            <ShieldCheck size={14} /> เชื่อมต่อ LINE
+          </Link>
         </div>
       </div>
     </section>

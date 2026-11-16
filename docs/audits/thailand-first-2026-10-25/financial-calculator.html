@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="th"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Nugaom — แบบจำลองรายได้และต้นทุน</title>
+<style>body{margin:0;background:#f4f6fa;color:#15253b;font:16px/1.65 system-ui,sans-serif}main{max-width:1150px;margin:auto;padding:28px}h1{font-size:28px;line-height:1.4}h2{font-size:20px}small{font-size:14px;color:#4e6179}.badge{display:inline-block;background:#fff2d8;color:#704600;padding:4px 12px;border-radius:5px}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:20px;background:white;padding:20px;border-radius:8px}label{display:block}input{display:block;box-sizing:border-box;width:100%;font:inherit;border:1px solid #8291a8;border-radius:4px;padding:8px}button{font:inherit;padding:9px 18px;border:0;border-radius:5px;background:#173d6b;color:white;margin:18px 0;cursor:pointer}table{border-collapse:collapse;width:100%;background:white}td,th{text-align:right;padding:12px;border-bottom:1px solid #d6deea;font-variant-numeric:tabular-nums}td:first-child,th:first-child{text-align:left;min-width:155px}th{background:#e7edf6}.table-wrap{overflow:auto}.negative{color:#a02b0f}.positive{color:#176647}.note{max-width:900px}a{color:#164f90}footer{margin-top:30px}code{background:#e7edf6;padding:2px 4px}</style>
+<main><span class="badge">ข้อเสนอ • สมมติฐาน ณ 25 ต.ค. 2026</span><h1>รายได้ค่าสมาชิกคุ้มต้นทุนหรือยัง?</h1><p class="note">ราคาทดลอง 99 / 299 / 599 บาท สัดส่วนผู้จ่าย 40% / 50% / 10% ค่าเฉลี่ย 249 บาทต่อคนต่อเดือน ตัวเลขนี้ไม่ใช่รายได้หรือกำไรที่เกิดขึ้นจริง และไม่ได้เปลี่ยนแพ็กเกจหรือโควตาบนเว็บ</p>
+<div class="controls"><label for="license">เงินเผื่อสิทธิข้อมูลตลาด / เดือน (บาท)<input id="license" type="number" min="0" step="1000" value="15000"></label><label for="research">ต้นทุน AI Research / คำถาม (บาท)<input id="research" type="number" min="0" step="0.5" value="10"></label><label for="basic">ต้นทุน AI อธิบายทั่วไป / คำถาม (บาท)<input id="basic" type="number" min="0" step="0.01" value="0.1"></label><label for="vat">VAT ยอดขาย หากราคารวม VAT (%)<input id="vat" type="number" min="0" max="100" step="1" value="0"></label></div>
+<button id="reset" type="button">คืนสมมติฐานตั้งต้น</button><p id="error" role="alert"></p>
+<div class="table-wrap"><table><thead><tr><th>รายเดือน</th><th>ระมัดระวัง</th><th>ฐาน</th><th>เติบโตดี</th></tr></thead><tbody id="rows"></tbody></table></div>
+<h2>วิธีอ่าน</h2><p class="note">Gross profit หักค่ารับเงิน, AI, แจ้งเตือน, VPS, Cloudflare, สำรองข้อมูล และเงินเผื่อสิทธิข้อมูลแล้ว ส่วน operating result หักค่า acquisition และงานดูแลที่ตั้งสมมติฐานเพิ่ม แต่ยังไม่รวมเงินเดือนผู้ก่อตั้ง/วิศวกร เงินคืน ข้อพิพาท และภาษีอื่นที่ไม่ได้ระบุ</p>
+<p class="note">เงินเผื่อสิทธิข้อมูล 15,000 บาทเป็นสมมติฐานทดสอบความอ่อนไหว ไม่ใช่ใบเสนอราคา redistribution จาก SET การใส่ 0 ไม่ได้หมายความว่ามีสิทธิใช้ฟรี ค่า FX ตั้งไว้ 35 บาท/USD และ VAT ค่าธรรมเนียม 7% เป็นสมมติฐาน ค่า Cloudflare เป็นงบจำลองแบบ Paid ซึ่งยังไม่ได้เปิดใช้งานจากเครื่องมือนี้</p>
+<details><summary>สมมติฐานการใช้งานและข้อจำกัด</summary><ul><li>MAU 500 / 1,000 / 5,000; conversion 3% / 6% / 10%; churn รายเดือน 10% / 6% / 3%</li><li>CAC 600 / 350 / 250 บาท; ลูกค้าใหม่ 5 / 15 / 50 คนต่อเดือน</li><li>โควตาเสนอใหม่ AI ทั่วไป 80/250/600 และ Research 0/2/5 ต่อเดือน ยังไม่แทนโควตาเดิม</li><li>งบ Research 10 บาท/ครั้งเป็นสมมติฐาน; ตัวอย่าง Bigdata หนึ่งครั้งประมาณ 3.94 บาท ไม่ใช่ค่าเฉลี่ย</li><li>ตัวอย่าง token AI ทั่วไป 2,000 input + 1,000 output; งบ 0.10 บาทเผื่อค่าบริการมากกว่าราคา token อย่างเดียว</li><li>ไม่มีผล benchmark ลูกค้า 100–5,000 คน; ไม่ใช่การรับรองความจุเครื่อง</li><li>Gross-margin LTV เว้นว่างหาก margin ยังติดลบ; ไม่ใช้ค่า LTV เพื่ออ้างผลตอบแทนที่พิสูจน์แล้ว</li></ul></details>
+<footer><small>อ้างอิงราคาทางการ: <a href="https://stripe.com/th/pricing">Stripe</a> · <a href="https://developers.cloudflare.com/workers/platform/pricing/">Workers</a> · <a href="https://developers.cloudflare.com/d1/platform/pricing/">D1</a> · <a href="https://www.hostinger.com/th/vps-hosting">Hostinger</a> · <a href="https://www.set.or.th/app/online-data/market-data?lang=en">SET</a><br>สูตรคำนวณผ่าน reconciliation และ boundary checks; ยังไม่ได้ตรวจภาพจากเบราว์เซอร์ในรอบนี้</small></footer></main>
+<script>const inputs={"days":30,"fxTHBPerUSD":35,"prices":[99,299,599],"mix":[0.4,0.5,0.1],"basicQuotaMonthly":[80,250,600],"researchQuotaMonthly":[0,2,5],"basicCostTHB":0.1,"researchCostTHB":10,"freeBasicQuota":3,"freeQuotaUtilization":0.1,"cardRate":0.0365,"billingRate":0.007,"cardFixedTHB":10,"feeVatRate":0.07,"salesVatRate":0,"alertsPerPaidCostTHB":0.5,"vpsTHB":419,"backupTHB":200,"observabilityTHB":100,"dataLicenseProvisionTHB":15000,"operationsTHB":5000,"apiCallsPerMinute":6,"gatewayCallsPerAPI":3,"rowsReadPerAPI":8,"logicalWritesPerAPI":1,"indexWriteFactor":2,"apiPayloadBytes":20480,"edgeCpuMs":0.5,"gatewayCpuMs":2,"apiCpuLowMs":3,"apiCpuHighMs":15,"hostBaselineRAMGiB":2.1,"latencySeconds":0.2,"inflightMiB":2,"idleConnectionKiB":16},scenarios=[{"id":"conservative","mau":500,"conversion":0.03,"churn":0.1,"cacTHB":600,"newPaid":5,"dauRatio":0.15,"hoursPerDAU":0.25,"basicUtilization":0.6,"researchUtilization":0.8},{"id":"base","mau":1000,"conversion":0.06,"churn":0.06,"cacTHB":350,"newPaid":15,"dauRatio":0.2,"hoursPerDAU":0.5,"basicUtilization":0.35,"researchUtilization":0.5},{"id":"optimistic","mau":5000,"conversion":0.1,"churn":0.03,"cacTHB":250,"newPaid":50,"dauRatio":0.3,"hoursPerDAU":0.5,"basicUtilization":0.25,"researchUtilization":0.35}];function assert(c,m){if(!c)throw Error(m||'Invalid assumption');}const dot=(a,b)=>a.reduce((s,n,i)=>s+n*b[i],0);function validate(a){
+ assert(Math.abs(a.mix.reduce((s,x)=>s+x,0)-1)<1e-8,'Plan mix must sum to 1');
+ for(const values of [a.mix,a.prices,a.basicQuotaMonthly,a.researchQuotaMonthly])assert(values.length===3&&values.every(x=>Number.isFinite(x)&&x>=0));
+ for(const [key,value] of Object.entries(a))if(typeof value==='number')assert(Number.isFinite(value)&&value>=0,key);
+}
+function traffic(apiPerDay,a=inputs){
+ const apiMonthly=apiPerDay*a.days,gatewayMonthly=apiMonthly*a.gatewayCallsPerAPI;
+ const edgeMonthly=apiMonthly,totalWorkerRequests=apiMonthly+gatewayMonthly;
+ const cpuMs=edgeMonthly*a.edgeCpuMs+gatewayMonthly*a.gatewayCpuMs;
+ const workerUSD=5+Math.max(0,totalWorkerRequests-1e7)/1e6*0.3+Math.max(0,cpuMs-3e7)/1e6*0.02;
+ const readsMonthly=apiMonthly*a.rowsReadPerAPI,writesMonthly=apiMonthly*a.logicalWritesPerAPI*a.indexWriteFactor;
+ const d1USD=Math.max(0,readsMonthly-25e9)/1e6*0.001+Math.max(0,writesMonthly-5e7)/1e6;
+ return {apiPerDay,apiMonthly,workerRequestsPerDay:totalWorkerRequests/a.days,workerRequestsMonthly:totalWorkerRequests,
+  readsPerDay:readsMonthly/a.days,writesPerDay:writesMonthly/a.days,readsMonthly,writesMonthly,
+  workerPaidBudgetTHB:workerUSD*a.fxTHBPerUSD,d1PaidOverageTHB:d1USD*a.fxTHBPerUSD,
+  freeQuotaFits:totalWorkerRequests/a.days<=1e5&&readsMonthly/a.days<=5e6&&writesMonthly/a.days<=1e5,
+  payloadGiBMonthly:apiMonthly*a.apiPayloadBytes/1024**3};
+}
+function commercial(s,a=inputs){
+ validate(a);for(const key of ['conversion','churn','dauRatio','basicUtilization','researchUtilization'])assert(s[key]>=0&&s[key]<=1,key);
+ const paid=s.mau*s.conversion,free=s.mau-paid,arppu=dot(a.prices,a.mix),mrr=paid*arppu;
+ const netRevenue=mrr/(1+a.salesVatRate);
+ const feePerPaid=(arppu*(a.cardRate+a.billingRate)+a.cardFixedTHB)*(1+a.feeVatRate);
+ const basicQuestionsPerPaid=dot(a.basicQuotaMonthly,a.mix)*s.basicUtilization;
+ const researchQuestionsPerPaid=dot(a.researchQuotaMonthly,a.mix)*s.researchUtilization;
+ const basicQuestions=paid*basicQuestionsPerPaid+free*a.freeBasicQuota*a.freeQuotaUtilization;
+ const researchQuestions=paid*researchQuestionsPerPaid;
+ const fees=paid*feePerPaid,aiBasic=basicQuestions*a.basicCostTHB,aiResearch=researchQuestions*a.researchCostTHB;
+ const alertCost=paid*a.alertsPerPaidCostTHB;
+ const t=traffic(s.mau*s.dauRatio*s.hoursPerDAU*60*a.apiCallsPerMinute,a);
+ const fixedCOGS=a.vpsTHB+a.backupTHB+a.observabilityTHB+a.dataLicenseProvisionTHB+t.workerPaidBudgetTHB+t.d1PaidOverageTHB;
+ const cogs=fixedCOGS+fees+aiBasic+aiResearch+alertCost,grossProfit=netRevenue-cogs;
+ const marketing=s.cacTHB*s.newPaid,operatingResult=grossProfit-marketing-a.operationsTHB;
+ const unitContribution=arppu/(1+a.salesVatRate)-feePerPaid-basicQuestionsPerPaid*a.basicCostTHB-researchQuestionsPerPaid*a.researchCostTHB-a.alertsPerPaidCostTHB;
+ const freeAI=free*a.freeBasicQuota*a.freeQuotaUtilization*a.basicCostTHB;
+ const grossMargin=netRevenue>0?grossProfit/netRevenue:null;
+ return {...s,paid,free,arppu,mrr,netRevenue,fees,aiBasic,aiResearch,alertCost,fixedCOGS,cogs,grossProfit,grossMargin,marketing,operatingResult,
+  basicQuestions,researchQuestions,basicInputTokens:basicQuestions*2000,basicOutputTokens:basicQuestions*1000,
+  unitContribution,contributionLTV:s.churn>0?unitContribution/s.churn:null,
+  grossMarginLTV:s.churn>0&&grossMargin>0?arppu/(1+a.salesVatRate)*grossMargin/s.churn:null,
+  cacPaybackMonths:unitContribution>0?s.cacTHB/unitContribution:null,
+  cogsBreakEvenPaid:unitContribution>0?Math.ceil((fixedCOGS+freeAI)/unitContribution):null,
+  operatingBreakEvenPaid:unitContribution>0?Math.ceil((fixedCOGS+freeAI+marketing+a.operationsTHB)/unitContribution):null,
+  retention12Months:(1-s.churn)**12,infraCostPerMAU:s.mau>0?(a.vpsTHB+a.backupTHB+a.observabilityTHB+t.workerPaidBudgetTHB+t.d1PaidOverageTHB)/s.mau:null,
+  traffic:t};
+}
+const money=n=>n===null?'ยังคำนวณไม่ได้':new Intl.NumberFormat('th-TH',{maximumFractionDigits:0}).format(n),percent=n=>n===null?'—':(n*100).toFixed(1)+'%';
+function update(){try{const a={...inputs,dataLicenseProvisionTHB:Number(document.getElementById('license').value),researchCostTHB:Number(document.getElementById('research').value),basicCostTHB:Number(document.getElementById('basic').value),salesVatRate:Number(document.getElementById('vat').value)/100};const rs=scenarios.map(s=>commercial(s,a));const metrics=[['ผู้ใช้งานต่อเดือน (MAU)',r=>money(r.mau)],['สมาชิกจ่ายเงิน',r=>money(r.paid)],['MRR ก่อน VAT ยอดขาย',r=>money(r.mrr)],['รายได้สุทธิ VAT ที่ตั้งไว้',r=>money(r.netRevenue)],['ต้นทุนบริการรวม (COGS)',r=>money(r.cogs)],['Gross profit',r=>money(r.grossProfit)],['Gross margin',r=>percent(r.grossMargin)],['Operating result',r=>money(r.operatingResult)],['คุ้มทุน COGS (ผู้จ่าย)',r=>money(r.cogsBreakEvenPaid)],['คุ้มทุนรวม OPEX (ผู้จ่าย)',r=>money(r.operatingBreakEvenPaid)],['CAC สมมติ (บาท)',r=>money(r.cacTHB)],['LTV จาก gross margin',r=>money(r.grossMarginLTV)],['CAC payback (เดือน)',r=>r.cacPaybackMonths?.toFixed(1)||'—'],['เงินเผื่อ AI รวม (บาท)',r=>money(r.aiBasic+r.aiResearch)],['โครงสร้างพื้นฐาน / MAU (บาท)',r=>r.infraCostPerMAU?.toFixed(2)||'—'],['Free quota Cloudflare ตามสมมติฐาน',r=>r.traffic.freeQuotaFits?'อยู่ในเพดาน*':'เกินเพดาน*']];document.getElementById('rows').innerHTML=metrics.map(([label,f])=>'<tr><td>'+label+'</td>'+rs.map(r=>'<td>'+f(r)+'</td>').join('')+'</tr>').join('');document.getElementById('error').textContent='';}catch(e){document.getElementById('error').textContent='กรุณาใส่สมมติฐานที่เป็นตัวเลขไม่ติดลบ';}}
+for(const id of ['license','research','basic','vat'])document.getElementById(id).addEventListener('input',update);document.getElementById('reset').addEventListener('click',()=>{for(const [id,value] of Object.entries({license:15000,research:10,basic:.1,vat:0}))document.getElementById(id).value=value;update();});update();
+</script></html>

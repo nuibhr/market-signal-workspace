@@ -11,7 +11,7 @@ const { sharedDatabase } = await import('../storage/sqlite.mjs');
 const { createCloudScanner, MAX_SCAN_ATTEMPTS } = await import('./cloud-jobs.mjs');
 const { createSignal, saveAdvance, signalForSession, cloudScannerProcessHealth, recordScanProgress, scannerHealth } = await import('./store.mjs');
 const { advanceThaiOrbPick } = await import('./thai-orb.mjs');
-const { SET100_SYMBOLS, MAI_INITIAL_SYMBOLS } = await import('../markets/catalog.mjs');
+const { THAI_ALL_SYMBOLS } = await import('../markets/catalog.mjs');
 test.after(() => { sharedDatabase().close(); rmSync(dir, { recursive: true, force: true }); });
 const at = s => Date.parse(`2026-10-07T${s}:00+07:00`);
 
@@ -89,7 +89,7 @@ test('Cloud heartbeat alone cannot certify a running scanner or successful consu
 
 test('Thai health recognizes complete Cloud runs by timestamps, regardless of their slot prefix', async t => {
   t.mock.timers.enable({ apis: ['Date'], now: at('14:00') });
-  for (const symbol of [...SET100_SYMBOLS, ...MAI_INITIAL_SYMBOLS]) await recordScanProgress('thai', '2026-10-07', symbol, 'done');
+  for (const symbol of THAI_ALL_SYMBOLS) await recordScanProgress('thai', '2026-10-07', symbol, 'done');
   await storage.run(`INSERT INTO auto_pick_runs(id,market,slot,status,started_at,finished_at,scanned)
     VALUES('cloud-health-fixture','thai','cloud:opaque-job-id','COMPLETE',?,?,4)`, new Date(at('13:59')).toISOString(), new Date().toISOString());
   assert.equal((await scannerHealth()).status, 'healthy');

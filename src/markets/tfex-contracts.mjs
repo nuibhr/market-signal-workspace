@@ -87,8 +87,7 @@ function productMonths(product, current) {
 function createContract(product, serial, rank) {
   const { year, code, expiryMonth } = monthParts(serial);
   const symbol = `${product.root}${code}${String(year).slice(-2)}`;
-  const monthLabel = new Date(Date.UTC(year, Number(expiryMonth.slice(-2)) - 1, 1))
-    .toLocaleDateString('th-TH', { timeZone: 'UTC', month: 'short', year: 'numeric' });
+  const monthLabel = `${['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][Number(expiryMonth.slice(-2))-1]} ${year+543}`;
   return {
     symbol,
     instrumentId: `TFEX:${symbol}`,
@@ -124,7 +123,9 @@ export function buildTfexContracts(now = Date.now()) {
   const available = candidates.filter(contract => !VERIFIED_LAST_TRADING_DAY[contract.symbol]
     || today <= VERIFIED_LAST_TRADING_DAY[contract.symbol]);
   const preferredCode = `Z${String(Math.floor(current / 12)).slice(-2)}`;
-  const rootOrder = { S50: 0, GO: 1, SVF: 2 };
+  // Include every product: an undefined rank yields NaN and an inconsistent
+  // comparator, so Node and browser V8 can select different first contracts.
+  const rootOrder = { S50: 0, GO: 1, SVF: 2, USD: 3 };
   const preferred = available.filter(contract => contract.symbol.endsWith(preferredCode))
     .sort((a, b) => rootOrder[a.root] - rootOrder[b.root]);
   return [...preferred, ...available.filter(contract => !contract.symbol.endsWith(preferredCode))];

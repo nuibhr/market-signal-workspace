@@ -16,6 +16,7 @@ const GROUPS = [
     icon: Compass,
     items: [
       ['overview', 'แดชบอร์ดภาพรวมตลาด', LayoutDashboard],
+      ['portfolio', 'เปิดพอร์ต / ยืนยันสิทธิ์ VIP', ShieldCheck],
       ['scanner', 'Multi-Strategy Scanner', Radar],
       ['watchlist', 'Watchlist (หุ้นโปรด)', Star],
     ],
@@ -73,7 +74,7 @@ export function WorkspaceSidebar({ marketId, activeNav, onNavigate, rights, acco
   return <><aside className="sidebar hub-sidebar">
     <div className="hub-sidebar-scroll">
       <Link href="/" className="brand" aria-label="Nugaom กลับเลือกตลาด"><div className="brand-mark"><Image src="/nugaom-mascot.png" width={52} height={52} alt="มาสคอต Nugaom AI Pick" /></div><div><strong>Nugaom</strong><small>AI PICK · พื้นที่ดูตลาด</small></div></Link>
-      <a className="hub-account-card" href={loginHref}><span className="hub-account-avatar"><MemberAvatar account={isGuest ? null : account} size={40} /></span><span><strong>{isGuest ? 'เริ่มด้วย LINE' : account?.displayName || 'มุมสมาชิกของฉัน'}</strong><small>{isGuest ? 'เชื่อมบัญชี · แจ้งพอร์ต · ทดลอง 14 วัน' : rights?.label}</small></span><span className="hub-account-arrow">↗</span></a>
+      <a className="hub-account-card" href={loginHref}><span className="hub-account-avatar"><MemberAvatar account={isGuest ? null : account} size={40} /></span><span><strong>{isGuest ? 'เริ่มด้วย LINE' : account?.displayName || 'มุมสมาชิกของฉัน'}</strong><small>{isGuest ? 'เข้าสู่ระบบ · ตรวจสิทธิสมาชิก' : rights?.label}</small></span><span className="hub-account-arrow">↗</span></a>
       <MarketNavigation current={marketId}/><div className="hub-sidebar-caption">เครื่องมือประจำตลาด</div>
       <nav className="hub-group-list" aria-label="เมนูหลัก">
         {GROUPS.map((group, index) => <section key={group.id} className="hub-menu-group"><button className="hub-group-toggle" aria-expanded={expanded.includes(group.id)} onClick={() => toggle(group.id)}><span className="hub-group-index">0{index + 1}</span><span className="hub-nav-glyph"><group.icon size={17} strokeWidth={1.9} /></span><span>{group.label}</span><ChevronDown size={14} className={expanded.includes(group.id) ? 'hub-chevron open' : 'hub-chevron'} /></button>{expanded.includes(group.id) && <div className="hub-group-items">{group.items.map(([id, label, Icon]) => <button key={id} className={activeNav === id ? 'hub-subnav active' : 'hub-subnav'} onClick={() => onNavigate(id)}><Icon size={15} strokeWidth={1.9} /><span>{label}</span>{id === 'watchlist' && favoriteCount > 0 && <em>{favoriteCount}</em>}</button>)}</div>}</section>)}
@@ -207,7 +208,7 @@ export function CalendarPanel({ onOpenGuide }) {
     </>}
     <div className="daily-callout"><CircleHelp size={17} /><span>FRED ให้วันประกาศและค่าที่เผยแพร่แล้ว ไม่ใช่ฟีดพาดหัวข่าว ไม่มีค่า forecast หรือเวลาออกข่าวในข้อมูลชุดนี้ วันประกาศอาจเปลี่ยนได้และข้อมูลอาจถูกปรับย้อนหลัง</span></div>
     <div className="calendar-source-links"><a href="https://www.bot.or.th/en/our-roles/monetary-policy/mpc-meeting.html" target="_blank" rel="noopener noreferrer">ธปท. · กำหนดประชุม กนง. ↗</a><a href="https://www.bls.gov/schedule/" target="_blank" rel="noopener noreferrer">BLS · เวลาออกข่าวสหรัฐฯ ↗</a></div>
-    <div style={{marginTop:'12px',display:'flex',gap:'8px',flexWrap:'wrap'}}><a href="/calendar" className="feature-primary" style={{textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'6px',fontSize:'0.88rem',padding:'8px 14px',borderRadius:'8px',background:'#0284c7',color:'#fff',fontWeight:'600'}}>เปิดปฏิทินเศรษฐกิจ & Macro Intelligence (จัดระดับผลกระทบ + ข้อควรระวัง AI) ↗</a><button className="feature-primary" onClick={onOpenGuide} style={{background:'transparent',border:'1px solid #cbd5e1',color:'#334155'}}>อ่านวิธีใช้ข่าวประกอบกราฟ ↗</button></div>
+    <div style={{marginTop:'12px',display:'flex',gap:'8px',flexWrap:'wrap'}}><a href="/calendar" className="feature-primary" style={{textDecoration:'none',display:'inline-flex',alignItems:'center',gap:'6px',fontSize:'0.88rem',padding:'8px 14px',borderRadius:'8px',background:'#0284c7',color:'#fff',fontWeight:'600'}}>เปิดปฏิทินเศรษฐกิจ & Macro Intelligence (จัดระดับผลกระทบ + ข้อควรระวัง AI) ↗</a><button className="feature-primary" onClick={onOpenGuide} style={{background:'transparent',border: "none",color:'#334155'}}>อ่านวิธีใช้ข่าวประกอบกราฟ ↗</button></div>
   </div>;
 }
 

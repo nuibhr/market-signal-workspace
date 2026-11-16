@@ -1,7 +1,8 @@
-import { notFound, redirect } from 'next/navigation';
 import { currentMember } from '../../membership/server.mjs';
-import { isAdmin } from '../../membership/store.mjs';
+import { isAdmin, getBrokerStaffRole } from '../../membership/store.mjs';
+import { getAffiliateProfile } from '../../membership/affiliates.mjs';
 import AdminConsole from '../../components/admin-console.jsx';
+import AdminLoginCard from '../../components/admin/admin-login-card.jsx';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,11 @@ export const metadata = { title: 'หลังบ้านผู้ดูแล 
 
 export default async function Page() {
   const member = await currentMember();
-  if (!member) redirect('/account');
-  if (!isAdmin(member)) notFound();
-  return <AdminConsole />;
+  const brokerRole = getBrokerStaffRole(member);
+  const affProfile = await getAffiliateProfile(member);
+  const activeAffiliate = affProfile?.status === 'active' ? affProfile : null;
+  if (!member || (!isAdmin(member) && !brokerRole && !activeAffiliate)) {
+    return <AdminLoginCard />;
+  }
+  return <AdminConsole initialBrokerRole={brokerRole} initialAffiliateOnly={Boolean(!isAdmin(member) && !brokerRole && activeAffiliate)} />;
 }

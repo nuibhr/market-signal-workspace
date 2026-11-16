@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "revision": null,
+  "environment": {
+    "name": null,
+    "kind": "staging",
+    "origin": null
+  },
+  "scope": [
+    {
+      "market": "thai",
+      "providers": [
+        "settrade"
+      ],
+      "features": [
+        "quotes",
+        "charts"
+      ]
+    },
+    {
+      "market": "dr",
+      "providers": [
+        "settrade"
+      ],
+      "features": [
+        "quotes",
+        "charts"
+      ]
+    },
+    {
+      "market": "us",
+      "providers": [
+        "fmp"
+      ],
+      "features": [
+        "quotes",
+        "charts"
+      ]
+    },
+    {
+      "market": "tfex",
+      "providers": [
+        "settrade"
+      ],
+      "features": [
+        "quotes",
+        "charts"
+      ]
+    },
+    {
+      "market": "forex",
+      "providers": [
+        "owner-ingest"
+      ],
+      "features": [
+        "quotes",
+        "charts"
+      ]
+    }
+  ],
+  "gates": {
+    "staging-isolation": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "clean-install": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "release-image": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "browser-desktop-mobile": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "line-login": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "stripe-test-lifecycle": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "load": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "backup-rollback": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "session-continuity": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "owner-release-approval": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "rights:thai:settrade": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "real-data:thai": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "rights:dr:settrade": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "real-data:dr": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "rights:us:fmp": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "real-data:us": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "rights:tfex:settrade": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "real-data:tfex": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "rights:forex:owner-ingest": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    },
+    "real-data:forex": {
+      "status": "PENDING",
+      "file": null,
+      "sha256": null,
+      "reviewer": null,
+      "verifiedAt": null,
+      "validUntil": null,
+      "revision": null,
+      "fixture": false
+    }
+  }
+}

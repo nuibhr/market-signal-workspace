@@ -34,6 +34,8 @@ export class ForexStore {
       CREATE TABLE IF NOT EXISTS forex_clock (connection_id TEXT PRIMARY KEY, body TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS forex_local_sessions (hash TEXT PRIMARY KEY, expires INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS forex_limits (bucket TEXT PRIMARY KEY, hits INTEGER NOT NULL, expires INTEGER NOT NULL);`);
+    this.db.exec(`CREATE TABLE IF NOT EXISTS forex_owner_audit (
+      id INTEGER PRIMARY KEY, owner TEXT NOT NULL, action TEXT NOT NULL, at INTEGER NOT NULL)`);
     initializeDaytrade(this.db);
   }
   limit(scope, identity, count, window = 60000, now = Date.now()) {
@@ -87,9 +89,11 @@ export class ForexStore {
       this.db.exec("ROLLBACK");
       throw error;
     }
+    this.auditOwner(owner,"pair",now);
     return { token, expires_at: iso(expires) };
   }
   revoke(owner) {
+    this.auditOwner(owner,"revoke");
     this.db.prepare("DELETE FROM forex_receipts WHERE connection_id IN (SELECT id FROM forex_connections WHERE owner=?)").run(owner);
     this.db.prepare("DELETE FROM forex_clock WHERE connection_id IN (SELECT id FROM forex_connections WHERE owner=?)").run(owner);
     this.db
@@ -102,6 +106,18 @@ export class ForexStore {
         "UPDATE forex_connections SET revoked=1, snapshot=NULL, quotes='{}', charts='{}' WHERE owner=?",
       )
       .run(owner);
+  }
+  auditOwner(owner, action, now=Date.now()) {
+    if(owner.startsWith('owner:')) this.db.prepare('INSERT INTO forex_owner_audit(owner,action,at) VALUES(?,?,?)').run(owner,action,now);
+  }
+  auditAccess(action, now=Date.now()) {
+    if(!['denied','invalid-service','role-revoked','invalid-ingest'].includes(action))return;
+    this.db.prepare('INSERT INTO forex_owner_audit(owner,action,at) VALUES(?,?,?)').run('unknown',action,now);
+  }
+  serviceOwner(token, now=Date.now()) {
+    if(typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
+    const row=this.db.prepare('SELECT owner FROM forex_connections WHERE token_hash=? AND revoked=0 AND expires>?').get(digest(token),now);
+    return row?.owner.startsWith('owner:') ? row.owner.slice(6) : null;
   }
   connection(owner) {
     return this.db
@@ -198,6 +214,7 @@ export class ForexStore {
         )
         .get(digest(token), now);
       fail(row, "INVALID_CONNECTOR_TOKEN", 401);
+      this.auditOwner(row.owner,"ingest",now);
       this.limit("ingest", row.id, 120, 60000, now);
       const packet = validatePacket(input, config, now);
       assertIdentity(row.server, packet.company, config);

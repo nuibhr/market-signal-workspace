@@ -295,6 +295,7 @@ export function createSettradeClient(options = {}) {
     }
   }
   async function login() {
+    if(env.SHARED_MARKET_DATA_MODE==='daily'&&options.personalCredentials!==true)throw new SettradeDataError('PERSONAL_DATA_CONNECTION_REQUIRED');
     if (config.missing.length) throw new SettradeDataError('NOT_CONFIGURED');
     if (token && expiresAt > now()) return token;
     if (!loginPromise) {
@@ -351,8 +352,9 @@ export function createSettradeClient(options = {}) {
       ? normalizeSettradeDailyCandles(raw, symbol, receivedAt, market)
       : normalizeSettradeIntradayCandles(raw, symbol, receivedAt, timeframe, market);
   }
-  async function getQuote(symbol) { safeSymbol(symbol); return sharedRequest(`quote:${symbol}`, 3000, () => loadQuote(symbol)); }
-  async function getCandles(symbol, timeframe = '1d', limit = 100) { return sharedRequest(`candles:${symbol}:${timeframe}:${limit}`, timeframe === '1d' ? 900000 : 10000, () => loadCandles(symbol, timeframe, limit)); }
+  async function sharedAsset(symbol){const {ALL_ASSETS}=await import('../markets/catalog.mjs');return ALL_ASSETS.find(a=>a.symbol===symbol&&(market==='TFEX'?a.id==='tfex':['thai','dr'].includes(a.id)));}
+  async function getQuote(symbol) { safeSymbol(symbol);if(env.SHARED_MARKET_DATA_MODE==='daily'&&options.personalCredentials!==true){const {sharedQuote}=await import('./shared-policy.mjs');return sharedQuote(await sharedAsset(symbol));}return sharedRequest(`quote:${symbol}`, 3000, () => loadQuote(symbol)); }
+  async function getCandles(symbol, timeframe = '1d', limit = 100) {if(env.SHARED_MARKET_DATA_MODE==='daily'&&options.personalCredentials!==true){safeSymbol(symbol);if(!CANDLE_INTERVALS[timeframe]||!Number.isInteger(limit)||limit<1||limit>MAX_CANDLE_BARS)throw new SettradeDataError('INVALID_CANDLE_LIMIT');const {sharedSeries}=await import('./shared-policy.mjs');return sharedSeries(await sharedAsset(symbol),timeframe);}return sharedRequest(`candles:${symbol}:${timeframe}:${limit}`, timeframe === '1d' ? 900000 : 10000, () => loadCandles(symbol, timeframe, limit)); }
   async function getDailyCandles(symbol, limit = 100) { return getCandles(symbol, '1d', limit); }
   const client = { configuration: { configured: config.missing.length === 0, missing: config.missing }, login, getQuote, getCandles, getDailyCandles };
   if (shared) sharedClients.set(clientKey, client);

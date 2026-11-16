@@ -7,7 +7,7 @@ export function AiCreditsPanel({ quota, onRefresh }) {
   return <section className="account-card">
     <div className="account-section-heading"><span className="account-icon cyan"><Sparkles size={24} /></span><div><span className="account-kicker">NUGAOM ASSISTANT / AI CREDITS</span><h2>เครดิต AI ของคุณ</h2><p>ถามข้อมูลหุ้นจาก Bigdata พร้อมที่มาในหน้าตลาด</p></div></div>
     <div className="account-metrics"><div><span>คำถาม AI คงเหลือวันนี้</span><strong>{quota?.freeRemaining ?? 0} / {quota?.freeLimit ?? 5}</strong><small>รีเซ็ต {quota?.resetAt?new Date(quota.resetAt).toLocaleString('th-TH',{timeZone:'Asia/Bangkok'}):'00:00 น.'} เวลาไทย</small></div><div><span>เครดิตคงเหลือ</span><strong>{quota?.credits ?? 0}</strong><small>{quota?.allowExtraCredits?'ถามเกินโควตาใช้ 1 เครดิต / คำถาม':'แพ็กเกจรายเดือนหยุดเมื่อครบโควตา'}</small></div></div>
-    <p className="account-fineprint">หักเครดิตเฉพาะเมื่อ Bigdata ตอบพร้อมแหล่งอ้างอิง ถ้าแหล่งข้อมูลขัดข้องหรือไม่มีหลักฐาน ระบบคืนเครดิตหรือช่องคำถามฟรีให้ โควตารายเดือนเป็นไปตามแพ็กเกจ Starter / Pro / Ultimate ส่วนเครดิตเดิมจัดการผ่านแอดมิน</p>
+    <p className="account-fineprint">หักเครดิตเฉพาะเมื่อ Bigdata ตอบพร้อมแหล่งอ้างอิง ถ้าแหล่งข้อมูลขัดข้องหรือไม่มีหลักฐาน ระบบคืนเครดิตหรือช่องคำถามฟรีให้ โควตารายเดือนเป็นไปตามแพ็กเกจ BASIC (10 คำถาม/วัน) และ PRO VIP (50 คำถาม/วัน) ส่วนเครดิตเดิมจัดการผ่านแอดมิน</p>
     <div className="account-actions"><a className="account-primary" href="/">ไปถามน้องนักออม AI <ArrowRight size={16} /></a><button className="account-secondary" onClick={onRefresh}>รีเฟรชยอด</button></div>
   </section>;
 }

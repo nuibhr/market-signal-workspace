@@ -1,7 +1,9 @@
 import { timingSafeEqual } from 'node:crypto';
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server.js';
 import { createSession, isConfigured, upsertLineMember, consumeLineFlow } from '../../../../../membership/store.mjs';
+import { attributeReferralToMember, REFERRAL_COOKIE } from '../../../../../membership/affiliates.mjs';
 import { OAUTH_COOKIE, SESSION_COOKIE, authBase, secureCookie } from '../../../../../membership/server.mjs';
+import {DEMO_COOKIE} from '../../../../../membership/demo-policy.mjs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,8 +46,13 @@ export async function GET(request) {
     const identity = await verified.json();
     if (typeof identity.sub !== 'string' || !/^U[a-f0-9]{32}$/i.test(identity.sub) || identity.nonce !== flow.nonce || !Number.isFinite(identity.exp) || identity.exp * 1000 <= Date.now() || identity.iss !== 'https://access.line.me' || identity.aud !== process.env.LINE_CHANNEL_ID) return accountRedirect(request, 'failed');
     const member = (await upsertLineMember({ lineId: identity.sub, displayName: typeof identity.name === 'string' ? identity.name : 'สมาชิก LINE', pictureUrl: typeof identity.picture === 'string' && identity.picture.startsWith('https://') ? identity.picture : null }));
+    const refCode = request.cookies.get(REFERRAL_COOKIE)?.value;
+    if (refCode) {
+      try { await attributeReferralToMember(member.id, refCode); } catch {}
+    }
     const session = (await createSession(member.id));
     const response = accountRedirect(request, 'ok');
+    response.cookies.delete(DEMO_COOKIE);
     response.cookies.set(SESSION_COOKIE, session.value, { httpOnly: true, secure: secureCookie(request),
       sameSite: 'lax', path: '/', expires: new Date(session.expiresAt) });
     return response;

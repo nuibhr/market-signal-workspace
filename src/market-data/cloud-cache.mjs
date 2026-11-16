@@ -1,5 +1,5 @@
 import { storage } from '../storage/database.mjs';
-export const cloudStorage=()=>process.env.STORAGE_PROVIDER==='d1';
+export const cloudStorage=()=>['d1','d1-http','scanner-http'].includes(process.env.STORAGE_PROVIDER);
 export async function cloudCacheGet(id){
   if(!cloudStorage())return null;
   const row=await storage.first('SELECT payload_json FROM provider_cache WHERE id=? AND expires_at>?',id,Date.now());

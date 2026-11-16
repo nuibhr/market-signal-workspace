@@ -1,0 +1,15 @@
+.git
+node_modules
+data
+work
+outputs
+.env
+.env.*
+.dev.vars*
+.wrangler
+.open-next
+.next*
+dist
+deploy/production.env
+deploy/*.credentials.json
+deploy/tunnel-token*

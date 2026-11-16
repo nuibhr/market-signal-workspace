@@ -5,7 +5,7 @@ import {soundPreference,saveSoundPreference} from './preferences.mjs';
 import {createNotificationInbox} from '../auto-pick/notification-inbox.mjs';
 import {eventSpeech} from './records.mjs';
 const now=Date.parse('2026-10-15T15:00:00Z');
-const article={id:'provider-job',title:'Real source fixture headline',url:'https://example.org/story',publishedAt:new Date(now-10000).toISOString(),source:'Fixture publisher',newsTypes:['breaking_news'],impactScore:2,entities:['NTES']};
+const article={id:'provider-job',title:'ข่าวหุ้นเด่น Real source fixture headline',url:'https://example.org/story',publishedAt:new Date(now-10000).toISOString(),source:'Fixture publisher',newsTypes:['breaking_news'],impactScore:2,entities:['NTES']};
 const feed=a=>({markets:[{id:'us',label:'US',status:'available',articles:a}]});
 test('new devices default to sound on; explicit mute survives reload and unavailable storage defaults on',()=>{
   const map=new Map(),storage={getItem:k=>map.get(k),setItem:(k,v)=>map.set(k,v)};
@@ -19,6 +19,11 @@ test('news uses source breaking flags or high importance, filters stale / old / 
   for(const a of [{...important,impactScore:3},{...article,publishedAt:null},{...article,publishedAt:new Date(now+1).toISOString()},{...article,publishedAt:new Date(now-1800000).toISOString()},{...article,url:'javascript:alert(1)'}])assert.equal(newsEvents(feed([a]),now).length,0);
   assert.equal(newsEvents({markets:[{...feed([article]).markets[0],status:'stale'}]},now).length,0);
   assert.ok(eventSpeech(newsEvents(feed([article]),now)[0]).includes(article.title));
+});
+test('pure English news headlines return null speech to prevent garbled voice announcements', () => {
+  const enStory = { ...article, id: 'cnbc-story', title: 'Wall Street opens higher on rate optimism' };
+  const enEvent = newsEvents(feed([enStory]), now)[0];
+  assert.equal(eventSpeech(enEvent), null);
 });
 test('first visit does not read old news; a newly scanned story alerts once across job IDs and reloads',async()=>{
   const map=new Map(),storage={getItem:k=>map.get(k),setItem:(k,v)=>map.set(k,v)},make=()=>createNotificationInbox({scope:'news:public:fixture',owner:'test',storage,now:()=>now});

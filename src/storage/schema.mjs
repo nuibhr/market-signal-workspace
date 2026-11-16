@@ -63,3 +63,117 @@ CREATE TABLE coach_operations (
 export const COMMUNITY_SCHEMA = "-- Fresh community implementation. Additive; no customer data or credentials.\nCREATE TABLE community_rooms (\n  id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT NOT NULL,\n  locked INTEGER NOT NULL DEFAULT 0 CHECK(locked IN (0,1))\n);\nINSERT INTO community_rooms(id,name,description) VALUES\n ('lounge','ห้องนักออม','พูดคุยและแลกเปลี่ยนประสบการณ์'),\n ('thai','หุ้นไทย','แลกเปลี่ยนมุมมองหุ้นไทย'),\n ('dr','DR','สินทรัพย์ต่างประเทศในกระดานไทย'),\n ('us','US และ ETF','หุ้นสหรัฐฯ และ ETF'),\n ('tfex','TFEX','กราฟ สัญญา และการจัดการความเสี่ยง'),\n ('forex','Forex','คู่เงินและบริบทเศรษฐกิจ');\nCREATE TABLE community_staff (\n  member_id TEXT NOT NULL REFERENCES members(id),\n  role TEXT NOT NULL CHECK(role IN ('marketing','analyst')),\n  PRIMARY KEY(member_id,role)\n);\nCREATE TABLE support_threads (\n  id TEXT PRIMARY KEY, member_id TEXT NOT NULL REFERENCES members(id),\n  team TEXT NOT NULL CHECK(team IN ('marketing','analyst')), subject TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','review','answered','closed')),\n  version INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL\n);\nCREATE TABLE community_messages (\n  seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT NOT NULL UNIQUE,\n  room_id TEXT REFERENCES community_rooms(id), thread_id TEXT REFERENCES support_threads(id),\n  sender_id TEXT NOT NULL REFERENCES members(id), sender_kind TEXT NOT NULL CHECK(sender_kind IN ('member','team')),\n  body TEXT NOT NULL, applied INTEGER NOT NULL DEFAULT 0 CHECK(applied IN (0,1)), hidden INTEGER NOT NULL DEFAULT 0 CHECK(hidden IN (0,1)), created_at TEXT NOT NULL,\n  CHECK((room_id IS NOT NULL AND thread_id IS NULL) OR (room_id IS NULL AND thread_id IS NOT NULL))\n);\nCREATE INDEX community_room_messages ON community_messages(room_id,seq DESC);\nCREATE INDEX community_thread_messages ON community_messages(thread_id,seq DESC);\nCREATE INDEX support_member_threads ON support_threads(member_id,updated_at DESC,id);\nCREATE INDEX support_team_threads ON support_threads(team,updated_at DESC,id);\nCREATE TABLE community_reads (\n  member_id TEXT NOT NULL REFERENCES members(id), channel TEXT NOT NULL, last_seq INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY(member_id,channel)\n);\nCREATE TABLE community_reports (\n  id TEXT PRIMARY KEY, message_id TEXT NOT NULL REFERENCES community_messages(id),\n  reporter_id TEXT NOT NULL REFERENCES members(id), reason TEXT NOT NULL,\n  status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','resolved')), created_at TEXT NOT NULL,\n  UNIQUE(message_id,reporter_id)\n);\nCREATE TABLE community_operations (\n  id TEXT PRIMARY KEY, actor_id TEXT NOT NULL REFERENCES members(id), action TEXT NOT NULL,\n  payload_hash TEXT NOT NULL, result_json TEXT NOT NULL, details_json TEXT NOT NULL, created_at TEXT NOT NULL\n);\nCREATE TRIGGER support_message_update AFTER INSERT ON community_messages WHEN NEW.thread_id IS NOT NULL AND NEW.applied=0 BEGIN\n  UPDATE support_threads SET updated_at=NEW.created_at,version=version+1,\n    status=CASE WHEN NEW.sender_kind='team' THEN 'answered' ELSE 'pending' END WHERE id=NEW.thread_id;\n  UPDATE community_messages SET applied=1 WHERE id=NEW.id;\nEND;\nCREATE TRIGGER community_message_no_delete BEFORE DELETE ON community_messages BEGIN\n  SELECT RAISE(ABORT,'IMMUTABLE_COMMUNITY_MESSAGE');\nEND;\nCREATE TRIGGER community_message_content_no_update BEFORE UPDATE OF id,seq,room_id,thread_id,sender_id,sender_kind,body,created_at ON community_messages BEGIN\n  SELECT RAISE(ABORT,'IMMUTABLE_COMMUNITY_MESSAGE');\nEND;\n";
 
 export const SCAN_PROGRESS_SCHEMA = "-- Retry counters are per symbol/session; no trading records or prices are changed.\nALTER TABLE auto_pick_scan_progress ADD COLUMN source_failures INTEGER NOT NULL DEFAULT 0;\nALTER TABLE auto_pick_worker_heartbeat ADD COLUMN runtime_version TEXT;\n";
+
+export const PARTNER_LEADS_SCHEMA = `
+CREATE TABLE IF NOT EXISTS partner_account_leads (
+  id TEXT PRIMARY KEY,
+  member_id TEXT,
+  broker_id TEXT NOT NULL,
+  broker_name TEXT NOT NULL,
+  full_name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  line_id TEXT,
+  email TEXT,
+  interests TEXT,
+  status TEXT NOT NULL DEFAULT 'new' CHECK(status IN ('new','contacted','in_progress','account_opened','cancelled')),
+  notes TEXT,
+  lead_type TEXT NOT NULL DEFAULT 'new_account',
+  account_no TEXT,
+  ip_hash TEXT,
+  user_agent TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS partner_leads_broker ON partner_account_leads(broker_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS partner_leads_status ON partner_account_leads(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS partner_leads_type ON partner_account_leads(lead_type, created_at DESC);
+`;
+
+export const TELEGRAM_VIP_SCHEMA = `
+CREATE TABLE IF NOT EXISTS telegram_vip_invites (
+  invite_link TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  chat_id TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','declined','revoked','expired')),
+  telegram_user_id TEXT,
+  telegram_username TEXT,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  resolved_at TEXT
+);
+CREATE INDEX IF NOT EXISTS telegram_vip_invites_member ON telegram_vip_invites(member_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS telegram_vip_members (
+  member_id TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
+  chat_id TEXT NOT NULL,
+  telegram_user_id TEXT NOT NULL UNIQUE,
+  telegram_username TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','kicked')),
+  joined_at TEXT NOT NULL,
+  kicked_at TEXT,
+  kick_reason TEXT,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS telegram_vip_members_status ON telegram_vip_members(status, chat_id);
+`;
+
+export const BROKER_ACTIVITY_SCHEMA = `-- Track verified broker trading activity and VIP revocation for partner-broker auto-kick.
+ALTER TABLE members ADD COLUMN broker_trade_checked_at TEXT;
+ALTER TABLE members ADD COLUMN broker_last_trade_at TEXT;
+ALTER TABLE members ADD COLUMN vip_revoked_reason TEXT;
+ALTER TABLE members ADD COLUMN vip_revoked_at TEXT;
+`;
+
+export const BROKER_VOLUME_MONITOR_SCHEMA = `-- Track monthly broker trading volume against VIP qualification target (default 1,000,000 THB/month) and promo/partner code metadata.
+ALTER TABLE members ADD COLUMN broker_monthly_volume_thb REAL NOT NULL DEFAULT 0;
+ALTER TABLE members ADD COLUMN broker_volume_month TEXT;
+ALTER TABLE members ADD COLUMN broker_volume_target_thb REAL NOT NULL DEFAULT 1000000;
+ALTER TABLE monthly_codes ADD COLUMN grant_type TEXT NOT NULL DEFAULT 'partner_vip';
+ALTER TABLE monthly_codes ADD COLUMN duration_days INTEGER NOT NULL DEFAULT 30;
+ALTER TABLE monthly_codes ADD COLUMN min_volume_thb REAL NOT NULL DEFAULT 1000000;
+ALTER TABLE monthly_codes ADD COLUMN note TEXT;
+`;
+
+export const BROKER_COMMISSION_TARGET_SCHEMA = `-- Switch partner broker monthly qualification target from 1,000,000 THB volume to 1,000 THB monthly commission per member.
+UPDATE members SET broker_volume_target_thb = 1000 WHERE broker_volume_target_thb = 1000000;
+UPDATE monthly_codes SET min_volume_thb = 1000 WHERE grant_type = 'partner_vip' AND min_volume_thb = 1000000;
+`;
+
+export const AFFILIATE_PROGRAM_SCHEMA = `-- Partner/Co-Admin 30% Affiliate Program & Referral Attribution
+ALTER TABLE members ADD COLUMN referred_by_code TEXT;
+ALTER TABLE members ADD COLUMN referred_by_member_id TEXT;
+ALTER TABLE members ADD COLUMN referred_at TEXT;
+
+CREATE TABLE IF NOT EXISTS affiliate_partners (
+  member_id TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
+  code TEXT NOT NULL UNIQUE,
+  commission_rate_pct REAL NOT NULL DEFAULT 30,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','paused')),
+  payout_note TEXT,
+  created_by TEXT REFERENCES members(id),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS affiliate_commissions (
+  id TEXT PRIMARY KEY,
+  affiliate_member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  referred_member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  referral_code TEXT NOT NULL,
+  plan_id TEXT NOT NULL,
+  interval TEXT NOT NULL DEFAULT 'month',
+  invoice_id TEXT NOT NULL UNIQUE,
+  stripe_event_id TEXT NOT NULL,
+  gross_amount_thb REAL NOT NULL,
+  commission_rate_pct REAL NOT NULL DEFAULT 30,
+  commission_thb REAL NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','paid','cancelled')),
+  payout_note TEXT,
+  paid_at TEXT,
+  paid_by TEXT REFERENCES members(id),
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS members_referred_by_idx ON members(referred_by_member_id);
+CREATE INDEX IF NOT EXISTS affiliate_commissions_partner_idx ON affiliate_commissions(affiliate_member_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS affiliate_commissions_status_idx ON affiliate_commissions(status, created_at DESC);
+`;

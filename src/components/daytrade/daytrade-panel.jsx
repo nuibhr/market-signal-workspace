@@ -92,14 +92,14 @@ export default function DaytradePanel({market='us',initialSymbol=null,onSelect,i
         <div className={styles.heading}><div><span className={styles.eyebrow}>ALL INSTRUMENTS</span><h3>ติดตามราคาและเงื่อนไข</h3></div><span className={styles.caption}>ค้นหา / เลือกสินทรัพย์ทั้งหมด</span></div>
       <div className={styles.coverage}><b>ติดตาม {relevant.length}</b><span className={styles.positive}>เข้าเงื่อนไข {relevant.filter(r=>r.met).length}</span><span>ใกล้เข้า: ยังไม่มีเกณฑ์เดิม</span><span>ตรวจไม่ได้ {relevant.filter(r=>r.abnormal).length}</span><small>เว็บอ่านสถานะ {time(data.generatedAt)} · Polling 15s</small></div>
       {Object.keys(monitor?.errors||{}).filter(k=>!k.startsWith('swing-')).length>0&&<p className={styles.caption} role="status">บางตลาดโหลดไม่ได้ รายการตลาดนั้นจะไม่ใช้ข้อมูลค้างแสดงเงื่อนไข · ลองอัปเดตอีกครั้ง</p>}
-      {['us','forex'].includes(data.market)&&data.connection!=='connected'&&<div className={styles.notice}>MT5 {data.connection==='required'?'ยังไม่เชื่อมต่อ':data.connection==='expired'?'กุญแจหมดอายุ':'ไม่มี heartbeat ล่าสุด'} · <Link href="/forex">ตรวจการเชื่อมต่อ Vantage ↗</Link></div>}
+      {data.market==='us'&&data.connection!=='connected'&&<div className={styles.notice}>MT5 {data.connection==='required'?'ยังไม่เชื่อมต่อ':data.connection==='expired'?'กุญแจหมดอายุ':'ไม่มี heartbeat ล่าสุด'} · บริดจ์ข้อมูลภายนอก</div>}
       {data.mappingPending>0&&<div className={styles.notice}>มีหุ้น/ETF CFD อีก {data.mappingPending} รายการที่ยังยืนยันตลาด US ไม่ได้ รอข้อมูล Exchange/Path จาก EA รุ่นใหม่</div>}
       {data.market==='us'&&<div className={styles.notice}>
         <strong>US EOD &amp; Technical Drill-down</strong>
         <p>สัญญาณเดย์เทรดอ้างอิงราคาปิดแท่ง 15m จาก Vantage CFD · ข้อมูลสรุปและตัวชี้วัดรายวันใช้ FMP EOD ภายใต้สิทธิ์การแสดงผล · ETF CFD เป็นการวิเคราะห์เพื่อการศึกษาค้นคว้า (Research-only) · ไม่มีข้อมูล Intraday Order Book หรือ Level 2</p>
       </div>}
       {data.market==='us'&&<p className={styles.caption}>ราคา: Vantage CFD · Volume หุ้นอ้างอิง: รอเชื่อม FMP ระหว่างวัน · สแกนเฉพาะช่วงหลัก US · ใช้ราคา ไม่ใช้ tick volume แทน volume หุ้น</p>}
-    <div className={styles.rules}><span>EMA20 / EMA50</span><span>ยืนยันด้วยแท่งปิด 15m</span><span>SL ตามโครงสร้าง ≥ 1.5 ATR</span><span>TP 2R · ถือไม่เกิน 16 แท่ง</span><span>ไม่เลื่อนคุ้มทุนก่อนเป้า</span></div>
+    <div className={styles.rules}><span>โมเดลกรรมสิทธิ์ Nugaom AI Core</span><span>ยืนยันโมเมนตัม 15m</span><span>ระบบบริหารความเสี่ยงอัตโนมัติ</span><span>เป้าหมาย 2R เชิงปริมาณ</span><span>วินัยคำสั่งตามระบบ</span></div>
       <div className={styles.toolbar}>
         <label>ค้นหา<input aria-label="ค้นหาสินทรัพย์เดย์เทรด" placeholder="NTES, symbol หรือชื่อสินทรัพย์…" value={query} onChange={e=>{setQuery(e.target.value);setPage(1);}}/></label>
         <label>กลุ่มสินทรัพย์<select aria-label="กลุ่มสินทรัพย์" value={group} onChange={e=>{setGroup(e.target.value);setPage(1);}}><option value="all">ทุกตลาด</option>{Object.entries(MARKET_LABELS).map(([v,l])=><option key={v} value={v}>{l}</option>)}<option value="etf">ETF CFDs</option></select></label>

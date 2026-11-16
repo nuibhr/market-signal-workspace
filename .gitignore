@@ -26,3 +26,4 @@ webull*_sdk.log*
 .open-next/
 .dev.vars
 .dev.vars.*
+dist/

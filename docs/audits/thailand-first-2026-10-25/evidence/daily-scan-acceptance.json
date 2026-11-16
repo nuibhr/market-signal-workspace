@@ -1,0 +1,61 @@
+{
+  "rounds": [
+    {
+      "id": "daily-scan-v1:us:2026-10-25",
+      "complete": 1,
+      "attempted": 600,
+      "interrupted": 0,
+      "completed_at": "2026-10-25T00:38:03.694Z"
+    },
+    {
+      "id": "daily-scan-v1:forex:2026-10-25",
+      "complete": 1,
+      "attempted": 19,
+      "interrupted": 0,
+      "completed_at": "2026-10-25T00:01:03.050Z"
+    },
+    {
+      "id": "daily-scan-v1:thai:2026-10-25",
+      "complete": 1,
+      "attempted": 150,
+      "interrupted": 0,
+      "completed_at": "2026-10-25T00:09:46.002Z"
+    },
+    {
+      "id": "daily-scan-v1:dr:2026-10-25",
+      "complete": 1,
+      "attempted": 141,
+      "interrupted": 0,
+      "completed_at": "2026-10-25T00:08:52.780Z"
+    },
+    {
+      "id": "daily-scan-v1:tfex:2026-10-25",
+      "complete": 1,
+      "attempted": 16,
+      "interrupted": 0,
+      "completed_at": "2026-10-25T00:00:36.688Z"
+    }
+  ],
+  "candles": [
+    {
+      "market": "dr",
+      "available": 141
+    },
+    {
+      "market": "forex",
+      "available": 17
+    },
+    {
+      "market": "tfex",
+      "available": 14
+    },
+    {
+      "market": "thai",
+      "available": 145
+    },
+    {
+      "market": "us",
+      "available": 599
+    }
+  ]
+}

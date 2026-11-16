@@ -3,7 +3,11 @@ import {signalUniverse} from './data.mjs';
 import {candidateViews} from './model.mjs';
 import {defaultSignalCosts} from './store.mjs';
 import {emaSeries} from '../analysis/minervini-stage2.mjs';
+import {scanAgeMinutes,sharedDaily,sharedCached} from '../market-data/shared-policy.mjs';
 export async function thaiScreenerFeed(now=Date.now()){
+ return sharedCached('thai-screen-feed',()=>readThaiScreener(now));
+}
+async function readThaiScreener(now){
  const observations=await storage.all('SELECT symbol,payload_json,checked_ms,next_scan_ms FROM signal_desk_observations WHERE market=?','thai');
  const bySymbol=new Map(observations.map(r=>[r.symbol,r]));
  const desk=await storage.all("SELECT payload_json FROM provider_cache WHERE id LIKE 'thai-desk-observation:%' AND expires_at>?",now);
@@ -17,7 +21,7 @@ export async function thaiScreenerFeed(now=Date.now()){
  if(benchmark?.source?.startsWith('Yahoo')&&!profileAllowed)benchmark=null;
  const rows=signalUniverse('thai').map(asset=>{
   const stored=bySymbol.get(asset.symbol),snapshot=stored?JSON.parse(stored.payload_json):null;
-  const fresh=Boolean(stored&&now-stored.checked_ms<=20*60000),assessment=fresh?snapshot?.stage2:null;
+  const fresh=Boolean(stored&&now-stored.checked_ms<=scanAgeMinutes('thai')*60000),assessment=fresh?snapshot?.stage2:null;
   const profile=profiles.get(asset.symbol),technical=assessment?.technical??{};
   const plans=snapshot&&fresh?candidateViews(snapshot,defaultSignalCosts(asset)):[];
   const plan=plans.find(r=>r.plan?.signalEligible)?.plan??assessment?.plan??null;
@@ -34,7 +38,7 @@ export async function thaiScreenerFeed(now=Date.now()){
  const rsLeaders=available.filter(r=>r.rs?.status==='available'&&r.rs.outperforming).sort((a,b)=>b.rs.excessReturnPercent-a.rs.excessReturnPercent).slice(0,3).map(r=>({symbol:r.symbol,excessReturnPercent:r.rs.excessReturnPercent}));
  const indexBars=benchmark?.bars?.filter(b=>Date.parse(`${b.time}T17:15:00+07:00`)<=now)??[],ema=emaSeries(indexBars.map(b=>b.close),50).at(-1),index=indexBars.at(-1);
  const indexFresh=index&&now-Date.parse(`${index.time}T17:15:00+07:00`)<=8*86400000;
- return {status:'available',market:'thai',assessmentOnly:true,ruleVersion:'thai-ema-stage2-context-v1',rows,
+ return {status:'available',dataMode:sharedDaily()?'daily-snapshot':'continuous',market:'thai',assessmentOnly:true,ruleVersion:'thai-ema-stage2-context-v1',rows,
   stats:{expected:rows.length,observed:available.length,stage2:available.filter(r=>r.templatePass).length,surge:available.filter(r=>r.rvol>1.5).length,rsLeaders,
    advance:available.filter(r=>r.changePercent>0).length,decline:available.filter(r=>r.changePercent<0).length,flat:available.filter(r=>r.changePercent===0).length,
    index:indexFresh?{price:index.close,day:index.time,trend:ema?index.close>=ema?'up':'down':'unknown',source:benchmark.source}:null},

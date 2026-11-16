@@ -152,7 +152,9 @@ export default function InstrumentUniverse({
                 ? demoQuote(item)
                 : Object.hasOwn(quotes, item.broker_symbol)
                   ? quotes[item.broker_symbol]
-                  : null;
+                  : Object.hasOwn(quotes, item.canonical_symbol)
+                    ? quotes[item.canonical_symbol]
+                    : null;
               return (
                 <tr key={item.id} data-selected={selected.id === item.id}>
                   <td>

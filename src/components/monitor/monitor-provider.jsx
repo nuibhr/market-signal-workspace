@@ -1,4 +1,5 @@
 'use client';
+import {readApiJson} from '../../security/api-response.mjs';
 import {pollAfterCompletion} from '../../monitor/poll.mjs';
 import {UI_POLL_INTERVAL_MS} from '../../signals/cadence.mjs';
 import {createContext,useContext,useEffect,useRef,useState} from 'react';
@@ -9,7 +10,8 @@ import {receiveSignalPage,referenceAlertHistorical} from '../../signals/client.m
 import {MARKET_LABELS} from '../../monitor/view.mjs';
 import {eventLabel,eventSpeech,tradeReference} from '../../monitor/records.mjs';
 import {newsEvents} from '../../monitor/news.mjs';
-import {soundPreference,saveSoundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
+import {soundPreference,saveSoundPreference,subscribeSoundPreference,SOUND_PREFERENCE_KEY} from '../../monitor/preferences.mjs';
+import {stopAllSignalSpeech} from '../../auto-pick/speech.mjs';
 import TradeRecordDialog from './trade-record.jsx';
 const Context=createContext(null);
 export const useMonitor=()=>useContext(Context);
@@ -25,8 +27,20 @@ export default function MonitorProvider({children}) {
   const boxes=useRef(new Map()),adapter=useRef(null),sound=useRef(true),identity=useRef(null);
   const speak=(text,done=()=>{},eligible,key)=>adapter.current?.play(text,done,eligible,key)??false;
   const toggle=()=>{
-    const next=!sound.current||['blocked','failed'].includes(audio);sound.current=next;setEnabled(next);adapter.current?.enable(next);
-    try{saveSoundPreference(window.localStorage,next);}catch{}setGestureReady(true);
+    const next=!sound.current||['blocked','failed'].includes(audio);
+    sound.current=next;
+    setEnabled(next);
+    if(next){
+      adapter.current?.unlock?.();
+    }else{
+      stopAllSignalSpeech(window);
+      if(typeof window!=='undefined'&&window.speechSynthesis){
+        try{window.speechSynthesis.cancel();}catch{}
+      }
+    }
+    adapter.current?.enable(next);
+    try{saveSoundPreference(window.localStorage,next);}catch{}
+    setGestureReady(true);
     if(next)speak('ทดสอบเสียงแจ้งเตือนทุกตลาด');
   };
   useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(null),30000);return()=>clearTimeout(timer);},[toast]);
@@ -35,13 +49,27 @@ export default function MonitorProvider({children}) {
     if(!adapter.current.supported)setAudio('unsupported');
     let storage;try{storage=window.localStorage;}catch{}
     sound.current=soundPreference(storage);setEnabled(sound.current);adapter.current.enable(sound.current);
-    const unlock=event=>{if(!event.isTrusted||event.target.closest?.('.monitor-sound'))return;setGestureReady(true);if(sound.current)adapter.current.enable(true);document.removeEventListener('pointerdown',unlock);document.removeEventListener('keydown',unlock);};
-    document.addEventListener('pointerdown',unlock);document.addEventListener('keydown',unlock);
+    const unlock=event=>{
+      if(!event.isTrusted||event.target?.closest?.('.monitor-sound'))return;
+      setGestureReady(true);
+      if(sound.current){
+        adapter.current?.unlock?.();
+        adapter.current?.enable(true);
+      }
+      document.removeEventListener('pointerdown',unlock);
+      document.removeEventListener('touchend',unlock);
+      document.removeEventListener('click',unlock);
+      document.removeEventListener('keydown',unlock);
+    };
+    document.addEventListener('pointerdown',unlock,{passive:true});
+    document.addEventListener('touchend',unlock,{passive:true});
+    document.addEventListener('click',unlock,{passive:true});
+    document.addEventListener('keydown',unlock);
     const preference=event=>{if(event.key===SOUND_PREFERENCE_KEY){sound.current=soundPreference(storage);setEnabled(sound.current);adapter.current.enable(sound.current);}};
     window.addEventListener('storage',preference);
     const tick=setInterval(()=>setNow(Date.now()),1000);setNow(Date.now());
     const visible=()=>adapter.current.visible();document.addEventListener('visibilitychange',visible);
-    return()=>{clearInterval(tick);adapter.current.stop();document.removeEventListener('visibilitychange',visible);document.removeEventListener('pointerdown',unlock);document.removeEventListener('keydown',unlock);window.removeEventListener('storage',preference);};
+    return()=>{clearInterval(tick);adapter.current.stop();document.removeEventListener('visibilitychange',visible);document.removeEventListener('pointerdown',unlock);document.removeEventListener('touchend',unlock);document.removeEventListener('click',unlock);document.removeEventListener('keydown',unlock);window.removeEventListener('storage',preference);};
   },[]);
   useEffect(()=>{
     if(!active)return;
@@ -49,7 +77,7 @@ export default function MonitorProvider({children}) {
     const controller=new AbortController(),box=createNotificationInbox({scope:'news:public:v1',owner:crypto.randomUUID(),storage,historyLimit:1000,locks:navigator.locks,onPersistenceError:()=>setDurable(false)});
     const poll=async()=>{
       try{
-        const r=await fetch('/api/news?alerts=1',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])}),feed=await r.json();
+        const r=await fetch('/api/news?alerts=1',{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])}),feed=await readApiJson(r);
         if(disposed)return;
         setNewsStatus(r.ok?feed.status:feed.code||'SOURCE_UNAVAILABLE');
         setNewsPolicy(feed.newsPolicy||'source-impact');setNewsArticles((feed.markets||[]).filter(m=>m.status==='available').flatMap(m=>m.articles||[]).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt)).slice(0,6));
@@ -58,8 +86,13 @@ export default function MonitorProvider({children}) {
           for(let i=0;i<500&&!disposed;i++){
             const e=await box.claim(document.visibilityState==='visible');if(!e)break;await box.displayed(e.id);if(!referenceAlertHistorical(e))setToast(e);
             if(!referenceAlertHistorical(e)&&e.deliveryVoice==='pending'){
-              await box.voice(e.id,sound.current?'attempted':'muted');
-              if(sound.current)speak(eventSpeech(e),value=>box.voice(e.id,value),()=>!referenceAlertHistorical(e),e.id);
+              const text=eventSpeech(e);
+              if(!text){
+                await box.voice(e.id,'muted');
+              }else{
+                await box.voice(e.id,sound.current?'attempted':'muted');
+                if(sound.current)speak(text,value=>box.voice(e.id,value),()=>!referenceAlertHistorical(e),e.id);
+              }
             }
             await box.dismiss(e.id);
           }
@@ -72,7 +105,7 @@ export default function MonitorProvider({children}) {
   useEffect(()=>{
     if(!active)return;
     let disposed=false,timer;const controller=new AbortController(),owner=crypto.randomUUID();
-    const request=async url=>{const r=await fetch(url,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});const d=await r.json();if(!r.ok)throw Error(d.error||d.code||`HTTP_${r.status}`);return d;};
+    const request=async url=>{const r=await fetch(url,{cache:'no-store',signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});const d=await readApiJson(r);if(!r.ok)throw Error(d.error||d.code||`HTTP_${r.status}`);return d;};
     const boxFor=scope=>{
       if(!boxes.current.has(scope)){let storage;try{storage=window.localStorage;}catch{setDurable(false);}
         boxes.current.set(scope,createNotificationInbox({scope,owner,storage,historyLimit:1000,locks:navigator.locks,onPersistenceError:()=>setDurable(false)}));}
@@ -84,8 +117,13 @@ export default function MonitorProvider({children}) {
         await box.displayed(e.id);
         if(!referenceAlertHistorical(e))setToast(e);
         if(!referenceAlertHistorical(e)&&e.deliveryVoice==='pending'){
-          await box.voice(e.id,sound.current?'attempted':'muted');
-          if(sound.current)speak(eventSpeech(e),value=>box.voice(e.id,value),()=>!referenceAlertHistorical(e));
+          const text=eventSpeech(e);
+          if(!text){
+            await box.voice(e.id,'muted');
+          }else{
+            await box.voice(e.id,sound.current?'attempted':'muted');
+            if(sound.current)speak(text,value=>box.voice(e.id,value),()=>!referenceAlertHistorical(e));
+          }
         }
         await box.dismiss(e.id);
       }
@@ -129,15 +167,24 @@ export default function MonitorProvider({children}) {
 }
 export function SoundControl(){
   const monitor=useMonitor();if(!monitor)return null;
-  const label=monitor.audio==='unsupported'?'ไม่รองรับเสียง':['blocked','failed'].includes(monitor.audio)?'แตะเพื่อเปิดเสียง':!monitor.enabled?'ปิดเสียง':monitor.audio==='speaking'?'กำลังอ่านเสียง':monitor.audio==='starting'?'กำลังเริ่มเสียง':!monitor.gestureReady?'แตะเพื่อเปิดเสียง':'เปิดเสียงแล้ว';
+  const label=monitor.audio==='unsupported'?'ไม่รองรับเสียง':['blocked','failed'].includes(monitor.audio)?'แตะเพื่อเปิดเสียง':!monitor.enabled?'ปิดเสียงอยู่':monitor.audio==='speaking'?'กำลังอ่านเสียง':monitor.audio==='starting'?'กำลังเริ่มเสียง':!monitor.gestureReady?'แตะเพื่อเปิดเสียง':'เปิดเสียงแล้ว';
   const icon=monitor.enabled?'🔊':'🔇';
-  return <button className="monitor-sound" type="button" aria-pressed={monitor.enabled} disabled={monitor.audio==='unsupported'} onClick={monitor.toggle} title="ควบคุมเสียงแจ้งเตือนทุกตลาด · ปิดเสียงยังคงบันทึกสถิติตามปกติ"><span className="sound-icon" aria-hidden="true">{icon}</span><span className="sound-label">{label}</span></button>;
+  const handleToggle=()=>{
+    if(monitor.enabled){
+      stopAllSignalSpeech(typeof window!=='undefined'?window:null);
+      if(typeof window!=='undefined'&&window.speechSynthesis){
+        try{window.speechSynthesis.cancel();}catch{}
+      }
+    }
+    monitor.toggle();
+  };
+  return <button className="monitor-sound" type="button" aria-pressed={monitor.enabled} disabled={monitor.audio==='unsupported'} onClick={handleToggle} title={monitor.enabled ? 'กดเพื่อปิดเสียงแจ้งเตือนทุกอย่างในระบบ (Mute All)' : 'กดเพื่อเปิดเสียงแจ้งเตือนทุกอย่างในระบบ (Unmute All)'}><span className="sound-icon" aria-hidden="true">{icon}</span><span className="sound-label">{label}</span></button>;
 }
 export function AlertHistory(){
   const m=useMonitor(),[count,setCount]=useState(20);if(!m)return null;
   return <section className="monitor-history" aria-label="ประวัติแจ้งเตือนทุกตลาด"><header><h3>แจ้งเตือนทุกตลาด</h3><span role="status" aria-live="polite">{m.events.length} รายการที่เก็บในอุปกรณ์นี้ (ล่าสุดไม่เกิน 1,000 ต่อฟีด) · <a href="#section-results">ประวัติแผนบนเซิร์ฟเวอร์ ↗</a></span></header>
     <p>เข้า–ออกและสถิติอ้างอิงรหัสไม้เดียวกัน · หนึ่งไม้นับผลปิดครั้งเดียว · ปิดเสียงยังเก็บบันทึก · ข่าวสำคัญแยกจากผลเทรด</p>
-    <p role="status">ข่าวไทย / US: {m.newsStatus==='available'?'ตรวจข่าวใหม่ทุก 60 วินาที':m.newsStatus==='partial'?'บางแหล่งข่าวไม่พร้อม':m.newsStatus?'แหล่งข่าวยังไม่พร้อม':'กำลังตรวจแหล่งข่าว'} · {m.newsPolicy==='fresh-public-headlines'?'RSS สาธารณะจาก InfoQuest / CNBC · แจ้งหัวข้อข่าวใหม่ พร้อมที่มา': 'Breaking News จากแหล่งข่าว หรือความสำคัญ 4–5/5'} · ขณะเปิดเว็บ</p>
+    <p role="status">ข่าวหุ้นไทย / US: {m.newsStatus==='available'?'ตรวจข่าวใหม่ทุก 60 วินาที':m.newsStatus==='partial'?'บางแหล่งข่าวไม่พร้อม':m.newsStatus?'แหล่งข่าวยังไม่พร้อม':'กำลังตรวจแหล่งข่าว'} · {m.newsPolicy==='fresh-public-headlines'?'RSS สาธารณะจาก ข่าวหุ้นธุรกิจ / CNBC · แจ้งหัวข้อข่าวหุ้น พร้อมที่มา': 'Breaking News จากแหล่งข่าว หรือความสำคัญ 4–5/5'} · ขณะเปิดเว็บ</p>
     {m.newsArticles?.length>0&&<details className="monitor-news-latest"><summary>ข่าวล่าสุดจากแหล่งข้อมูล ({m.newsArticles.length})</summary><ul>{m.newsArticles.map(a=><li key={`${a.source}:${a.id}`}><a href={a.url} target="_blank" rel="noopener noreferrer">{a.title} ↗</a><small>{a.source} · {formatTime(a.publishedAt)}</small></li>)}</ul></details>}
     {!m.durable&&<p role="status">อุปกรณ์เก็บประวัติไม่ได้ รีเฟรชอาจได้รับรายการเดิมอีก</p>}
     {Object.keys(m.errors).some(k=>k.startsWith('swing-'))&&<p role="status">ฟีด Swing บางตลาดไม่พร้อม ประวัติเดิมยังอยู่</p>}

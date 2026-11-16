@@ -128,7 +128,7 @@ if (res == 200) {
         </div>
 
         {/* Universal Top Navigation across all markets and tools */}
-        <div className="ng-header-nav-strip" style={{ marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+        <div className="ng-header-nav-strip" style={{ marginTop: '12px', borderTop: "none", paddingTop: '10px' }}>
           <MarketNavigation current="developers" />
         </div>
       </header>
@@ -150,7 +150,7 @@ if (res == 200) {
             marginBottom: '16px',
             borderRadius: '12px',
             background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%)',
-            border: '1px solid rgba(124, 58, 237, 0.25)',
+            border: "none",
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -174,24 +174,6 @@ if (res == 200) {
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <Link
-              href="/forex"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                background: 'rgba(168, 85, 247, 0.15)',
-                color: '#c084fc',
-                fontSize: '11px',
-                fontWeight: '700',
-                textDecoration: 'none',
-                border: '1px solid rgba(168, 85, 247, 0.3)',
-              }}
-            >
-              🌍 กราฟ Forex Desk
-            </Link>
-            <Link
               href="/thai#chart-panel"
               style={{
                 display: 'inline-flex',
@@ -204,7 +186,7 @@ if (res == 200) {
                 fontSize: '11px',
                 fontWeight: '700',
                 textDecoration: 'none',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
+                border: "none",
               }}
             >
               🇹🇭 กราฟหุ้นไทย (SET)
@@ -222,7 +204,7 @@ if (res == 200) {
                 fontSize: '11px',
                 fontWeight: '700',
                 textDecoration: 'none',
-                border: '1px solid rgba(13, 148, 136, 0.3)',
+                border: "none",
               }}
             >
               🛡️ คำนวณขนาดไม้ 2R
@@ -411,11 +393,11 @@ if (res == 200) {
               </span>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <Link
-                  href="/forex"
+                  href="/thai"
                   className="ng-action-link"
-                  style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#c084fc', borderColor: 'rgba(124, 58, 237, 0.3)' }}
+                  style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.3)' }}
                 >
-                  🚀 ดูกราฟ SMC ใน Forex Desk <ArrowUpRight size={14} />
+                  🚀 ดูกราฟ SMC ในกระดานหุ้นไทย <ArrowUpRight size={14} />
                 </Link>
                 <Link href="/risk" className="ng-action-link">
                   คำนวณขนาดไม้ 2R <ArrowUpRight size={14} />

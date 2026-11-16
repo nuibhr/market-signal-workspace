@@ -1,0 +1,14 @@
+{
+  "account": "noomnugaom",
+  "livemode": true,
+  "chargesEnabled": true,
+  "payoutsEnabled": true,
+  "identityVerified": true,
+  "requirementsCurrentlyDue": 0,
+  "activeThbRecurringPrices": 0,
+  "liveWebhookEndpoints": 0,
+  "payoutSchedule": "manual",
+  "webApplicationStripeMode": "test",
+  "productionLineLoginHumanAcceptance": "pending-user-test",
+  "source": "Stripe connected account read and production application audit on 2026-10-24"
+}

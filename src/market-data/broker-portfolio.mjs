@@ -6,9 +6,9 @@ export function normalizeBrokerPortfolio(market,accountRaw,portfolioRaw){
  const account=object(accountRaw),p=object(portfolioRaw);
  const rows=Array.isArray(portfolioRaw)?portfolioRaw:Array.isArray(portfolioRaw?.data)?portfolioRaw.data:p?.portfolios||p?.portfolioList||p?.securities||p?.positions||p?.portfolio;
  if(!Array.isArray(rows))throw fail('PORTFOLIO_SCHEMA_UNSUPPORTED');
- const equity=number(account,['equity','totalAsset','totalAssets','totalEquity','netAssetValue']);
- if(equity===null)throw fail('ACCOUNT_EQUITY_UNAVAILABLE');
  const cashBalance=number(account,['cashBalance','cash','cashAvailable','cashBalanceAvailable']);
+ const equity=number(account,['equity','totalAsset','totalAssets','totalEquity','netAssetValue'])??(cashBalance!==null?cashBalance:null);
+ if(equity===null)throw fail('ACCOUNT_EQUITY_UNAVAILABLE');
  if(market==='TFEX'){
   const positions=[];
   for(const row of rows){
