@@ -19,7 +19,7 @@ test('ledger caps identities before strategy, status, page and record focus; str
  }
 });
 test('legacy scan views consume only capped canonical rows and cannot revive unverified signals',async()=>{
- for(const market of ['thai','dr','us','tfex','forex'])for(const [planId,cap] of [['starter',3],['pro',5],['ultimate',8]])for(const legacyView of ['swing','daytrade','auto-pick']){
+ for(const market of ['thai','dr','us','tfex','forex'])for(const [planId,cap] of [['starter',3],['pro',8]])for(const legacyView of ['swing','daytrade','auto-pick']){
   const handler=createCanonicalHandler({market,legacyView,currentMember:async()=>({id:'fixture'}),membershipFor:()=>({tier:'subscriber',planId}),loadInputs:async()=>Array.from({length:20},(_,i)=>({market,symbol:'S'+i,instrumentId:'FIXTURE:'+i,dataKind:{thai:'SCANNER_CANDIDATE',dr:'DR_BRIDGE',us:'EQUITY_EOD',tfex:'FUTURES_CANDIDATE',forex:'SCAN_CANDIDATE'}[market],providerId:'unknown',providerState:'UNAVAILABLE',data:{price:111,entry:222,secret:'DO_NOT_SERIALIZE'}}))});
   const response=await handler(new Request('https://example.invalid/api/scan?diagnostic=1&cap=99&tier=ULTIMATE'));
   assert.equal(response.status,200);const value=await response.json();

@@ -427,8 +427,7 @@
             "GUEST",
             "TRIAL",
             "STARTER",
-            "PRO",
-            "ULTIMATE"
+            "PRO"
           ]
         },
         "selectedMarket": {
@@ -1184,10 +1183,10 @@
               "entitlement": {
                 "properties": {
                   "maxFullCards": {
-                    "const": 8
+                    "const": 3
                   },
                   "fullCardsReturned": {
-                    "maximum": 8
+                    "maximum": 3
                   },
                   "redactedSampleLimit": {
                     "const": 0
@@ -1198,7 +1197,7 @@
                 }
               },
               "records": {
-                "maxItems": 8,
+                "maxItems": 3,
                 "items": {
                   "$ref": "#/$defs/fullRecord"
                 }
@@ -1258,51 +1257,6 @@
                 "properties": {
                   "tier": {
                     "const": "PRO"
-                  }
-                },
-                "required": [
-                  "tier"
-                ]
-              }
-            },
-            "required": [
-              "entitlement"
-            ]
-          },
-          "then": {
-            "properties": {
-              "entitlement": {
-                "properties": {
-                  "maxFullCards": {
-                    "const": 5
-                  },
-                  "fullCardsReturned": {
-                    "maximum": 5
-                  },
-                  "redactedSampleLimit": {
-                    "const": 0
-                  },
-                  "redactedSamplesReturned": {
-                    "const": 0
-                  }
-                }
-              },
-              "records": {
-                "maxItems": 5,
-                "items": {
-                  "$ref": "#/$defs/fullRecord"
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "entitlement": {
-                "properties": {
-                  "tier": {
-                    "const": "ULTIMATE"
                   }
                 },
                 "required": [

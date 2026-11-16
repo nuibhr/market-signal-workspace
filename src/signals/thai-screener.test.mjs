@@ -3,6 +3,7 @@ import {mkdtempSync,rmSync} from 'node:fs';import {join} from 'node:path';import
 const dir=mkdtempSync(join(tmpdir(),'thai-stage2-'));process.env.DATABASE_PATH=join(dir,'fixture.sqlite');
 const {storage}=await import('../storage/database.mjs'),{sharedDatabase}=await import('../storage/sqlite.mjs');
 const {thaiScreenerFeed}=await import('./thai-screener.mjs');
+const {THAI_ALL_SYMBOLS}=await import('../markets/catalog.mjs');
 const now=Date.parse('2026-10-21T12:00:00Z');
 test.after(()=>{sharedDatabase().close();rmSync(dir,{recursive:true,force:true});});
 test('dashboard joins public screening observations and fresh profiles, retains unknown symbols, and never writes trades',async()=>{
@@ -10,7 +11,7 @@ test('dashboard joins public screening observations and fresh profiles, retains 
  await storage.run('INSERT INTO signal_desk_observations VALUES(?,?,?,?,?)','thai','PTT',JSON.stringify(snapshot),now,now+600000);
  await storage.run('INSERT INTO provider_cache VALUES(?,?,?)','thai-stage2-profile:PTT',JSON.stringify({symbol:'PTT',name:'PTT fixture',pe:9,dividendPercent:6,sectorCode:'ENERG'}),now+86400000);
  const before=await storage.all('SELECT * FROM signal_desk_signals');
- const feed=await thaiScreenerFeed(now);assert.equal(feed.rows.length,150);assert.equal(feed.stats.observed,1);assert.equal(feed.stats.stage2,1);assert.equal(feed.stats.surge,1);assert.equal(feed.stats.advance,1);
+ const feed=await thaiScreenerFeed(now);assert.equal(feed.rows.length,THAI_ALL_SYMBOLS.length);assert.equal(feed.stats.observed,1);assert.equal(feed.stats.stage2,1);assert.equal(feed.stats.surge,1);assert.equal(feed.stats.advance,1);
  const ptt=feed.rows.find(r=>r.symbol==='PTT');assert.equal(ptt.pe,9);assert.equal(ptt.sector,'ENERG');assert.equal(feed.rows.find(r=>r.symbol!=='PTT').score,null);
  assert.deepEqual(await storage.all('SELECT * FROM signal_desk_signals'),before);
  const stale=await thaiScreenerFeed(now+21*60000);assert.equal(stale.stats.stage2,0);assert.equal(stale.rows.find(r=>r.symbol==='PTT').price,null);

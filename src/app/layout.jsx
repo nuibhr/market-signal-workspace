@@ -22,6 +22,7 @@ import './magic-ui-theme.css';
 import AssistantProvider from '../components/assistant-provider.jsx';
 import MonitorProvider from '../components/monitor/monitor-provider.jsx';
 import SharedDataNotice from '../components/shared-data-notice.jsx';
+import ReferralTracker from '../components/referral-tracker.jsx';
 
 export const metadata = {
   title: 'Nugaom AI Pick — Market Intelligence Workspace',
@@ -40,7 +41,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body data-theme="dark"><MonitorProvider><AssistantProvider><SharedDataNotice/>{children}</AssistantProvider></MonitorProvider></body>
+      <body data-theme="dark"><MonitorProvider><AssistantProvider><ReferralTracker/><SharedDataNotice/>{children}</AssistantProvider></MonitorProvider></body>
     </html>
   );
 }

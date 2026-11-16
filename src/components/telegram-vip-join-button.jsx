@@ -21,12 +21,17 @@ export default function TelegramVipJoinButton({
   label = '✈️ รับการบ้านหุ้นเข้า Telegram VIP ↗',
   className = '',
   style = null,
+  hasAccess = null,
 }) {
   const [loading, setLoading] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
   const [notice, setNotice] = useState(null);
 
   async function handleJoinVip() {
+    if (hasAccess === false) {
+      setNotice({ type: 'upgrade', text: 'สิทธิ์เฉพาะสมาชิก PRO VIP (฿399/ด.) หรือสมาชิกพอร์ตพันธมิตร', href: '/account#membership-plans', cta: 'อัปเกรดเป็น PRO VIP / ดูสิทธิพาร์ทเนอร์ ↗' });
+      return;
+    }
     if (inviteLink) {
       window.open(inviteLink, '_blank', 'noopener,noreferrer');
       return;
@@ -37,7 +42,7 @@ export default function TelegramVipJoinButton({
       const response = await fetch('/api/alerts/telegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create-invite' }),
+        body: JSON.stringify({ action: 'create-invite', mode: 'join-request' }),
       });
       const data = await readApiJson(response);
       if (response.ok && data?.ok && data.inviteLink) {
@@ -53,7 +58,7 @@ export default function TelegramVipJoinButton({
         return;
       }
       if (response.status === 403 || data?.error === 'MEMBERSHIP_REQUIRED') {
-        setNotice({ type: 'upgrade', text: 'สิทธิ์เฉพาะสมาชิก VIP / Trial หรือเปิดพอร์ตพาร์ทเนอร์', href: '/open-account', cta: 'เปิดพอร์ต / รับสิทธิ์ VIP ↗' });
+        setNotice({ type: 'upgrade', text: 'สิทธิ์เฉพาะสมาชิก PRO VIP (฿399/ด.) หรือสมาชิกพอร์ตพันธมิตร', href: '/account#membership-plans', cta: 'อัปเกรดเป็น PRO VIP / ดูสิทธิพาร์ทเนอร์ ↗' });
         return;
       }
       setNotice({ type: 'error', text: 'ยังไม่สามารถสร้างลิงก์เข้ากลุ่ม VIP ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง' });
@@ -76,9 +81,9 @@ export default function TelegramVipJoinButton({
         {loading ? 'กำลังสร้างลิงก์เข้ากลุ่ม VIP…' : label}
       </button>
       {inviteLink && (
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px', color: '#38bdf8' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', color: '#38bdf8' }}>
           <a href={inviteLink} target="_blank" rel="noopener noreferrer" style={{ color: '#38bdf8', fontWeight: 600, textDecoration: 'underline' }}>
-            🚀 เปิดกลุ่ม Telegram VIP (ลิงก์ใช้ได้ 1 ครั้ง) ↗
+            🚀 เปิดกลุ่ม Telegram VIP · แตะ Request to Join เพื่อยืนยันสิทธิ์อัตโนมัติ ↗
           </a>
         </div>
       )}
@@ -95,3 +100,4 @@ export default function TelegramVipJoinButton({
     </div>
   );
 }
+

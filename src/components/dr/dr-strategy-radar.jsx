@@ -345,7 +345,7 @@ const DR_DOCTOR_MASTER = {
   },
 };
 
-export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',resultsRequest=0,favorites=[],favoritesByMarket={},onToggleFavorite,signalAccess=null,onOpenStyleScanner,compact=false,visible=true,workspaceView=null,onOpenResults }) {
+export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',resultsRequest=0,favorites=[],favoritesByMarket={},onToggleFavorite,signalAccess=null,voiceAccess=null,telegramVipAccess=null,onOpenStyleScanner,compact=false,visible=true,workspaceView=null,onOpenResults }) {
   // Navigation tabs
   const [activeTab, setActiveTab] = useState(currentMarket==='thai'?'thai-scanner':'decision');
   const [showSummary,setShowSummary]=useState(false);
@@ -494,6 +494,14 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   const [lastDrSpokenText, setLastDrSpokenText] = useState('');
 
   const speakDrText = useCallback((text) => {
+    if (voiceAccess === false) {
+      setToastData({
+        title: '🔒 เสียงพากย์สดเฉพาะสมาชิก PRO VIP (฿399/ด.)',
+        desc: 'แพ็กเกจ BASIC และช่วงทดลองฟรีไม่รวมเสียงแจ้งเตือนสด อัปเกรดได้ที่หน้าบัญชีของคุณ (/account#membership-plans)',
+        type: 'info',
+      });
+      return;
+    }
     let storage; try { storage = window.localStorage; } catch {}
     const isSoundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
     if (!text || !speakerRef.current || !isSoundOn) {
@@ -509,7 +517,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
     setLastDrSpokenText(text);
     speakerRef.current.unlock?.();
     speakerRef.current.play(text);
-  }, [voiceEnabled, monitor]);
+  }, [voiceEnabled, monitor, voiceAccess]);
 
   const drPlaybookSource = useMemo(() => {
     if (scoredDRs && scoredDRs.length > 0) {
@@ -728,6 +736,14 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
 
   // Audio Voice Playback Handlers
   const handlePlayMorningBriefing = () => {
+    if (voiceAccess === false) {
+      setToastData({
+        title: '🔒 เสียงพากย์สดเฉพาะสมาชิก PRO VIP (฿399/ด.)',
+        desc: 'แพ็กเกจ BASIC และช่วงทดลองฟรีไม่รวมเสียงแจ้งเตือนสด อัปเกรดได้ที่ /account#membership-plans',
+        type: 'info',
+      });
+      return;
+    }
     let storage; try { storage = window.localStorage; } catch {}
     const isSoundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
     if (!speakerRef.current || !isSoundOn) {
@@ -754,6 +770,14 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
   };
 
   const handleSpeakSingle = (p) => {
+    if (voiceAccess === false) {
+      setToastData({
+        title: '🔒 เสียงพากย์สดเฉพาะสมาชิก PRO VIP (฿399/ด.)',
+        desc: 'แพ็กเกจ BASIC และช่วงทดลองฟรีไม่รวมเสียงแจ้งเตือนสด อัปเกรดได้ที่ /account#membership-plans',
+        type: 'info',
+      });
+      return;
+    }
     let storage; try { storage = window.localStorage; } catch {}
     const isSoundOn = monitor ? monitor.enabled : (voiceEnabled && soundPreference(storage));
     if (!speakerRef.current || !isSoundOn) {
@@ -1017,18 +1041,24 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
               <p>คัด DR80 หุ้นโลกที่มีแต้มต่อ Fair Value พร้อมอ่านออกเสียงภาษาไทยแจ้งจุดเข้า แนวรับ แนวต้าน และจุดคัทลอสให้ฟังทันที (กดสลับเมนูเสียงไม่ซ้อนกัน)</p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button
-                type="button"
-                className={styles.doctorSubmitBtn}
-                onClick={() => {
-                  const txt = drRoundTab === 'evening'
-                    ? buildDrEveningHomeworkSpeech(drEveningPicks, { drMorningPicks })
-                    : buildDrMorningBriefSpeech(drMorningPicks);
-                  speakDrText(txt);
-                }}
-              >
-                {speechState === 'speaking' ? '🔊 กำลังอ่านโพย DR…' : '🔊 กดฟังเสียงสรุปโพย DR ในแผน'}
-              </button>
+              {voiceAccess === false ? (
+                <a href="/account#membership-plans" className={styles.doctorSubmitBtn} style={{ textDecoration: 'none' }}>
+                  🔒 เสียงพากย์สดเฉพาะ PRO VIP (฿399)
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.doctorSubmitBtn}
+                  onClick={() => {
+                    const txt = drRoundTab === 'evening'
+                      ? buildDrEveningHomeworkSpeech(drEveningPicks, { drMorningPicks })
+                      : buildDrMorningBriefSpeech(drMorningPicks);
+                    speakDrText(txt);
+                  }}
+                >
+                  {speechState === 'speaking' ? '🔊 กำลังอ่านโพย DR…' : '🔊 กดฟังเสียงสรุปโพย DR ในแผน'}
+                </button>
+              )}
               {speechState === 'speaking' && (
                 <button
                   type="button"
@@ -1213,7 +1243,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
               <p>คัดกรองเฉพาะ DR80 ที่มีแต้มต่อราคา Fair/Discount + ทรงกราฟ Stage 2 แข็งแกร่ง บันทึก Entry / SL / TP ชัดเจน</p>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <TelegramVipJoinButton label="✈️ รับการบ้าน DR เด่นเข้า Telegram VIP ↗" />
+              <TelegramVipJoinButton label="✈️ รับการบ้าน DR เด่นเข้า Telegram VIP ↗" hasAccess={telegramVipAccess} />
               <button
                 type="button"
                 className={styles.ledgerButton}
@@ -1427,6 +1457,7 @@ export default function DrStrategyRadar({ onSelectSymbol, currentMarket = 'dr',r
                 <TelegramVipJoinButton
                   label="✈️ รับโพย DR เด่นเข้า Telegram VIP ↗"
                   className={styles.doctorTelegramBtn}
+                  hasAccess={telegramVipAccess}
                 />
               </div>
 

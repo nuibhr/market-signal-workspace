@@ -88,3 +88,92 @@ CREATE INDEX IF NOT EXISTS partner_leads_broker ON partner_account_leads(broker_
 CREATE INDEX IF NOT EXISTS partner_leads_status ON partner_account_leads(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS partner_leads_type ON partner_account_leads(lead_type, created_at DESC);
 `;
+
+export const TELEGRAM_VIP_SCHEMA = `
+CREATE TABLE IF NOT EXISTS telegram_vip_invites (
+  invite_link TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  chat_id TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','declined','revoked','expired')),
+  telegram_user_id TEXT,
+  telegram_username TEXT,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  resolved_at TEXT
+);
+CREATE INDEX IF NOT EXISTS telegram_vip_invites_member ON telegram_vip_invites(member_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS telegram_vip_members (
+  member_id TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
+  chat_id TEXT NOT NULL,
+  telegram_user_id TEXT NOT NULL UNIQUE,
+  telegram_username TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','kicked')),
+  joined_at TEXT NOT NULL,
+  kicked_at TEXT,
+  kick_reason TEXT,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS telegram_vip_members_status ON telegram_vip_members(status, chat_id);
+`;
+
+export const BROKER_ACTIVITY_SCHEMA = `-- Track verified broker trading activity and VIP revocation for partner-broker auto-kick.
+ALTER TABLE members ADD COLUMN broker_trade_checked_at TEXT;
+ALTER TABLE members ADD COLUMN broker_last_trade_at TEXT;
+ALTER TABLE members ADD COLUMN vip_revoked_reason TEXT;
+ALTER TABLE members ADD COLUMN vip_revoked_at TEXT;
+`;
+
+export const BROKER_VOLUME_MONITOR_SCHEMA = `-- Track monthly broker trading volume against VIP qualification target (default 1,000,000 THB/month) and promo/partner code metadata.
+ALTER TABLE members ADD COLUMN broker_monthly_volume_thb REAL NOT NULL DEFAULT 0;
+ALTER TABLE members ADD COLUMN broker_volume_month TEXT;
+ALTER TABLE members ADD COLUMN broker_volume_target_thb REAL NOT NULL DEFAULT 1000000;
+ALTER TABLE monthly_codes ADD COLUMN grant_type TEXT NOT NULL DEFAULT 'partner_vip';
+ALTER TABLE monthly_codes ADD COLUMN duration_days INTEGER NOT NULL DEFAULT 30;
+ALTER TABLE monthly_codes ADD COLUMN min_volume_thb REAL NOT NULL DEFAULT 1000000;
+ALTER TABLE monthly_codes ADD COLUMN note TEXT;
+`;
+
+export const BROKER_COMMISSION_TARGET_SCHEMA = `-- Switch partner broker monthly qualification target from 1,000,000 THB volume to 1,000 THB monthly commission per member.
+UPDATE members SET broker_volume_target_thb = 1000 WHERE broker_volume_target_thb = 1000000;
+UPDATE monthly_codes SET min_volume_thb = 1000 WHERE grant_type = 'partner_vip' AND min_volume_thb = 1000000;
+`;
+
+export const AFFILIATE_PROGRAM_SCHEMA = `-- Partner/Co-Admin 30% Affiliate Program & Referral Attribution
+ALTER TABLE members ADD COLUMN referred_by_code TEXT;
+ALTER TABLE members ADD COLUMN referred_by_member_id TEXT;
+ALTER TABLE members ADD COLUMN referred_at TEXT;
+
+CREATE TABLE IF NOT EXISTS affiliate_partners (
+  member_id TEXT PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
+  code TEXT NOT NULL UNIQUE,
+  commission_rate_pct REAL NOT NULL DEFAULT 30,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','paused')),
+  payout_note TEXT,
+  created_by TEXT REFERENCES members(id),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS affiliate_commissions (
+  id TEXT PRIMARY KEY,
+  affiliate_member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  referred_member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  referral_code TEXT NOT NULL,
+  plan_id TEXT NOT NULL,
+  interval TEXT NOT NULL DEFAULT 'month',
+  invoice_id TEXT NOT NULL UNIQUE,
+  stripe_event_id TEXT NOT NULL,
+  gross_amount_thb REAL NOT NULL,
+  commission_rate_pct REAL NOT NULL DEFAULT 30,
+  commission_thb REAL NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','paid','cancelled')),
+  payout_note TEXT,
+  paid_at TEXT,
+  paid_by TEXT REFERENCES members(id),
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS members_referred_by_idx ON members(referred_by_member_id);
+CREATE INDEX IF NOT EXISTS affiliate_commissions_partner_idx ON affiliate_commissions(affiliate_member_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS affiliate_commissions_status_idx ON affiliate_commissions(status, created_at DESC);
+`;

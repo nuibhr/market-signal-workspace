@@ -3,7 +3,7 @@ import { storage, operation as op } from '../storage/database.mjs';
 import { thaiSession } from './engine.mjs';
 import { drSession, DR_ORB_RULE_VERSION } from './dr-orb.mjs';
 import { THAI_ORB_RULE_VERSION } from './thai-orb.mjs';
-import { DR80_SYMBOLS, MAI_INITIAL_SYMBOLS, SET100_SYMBOLS } from '../markets/catalog.mjs';
+import { DR80_SYMBOLS, THAI_ALL_SYMBOLS } from '../markets/catalog.mjs';
 import { US_SCAN_SYMBOLS, US_UNIVERSE_VERSION, usScanSlot } from '../markets/us-universe.mjs';
 import { usEodSession } from '../market-data/fmp-us.mjs';
 import { createSettradeClient } from '../market-data/settrade.mjs';
@@ -136,7 +136,7 @@ export async function settleScanCoverage(market,key,symbols,now=Date.now()) {
 
 export async function settleOutstandingScans(enabledMarkets,now=Date.now()) {
   for(const market of enabledMarkets) {
-    const symbols=market==='thai'?[...SET100_SYMBOLS,...MAI_INITIAL_SYMBOLS]:market==='dr'?DR80_SYMBOLS:market==='us'?US_SCAN_SYMBOLS:[];
+    const symbols=market==='thai'?THAI_ALL_SYMBOLS:market==='dr'?DR80_SYMBOLS:market==='us'?US_SCAN_SYMBOLS:[];
     const keys=await storage.all("SELECT DISTINCT session_key AS key FROM auto_pick_scan_progress WHERE market=? AND state='retry' ORDER BY session_key DESC LIMIT 5",market);
     for(const {key} of keys)await settleScanCoverage(market,key,symbols,now);
   }
@@ -294,7 +294,7 @@ export async function scannerHealth(now = Date.now(), market = 'thai') {
   if (row.status === 'RUNNING') return { status: ageMinutes > 5 ? 'stuck' : 'running', lastRunAt };
   if (!Number.isFinite(ageMinutes) || ageMinutes > 20 || ageMinutes < -2) return { status: 'not-running', lastRunAt };
   if (row.status === 'FAILED') return { status: row.error_code==='SCAN_IN_PROGRESS'&&session.candidateWindow?'scanning-incomplete':'degraded', lastRunAt, errorCode: row.error_code };
-  const coverage=await scanCoverage('thai',session.day,[...SET100_SYMBOLS,...MAI_INITIAL_SYMBOLS],now);
+  const coverage=await scanCoverage('thai',session.day,THAI_ALL_SYMBOLS,now);
   if(session.candidateWindow&&coverage.remaining>0)return {status:'scanning-incomplete',lastRunAt};
   if(session.minutes>=675) {
     if(coverage.remaining||coverage.missed||coverage.unavailable)return {status:'candidate-degraded',lastRunAt,errorCode:'SCAN_UNIVERSE_INCOMPLETE'};

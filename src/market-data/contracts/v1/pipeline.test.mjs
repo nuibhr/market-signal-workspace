@@ -10,7 +10,7 @@ const policy={id:'fixture-only',maxAgeSeconds:30};
 function input(market='thai',i=0){return {market,symbol:`F${i}`,instrumentId:`FIXTURE:${market}:${i}`,providerId:'settrade',providerState:'READY',dataMode:'EOD',dataKind:{thai:'SCANNER_CANDIDATE',dr:'DR_DAILY_BAR',us:'EQUITY_EOD',tfex:'FUTURES_CANDIDATE',forex:'SCAN_CANDIDATE'}[market],dataAsOf:stamp,receivedAt:stamp,closed:true,qualityVerified:true,data:{price:100,changePct:1,entry:101,token:'NEVER_SERIALIZE'}};}
 const options=(market='thai',tier='TRIAL')=>({market,tier,now,evidence,calendar,policy});
 test('five markets and all tier caps validate against JSON schema; guest never receives full fields',()=>{
- for(const market of ['thai','dr','us','tfex','forex'])for(const [tier,cap] of Object.entries({GUEST:1,TRIAL:8,STARTER:3,PRO:5,ULTIMATE:8})){
+ for(const market of ['thai','dr','us','tfex','forex'])for(const [tier,cap] of Object.entries({GUEST:1,TRIAL:3,STARTER:3,PRO:8})){
   const e=projectEnvelope(Array.from({length:20},(_,i)=>input(market,i)),options(market,tier));
   assert.equal(e.records.length,cap);assert.equal(validateOutput(e).valid,true,JSON.stringify(validateOutput(e)));
   assert.ok(!JSON.stringify(e).includes('NEVER_SERIALIZE'));
@@ -72,7 +72,10 @@ test('shape rejects extra secrets, malformed timestamps, unknown enums and caps;
  err.error['secret-token-in-key']='secret-value';const result=validateOutput(err);assert.equal(result.valid,false);assert.ok(!JSON.stringify(result).includes('secret'));
 });
 test('server membership mapping preserves the entitlement ladder',()=>{
- for(const [planId,tier] of [['starter','STARTER'],['pro','PRO'],['ultimate','ULTIMATE']])assert.equal(canonicalTier({tier:'subscriber',planId}),tier);
+ for(const [planId,tier] of [['starter','STARTER'],['pro','PRO']])assert.equal(canonicalTier({tier:'subscriber',planId}),tier);
+ assert.equal(canonicalTier({tier:'subscriber',planId:'starter',markets:['thai','dr']},'thai'),'STARTER');
+ assert.equal(canonicalTier({tier:'subscriber',planId:'starter',markets:['thai','dr']},'us'),'GUEST');
+ assert.equal(canonicalTier({tier:'trial',markets:['thai','dr']},'tfex'),'GUEST');
  assert.equal(canonicalTier({tier:'trial'}),'TRIAL');assert.equal(canonicalTier({tier:'expired'}),'GUEST');assert.equal(canonicalTier({tier:'subscriber',planId:'attacker'}),'GUEST');
 });
 test('invalid prices, crossed quotes, negative volume and empty data never become available',()=>{

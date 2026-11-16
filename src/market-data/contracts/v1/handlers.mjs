@@ -11,7 +11,7 @@ export function createCanonicalHandler({currentMember,membershipFor,loadInputs,e
    const view=params.get('view');
    if(view&&!['focus','screener','rotation','diagnostic','fx'].includes(view))return apiError('INVALID_VIEW');
    if(params.has('timeframe')&&params.get('timeframe')!=='1d')return apiError('INVALID_DATA_REQUEST');
-   const member=await currentMember(request),tier=canonicalTier(membershipFor(member)),now=clock();
+   const member=await currentMember(request),tier=canonicalTier(membershipFor(member),market),now=clock();
    const limited=await rateLimit('canonical-read',member?.id??'public',60);if(limited)return apiError('RATE_LIMITED');
    const universe=market==='us'&&(view==='rotation'||params.get('universe')==='etf')?'etf':'default';
    const inputs=await loadInputs(market,{now,evidence:evidence(),member,universe});

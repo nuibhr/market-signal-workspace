@@ -44,16 +44,17 @@ test('demo roles are per browser, expire, preserve quota across switches and nev
  process.env.APP_ORIGIN='http://localhost:3000';process.env.DEMO_LOGIN_ENABLED='true';
  try{
   assert.equal((await POST(request('POST',{role:'admin'}))).status,400);
-  assert.equal((await POST(request('POST',{role:'ultimate'},null,'https://attacker.example'))).status,403);
+  assert.equal((await POST(request('POST',{role:'pro'},null,'https://attacker.example'))).status,403);
   const login=await POST(request('POST',{role:'starter'}));assert.equal(login.status,200);
   let value=login.cookies.get(DEMO_COOKIE).value,member=await sessionMember(value);
   const id=member.id,expires=member.demo.expiresAt;
   assert.equal(membershipFor(member).limits.freeAiQuestionsDaily,10);
+  assert.deepEqual(membershipFor(member).markets,['thai','dr']);
   assert.ok(Date.parse(expires)-Date.now()<=7200000);
   const q=crypto.randomUUID(),conversation=crypto.randomUUID();
   const reservation=await reserveAiQuestion(member,q,'test question',conversation);
   await completeAiQuestion(member,q,{answer:'Demo',sources:[]},null,reservation.reservationToken);
-  for(const [role,tier,limit] of [['pro','subscriber',50],['ultimate','subscriber',150],['trial','trial',5],['expired','expired',0],['onboarding','onboarding',0]]){
+  for(const [role,tier,limit] of [['pro','subscriber',50],['trial','trial',5],['expired','expired',0],['onboarding','onboarding',0]]){
    const response=await POST(request('POST',{role},value));assert.equal(response.status,200);
    assert.equal(await sessionMember(value),null,'rotated demo token is revoked');
    value=response.cookies.get(DEMO_COOKIE).value;member=await sessionMember(value);
@@ -62,7 +63,7 @@ test('demo roles are per browser, expire, preserve quota across switches and nev
    assert.equal((await aiQuota(member)).freeUsed,1,'changing tier does not reset usage');
    process.env.ADMIN_LINE_IDS=member.line_id;assert.equal(isAdmin(member),false);
   }
-  const other=await POST(request('POST',{role:'ultimate'}));
+  const other=await POST(request('POST',{role:'pro'}));
   assert.notEqual((await sessionMember(other.cookies.get(DEMO_COOKIE).value)).id,id);
   process.env.STRIPE_SECRET_KEY='sk_live_fixture';
   await assert.rejects(checkout(member,'starter',{stripe:{}}),/DEMO_BILLING_TEST_ONLY/);

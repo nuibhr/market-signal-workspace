@@ -18,7 +18,9 @@ test('LINE-only trial runs for 14 days without broker data; concurrent retries g
  const row=await storage.first('SELECT * FROM members WHERE id=?',m.id);
  assert.equal(Date.parse(row.trial_ends_at)-Date.parse(row.trial_started_at),14*86400000);
  assert.equal(row.portfolio_hash,null);assert.equal(row.portfolio_status,'missing');
- assert.equal(membershipFor(row).tier,'trial');assert.equal(membershipFor(row).limits.dailyScanSymbols,8);
+ const trialRights=membershipFor(row);
+ assert.equal(trialRights.tier,'trial');assert.equal(trialRights.limits.dailyScanSymbols,3);assert.deepEqual(trialRights.markets,['thai','dr']);
+ assert.equal(trialRights.capabilities.telegramVip,false);assert.equal(trialRights.capabilities.voiceAlerts,false);
  assert.equal(trialEnrollment(row).canStart,false);
  assert.equal((await storage.first("SELECT COUNT(*) AS n FROM membership_events WHERE member_id=? AND event_type='trial_started'",m.id)).n,1);
  await storage.run('UPDATE members SET trial_ends_at=? WHERE id=?',new Date(Date.now()-1000).toISOString(),m.id);

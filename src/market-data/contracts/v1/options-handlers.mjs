@@ -8,7 +8,7 @@ export function createOptionsHandler({currentMember,membershipFor,contracts,getQ
   try{
    const p=new URL(request.url).searchParams,series=p.get('series')??'S50Z26';
    if(!contracts().some(c=>c.root==='S50'&&c.symbol===series))return apiError('INVALID_SYMBOL');
-   const now=clock(),member=await currentMember(request),tier=canonicalTier(membershipFor(member)),rights=evidence();
+   const now=clock(),member=await currentMember(request),tier=canonicalTier(membershipFor(member),'tfex'),rights=evidence();
    const cap=ENTITLEMENT_CAPS[tier].maxFullCards||1;
    const limited=await rateLimit('canonical-options',member?.id??'public',30);if(limited)return apiError('RATE_LIMITED');
    let inputs=[],atmStrike=null;

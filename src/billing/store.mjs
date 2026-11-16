@@ -1,6 +1,6 @@
 import {randomUUID,createHash} from 'node:crypto';
 import {storage,operation as op} from '../storage/database.mjs';
-import {configuredPlans,stripeMode,validMonthlyPrice} from './plans.mjs';
+import {MEMBERSHIP_PLANS,configuredPlans,stripeMode,validAnnualPrice,validMonthlyPrice,validPlanPrice} from './plans.mjs';
 import {stripeClient,billingOrigin,stripeRedirect} from './client.mjs';
 import {demoEnabled,isDemoIdentity} from '../membership/demo-policy.mjs';
 const idOf=v=>typeof v==='string'?v:v?.id;
@@ -19,19 +19,26 @@ export async function withBilling(member){
 export async function billingSummary(member){
   let mode;try{mode=stripeMode();}catch{return {configured:false,mode:null,subscription:null,hasCustomer:false};}
   const b=member?.billing;
-  let configured=false;try{configured=Boolean(configuredPlans().length===3&&process.env.STRIPE_WEBHOOK_SECRET?.startsWith('whsec_')&&process.env.APP_ORIGIN);}catch{}
+  let configured=false;try{configured=Boolean(configuredPlans().length===MEMBERSHIP_PLANS.length&&process.env.STRIPE_WEBHOOK_SECRET?.startsWith('whsec_')&&process.env.APP_ORIGIN);}catch{}
   return {configured,mode,
     hasCustomer:Boolean(member&&await storage.first('SELECT customer_id FROM billing_customers WHERE member_id=? AND mode=?',member.id,mode)),
     subscription:b?{planId:b.plan_id,status:b.status,paidUntil:b.paid_until,cancelAtPeriodEnd:Boolean(b.cancel_at_period_end)}:null};
 }
 export async function listPlans({stripe=stripeClient()}={}){
   const mode=stripeMode(),plans=configuredPlans();
-  if(plans.length!==3||!process.env.STRIPE_WEBHOOK_SECRET?.startsWith('whsec_'))throw Error('STRIPE_NOT_CONFIGURED');
+  if(plans.length!==MEMBERSHIP_PLANS.length||!process.env.STRIPE_WEBHOOK_SECRET?.startsWith('whsec_'))throw Error('STRIPE_NOT_CONFIGURED');
   billingOrigin();
   return Promise.all(plans.map(async plan=>{
     const price=await stripe.prices.retrieve(plan.priceId);
     if(!validMonthlyPrice(price,plan,mode))throw Error('INVALID_STRIPE_PRICE');
-    return {id:plan.id,name:plan.name,amount:price.unit_amount,currency:'thb',interval:'month',aiDailyLimit:plan.aiDailyLimit,dailyScanSymbols:plan.dailyScanSymbols,features:plan.features,ready:true};
+    let annualPriceReady=false,annualAmount=plan.annualBaht*100;
+    if(plan.annualPriceId){
+      const annualPrice=await stripe.prices.retrieve(plan.annualPriceId);
+      if(!validAnnualPrice(annualPrice,plan,mode))throw Error('INVALID_STRIPE_PRICE');
+      annualAmount=annualPrice.unit_amount;
+      annualPriceReady=true;
+    }
+    return {id:plan.id,name:plan.name,amount:price.unit_amount,annualAmount,annualPriceReady,currency:'thb',interval:'month',aiDailyLimit:plan.aiDailyLimit,dailyScanSymbols:plan.dailyScanSymbols,markets:plan.markets,features:plan.features,ready:true};
   }));
 }
 async function ensureCustomer(member,stripe,mode){
@@ -43,21 +50,25 @@ async function ensureCustomer(member,stripe,mode){
   row=await storage.first('SELECT customer_id FROM billing_customers WHERE member_id=? AND mode=?',member.id,mode);
   return row.customer_id;
 }
-export async function checkout(member,planId,{stripe=stripeClient(),now=Math.floor(Date.now()/1000)}={}){
+export async function checkout(member,planId,{stripe=stripeClient(),now=Math.floor(Date.now()/1000),interval='month'}={}){
   if(!member)throw Error('LOGIN_REQUIRED');
   if(isDemoIdentity(member)&&(!member.demo||stripeMode()!=='test'))throw Error('DEMO_BILLING_TEST_ONLY');
+  if(!['month','year'].includes(interval))throw Error('INVALID_PLAN');
   const plan=configuredPlans().find(p=>p.id===planId);
   if(!plan)throw Error('INVALID_PLAN');
+  const targetPriceId=interval==='year'?plan.annualPriceId:plan.priceId;
+  if(!targetPriceId)throw Error('INVALID_PLAN');
+  const checkoutPlanKey=interval==='year'?`${plan.id}:year`:plan.id;
   await listPlans({stripe});
   const mode=stripeMode(),customer=await ensureCustomer(member,stripe,mode);
   const subscriptions=await stripe.subscriptions.list({customer,status:'all',limit:100});
   if(subscriptions.has_more||subscriptions.data.some(s=>!['canceled','incomplete_expired'].includes(s.status)))throw Error('SUBSCRIPTION_EXISTS');
   let attempt=await storage.first(`INSERT INTO billing_checkouts(member_id,mode,plan_id,request_key,expires_at,lease_until) VALUES(?,?,?,?,?,?)
     ON CONFLICT(member_id,mode) DO UPDATE SET plan_id=excluded.plan_id,request_key=excluded.request_key,session_id=NULL,url=NULL,expires_at=excluded.expires_at,lease_until=excluded.lease_until
-    WHERE billing_checkouts.expires_at<=? RETURNING *`,member.id,mode,plan.id,randomUUID(),now+1800,now+30,now);
+    WHERE billing_checkouts.expires_at<=? RETURNING *`,member.id,mode,checkoutPlanKey,randomUUID(),now+1800,now+30,now);
   if(!attempt){
     const previous=await storage.first('SELECT * FROM billing_checkouts WHERE member_id=? AND mode=?',member.id,mode);
-    if(previous?.plan_id!==plan.id)throw Error('CHECKOUT_ALREADY_OPEN');
+    if(previous?.plan_id!==checkoutPlanKey)throw Error('CHECKOUT_ALREADY_OPEN');
     if(previous?.session_id)return {url:stripeRedirect(previous.url)};
     attempt=await storage.first('UPDATE billing_checkouts SET lease_until=? WHERE member_id=? AND mode=? AND lease_until<=? AND session_id IS NULL RETURNING *',now+30,member.id,mode,now);
     if(!attempt)throw Error('CHECKOUT_PENDING');
@@ -66,9 +77,9 @@ export async function checkout(member,planId,{stripe=stripeClient(),now=Math.flo
     const origin=billingOrigin();
     // Derive the label from the persisted attempt so idempotent retries keep identical parameters.
     const suffix=Array.from(createHash('sha256').update(attempt.request_key).digest().subarray(0,8),value=>String.fromCharCode(97+value%26)).join('');
-    const session=await stripe.checkout.sessions.create({customer,mode:'subscription',line_items:[{price:plan.priceId,quantity:1}],
+    const session=await stripe.checkout.sessions.create({customer,mode:'subscription',line_items:[{price:targetPriceId,quantity:1}],
       integration_identifier:`nugaom-membership-${suffix}`,
-      client_reference_id:member.id,subscription_data:{metadata:{member_id:member.id,plan_id:plan.id}},
+      client_reference_id:member.id,subscription_data:{metadata:{member_id:member.id,plan_id:plan.id,interval}},
       success_url:`${origin}/account?billing=success`,cancel_url:`${origin}/account?billing=cancelled`,expires_at:attempt.expires_at},
       {idempotencyKey:`nugaom-checkout-${attempt.request_key}`});
     const url=stripeRedirect(session.url);
@@ -104,11 +115,13 @@ export async function applyStripeEvent(event,{stripe=stripeClient()}={}){
   const previous=await storage.first('SELECT * FROM billing_subscriptions WHERE subscription_id=?',sub.id);
   if(previous&&previous.member_id!==owner.member_id)throw Error('INVALID_STRIPE_EVENT');
   const items=sub.items?.data??[],item=items.length===1?items[0]:null;
-  const plan=configuredPlans().find(p=>p.priceId===idOf(item?.price));
+  const itemPriceId=idOf(item?.price);
+  const plan=configuredPlans().find(p=>p.priceId===itemPriceId||(p.annualPriceId&&p.annualPriceId===itemPriceId));
+  const expectedPriceIds=plan?[plan.priceId,plan.annualPriceId].filter(Boolean):[];
   const invoice=sub.latest_invoice;
   const periodEnd=item?.current_period_end??sub.current_period_end;
-  const invoiceMatches=plan&&invoice?.lines?.data?.some(line=>idOf(line.pricing?.price_details?.price??line.price)===plan.priceId&&Number.isFinite(line.period?.end)&&line.period.end>=periodEnd);
-  const verified=invoiceMatches&&plan&&item.quantity===1&&validMonthlyPrice(item.price,plan,mode)&&sub.status==='active'&&invoice?.status==='paid'&&Number.isFinite(periodEnd)&&periodEnd*1000>Date.now();
+  const invoiceMatches=plan&&invoice?.lines?.data?.some(line=>expectedPriceIds.includes(idOf(line.pricing?.price_details?.price??line.price))&&Number.isFinite(line.period?.end)&&line.period.end>=periodEnd);
+  const verified=invoiceMatches&&plan&&item.quantity===1&&validPlanPrice(item.price,plan,mode)&&sub.status==='active'&&invoice?.status==='paid'&&Number.isFinite(periodEnd)&&periodEnd*1000>Date.now();
   let planId=verified?plan.id:previous?.plan_id??null,paidUntil=verified?new Date(periodEnd*1000).toISOString():previous?.paid_until??null;
   if(!plan||!['active','past_due'].includes(sub.status)){planId=null;paidUntil=null;}
   const mutation=randomUUID(),now=new Date().toISOString();
@@ -121,5 +134,27 @@ export async function applyStripeEvent(event,{stripe=stripeClient()}={}){
   ];
   if(['checkout.session.completed','checkout.session.async_payment_succeeded'].includes(event.type)&&object?.id)queries.push(op('UPDATE billing_checkouts SET expires_at=0 WHERE member_id=? AND mode=? AND session_id=? AND EXISTS(SELECT 1 FROM billing_events WHERE event_id=? AND mutation_token=?)',owner.member_id,mode,object.id,event.id,mutation));
   const result=await storage.batch(queries);
-  return {processed:Boolean(result[1].changes)};
+  const processed=Boolean(result[1].changes);
+  if(processed&&verified&&invoice?.status==='paid'&&invoice?.id){
+    try{
+      const {recordStripeAffiliateCommission}=await import('../membership/affiliates.mjs');
+      const grossSatang=Number.isFinite(invoice.amount_paid)&&invoice.amount_paid>0?invoice.amount_paid:Number(item?.price?.unit_amount||0);
+      const interval=item?.price?.recurring?.interval==='year'?'year':'month';
+      await recordStripeAffiliateCommission({
+        memberId:owner.member_id,
+        planId,
+        interval,
+        invoiceId:invoice.id,
+        eventId:event.id,
+        grossAmountSatang:grossSatang,
+      });
+    }catch{}
+  }
+  if(processed&&(!plan||!['active','past_due'].includes(sub.status))){
+    try{
+      const {kickMemberFromVipIfExpired}=await import('../notifications/vip-access.mjs');
+      await kickMemberFromVipIfExpired(owner.member_id,{reason:`STRIPE_${String(sub.status||'EXPIRED').toUpperCase()}`});
+    }catch{}
+  }
+  return {processed};
 }

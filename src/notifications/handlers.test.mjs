@@ -89,6 +89,42 @@ test('auto-kick-expired batch kicks list of expired user IDs', async () => {
   assert.equal(kicks.length, 3);
 });
 
+test('create-invite join-request mode issues tracking invite and fromDb auto-kick scans DB', async () => {
+  let issued = null;
+  let autoKicked = false;
+  let webhookSet = null;
+  const { handler } = setup({ id: 'admin', display_name: 'Admin' }, true, {
+    issueJoinInvite: async (args) => {
+      issued = args;
+      return { inviteLink: 'https://t.me/+joinReqTrack', name: args.name, requiresApproval: true };
+    },
+    runAutoKickExpired: async () => {
+      autoKicked = true;
+      return { ok: true, checkedCount: 2, expiredCount: 1, kickedCount: 1, kicked: ['202'], failed: [] };
+    },
+    setWebhook: async (args) => {
+      webhookSet = args;
+      return { success: true };
+    },
+  });
+
+  const resInvite = await handler.POST(request({ action: 'create-invite', mode: 'join-request' }));
+  assert.equal(resInvite.status, 200);
+  const inviteData = await resInvite.json();
+  assert.equal(inviteData.requiresApproval, true);
+  assert.equal(inviteData.inviteLink, 'https://t.me/+joinReqTrack');
+  assert.equal(issued.member.id, 'admin');
+
+  const resKick = await handler.POST(request({ action: 'auto-kick-expired', fromDb: true }));
+  assert.equal(resKick.status, 200);
+  assert.equal(autoKicked, true);
+  assert.equal((await resKick.json()).kickedCount, 1);
+
+  const resHook = await handler.POST(request({ action: 'register-webhook' }));
+  assert.equal(resHook.status, 200);
+  assert.equal(webhookSet.url, 'https://app.invalid/api/alerts/telegram/webhook');
+});
+
 test('market-playbook dispatches categorized playbook with category badge, hashtags and topic thread support', async () => {
   const { handler, calls } = setup({ id: 'admin' }, true);
   const res = await handler.POST(request({
@@ -109,4 +145,43 @@ test('market-playbook dispatches categorized playbook with category badge, hasht
   assert.ok(calls[0].text.includes('[🌐 โพย DR80 หุ้นโลก]'));
   assert.ok(calls[0].text.includes('09:30 น.'));
   assert.ok(calls[0].text.includes('#DR80'));
+});
+
+test('create-invite rejects Trial & BASIC (starter) with 403 and allows PRO VIP; admin runs broker inactivity kick', async () => {
+  const prevStarter = process.env.STRIPE_PRICE_STARTER_MONTHLY;
+  const prevPro = process.env.STRIPE_PRICE_PRO_MONTHLY;
+  process.env.STRIPE_PRICE_STARTER_MONTHLY = 'price_starter';
+  process.env.STRIPE_PRICE_PRO_MONTHLY = 'price_pro';
+  try {
+  const future = '2099-01-01T00:00:00Z';
+  const trialSetup = setup({ id: 'trial-user', trial_ends_at: future }, false);
+  assert.equal((await trialSetup.handler.POST(request({ action: 'create-invite' }))).status, 403);
+  assert.equal(trialSetup.invites.length, 0);
+
+  const starterSetup = setup({ id: 'starter-user', billing: { plan_id: 'starter', status: 'active', paid_until: future } }, false);
+  assert.equal((await starterSetup.handler.POST(request({ action: 'create-invite' }))).status, 403);
+  assert.equal(starterSetup.invites.length, 0);
+
+  const proSetup = setup({ id: 'pro-user', display_name: 'Pro Member', billing: { plan_id: 'pro', status: 'active', paid_until: future } }, false, {
+    issueJoinInvite: async ({ member }) => ({ inviteLink: `https://t.me/+${member.id}`, name: member.display_name, requiresApproval: true }),
+  });
+  const proRes = await proSetup.handler.POST(request({ action: 'create-invite', mode: 'join-request' }));
+  assert.equal(proRes.status, 200);
+  assert.equal((await proRes.json()).inviteLink, 'https://t.me/+pro-user');
+
+  let receivedDryRun = null;
+  const adminSetup = setup({ id: 'admin' }, true, {
+    runAutoKickInactiveBroker: async ({ inactivityDays, dryRun }) => {
+      receivedDryRun = { inactivityDays, dryRun };
+      return { ok: true, dryRun, matchedCount: 2, revokedCount: dryRun ? 0 : 2, kickedCount: dryRun ? 0 : 2 };
+    },
+  });
+  const kickRes = await adminSetup.handler.POST(request({ action: 'auto-kick-inactive-broker', inactivityDays: 14, dryRun: true }));
+  assert.equal(kickRes.status, 200);
+  assert.deepEqual(receivedDryRun, { inactivityDays: 14, dryRun: true });
+  assert.equal((await kickRes.json()).matchedCount, 2);
+  } finally {
+    if (prevStarter === undefined) delete process.env.STRIPE_PRICE_STARTER_MONTHLY; else process.env.STRIPE_PRICE_STARTER_MONTHLY = prevStarter;
+    if (prevPro === undefined) delete process.env.STRIPE_PRICE_PRO_MONTHLY; else process.env.STRIPE_PRICE_PRO_MONTHLY = prevPro;
+  }
 });

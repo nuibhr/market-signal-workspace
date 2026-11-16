@@ -213,7 +213,7 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
             const demoRes = await fetch('/api/auth/demo', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ role: 'ultimate' }),
+              body: JSON.stringify({ role: 'pro' }),
               signal: controller.signal,
             });
             if (demoRes.ok) {
@@ -552,7 +552,17 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
           </section>}
 
           {ownerPreview&&<OwnerDataPreview market={marketId} onSelect={selectLedgerSymbol}/>}
-          {marketId==='thai'&&<div id="section-overview" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='stage2'}><ThaiScreenerDashboard apiUrl={ownerPreview?'/api/owner-preview?market=thai&view=thai':'/api/thai-screener'} ownerPreview={ownerPreview} compact visible={thaiView==='stage2'} signalAccess={ownerPreview?true:accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} onOpenStyleScanner={()=>navigateTo('scanner')} onResults={()=>navigateTo('results')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
+          {accountReady && !ownerPreview && ['us','tfex','forex'].includes(marketId) && Array.isArray(rights?.markets) && !rights.markets.includes(marketId) && (
+            <section className="scanner-member-lock" style={{margin:'16px 0',padding:'22px',borderRadius:'16px',background:'rgba(15,23,42,0.88)',border:'1px solid rgba(56,189,248,0.32)'}}>
+              <h3>🔒 ตลาด {marketId.toUpperCase()} เฉพาะสมาชิก PRO VIP (฿399/ด.) หรือสมาชิกพอร์ตพันธมิตร</h3>
+              <p>สิทธิ์ปัจจุบัน ({rights?.planId==='starter'?'BASIC ฿159/ด.':rights?.tier==='trial'?'ทดลองใช้ฟรี 14 วัน':'Guest'}) ใช้งานได้เฉพาะตลาดหุ้นไทยและ DR80 เท่านั้น</p>
+              <div style={{display:'flex',gap:'12px',flexWrap:'wrap',marginTop:'12px'}}>
+                <a href="/account#membership-plans" className="account-primary">อัปเกรดเป็น PRO VIP ↗</a>
+                <a href="/open-account" className="account-secondary">เปิดพอร์ตพันธมิตรรับ VIP ฟรี ↗</a>
+              </div>
+            </section>
+          )}
+          {marketId==='thai'&&<div id="section-overview" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='stage2'}><ThaiScreenerDashboard apiUrl={ownerPreview?'/api/owner-preview?market=thai&view=thai':'/api/thai-screener'} ownerPreview={ownerPreview} compact visible={thaiView==='stage2'} signalAccess={ownerPreview?true:accountReady?Boolean(rights?.capabilities?.autoPickFeed):null} voiceAccess={ownerPreview?true:accountReady?Boolean(rights?.capabilities?.voiceAlerts):null} telegramVipAccess={ownerPreview?true:accountReady?Boolean(rights?.capabilities?.telegramVip):null} favorites={favorites} onToggleFavorite={toggleFavorite} onSelect={symbol=>selectLedgerSymbol(symbol,'thai')} onOpenStyleScanner={()=>navigateTo('scanner')} onResults={()=>navigateTo('results')} selectedSymbol={asset.symbol} favoritesRequest={favoritesOpenRequest}/></div>}
           {marketId==='thai'&&<div id="section-portfolio" className={thaiWorkspaceStyles.panel} hidden={thaiView!=='portfolio'}><EquityPortfolioDesk onSelectSymbol={selectAsset}/></div>}
           {['thai','dr'].includes(marketId) && (
             <div className={thaiWorkspaceStyles.panel} hidden={marketId==='thai'&&!['radar','results'].includes(thaiView)}>
@@ -569,16 +579,18 @@ export default function Workspace({marketId='thai',initialSymbol=null}) {
               favorites={favorites}
               favoritesByMarket={favoritesByMarket}
               onToggleFavorite={toggleFavorite}
-              signalAccess={accountReady?Boolean(rights?.capabilities?.autoPickFeed):null}
+              signalAccess={ownerPreview?true:accountReady?Boolean(rights?.capabilities?.autoPickFeed):null}
+              voiceAccess={ownerPreview?true:accountReady?Boolean(rights?.capabilities?.voiceAlerts):null}
+              telegramVipAccess={ownerPreview?true:accountReady?Boolean(rights?.capabilities?.telegramVip):null}
             />
             </div>
           )}
-          {marketId==='tfex' && (
+          {marketId==='tfex' && !(accountReady && !ownerPreview && Array.isArray(rights?.markets) && !rights.markets.includes('tfex')) && (
             <div id="section-overview">
               <TfexTerminal key={`tfex-${Boolean(rights?.authenticated)}`} selectedSymbol={asset.symbol} onSelect={selectAsset} />
             </div>
           )}
-          {marketId==='us' && (
+          {marketId==='us' && !(accountReady && !ownerPreview && Array.isArray(rights?.markets) && !rights.markets.includes('us')) && (
             <div id="section-overview">
               {usTab !== 'chart' && (
                 <UsStage2Desk

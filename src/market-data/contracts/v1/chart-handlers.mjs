@@ -14,7 +14,7 @@ export function createChartHandler({read,currentMember,membershipFor,assets,scan
    if(!['15m','1h','4h','1d'].includes(timeframe))return apiError('INVALID_DATA_REQUEST');
    if(market==='us'&&timeframe!=='1d')return apiError('INVALID_DATA_REQUEST');
    const asset=assets.find(a=>a.id===market&&a.symbol===symbol);if(!asset)return apiError('INVALID_SYMBOL');
-   const tier=canonicalTier(membershipFor(await currentMember(request))),cap=ENTITLEMENT_CAPS[tier].maxFullCards;
+   const tier=canonicalTier(membershipFor(await currentMember(request)),market),cap=ENTITLEMENT_CAPS[tier].maxFullCards;
    if(!scanAssets(market,asset.sectionId==='US_ETFS'?'etf':'default').slice(0,cap).some(a=>a.symbol===symbol))return apiError('MEMBERSHIP_REQUIRED');
    const now=clock(),rights=evidence(),sources=market==='us'?['fmp','yahoo']:market==='forex'?['owner-ingest']:market==='tfex'?['settrade']:['settrade','yahoo'];
    const allowedProviders=sources.filter(id=>displayRights(rights,market,id,now)==='CONFIRMED');

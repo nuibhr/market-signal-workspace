@@ -6,8 +6,9 @@ import { US_LIQUID_STOCKS } from './us-liquid-500.mjs';
 import { US_VERIFIED_ETFS } from './us-etfs.mjs';
 const US_WATCHLIST = [...US_LIQUID_STOCKS, ...US_VERIFIED_ETFS];
 import { TFEX_CONTRACTS, TFEX_SYMBOLS } from './tfex-contracts.mjs';
+import { THAI_LIQUID_EXTENDED_SYMBOLS } from './thai-liquid-extended.mjs';
 
-export { TFEX_SYMBOLS };
+export { TFEX_SYMBOLS, THAI_LIQUID_EXTENDED_SYMBOLS };
 
 export const SET100_SYMBOLS = [
   'AAV', 'ADVANC', 'AEONTS', 'AMATA', 'AOT', 'AP', 'AURA', 'AWC', 'BA', 'BAM',
@@ -67,9 +68,10 @@ const DISPLAY_NAMES = {
   'XAU/USD': 'Gold / US Dollar', 'XAG/USD': 'Silver / US Dollar',
 };
 const GROUPS = [
-  { id: 'thai', label: 'หุ้นไทย', detail: 'SET100 · mai 50', sections: [
+  { id: 'thai', label: 'หุ้นไทย', detail: 'SET100 · mai · กองทุน & หุ้นสภาพคล่อง ≥฿2', sections: [
     { id: 'SET100', label: 'SET100 · snapshot 2026 H2', symbols: SET100_SYMBOLS },
     { id: 'MAI_INITIAL', label: 'mai 50 · รอยืนยันอันดับ Market Cap', symbols: MAI_INITIAL_SYMBOLS },
+    { id: 'THAI_EXTENDED', label: 'SET & กองทุนสภาพคล่อง (≥฿2 · ≥5M/วัน)', symbols: THAI_LIQUID_EXTENDED_SYMBOLS },
   ] },
   { id: 'dr', label: 'DR', detail: 'DR80 · KTB', sections: [
     { id: 'DR80', label: 'DR80 · snapshot 25 ก.ย. 2026', symbols: DR80_SYMBOLS },
@@ -113,4 +115,9 @@ export const MARKET_GROUPS = GROUPS.map(group => ({
 
 export const MARKET_ASSETS = Object.fromEntries(MARKET_GROUPS.map(group => [group.id, group.sections.flatMap(section => section.assets)]));
 export const ALL_ASSETS = MARKET_GROUPS.flatMap(group => group.sections.flatMap(section => section.assets));
+export const THAI_ALL_SYMBOLS = [...new Set([...SET100_SYMBOLS, ...MAI_INITIAL_SYMBOLS, ...THAI_LIQUID_EXTENDED_SYMBOLS])];
+export function thaiInstrumentId(symbol) {
+  const section = SET100_SYMBOLS.includes(symbol) ? 'SET100' : MAI_INITIAL_SYMBOLS.includes(symbol) ? 'MAI_INITIAL' : 'THAI_EXTENDED';
+  return `${section}:${symbol}`;
+}
 export const SETTRADE_SYMBOLS = new Set(ALL_ASSETS.filter(asset => asset.feed === 'settrade-daily').map(asset => asset.symbol));

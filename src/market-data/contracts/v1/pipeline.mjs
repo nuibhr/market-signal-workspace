@@ -6,13 +6,14 @@ const finite=x=>typeof x==='number'&&Number.isFinite(x);
 export const timestamp=x=>typeof x==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/.test(x)&&Number.isFinite(Date.parse(x))?x:null;
 const sessionUnknown=()=>({state:'UNKNOWN',closed:null,timezone:null,calendarId:null});
 const uniq=xs=>[...new Set(xs)];
-export function canonicalTier(rights) {
+export function canonicalTier(rights, market = null) {
+ if (market && Array.isArray(rights?.markets) && !rights.markets.includes(market)) return 'GUEST';
  if(rights?.tier==='trial')return 'TRIAL';
  if(rights?.tier==='subscriber') {
   const tier=rights.planId?.toUpperCase();
-  if(['STARTER','PRO','ULTIMATE'].includes(tier))return tier;
-  // Existing admin-issued membership has the established eight-card allowance.
-  if(!rights.planId&&rights.limits?.dailyScanSymbols===8)return 'ULTIMATE';
+  if(['STARTER','PRO'].includes(tier))return tier;
+  // Partner-broker / admin-issued VIP membership has the full eight-card Pro VIP allowance.
+  if(!rights.planId&&rights.limits?.dailyScanSymbols===8)return 'PRO';
  }
  return 'GUEST';
 }

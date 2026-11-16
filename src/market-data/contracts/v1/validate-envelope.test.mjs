@@ -152,13 +152,13 @@ test('accepts one redacted Guest sample and rejects full Guest cards', () => {
 });
 
 test('enforces the exact approved card caps for Trial and all paid tiers', () => {
-  for (const [tier, cap] of Object.entries({ TRIAL: 8, STARTER: 3, PRO: 5, ULTIMATE: 8 })) {
+  for (const [tier, cap] of Object.entries({ TRIAL: 3, STARTER: 3, PRO: 8 })) {
     const envelope = makeEnvelope({ tier, fullCount: cap });
     assert.equal(isValid(envelope), true, `${tier} cap ${cap} should validate`);
   }
   const overCap = makeEnvelope({ tier: 'STARTER', fullCount: 4 });
   assert.ok(validateEnvelopeInvariants(overCap).errors.some(error => error.code === 'FULL_CARD_CAP_EXCEEDED'));
-  const wrongCap = makeEnvelope({ tier: 'PRO', fullCount: 1 });
+  const wrongCap = makeEnvelope({ tier: 'STARTER', fullCount: 1 });
   wrongCap.entitlement.maxFullCards = 8;
   assert.ok(validateEnvelopeInvariants(wrongCap).errors.some(error => error.code === 'TIER_CAP_MISMATCH'));
 });

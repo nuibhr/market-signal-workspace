@@ -368,6 +368,25 @@ export async function verifyTelegramBot({ token, fetcher = fetch } = {}) {
   }
 }
 
+async function callTelegramBotApi({ token, method, body = {}, errorCode = 'TELEGRAM_API_FAILED', timeoutMs = 10000, fetcher = fetch } = {}) {
+  if (!token) {
+    throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  }
+  const url = `https://api.telegram.org/bot${token}/${method}`;
+  const response = await fetcher(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.ok) {
+    const errorMsg = data.description || `HTTP_${response.status}`;
+    throw Object.assign(new Error(errorMsg), { code: errorCode, details: data });
+  }
+  return data.result;
+}
+
 export async function createTelegramInviteLink({
   token,
   chatId,
@@ -381,35 +400,85 @@ export async function createTelegramInviteLink({
     throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
   }
 
-  const url = `https://api.telegram.org/bot${token}/createChatInviteLink`;
   const body = {
     chat_id: chatId,
     creates_join_request: Boolean(createsJoinRequest),
   };
   if (name) body.name = String(name).slice(0, 32);
-  if (Number.isFinite(memberLimit) && memberLimit > 0) body.member_limit = memberLimit;
+  // Telegram rejects member_limit when creates_join_request is true.
+  if (!createsJoinRequest && Number.isFinite(memberLimit) && memberLimit > 0) body.member_limit = memberLimit;
   if (Number.isFinite(expireDate) && expireDate > 0) body.expire_date = Math.floor(expireDate / 1000);
 
-  const response = await fetcher(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(10000),
+  const result = await callTelegramBotApi({
+    token,
+    method: 'createChatInviteLink',
+    body,
+    errorCode: 'TELEGRAM_INVITE_FAILED',
+    fetcher,
   });
-
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.ok) {
-    const errorMsg = data.description || `HTTP_${response.status}`;
-    throw Object.assign(new Error(errorMsg), { code: 'TELEGRAM_INVITE_FAILED', details: data });
-  }
 
   return {
     success: true,
-    inviteLink: data.result?.invite_link,
-    name: data.result?.name,
-    memberLimit: data.result?.member_limit,
-    expireDate: data.result?.expire_date,
+    inviteLink: result?.invite_link,
+    name: result?.name,
+    memberLimit: result?.member_limit,
+    expireDate: result?.expire_date,
+    createsJoinRequest: Boolean(result?.creates_join_request ?? createsJoinRequest),
   };
+}
+
+export async function approveTelegramJoinRequest({ token, chatId, userId, fetcher = fetch } = {}) {
+  if (!token || !chatId) throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  if (!userId) throw Object.assign(new Error('TELEGRAM_USER_ID_REQUIRED'), { code: 'TELEGRAM_USER_ID_REQUIRED' });
+  await callTelegramBotApi({
+    token,
+    method: 'approveChatJoinRequest',
+    body: { chat_id: chatId, user_id: userId },
+    errorCode: 'TELEGRAM_APPROVE_FAILED',
+    fetcher,
+  });
+  return { success: true, approved: true, userId };
+}
+
+export async function declineTelegramJoinRequest({ token, chatId, userId, fetcher = fetch } = {}) {
+  if (!token || !chatId) throw Object.assign(new Error('TELEGRAM_CREDENTIALS_REQUIRED'), { code: 'TELEGRAM_CREDENTIALS_REQUIRED' });
+  if (!userId) throw Object.assign(new Error('TELEGRAM_USER_ID_REQUIRED'), { code: 'TELEGRAM_USER_ID_REQUIRED' });
+  await callTelegramBotApi({
+    token,
+    method: 'declineChatJoinRequest',
+    body: { chat_id: chatId, user_id: userId },
+    errorCode: 'TELEGRAM_DECLINE_FAILED',
+    fetcher,
+  });
+  return { success: true, declined: true, userId };
+}
+
+export async function revokeTelegramInviteLink({ token, chatId, inviteLink, fetcher = fetch } = {}) {
+  if (!token || !chatId || !inviteLink) {
+    throw Object.assign(new Error('TELEGRAM_INVITE_REVOKE_PARAMS_REQUIRED'), { code: 'TELEGRAM_INVITE_REVOKE_PARAMS_REQUIRED' });
+  }
+  const result = await callTelegramBotApi({
+    token,
+    method: 'revokeChatInviteLink',
+    body: { chat_id: chatId, invite_link: inviteLink },
+    errorCode: 'TELEGRAM_REVOKE_FAILED',
+    fetcher,
+  });
+  return { success: true, revoked: true, inviteLink: result?.invite_link || inviteLink };
+}
+
+export async function setTelegramWebhook({ token, url, secretToken, allowedUpdates = ['chat_join_request', 'chat_member'], fetcher = fetch } = {}) {
+  if (!token || !url) throw Object.assign(new Error('TELEGRAM_WEBHOOK_PARAMS_REQUIRED'), { code: 'TELEGRAM_WEBHOOK_PARAMS_REQUIRED' });
+  const body = { url, allowed_updates: allowedUpdates };
+  if (secretToken) body.secret_token = secretToken;
+  await callTelegramBotApi({
+    token,
+    method: 'setWebhook',
+    body,
+    errorCode: 'TELEGRAM_SET_WEBHOOK_FAILED',
+    fetcher,
+  });
+  return { success: true, url };
 }
 
 export async function kickTelegramChatMember({ token, chatId, userId, fetcher = fetch } = {}) {

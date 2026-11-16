@@ -5,6 +5,19 @@ import {withBilling} from '../billing/store.mjs';
 import {membershipFor} from './rights.mjs';
 import {isDemoIdentity} from './demo-policy.mjs';
 const DAY = 86_400_000;
+export const DEFAULT_BROKER_MONTHLY_TARGET_THB = 1_000;
+
+export function bangkokMonth(now = Date.now()) {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit' }).formatToParts(new Date(now));
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}`;
+}
+function extendDays(currentIso, days) {
+  const safeDays = Math.max(1, Math.min(365, Math.floor(Number(days) || 30)));
+  if (safeDays === 30) return extendThirtyDays(currentIso);
+  const base = Math.max(Date.now(), currentIso ? Date.parse(currentIso) || 0 : 0);
+  return new Date(base + safeDays * DAY).toISOString();
+}
 
 export function digest(value) { return createHash('sha256').update(value).digest('hex'); }
 function sessionDigest(value) {
@@ -84,10 +97,10 @@ async function mutateMember(memberId, actorId, type, prepare) {
 export async function upsertLineMember({ lineId, displayName, pictureUrl }) {
   const now=new Date().toISOString();
   const result=await storage.batch([
-    op(`INSERT INTO members (id,line_id,display_name,picture_url,created_at,updated_at)
-      VALUES (?,?,?,?,?,?) ON CONFLICT(line_id) DO UPDATE SET display_name=excluded.display_name,
+    op(`INSERT INTO members (id,line_id,display_name,picture_url,broker_volume_target_thb,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?) ON CONFLICT(line_id) DO UPDATE SET display_name=excluded.display_name,
       picture_url=excluded.picture_url,updated_at=excluded.updated_at,version=members.version+1`,
-      token(),lineId,displayName.slice(0,80),pictureUrl||null,now,now),
+      token(),lineId,displayName.slice(0,80),pictureUrl||null,DEFAULT_BROKER_MONTHLY_TARGET_THB,now,now),
     op('SELECT * FROM members WHERE line_id=?',lineId),
   ]);
   return result[1].results[0];
@@ -156,10 +169,213 @@ export async function listAdminMembers() {
 export async function verifyPortfolio(admin,memberId,numberInput) {
   if(!isAdmin(admin))throw new Error('FORBIDDEN');
   const number=normalizePortfolio(numberInput);
+  const now=new Date().toISOString();
   await mutateMember(memberId,admin.id,'portfolio_verified',member=>{
     if(!member.portfolio_hash||member.portfolio_hash!==portfolioDigest(member.broker,number))throw new Error('PORTFOLIO_MISMATCH');
-    return {set:"portfolio_status='verified',portfolio_verified_at=?",params:[new Date().toISOString()]};
+    return {set:"portfolio_status='verified',portfolio_verified_at=?,broker_trade_checked_at=?,vip_revoked_reason=NULL,vip_revoked_at=NULL",params:[now,now]};
   });
+}
+export async function verifyPartnerBrokerByAdmin(admin,memberId,{broker='PI',accountNo,targetThb=DEFAULT_BROKER_MONTHLY_TARGET_THB,monthlyVolumeThb=null,volumeMonth=null,note=''}={}) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
+  if(typeof note!=='string'||note.length>200)throw new Error('INVALID_NOTE');
+  const brokerAliases={'003':'PI SECURITIES (003)','022':'TRINITY SECURITIES (022)','050':'ASL SECURITIES (050)'};
+  const rawBroker=String(broker??'').trim().toUpperCase();
+  const cleanBroker=brokerAliases[rawBroker]||rawBroker.replace(/\s+/g,' ');
+  if(!/^[\p{L}\p{M}\p{N} .&()-]{2,40}$/u.test(cleanBroker))throw new Error('INVALID_BROKER');
+  const number=normalizePortfolio(accountNo);
+  const hash=portfolioDigest(cleanBroker,number);
+  const safeTarget=Number.isFinite(Number(targetThb))&&Number(targetThb)>0?Math.round(Number(targetThb)):DEFAULT_BROKER_MONTHLY_TARGET_THB;
+  const hasVolume=monthlyVolumeThb!==null&&monthlyVolumeThb!==undefined&&monthlyVolumeThb!=='';
+  const safeVolume=hasVolume?Math.max(0,Number(monthlyVolumeThb)):null;
+  if(hasVolume&&(!Number.isFinite(safeVolume)||safeVolume<0))throw new Error('INVALID_TRADE_VOLUME');
+  const cleanMonth=typeof volumeMonth==='string'&&/^\d{4}-\d{2}$/.test(volumeMonth.trim())?volumeMonth.trim():bangkokMonth();
+  const now=new Date().toISOString();
+  try {
+    await mutateMember(memberId,admin.id,'portfolio_verified',()=>{
+      const baseSet=[
+        "broker=?",
+        "portfolio_hash=?",
+        "portfolio_last4=?",
+        "portfolio_status='verified'",
+        "portfolio_submitted_at=COALESCE(portfolio_submitted_at,?)",
+        "portfolio_verified_at=?",
+        "broker_trade_checked_at=?",
+        "broker_volume_target_thb=?",
+        "vip_revoked_reason=NULL",
+        "vip_revoked_at=NULL",
+      ];
+      const baseParams=[cleanBroker,hash,number.slice(-4),now,now,now,safeTarget];
+      if(hasVolume){
+        baseSet.push("broker_monthly_volume_thb=?","broker_volume_month=?","broker_last_trade_at=CASE WHEN ?>0 THEN ? ELSE broker_last_trade_at END");
+        baseParams.push(safeVolume,cleanMonth,safeVolume,now);
+      }
+      return {
+        set:baseSet.join(','),
+        params:baseParams,
+        details:JSON.stringify({broker:cleanBroker,last4:number.slice(-4),targetThb:safeTarget,monthlyVolumeThb:safeVolume,note:note.trim()}),
+      };
+    });
+  } catch(error) {
+    if(String(error.message).includes('members.portfolio_hash'))throw new Error('PORTFOLIO_ALREADY_USED');
+    throw error;
+  }
+  const volumeVal=hasVolume?Math.round(safeVolume):0;
+  return {
+    broker:cleanBroker,
+    last4:number.slice(-4),
+    targetThb:safeTarget,
+    monthlyVolumeThb:volumeVal,
+    volumeMonth:cleanMonth,
+    qualified:volumeVal>=safeTarget,
+  };
+}
+export async function recordBrokerTradeActivity(admin,memberId,{tradedAt=new Date().toISOString(),monthlyVolumeThb=undefined,volumeMonth=null,targetThb=undefined,note=''}={}) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
+  if(typeof note!=='string'||note.length>200)throw new Error('INVALID_NOTE');
+  const parsed=Date.parse(tradedAt);
+  const tradeIso=Number.isFinite(parsed)?new Date(parsed).toISOString():new Date().toISOString();
+  const checkedAt=new Date().toISOString();
+  const hasVolume=monthlyVolumeThb!==undefined&&monthlyVolumeThb!==null&&monthlyVolumeThb!=='';
+  const safeVolume=hasVolume?Number(monthlyVolumeThb):undefined;
+  if(hasVolume&&(!Number.isFinite(safeVolume)||safeVolume<0||safeVolume>10_000_000_000))throw new Error('INVALID_TRADE_VOLUME');
+  const hasTarget=targetThb!==undefined&&targetThb!==null&&targetThb!=='';
+  const safeTarget=hasTarget?Number(targetThb):undefined;
+  if(hasTarget&&(!Number.isFinite(safeTarget)||safeTarget<=0))throw new Error('INVALID_TRADE_VOLUME');
+  const cleanMonth=typeof volumeMonth==='string'&&/^\d{4}-\d{2}$/.test(volumeMonth.trim())?volumeMonth.trim():bangkokMonth();
+  let outcome=null;
+  await mutateMember(memberId,admin.id,'broker_trade_verified',member=>{
+    const effectiveTarget=hasTarget?Math.round(safeTarget):(Number(member.broker_volume_target_thb)||DEFAULT_BROKER_MONTHLY_TARGET_THB);
+    const sets=["broker_trade_checked_at=?"];
+    const params=[checkedAt];
+    if(!hasVolume||safeVolume>0){
+      sets.push("broker_last_trade_at=?");
+      params.push(tradeIso);
+    }
+    if(hasVolume){
+      sets.push("broker_monthly_volume_thb=?","broker_volume_month=?");
+      params.push(Math.round(safeVolume),cleanMonth);
+    }
+    if(hasTarget){
+      sets.push("broker_volume_target_thb=?");
+      params.push(effectiveTarget);
+    }
+    if(!hasVolume||safeVolume>=effectiveTarget){
+      sets.push("vip_revoked_reason=NULL","vip_revoked_at=NULL");
+    }
+    const finalVolume=hasVolume?Math.round(safeVolume):(member.broker_monthly_volume_thb??0);
+    const qualified=hasVolume?safeVolume>=effectiveTarget:true;
+    outcome={tradedAt:tradeIso,monthlyVolumeThb:finalVolume,volumeMonth:cleanMonth,targetThb:effectiveTarget,qualified};
+    return {
+      set:sets.join(','),
+      params,
+      details:JSON.stringify({
+        tradedAt:tradeIso,
+        monthlyVolumeThb:finalVolume,
+        volumeMonth:cleanMonth,
+        targetThb:effectiveTarget,
+        qualified,
+        note:note.trim(),
+      }),
+    };
+  });
+  return outcome;
+}
+export async function extendVipSubscription(admin,memberId,{days=30,reason='PARTNER_VOLUME_QUALIFIED',note=''}={}) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
+  if(typeof note!=='string'||note.length>200)throw new Error('INVALID_NOTE');
+  const safeDays=Math.max(1,Math.min(365,Math.floor(Number(days)||30)));
+  let endsAt=null;
+  await mutateMember(memberId,admin.id,'vip_extended',member=>{
+    endsAt=extendDays(member.subscription_ends_at,safeDays);
+    return {
+      set:"subscription_ends_at=?,vip_revoked_reason=NULL,vip_revoked_at=NULL",
+      params:[endsAt],
+      details:JSON.stringify({subscriptionEndsAt:endsAt,days:safeDays,reason:String(reason||'PARTNER_VOLUME_QUALIFIED').slice(0,60),note:note.trim()}),
+    };
+  });
+  return {subscriptionEndsAt:endsAt,days:safeDays};
+}
+export async function recordBrokerCommissionByStaff(actor,{memberId,brokerId,accountNo='',commissionThb=0,targetThb=DEFAULT_BROKER_MONTHLY_TARGET_THB,volumeMonth=null,extendVipDays=0,note=''}={}) {
+  const role=getBrokerStaffRole(actor);
+  const cleanBrokerId=String(brokerId??'').trim();
+  if(!role||(!role.isSuper&&role.brokerId!==cleanBrokerId))throw new Error('FORBIDDEN');
+  if(typeof note!=='string'||note.length>200)throw new Error('INVALID_NOTE');
+  const safeCommission=Number(commissionThb);
+  if(!Number.isFinite(safeCommission)||safeCommission<0||safeCommission>10_000_000_000)throw new Error('INVALID_TRADE_VOLUME');
+  const safeTarget=Number.isFinite(Number(targetThb))&&Number(targetThb)>0?Math.round(Number(targetThb)):DEFAULT_BROKER_MONTHLY_TARGET_THB;
+  const cleanMonth=typeof volumeMonth==='string'&&/^\d{4}-\d{2}$/.test(volumeMonth.trim())?volumeMonth.trim():bangkokMonth();
+  const brokerNames={'003':'PI SECURITIES (003)','022':'TRINITY SECURITIES (022)','050':'ASL SECURITIES (050)'};
+  const cleanBroker=brokerNames[cleanBrokerId]||(cleanBrokerId||'PARTNER').toUpperCase();
+  const now=new Date().toISOString();
+  const safeDays=Math.max(0,Math.min(365,Math.floor(Number(extendVipDays)||0)));
+  const roundedCommission=Math.round(safeCommission);
+  const qualified=roundedCommission>=safeTarget;
+  let subscriptionEndsAt=null;
+  let last4=null;
+  await mutateMember(memberId,actor.id,'broker_trade_verified',member=>{
+    const sets=[
+      "broker_trade_checked_at=?",
+      "broker_monthly_volume_thb=?",
+      "broker_volume_month=?",
+      "broker_volume_target_thb=?",
+    ];
+    const params=[now,roundedCommission,cleanMonth,safeTarget];
+    if(roundedCommission>0){
+      sets.push("broker_last_trade_at=?");
+      params.push(now);
+    }
+    if(qualified){
+      sets.push("vip_revoked_reason=NULL","vip_revoked_at=NULL");
+    }
+    if(member.portfolio_status!=='verified'){
+      const candidateAcc=normalizePortfolio(accountNo||String(member.id).replace(/[^A-Za-z0-9]/g,'').slice(0,12).padEnd(8,'0'));
+      last4=candidateAcc.slice(-4);
+      sets.push("broker=COALESCE(broker,?)","portfolio_hash=COALESCE(portfolio_hash,?)","portfolio_last4=COALESCE(portfolio_last4,?)","portfolio_status='verified'","portfolio_submitted_at=COALESCE(portfolio_submitted_at,?)","portfolio_verified_at=COALESCE(portfolio_verified_at,?)");
+      params.push(cleanBroker,portfolioDigest(cleanBroker,candidateAcc),last4,now,now);
+    }else{
+      last4=member.portfolio_last4;
+    }
+    if(safeDays>0&&qualified){
+      subscriptionEndsAt=extendDays(member.subscription_ends_at,safeDays);
+      sets.push("subscription_ends_at=?");
+      params.push(subscriptionEndsAt);
+    }else{
+      subscriptionEndsAt=member.subscription_ends_at||null;
+    }
+    return {
+      set:sets.join(','),
+      params,
+      details:JSON.stringify({
+        brokerId:cleanBrokerId,
+        monthlyCommissionThb:roundedCommission,
+        volumeMonth:cleanMonth,
+        targetThb:safeTarget,
+        qualified,
+        extendedDays:safeDays>0&&qualified?safeDays:0,
+        note:note.trim(),
+      }),
+    };
+  });
+  return {monthlyCommissionThb:roundedCommission,targetThb:safeTarget,volumeMonth:cleanMonth,qualified,subscriptionEndsAt,last4};
+}
+export async function revokePartnerVip(admin,memberId,{reason='NO_TRADING_ACTIVITY'}={}) {
+  if(!isAdmin(admin))throw new Error('FORBIDDEN');
+  const cleanReason=String(reason||'NO_TRADING_ACTIVITY').trim().slice(0,80)||'NO_TRADING_ACTIVITY';
+  const now=new Date().toISOString();
+  await mutateMember(memberId,admin.id,'vip_revoked',member=>{
+    const nextEnd=member.subscription_ends_at&&Date.parse(member.subscription_ends_at)>Date.parse(now)?now:member.subscription_ends_at;
+    return {
+      set:"subscription_ends_at=?,vip_revoked_reason=?,vip_revoked_at=?,broker_trade_checked_at=?",
+      params:[nextEnd,cleanReason,now,now],
+      details:cleanReason,
+    };
+  });
+  let telegramKick={skipped:true};
+  try{
+    const {kickMemberFromVipIfExpired}=await import('../notifications/vip-access.mjs');
+    telegramKick=await kickMemberFromVipIfExpired(memberId,{reason:cleanReason});
+  }catch{}
+  return {revoked:true,telegramKick};
 }
 export async function rejectPortfolio(admin,memberId) {
   if(!isAdmin(admin))throw new Error('FORBIDDEN');
@@ -174,21 +390,30 @@ function adminRequestId(value) {
   if(typeof id!=='string'||!/^[-_a-zA-Z0-9]{16,100}$/.test(id))throw new Error('INVALID_REQUEST_ID');
   return id;
 }
-export async function issueCode(admin,memberId,requestId) {
+export async function issueCode(admin,memberId,requestId,options={}) {
   if(!isAdmin(admin))throw new Error('FORBIDDEN');
   const request=adminRequestId(requestId);
+  const grantType=options.grantType==='promo_vip'?'promo_vip':'partner_vip';
+  const durationDays=Math.max(1,Math.min(365,Math.floor(Number(options.durationDays)||30)));
+  const minVolumeThb=options.minVolumeThb!==undefined&&options.minVolumeThb!==null&&options.minVolumeThb!==''
+    ?Math.max(0,Math.round(Number(options.minVolumeThb)||0))
+    :(grantType==='promo_vip'?0:DEFAULT_BROKER_MONTHLY_TARGET_THB);
+  const note=typeof options.note==='string'?options.note.trim().slice(0,200):'';
+  const allowUnverified=Boolean(options.allowUnverified)||grantType==='promo_vip';
   // The same acknowledged request returns the same code without storing its plaintext.
   const code=`NUG-${createHmac('sha256',process.env.SESSION_SECRET).update(`monthly-code:${admin.id}:${memberId}:${request}`).digest('hex').slice(0,24).toUpperCase()}`;
   const hash=digest(code),now=new Date().toISOString();
+  const details=JSON.stringify({grantType,durationDays,minVolumeThb,note});
+  const wherePortfolio=allowUnverified?'':"AND portfolio_status='verified'";
   const result=await storage.batch([
-    op(`INSERT OR IGNORE INTO monthly_codes (code_hash,member_id,created_by,created_at,expires_at)
-      SELECT ?,id,?,?,? FROM members WHERE id=? AND portfolio_status='verified'`,hash,admin.id,now,new Date(Date.now()+30*DAY).toISOString(),memberId),
-    op(`INSERT OR IGNORE INTO membership_events SELECT ?,member_id,?,'code_issued',created_at,NULL FROM monthly_codes WHERE code_hash=?`,
-      `code-issued:${hash}`,admin.id,hash),
+    op(`INSERT OR IGNORE INTO monthly_codes (code_hash,member_id,created_by,created_at,expires_at,grant_type,duration_days,min_volume_thb,note)
+      SELECT ?,id,?,?,?,?,?,?,? FROM members WHERE id=? ${wherePortfolio}`,hash,admin.id,now,new Date(Date.now()+30*DAY).toISOString(),grantType,durationDays,minVolumeThb,note||null,memberId),
+    op(`INSERT OR IGNORE INTO membership_events SELECT ?,member_id,?,'code_issued',created_at,? FROM monthly_codes WHERE code_hash=?`,
+      `code-issued:${hash}`,admin.id,details,hash),
     op('SELECT member_id,expires_at,redeemed_at,revoked_at FROM monthly_codes WHERE code_hash=?',hash),
   ]);
   const record=result[2].results[0];
-  if(!record||record.member_id!==memberId)throw new Error('PORTFOLIO_NOT_VERIFIED');
+  if(!record||record.member_id!==memberId)throw new Error(allowUnverified?'REQUEST_UNAVAILABLE':'PORTFOLIO_NOT_VERIFIED');
   if(record.redeemed_at||record.revoked_at||record.expires_at<=now)throw new Error('CODE_UNAVAILABLE');
   return code;
 }
@@ -209,20 +434,31 @@ export async function revokeCode(admin,memberId,codeId) {
 export async function redeemCode(member,codeInput) {
   const code=String(codeInput??'').trim().toUpperCase();
   if(!/^NUG-[A-F0-9]{24}$/.test(code))throw new Error('INVALID_CODE');
+  const codeHash=digest(code);
   for(let attempt=0;attempt<4;attempt++) {
+    const now=new Date().toISOString();
+    const record=await storage.first('SELECT member_id,redeemed_at,revoked_at,expires_at,grant_type,duration_days,min_volume_thb FROM monthly_codes WHERE code_hash=?',codeHash);
+    if(!record||record.member_id!==member.id||record.redeemed_at||record.revoked_at||record.expires_at<=now)throw new Error('CODE_UNAVAILABLE');
     const current=await memberById(member.id);
-    if(current?.portfolio_status!=='verified')throw new Error('PORTFOLIO_NOT_VERIFIED');
-    const endsAt=monthEnd(current),mutation=token(),now=new Date().toISOString();
+    if(!current)throw new Error('LOGIN_REQUIRED');
+    const isPromo=record.grant_type==='promo_vip';
+    if(!isPromo&&current.portfolio_status!=='verified')throw new Error('PORTFOLIO_NOT_VERIFIED');
+    const durationDays=Number(record.duration_days)||30;
+    const endsAt=extendDays(current.subscription_ends_at,durationDays);
+    const minVolume=Number(record.min_volume_thb)||0;
+    const mutation=token();
+    const verifiedGuard=isPromo?'':"AND portfolio_status='verified'";
+    const targetSql=minVolume>0?',broker_volume_target_thb=?':'';
+    const targetParams=minVolume>0?[minVolume]:[];
+    const auditDetails=JSON.stringify({subscriptionEndsAt:endsAt,grantType:record.grant_type||'partner_vip',durationDays,minVolumeThb:minVolume});
     const result=await storage.batch([
-      op(`UPDATE monthly_codes SET redeemed_at=?,redemption_token=? WHERE code_hash=? AND member_id=? AND redeemed_at IS NULL AND expires_at>?
-        AND EXISTS(SELECT 1 FROM members WHERE id=? AND portfolio_status='verified' AND version=?)`,now,mutation,digest(code),member.id,now,member.id,current.version),
-      op(`UPDATE members SET subscription_ends_at=?,updated_at=?,version=version+1,mutation_key=? WHERE id=? AND version=?
-        AND EXISTS(SELECT 1 FROM monthly_codes WHERE code_hash=? AND redemption_token=?)`,endsAt,now,mutation,member.id,current.version,digest(code),mutation),
-      audit(member.id,member.id,'code_redeemed',endsAt,mutation),
+      op(`UPDATE monthly_codes SET redeemed_at=?,redemption_token=? WHERE code_hash=? AND member_id=? AND redeemed_at IS NULL AND revoked_at IS NULL AND expires_at>?
+        AND EXISTS(SELECT 1 FROM members WHERE id=? ${verifiedGuard} AND version=?)`,now,mutation,codeHash,member.id,now,member.id,current.version),
+      op(`UPDATE members SET subscription_ends_at=?,vip_revoked_reason=NULL,vip_revoked_at=NULL${targetSql},updated_at=?,version=version+1,mutation_key=? WHERE id=? AND version=?
+        AND EXISTS(SELECT 1 FROM monthly_codes WHERE code_hash=? AND redemption_token=?)`,endsAt,...targetParams,now,mutation,member.id,current.version,codeHash,mutation),
+      audit(member.id,member.id,'code_redeemed',auditDetails,mutation),
     ]);
     if(result[0].changes&&result[1].changes)return endsAt;
-    const record=await storage.first('SELECT member_id,redeemed_at,expires_at FROM monthly_codes WHERE code_hash=?',digest(code));
-    if(!record||record.member_id!==member.id||record.redeemed_at||record.expires_at<=now)throw new Error('CODE_UNAVAILABLE');
   }
   throw new Error('REQUEST_UNAVAILABLE');
 }
@@ -274,7 +510,14 @@ export async function accountSummary(member) {
   const renewal=await storage.first("SELECT id FROM renewal_requests WHERE member_id=? AND status='pending'",member.id);
   return {id:member.id,displayName:member.display_name,pictureUrl:member.picture_url,demo:member.demo??null,broker:member.broker,
     portfolioLast4:member.portfolio_last4,portfolioStatus:member.portfolio_status,trialStartedAt:member.trial_started_at,
-    trialEndsAt:member.trial_ends_at,subscriptionEndsAt:member.subscription_ends_at,renewalPending:Boolean(renewal),admin:isAdmin(member),coach:Boolean(await storage.first('SELECT id FROM coach_portfolios WHERE owner_id=? LIMIT 1',member.id))};
+    trialEndsAt:member.trial_ends_at,subscriptionEndsAt:member.subscription_ends_at,
+    brokerLastTradeAt:member.broker_last_trade_at??null,
+    brokerMonthlyVolumeThb:Number(member.broker_monthly_volume_thb||0),
+    brokerVolumeMonth:member.broker_volume_month??null,
+    brokerVolumeTargetThb:Number(member.broker_volume_target_thb||DEFAULT_BROKER_MONTHLY_TARGET_THB),
+    vipRevokedReason:member.vip_revoked_reason??null,
+    vipRevokedAt:member.vip_revoked_at??null,
+    renewalPending:Boolean(renewal),admin:isAdmin(member),brokerStaff:Boolean(getBrokerStaffRole(member)),affiliate:Boolean(await storage.first("SELECT member_id FROM affiliate_partners WHERE member_id=? AND status='active'",member.id)),coach:Boolean(await storage.first('SELECT id FROM coach_portfolios WHERE owner_id=? LIMIT 1',member.id))};
 }
 export async function aiQuota(member) {
   const day=bangkokDay();

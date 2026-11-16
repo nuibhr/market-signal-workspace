@@ -23,7 +23,7 @@ const handlers=createCommunityHandlers({
 });
 async function fixture({active=false,admin=false}={}) {
   const member=await upsertLineMember({lineId:admin?process.env.ADMIN_LINE_IDS:'U'+randomBytes(16).toString('hex'),displayName:'Fixture member'});
-  if(active)await storage.run("UPDATE members SET trial_ends_at=?,portfolio_status='verified' WHERE id=?",new Date(Date.now()+86400000).toISOString(),member.id);
+  if(active)await storage.run("UPDATE members SET subscription_ends_at=?,portfolio_status='verified' WHERE id=?",new Date(Date.now()+86400000).toISOString(),member.id);
   const session=await createSession(member.id);
   return {member,session,cookie:`nugaom_session=${session.value}`};
 }
@@ -61,7 +61,7 @@ test('HTTP member flow stores one message, reads receipts and immediately applie
   for(const key of ['line_id','portfolio_hash','sender_id','session'])assert.ok(!JSON.stringify(channel).includes(key));
   await result(await post(reader,{action:'read',kind:'room',channelId:'lounge',lastSeq:channel.messages[0].seq}),200);
   assert.equal((await result(await get(reader),200)).rooms.find(room=>room.id==='lounge').unread,0);
-  await storage.run('UPDATE members SET trial_ends_at=? WHERE id=?',new Date(Date.now()-1000).toISOString(),author.member.id);
+  await storage.run('UPDATE members SET subscription_ends_at=? WHERE id=?',new Date(Date.now()-1000).toISOString(),author.member.id);
   assert.equal((await result(await post(author,roomBody),403)).error,'MEMBERSHIP_REQUIRED');
   assert.equal((await result(await get(author,'?view=channel&kind=room&id=lounge'),403)).error,'MEMBERSHIP_REQUIRED');
   const thread=await result(await post(author,{action:'create-thread',team:'marketing',subject:'Fixture account support',body:'Please help'}),200);

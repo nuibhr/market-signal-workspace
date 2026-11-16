@@ -506,6 +506,7 @@ export default function EquityPortfolioDesk({ onSelectSymbol }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'create-invite',
+          mode: 'join-request',
           leadId,
           memberName: leadName || 'VIP Member',
         }),

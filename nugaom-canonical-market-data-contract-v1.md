@@ -221,7 +221,7 @@ Freshness threshold ต้องเป็น policy แยกตาม market + 
 - Guest: `maxFullCards=0`, `redactedSampleLimit=1`, ส่งได้ไม่เกิน 1 sample.
 - sample อนุญาตเพียง symbol, name, market, changePct, dataAsOf, source ตาม allowlist ที่อนุมัติ.
 - ห้าม price/score/Entry/TP/SL/underlying valuation/hidden array/leaderboard หรือ aggregate ที่ใช้อนุมาน record ที่ซ่อน.
-- Trial=8; Starter=3; Pro=5; Ultimate=8 full cards ต่อ scan ของ market ที่เลือก.
+- Trial=3; Starter (Basic)=3; Pro VIP=8 full cards ต่อ scan ของ market ที่เลือก (Trial และ Starter เฉพาะ Thai/DR).
 - cap เป็น **full cards ที่ response ส่งจริง** ไม่ใช่ catalog size; filter, pagination, diagnostics, chart payload, summary และ error path ต้องไม่เพิ่มสิทธิ์.
 
 ## 6. Coverage และ privacy/entitlement

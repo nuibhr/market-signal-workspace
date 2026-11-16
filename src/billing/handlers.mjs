@@ -16,7 +16,7 @@ export async function billingAction(request,kind,{getMember=currentMember,stripe
   const limited=await rateLimit('billing',member.id,10);if(limited)return limited;
   try{
     const body=await readJsonBody(request,1024);
-    const response=kind==='checkout'?await checkout(member,body.planId,{...(stripe?{stripe}:{})}):await portal(member,{...(stripe?{stripe}:{})});
+    const response=kind==='checkout'?await checkout(member,body.planId,{interval:body.interval??'month',...(stripe?{stripe}:{})}):await portal(member,{...(stripe?{stripe}:{})});
     return Response.json(response,{headers:privateHeaders});
   }catch(error){return error instanceof RequestError?requestErrorResponse(error):failed(error);}
 }

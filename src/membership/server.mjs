@@ -8,15 +8,37 @@ export const SESSION_COOKIE = 'nugaom_session';
 export const OAUTH_COOKIE = 'nugaom_line_flow';
 export const privateHeaders = { 'Cache-Control': 'private, no-store' };
 
-export async function currentMember() {
-  const jar=await cookies();
-  if(demoEnabled()){
-    const demo=await sessionMember(jar.get(DEMO_COOKIE)?.value);
-    if(demo?.demo)return demo;
+function parseCookieHeader(header) {
+  const out = {};
+  for (const part of String(header || '').split(';')) {
+    const idx = part.indexOf('=');
+    if (idx <= 0) continue;
+    const key = part.slice(0, idx).trim();
+    const val = part.slice(idx + 1).trim();
+    try { out[key] = decodeURIComponent(val); } catch { out[key] = val; }
   }
-  const value = jar.get(SESSION_COOKIE)?.value;
-  if (!value) return null;
-  return sessionMember(value);
+  return out;
+}
+
+export async function currentMember(request) {
+  let demoVal = null;
+  let sessionVal = null;
+  try {
+    const jar = await cookies();
+    demoVal = jar.get(DEMO_COOKIE)?.value;
+    sessionVal = jar.get(SESSION_COOKIE)?.value;
+  } catch {
+    if (!request?.headers) return null;
+    const parsed = parseCookieHeader(request.headers.get('cookie'));
+    demoVal = parsed[DEMO_COOKIE] ?? null;
+    sessionVal = parsed[SESSION_COOKIE] ?? null;
+  }
+  if (demoEnabled() && demoVal) {
+    const demo = await sessionMember(demoVal);
+    if (demo?.demo) return demo;
+  }
+  if (!sessionVal) return null;
+  return sessionMember(sessionVal);
 }
 export async function currentAccount() {
   const member = await currentMember();

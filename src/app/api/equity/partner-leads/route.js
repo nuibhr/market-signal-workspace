@@ -3,6 +3,7 @@ import { currentMember, sameOrigin } from '../../../../membership/server.mjs';
 import { isAdmin, getBrokerStaffRole, submitPortfolio } from '../../../../membership/store.mjs';
 import { rateLimit, readJsonBody, requestErrorResponse } from '../../../../security/request-guard.mjs';
 import { sendTelegramMessage, createTelegramInviteLink, resolveTelegramStaffLeadDestination } from '../../../../notifications/broadcaster.mjs';
+import { issueMemberJoinRequestInvite } from '../../../../notifications/vip-access.mjs';
 import { randomUUID } from 'node:crypto';
 
 export const runtime = 'nodejs';
@@ -194,14 +195,24 @@ ${validLeadType === 'existing_port'
     let inviteLink = null;
     if (process.env.TELEGRAM_BOT_TOKEN && customerVipChatId) {
       try {
-        const invite = await createTelegramInviteLink({
-          token: process.env.TELEGRAM_BOT_TOKEN,
-          chatId: customerVipChatId,
-          name: `VIP · ${trimmedName.slice(0, 16)} (${brokerId})`,
-          memberLimit: 1,
-          expireDate: Date.now() + 24 * 60 * 60 * 1000, // 24 hours validity
-        });
-        inviteLink = invite?.inviteLink || null;
+        if (member?.id) {
+          const invite = await issueMemberJoinRequestInvite({
+            member,
+            token: process.env.TELEGRAM_BOT_TOKEN,
+            chatId: customerVipChatId,
+            name: `VIP · ${trimmedName.slice(0, 16)} (${brokerId})`,
+          });
+          inviteLink = invite?.inviteLink || null;
+        } else {
+          const invite = await createTelegramInviteLink({
+            token: process.env.TELEGRAM_BOT_TOKEN,
+            chatId: customerVipChatId,
+            name: `VIP · ${trimmedName.slice(0, 16)} (${brokerId})`,
+            memberLimit: 1,
+            expireDate: Date.now() + 24 * 60 * 60 * 1000, // 24 hours validity
+          });
+          inviteLink = invite?.inviteLink || null;
+        }
       } catch (err) {
         console.warn('[Partner Lead] Telegram customer invite creation skipped or failed:', err.message);
       }

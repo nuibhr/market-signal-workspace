@@ -7,13 +7,13 @@ import { replayThreeMonths } from './backtest.mjs';
 import { THAI_ORB_RULE_VERSION } from './thai-orb.mjs';
 import { DR_ORB_RULE_VERSION } from './dr-orb.mjs';
 import { US_EOD_RULE_VERSION } from './us-engine.mjs';
-import { SET100_SYMBOLS, MAI_INITIAL_SYMBOLS, DR80_SYMBOLS, US_STOCKS } from '../markets/catalog.mjs';
+import { THAI_ALL_SYMBOLS, DR80_SYMBOLS, US_STOCKS } from '../markets/catalog.mjs';
 import { US_SCAN_SYMBOLS } from '../markets/us-universe.mjs';
 
 const historyClient = createSettradeClient();
 const versions = { thai: THAI_ORB_RULE_VERSION, dr: DR_ORB_RULE_VERSION, us: US_EOD_RULE_VERSION };
 const usSet = new Set(US_STOCKS.map(item => item.symbol));
-const universes = { thai: [...new Set([...SET100_SYMBOLS, ...MAI_INITIAL_SYMBOLS])], dr: [...new Set(DR80_SYMBOLS)], us: US_SCAN_SYMBOLS.filter(symbol => usSet.has(symbol)) };
+const universes = { thai: [...THAI_ALL_SYMBOLS], dr: [...new Set(DR80_SYMBOLS)], us: US_SCAN_SYMBOLS.filter(symbol => usSet.has(symbol)) };
 const dayAt = now => new Date(now).toISOString().slice(0, 10);
 const modelFor = market => `${versions[market]}:aggregate-v3`;
 

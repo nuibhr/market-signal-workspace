@@ -260,6 +260,37 @@ test('createTelegramInviteLink creates a one-time invite link with member_limit 
   assert.equal(calledBody.member_limit, 1);
 });
 
+test('createTelegramInviteLink with createsJoinRequest sends creates_join_request and omits member_limit', async () => {
+  let calledBody = null;
+  const mockFetcher = async (_url, options) => {
+    calledBody = JSON.parse(options.body);
+    return {
+      ok: true,
+      json: async () => ({
+        ok: true,
+        result: {
+          invite_link: 'https://t.me/+JoinReqAbC',
+          creates_join_request: true,
+        },
+      }),
+    };
+  };
+
+  const res = await createTelegramInviteLink({
+    token: 'test_token',
+    chatId: '-100987654',
+    name: 'VIP-mem1',
+    memberLimit: 1,
+    createsJoinRequest: true,
+    fetcher: mockFetcher,
+  });
+
+  assert.equal(res.success, true);
+  assert.equal(res.createsJoinRequest, true);
+  assert.equal(calledBody.creates_join_request, true);
+  assert.equal('member_limit' in calledBody, false);
+});
+
 test('kickTelegramChatMember bans and unbans to kick user out without permanent ban', async () => {
   const calls = [];
   const mockFetcher = async (url, options) => {

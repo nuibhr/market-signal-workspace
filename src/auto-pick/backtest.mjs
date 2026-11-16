@@ -1,7 +1,7 @@
 import { buildThaiOrbPlan, advanceThaiOrbPick } from './thai-orb.mjs';
 import { buildDrOrbPlan, advanceDrOrbPick, drSession } from './dr-orb.mjs';
 import { buildUsEodPlan, advanceUsEodPick } from './us-engine.mjs';
-import { MAI_INITIAL_SYMBOLS } from '../markets/catalog.mjs';
+import { thaiInstrumentId } from '../markets/catalog.mjs';
 import { bangkokParts } from './engine.mjs';
 
 export function replayThreeMonths({ symbol, market, daily, intraday = [], now = Date.now() }) {
@@ -28,7 +28,7 @@ export function replayThreeMonths({ symbol, market, daily, intraday = [], now = 
       const published = Date.parse(`${day}T${market==='thai'?'10:15':sessionName==='day'?'10:30':'20:00'}:00+07:00`);
       const session = drSession(published); if (market==='dr' && session.session!==sessionName) continue;
       const pre = intraday.filter(b=>(b.time+900)*1000<=published);
-      const plan = market==='thai' ? buildThaiOrbPlan({symbol,instrumentId:`${MAI_INITIAL_SYMBOLS.includes(symbol)?'MAI_INITIAL':'SET100'}:${symbol}`,fifteenMinuteBars:pre,dailyBars:daily.filter(b=>b.time<day),now:published})
+      const plan = market==='thai' ? buildThaiOrbPlan({symbol,instrumentId:thaiInstrumentId(symbol),fifteenMinuteBars:pre,dailyBars:daily.filter(b=>b.time<day),now:published})
         : buildDrOrbPlan({symbol,fifteenMinuteBars:pre,dailyBars:daily.filter(b=>b.time<day),session,now:published});
       evaluated++; if (!plan.tradeAllowed) continue; plans++;
       let pick={plan,status:'WAITING_FOR_ENTRY',sessionDay:market==='thai'?day:session.key,publishedAt:new Date(published).toISOString()};

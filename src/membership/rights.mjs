@@ -1,5 +1,6 @@
-import {configuredPlans,MEMBERSHIP_PLANS} from '../billing/plans.mjs';
+import {ALL_MARKETS,BASIC_MARKETS,configuredPlans,MEMBERSHIP_PLANS} from '../billing/plans.mjs';
 import {demoEnabled} from './demo-policy.mjs';
+
 export function membershipFor(member) {
   const now = Date.now();
   const demo=demoEnabled()&&Date.parse(member?.demo?.expiresAt)>now?member.demo:null;
@@ -12,19 +13,42 @@ export function membershipFor(member) {
     ? 'expired'
     : 'onboarding';
   const active = tier === 'subscriber' || tier === 'trial';
-  const enabled=feature=>active&&(!planPaid||plan.features.includes(feature));
+  const isFullVip = (tier === 'subscriber' && !planPaid) || (planPaid && plan.id === 'pro');
+  const isStarter = planPaid && plan.id === 'starter';
+  const enabled=feature=>!active ? false : planPaid ? plan.features.includes(feature) : tier === 'subscriber' ? true : ['manualDailyScan','autoPickFeed','aiQuestions'].includes(feature);
+  const markets=!active ? [] : planPaid ? [...plan.markets] : tier === 'subscriber' ? [...ALL_MARKETS] : [...BASIC_MARKETS];
+  const dailyScanSymbols=enabled('manualDailyScan') ? (isStarter ? 3 : isFullVip ? 8 : 3) : 0;
+  const freeAiQuestionsDaily=enabled('aiQuestions') ? (planPaid ? plan.aiDailyLimit : tier === 'subscriber' ? 50 : 5) : 0;
+
   return {
     tier,
     label: { guest: 'ยังไม่เข้าสู่ระบบ', subscriber: 'สมาชิก', trial: 'ทดลองใช้ฟรี', expired: 'สิทธิหมดอายุ', onboarding: 'สมาชิกใหม่', 'portfolio-fix': 'แจ้งเลขพอร์ตใหม่' }[tier],
     authenticated: Boolean(member),
-    planId:planPaid?plan.id:null,planName:planPaid?plan.name:paid?'สมาชิกเดิม':trial?'ทดลองใช้ฟรี':null,
+    planId:planPaid?plan.id:null,
+    planName:planPaid?plan.name:paid?'PRO VIP (พาร์ทเนอร์)':trial?'ทดลองใช้ฟรี':null,
     billingSource:demo?'demo':stripePaid?'stripe':paid?'admin':null,
     expiresAt: demo?demo.expiresAt:stripePaid ? member.billing.paid_until : paid ? member.subscription_ends_at : trial ? member.trial_ends_at : null,
+    markets,
     capabilities: {
-      symbolSearch: true, marketChart: true, manualDailyScan: enabled('manualDailyScan'), autoPickFeed: enabled('autoPickFeed'), aiQuestions: enabled('aiQuestions'),
-      localWatchlist: true, multiTimeframe: true, serverAlerts: false,
-      savedCloudWorkspace: false, deepScan: false, communityPosting: enabled('communityPosting'),
+      symbolSearch: true,
+      marketChart: true,
+      manualDailyScan: enabled('manualDailyScan'),
+      autoPickFeed: enabled('autoPickFeed'),
+      aiQuestions: enabled('aiQuestions'),
+      localWatchlist: true,
+      multiTimeframe: true,
+      serverAlerts: false,
+      savedCloudWorkspace: false,
+      deepScan: false,
+      communityPosting: enabled('communityPosting'),
+      telegramVip: enabled('telegramVip'),
+      voiceAlerts: enabled('voiceAlerts'),
     },
-    limits: { dailyScanSymbols: enabled('manualDailyScan') ? planPaid?plan.dailyScanSymbols:8 : 0, freeAiQuestionsDaily: enabled('aiQuestions') ? planPaid?plan.aiDailyLimit:5 : 0, extraAiQuestionCredits: 1, allowExtraAiCredits:!planPaid&&!demo },
+    limits: {
+      dailyScanSymbols,
+      freeAiQuestionsDaily,
+      extraAiQuestionCredits: 1,
+      allowExtraAiCredits: !planPaid && !demo,
+    },
   };
 }

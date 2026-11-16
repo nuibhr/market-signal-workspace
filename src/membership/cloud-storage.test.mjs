@@ -61,7 +61,7 @@ test('native D1 preserves LINE profile, 14-day trial, monthly renewal, credits a
     assert.equal(await member.sessionMember('forged'),null);
     await member.deleteSession(session.value);assert.equal(await member.sessionMember(session.value),null);
     const conversation=randomUUID();
-    for(let i=0;i<5;i++){
+    for(let i=0;i<50;i++){
       const id=randomUUID(),r=await member.reserveAiQuestion(customer,id,'Fixture question',conversation);
       assert.equal(r.chargeType,'free');await member.completeAiQuestion(customer,id,{answer:'fixture'},null,r.reservationToken);
     }
@@ -102,7 +102,7 @@ test('native D1 preserves LINE profile, 14-day trial, monthly renewal, credits a
     {
     // A Stripe-paid D1 account uses the same entitlement and atomic quota guard as Node.
     process.env.STRIPE_SECRET_KEY='sk_test_d1_fixture';
-    process.env.STRIPE_PRICE_STARTER_MONTHLY='price_starter';process.env.STRIPE_PRICE_PRO_MONTHLY='price_pro';process.env.STRIPE_PRICE_ULTIMATE_MONTHLY='price_ultimate';
+    process.env.STRIPE_PRICE_STARTER_MONTHLY='price_starter';process.env.STRIPE_PRICE_PRO_MONTHLY='price_pro';
     const billing=await import('../billing/store.mjs');
     const paid=await member.upsertLineMember({lineId:'U'+'c'.repeat(32),displayName:'D1 billing fixture'});
     await storage.run('INSERT INTO billing_customers VALUES(?,?,?)',paid.id,'test','cus_d1_fixture');

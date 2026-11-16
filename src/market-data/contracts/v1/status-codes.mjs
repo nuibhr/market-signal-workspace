@@ -80,13 +80,12 @@ export const STATUS_CODES = Object.freeze([
   'UNKNOWN',
 ]);
 
-// User-approved full candidate-card caps. Guest preview is redacted, not a full card.
+// User-approved full candidate-card caps for the 2-tier system. Guest preview is redacted, not a full card.
 export const ENTITLEMENT_CAPS = Object.freeze({
   GUEST: Object.freeze({ maxFullCards: 0, redactedSampleLimit: 1 }),
-  TRIAL: Object.freeze({ maxFullCards: 8, redactedSampleLimit: 0 }),
+  TRIAL: Object.freeze({ maxFullCards: 3, redactedSampleLimit: 0 }),
   STARTER: Object.freeze({ maxFullCards: 3, redactedSampleLimit: 0 }),
-  PRO: Object.freeze({ maxFullCards: 5, redactedSampleLimit: 0 }),
-  ULTIMATE: Object.freeze({ maxFullCards: 8, redactedSampleLimit: 0 }),
+  PRO: Object.freeze({ maxFullCards: 8, redactedSampleLimit: 0 }),
 });
 
 export const API_ERROR_CODES = Object.freeze([

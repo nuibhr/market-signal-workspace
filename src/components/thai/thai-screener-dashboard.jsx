@@ -112,7 +112,7 @@ export function ThaiScreenerTable({rows,favorites=[],selectedSymbol,onSelect,onT
  </tr>)}</tbody></table></div>;
 }
 
-export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',ownerPreview=false,signalAccess=null,favorites=[],onToggleFavorite,onSelect,selectedSymbol,favoritesRequest=0,onOpenStyleScanner,onResults,compact=false,visible=true}){
+export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',ownerPreview=false,signalAccess=null,voiceAccess=null,telegramVipAccess=null,favorites=[],onToggleFavorite,onSelect,selectedSymbol,favoritesRequest=0,onOpenStyleScanner,onResults,compact=false,visible=true}){
  const [data,setData]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[fetchCycle,setFetchCycle]=useState(0);
  const [preset,setPreset]=useState('all'),[query,setQuery]=useState(''),[savedOnly,setSavedOnly]=useState(false),[sector,setSector]=useState('all'),[peMax,setPeMax]=useState(80),[rsiMin,setRsiMin]=useState(0),[rsiMax,setRsiMax]=useState(100),[sort,setSort]=useState('quality'),[page,setPage]=useState(1);
  const [showMetrics,setShowMetrics]=useState(!compact);
@@ -189,6 +189,13 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
  },[monitor?.enabled]);
 
  function speakText(text){
+  if(voiceAccess===false){
+   setToastData({
+    title:'🔒 เสียงพากย์สดเฉพาะสมาชิก PRO VIP (฿399/ด.)',
+    desc:'แพ็กเกจ BASIC และช่วงทดลองฟรีไม่รวมเสียงแจ้งเตือนสด อัปเกรดได้ที่หน้าบัญชีของคุณ (/account#membership-plans)',
+   });
+   return;
+  }
   let storage;try{storage=window.localStorage;}catch(_e){}
   const isSoundOn=monitor?monitor.enabled:(voiceEnabled&&soundPreference(storage));
   if(!text||!speakerRef.current||!isSoundOn){
@@ -225,11 +232,14 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   return()=>{stop();controller.abort();};
  },[signalAccess,revision,visible,apiUrl]);
 
- const rawRows=data?.rows??[],rows=rawRows.length?rawRows:THAI_CURATED_FALLBACK_ROWS,stats=data?.stats;
- const filtered=useMemo(()=>filterThaiRows(rows,{preset,query,savedOnly,favorites,sector,peMax,rsiMin,rsiMax,sort}),[rows,preset,query,savedOnly,favorites,sector,peMax,rsiMin,rsiMax,sort]);
+ const isUnlocked=signalAccess===true||ownerPreview;
+ const rawRows=data?.rows??[],rows=isUnlocked?(rawRows.length?rawRows:THAI_CURATED_FALLBACK_ROWS):[],stats=data?.stats;
+ const previewLockedRows=useMemo(()=>THAI_CURATED_FALLBACK_ROWS.slice(0,2).map(r=>({...r,price:null,changePercent:null,plan:null,score:null,rsi:null,pe:null,dividendPercent:null,rvol:null,rs:null,status:'available'})),[]);
+ const displayRows=isUnlocked?rows:previewLockedRows;
+ const filtered=useMemo(()=>filterThaiRows(displayRows,{preset,query,savedOnly,favorites,sector,peMax,rsiMin,rsiMax,sort}),[displayRows,preset,query,savedOnly,favorites,sector,peMax,rsiMin,rsiMax,sort]);
  useEffect(()=>setPage(1),[preset,query,savedOnly,sector,peMax,rsiMin,rsiMax,sort]);
- const pages=Math.max(1,Math.ceil(filtered.length/7)),current=Math.min(page,pages),selected=rows.find(r=>r.symbol===selectedSymbol)||rows[0],sizing=selected?.plan?sizeReferencePlan(selected.plan,{capital:Number(capital),riskBudget:Number(risk),lotSize:100}):null;
- const sectors=[...new Set(rows.map(r=>r.sector).filter(Boolean))].sort(),hasPe=rows.some(r=>Number.isFinite(r.pe));
+ const pages=Math.max(1,Math.ceil(filtered.length/7)),current=Math.min(page,pages),selected=displayRows.find(r=>r.symbol===selectedSymbol)||displayRows[0],sizing=isUnlocked&&selected?.plan?sizeReferencePlan(selected.plan,{capital:Number(capital),riskBudget:Number(risk),lotSize:100}):null;
+ const sectors=[...new Set(displayRows.map(r=>r.sector).filter(Boolean))].sort(),hasPe=displayRows.some(r=>Number.isFinite(r.pe));
  const regime=stats?.index&&stats.index.trend!=='unknown'&&stats.observed>=stats.expected*.8?(stats.index.trend==='up'&&stats.advance>stats.decline?'ตลาดเอื้อ':stats.index.trend==='down'?'ระวังขาลง':'ตลาดผสม'):'ตลาดเอื้อ (SET100)';
  const reset=()=>{setPreset('all');setQuery('');setSavedOnly(false);setSector('all');setPeMax(80);setRsiMin(0);setRsiMax(100);};
  const refreshKey=data?[...new Set([selectedSymbol,...filtered.slice((current-1)*7,current*7).map(r=>r.symbol)])].filter(Boolean).slice(0,8).join(','):'';
@@ -272,9 +282,9 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
   ].filter(Boolean);
  },[rows,morningSymbols]);
 
- /* ─── Voice Briefing preparation (On-Demand only, no auto-play on load) ─── */
+ /* ─── Voice Briefing preparation (On-Demand only, members-only picks) ─── */
  useEffect(()=>{
-  if(!visible||autoAnnouncedRef.current)return;
+  if(!isUnlocked||!visible||autoAnnouncedRef.current)return;
   if(!morningPicks.length)return;
   autoAnnouncedRef.current=true;
   const timeGate=isEveningHomeworkUnlocked();
@@ -282,12 +292,13 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    ?buildEveningHomeworkSpeech(rows,regime,{morningPicks})
    :buildMorningBriefSpeech(rows,regime);
   setLastSpokenText(autoText);
- },[visible,morningPicks,rows,regime]);
+ },[isUnlocked,visible,morningPicks,rows,regime]);
 
  const avoidedCount=useMemo(()=>{
+  if(!isUnlocked)return null;
   const weak=rows.filter(r=>r.stage===4||(r.stage===3&&!r.templatePass)).length;
   return rows.some(r=>r.stage!==null)?weak:null;
- },[rows,stats]);
+ },[isUnlocked,rows,stats]);
 
  function handleRunDoctor(sym,{speak=true}={}){
   const target=(sym||doctorInput||'').trim().toUpperCase();
@@ -336,7 +347,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
      <p>ระบบคัดหุ้นเข้าแผน 2R พร้อมอ่านออกเสียงภาษาไทยแจ้งจุดเข้า แนวรับ แนวต้าน และจุดคัทลอสให้ฟังทันที (กดสลับเมนูเสียงไม่ซ้อนกัน)</p>
     </div>
     <div className={styles.retailVoiceControls}>
-     <button
+     {isUnlocked&&voiceAccess!==false&&<button
       type="button"
       className={styles.voicePlayPrimary}
       onClick={()=>{
@@ -349,7 +360,8 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
       }}
      >
       {speechState==='speaking'?'🔊 กำลังอ่านโพยหุ้น…':'🔊 กดฟังเสียงสรุปโพยหุ้นในแผน'}
-     </button>
+     </button>}
+     {isUnlocked&&voiceAccess===false&&<a href="/account#membership-plans" className={styles.voicePlayPrimary} style={{textDecoration:'none'}}>🔒 เสียงพากย์สดเฉพาะ PRO VIP (฿399)</a>}
      {speechState==='speaking'&&(
       <button
        type="button"
@@ -387,7 +399,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
      className={retailTab==='morning'?styles.retailTabActive:styles.retailTab}
      onClick={()=>{
       setRetailTab('morning');
-      speakText(buildMorningBriefSpeech(rows,regime));
+      if(isUnlocked)speakText(buildMorningBriefSpeech(rows,regime));
      }}
     >
      🌅 09:30 น. เช้านี้เล่นอะไรดี? <small>โพยเปิดตลาดเช้า 3 หุ้นเด่น + ฟังเสียง</small>
@@ -399,7 +411,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
      className={retailTab==='evening'?styles.retailTabActive:styles.retailTab}
      onClick={()=>{
       setRetailTab('evening');
-      speakText(buildEveningHomeworkSpeech(rows,regime,{morningPicks}));
+      if(isUnlocked)speakText(buildEveningHomeworkSpeech(rows,regime,{morningPicks}));
      }}
     >
      🌙 17:30 น. หุ้นการบ้านเย็นนี้ <small>{eveningTimeStatus.unlocked?'การบ้าน 3 สไตล์ไม่ซ้ำรอบเช้า + ฟังเสียง':'🔒 สแกนอัตโนมัติ 17:30 น. หลังตลาดปิด'}</small>
@@ -423,7 +435,25 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
     </button>
    </div>
 
-   {retailTab==='morning'&&(
+   {!isUnlocked&&(retailTab==='morning'||retailTab==='evening')&&(
+    <div style={{ padding: '24px 20px', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(15,23,42,0.92), rgba(30,41,59,0.78))', border: '1px solid rgba(56,189,248,0.28)', textAlign: 'center', margin: '14px 0' }}>
+     <div style={{ fontSize: '28px', marginBottom: '6px' }}>🔒</div>
+     <strong style={{ fontSize: '16px', color: '#f8fafc', display: 'block' }}>โพยหุ้นเด่น &amp; แผนจุดเข้า / Stop Loss / เป้า 2R สงวนสิทธิ์เฉพาะสมาชิก VIP และทดลองใช้งาน</strong>
+     <p style={{ color: '#94a3b8', fontSize: '13px', margin: '8px auto 16px', maxWidth: '580px', lineHeight: 1.6 }}>
+      เข้าสู่ระบบ LINE เพื่อทดลองสแกนหุ้น Stage 2 หรือเปิดพอร์ตพาร์ทเนอร์รับสิทธิ์ VIP ทดลองใช้งาน 14 วัน + ลิงก์เข้ากลุ่ม Telegram VIP ทันที
+     </p>
+     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+      <a href="/account" style={{ background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)', color: '#fff', padding: '9px 18px', borderRadius: '10px', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
+       🔑 เข้าสู่ระบบ / สมัครแพ็กเกจ (เริ่มต้น ฿159/ด.) ↗
+      </a>
+      <a href="/open-account" style={{ background: 'rgba(16,185,129,0.16)', color: '#6ee7b7', border: '1px solid rgba(16,185,129,0.35)', padding: '9px 18px', borderRadius: '10px', fontWeight: 600, fontSize: '13px', textDecoration: 'none' }}>
+       📈 เปิดพอร์ตพาร์ทเนอร์ (ฟรี 14 วัน + เข้า Telegram VIP) ↗
+      </a>
+     </div>
+    </div>
+   )}
+
+   {isUnlocked&&retailTab==='morning'&&(
     <div className={styles.retailCardsGrid}>
      {morningPicks.map((item,idx)=>{
       const analysis=getDoctorAnalysis(item);
@@ -464,7 +494,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
 
 
 
-   {retailTab==='evening'&&(!eveningTimeStatus.unlocked?(
+   {isUnlocked&&retailTab==='evening'&&(!eveningTimeStatus.unlocked?(
     <div style={{ padding: '28px 20px', borderRadius: '18px', background: 'linear-gradient(135deg, rgba(15,23,42,0.88), rgba(30,41,59,0.72))', border: '1px solid rgba(56,189,248,0.22)', textAlign: 'center', margin: '14px 0', backdropFilter: 'blur(16px)' }}>
      <div style={{ fontSize: '34px', marginBottom: '8px' }}>⏳</div>
      <strong style={{ fontSize: '16px', color: '#f8fafc', display: 'block' }}>ตลาดกำลังเปิดทำการ · การบ้านหุ้นรอบเย็นจะเริ่มประมวลผลเวลา 17:30 น.</strong>
@@ -529,7 +559,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
      <p>คัดกรองเฉพาะหุ้นที่มีโครงสร้างความได้เปรียบสูง (High Probability Setup) บันทึก Entry / SL / TP ชัดเจน</p>
     </div>
     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-     <TelegramVipJoinButton label="✈️ รับการบ้านหุ้นเข้า Telegram VIP ↗" />
+     <TelegramVipJoinButton label="✈️ รับการบ้านหุ้นเข้า Telegram VIP ↗" hasAccess={telegramVipAccess} />
      <button type="button" className={styles.ledgerButton} onClick={()=>{if(onResults)onResults();}}>
       📑 ดูบันทึกผลจริง Trade Ledger ↗
      </button>
@@ -752,9 +782,9 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    </div>
   </aside>
 
-  {(signalAccess===false||error==='MEMBERSHIP_REQUIRED')&&<div role="status" className={styles.message}><b>กำลังแสดงชุดข้อมูลอ้างอิง SET100 · เปิดสัญญาณสดด้วยสิทธิสมาชิก</b><p>เข้าสู่ระบบสมาชิกเพื่อซิงก์สัญญาณคัดกรองเรียลไทม์รายวัน</p><a href="/account">เข้าสู่ระบบ / ตรวจสมาชิก ↗</a></div>}
+  {(signalAccess===false||error==='MEMBERSHIP_REQUIRED')&&<div role="status" className={styles.message}><b>โหมดผู้เยี่ยมชม (ล็อกราคาและแผนเข้า-ออก 2R)</b><p>เข้าสู่ระบบสมาชิกหรือเปิดพอร์ตพาร์ทเนอร์เพื่อปลดล็อกตารางสแกน SET100 และแผน 2R ครบทุกตัว</p><a href="/account">เข้าสู่ระบบ / สมัครสมาชิก ↗</a></div>}
   <>
-   {topFocus.length>0&&<section className={styles.focusSection} aria-label="Top 3 High Conviction Stage 2 Focus Picks">
+   {isUnlocked&&topFocus.length>0&&<section className={styles.focusSection} aria-label="Top 3 High Conviction Stage 2 Focus Picks">
     <div className={styles.focusHeader}>
      <span className={styles.focusBadge}>⭐ Daily High Conviction</span>
      <h3>Top 3 หุ้นทรงพลัง Stage 2 (พร้อมกรอบราคา 2R)</h3>
@@ -803,7 +833,7 @@ export default function ThaiScreenerDashboard({apiUrl='/api/thai-screener',owner
    {error&&error!=='MEMBERSHIP_REQUIRED'&&<p role="alert" className={styles.notice}>ยังอ่านข้อมูลไม่ได้ กรุณาลองโหลดผลล่าสุด · {error}</p>}
    <ThaiScreenerTable showMetrics={showMetrics} rows={filtered.slice((current-1)*7,current*7)} favorites={favorites} selectedSymbol={selectedSymbol} onSelect={onSelect} onToggleFavorite={onToggleFavorite} onSpeakRow={row=>speakText(buildStockSupportResistanceSpeech(row))}/>
    {!filtered.length&&<p role="status" className={styles.message}>{preset==='orb'?'ไม่มีสัญญาณ ORB ใหม่ในโหมดที่พักวิจัย':'ยังไม่มีหุ้นผ่านตัวกรองนี้ ลองล้างตัวกรองหรือรอข้อมูลครบ'}</p>}
-   <footer className={styles.pagination}><span>{filtered.length}/{rows.length} ตัว · หน้าละ 7 · {rawRows.length?(data?.dataMode==='daily-snapshot'?'ผลส่วนกลางรอบรายวัน · ใช้ร่วมกันทั้งวัน':'คัดใหม่รายตัวทุก 10 นาทีตามคิว'):'ชุดอ้างอิง SET100 พร้อมโลโก้และแผน 2R'}</span><div><button disabled={current===1} onClick={()=>setPage(current-1)}>ก่อนหน้า</button><span>{current}/{pages}</span><button disabled={current===pages} onClick={()=>setPage(current+1)}>ถัดไป</button></div></footer>
+   <footer className={styles.pagination}><span>{filtered.length}/{displayRows.length} ตัว · หน้าละ 7 · {!isUnlocked?'โหมดตัวอย่างผู้เยี่ยมชม (ปลดล็อกแผน 2R ด้วยสิทธิ์สมาชิก)':rawRows.length?(data?.dataMode==='daily-snapshot'?'ผลส่วนกลางรอบรายวัน · ใช้ร่วมกันทั้งวัน':'คัดใหม่รายตัวทุก 10 นาทีตามคิว'):'ชุดอ้างอิง SET100 พร้อมโลโก้และแผน 2R'}</span><div><button disabled={current===1} onClick={()=>setPage(current-1)}>ก่อนหน้า</button><span>{current}/{pages}</span><button disabled={current===pages} onClick={()=>setPage(current+1)}>ถัดไป</button></div></footer>
    
    <div className={styles.elevatedSizing} aria-label="โต๊ะคำนวณขนาดไม้ 2R Position Sizing">
     <div className={styles.sizingHead}>

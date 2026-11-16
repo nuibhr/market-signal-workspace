@@ -1,6 +1,6 @@
 import { sourceDisposition } from './coverage-policy.mjs';
 import { archiveCandles } from './history-store.mjs';
-import { SET100_SYMBOLS, MAI_INITIAL_SYMBOLS, DR80_SYMBOLS, US_STOCKS } from '../markets/catalog.mjs';
+import { THAI_ALL_SYMBOLS, thaiInstrumentId, DR80_SYMBOLS, US_STOCKS } from '../markets/catalog.mjs';
 import { US_SCAN_SYMBOLS, US_UNIVERSE_METADATA, usScanSlot } from '../markets/us-universe.mjs';
 import { completedCandles } from '../analysis/pivots.mjs';
 import { createSettradeClient } from '../market-data/settrade.mjs';
@@ -34,7 +34,7 @@ export function drScanSymbols() {
 }
 
 export function thaiScanSymbols() {
-  return [...new Set([...SET100_SYMBOLS, ...MAI_INITIAL_SYMBOLS])];
+  return [...THAI_ALL_SYMBOLS];
 }
 
 export function usScanSymbols() {
@@ -145,7 +145,7 @@ async function runThaiAutoPick(now = Date.now(), task = {}) {
             (await recordScanProgress('thai', session.day, symbol, 'retry', 'NO_CURRENT_SESSION_CANDLE'));
             continue;
           }
-          const plan = buildThaiOrbPlan({ symbol, instrumentId: `${SET100_SYMBOLS.includes(symbol) ? 'SET100' : 'MAI_INITIAL'}:${symbol}`,
+          const plan = buildThaiOrbPlan({ symbol, instrumentId: thaiInstrumentId(symbol),
             fifteenMinuteBars: fifteen.bars, dailyBars: daily.bars, now:checkedAt });
           (await recordDecision(runId, symbol, plan));
           (await recordScanProgress('thai', session.day, symbol,

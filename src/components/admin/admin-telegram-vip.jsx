@@ -14,6 +14,7 @@ import {
   Sliders,
   History,
   Lock,
+  Shield,
   Target,
   ExternalLink,
   UserMinus,
@@ -159,9 +160,14 @@ export default function AdminTelegramVip() {
 
   // Member Management & Auto-Kick State
   const [inviteMemberName, setInviteMemberName] = useState('');
+  const [inviteJoinRequest, setInviteJoinRequest] = useState(true);
   const [createdInviteLink, setCreatedInviteLink] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [generatingInvite, setGeneratingInvite] = useState(false);
+  const [registeringWebhook, setRegisteringWebhook] = useState(false);
+  const [dbKicking, setDbKicking] = useState(false);
+  const [inactivityDays, setInactivityDays] = useState(30);
+  const [kickingInactiveBroker, setKickingInactiveBroker] = useState(false);
 
   const [kickUserId, setKickUserId] = useState('');
   const [kickingMember, setKickingMember] = useState(false);
@@ -181,6 +187,7 @@ export default function AdminTelegramVip() {
     try {
       const payload = {
         action: 'create-invite',
+        mode: inviteJoinRequest ? 'join-request' : undefined,
         memberName: inviteMemberName.trim() || 'VIP Member',
         memberLimit: 1,
         ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
@@ -272,6 +279,102 @@ export default function AdminTelegramVip() {
     }
   }
 
+  async function handleDbAutoKickExpired() {
+    if (dbKicking) return;
+    if (!confirm('ตรวจรายชื่อสมาชิก Telegram VIP ที่ผูกในฐานข้อมูล และสั่งบอทเตะเฉพาะคนที่แพ็กเกจหมดอายุแล้ว?')) return;
+    setDbKicking(true);
+    setToast(null);
+    try {
+      const payload = {
+        action: 'auto-kick-expired',
+        fromDb: true,
+        ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
+      };
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setToast({ type: 'ok', msg: `✅ ตรวจ ${data.checkedCount} ราย · พบหมดอายุ ${data.expiredCount} ราย · เตะออกสำเร็จ ${data.kickedCount} ราย` });
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: data.error || 'ซิงก์เตะสมาชิกไม่สำเร็จ' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setDbKicking(false);
+    }
+  }
+
+  const [requireMinVolume, setRequireMinVolume] = useState(true);
+
+  async function handleKickInactiveBroker() {
+    if (kickingInactiveBroker) return;
+    const days = Math.max(1, Math.min(365, Number(inactivityDays) || 30));
+    const confirmLabel = requireMinVolume
+      ? `ตรวจสมาชิก VIP พอร์ตพาร์ทเนอร์ที่ค่าคอม < 1,000 บาท/เดือน หรือไม่เทรดเกิน ${days} วัน และสั่งปิดสิทธิ์ + เตะออกจากกลุ่ม Telegram VIP?`
+      : `ตรวจสมาชิก VIP พอร์ตพาร์ทเนอร์ที่ไม่มีบันทึกการเทรดเกิน ${days} วัน และสั่งปิดสิทธิ์ + เตะออกจากกลุ่ม Telegram VIP?`;
+    if (!confirm(confirmLabel)) return;
+    setKickingInactiveBroker(true);
+    setToast(null);
+    try {
+      const payload = {
+        action: 'auto-kick-inactive-broker',
+        inactivityDays: days,
+        requireMinVolume,
+        minMonthlyVolumeThb: 1000,
+        graceDays: 7,
+        ...(!botStatus.serverConfigured && telegramConfig ? telegramConfig : {}),
+      };
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setToast({
+          type: 'ok',
+          msg: `🚫 ตรวจพอร์ตไม่เทรดเกิน ${data.inactivityDays} วัน: พบ ${data.matchedCount} ราย · ระงับสิทธิ์เว็บ ${data.revokedCount} ราย · เตะ Telegram ${data.kickedCount} ราย`,
+        });
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: data.error || 'ตรวจและเตะพอร์ตไม่เทรดไม่สำเร็จ' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setKickingInactiveBroker(false);
+    }
+  }
+
+  async function handleRegisterWebhook() {
+    if (registeringWebhook) return;
+    setRegisteringWebhook(true);
+    setToast(null);
+    try {
+      const res = await fetch('/api/alerts/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'register-webhook' }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setToast({ type: 'ok', msg: `🔗 ตั้งค่า Telegram Webhook สำเร็จ: ${data.url}` });
+        await fetchBotStatus();
+      } else {
+        setToast({ type: 'err', msg: data.error || 'ตั้งค่า Webhook ไม่สำเร็จ (ต้องใช้ HTTPS origin)' });
+      }
+    } catch (err) {
+      setToast({ type: 'err', msg: err.message || 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้' });
+    } finally {
+      setRegisteringWebhook(false);
+    }
+  }
+
   useEffect(() => {
     const cfg=readTelegramSettings(window.localStorage);setTelegramConfig(cfg);fetchBotStatus(cfg);
   }, []);
@@ -292,6 +395,8 @@ export default function AdminTelegramVip() {
         hasToken: data.hasToken,
         hasChatId: data.hasChatId,
         chatIdMasked: ownValid?cfg.chatId.slice(0,4)+'***':data.chatIdMasked,
+        webhookSecretConfigured: Boolean(data.webhookSecretConfigured),
+        vipTracking: data.vipTracking || { activeTrackedCount: 0, expiredCount: 0, expiredMembers: [] },
         loading: false,
       });
     } catch {
@@ -781,6 +886,91 @@ ${stage === 'ENTRY' ? '1. เปิดแอป MT4/MT5 กรอก Entry, SL, 
       {/* Tab: VIP Membership Access & Auto-Kick */}
       {activeTab === 'members' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Card 0: DB Auto-Sync & Join-Request Webhook Status */}
+          <div className={styles.dispatchCard}>
+            <div className={styles.cardHead}>
+              <div>
+                <h3 className={styles.cardTitle}>
+                  <Shield size={18} color="#10b981" /> ระบบผูกสิทธิ์รายเดือน &amp; เตะออกอัตโนมัติ (Join-Request + Auto-Kick Sync)
+                </h3>
+                <p className={styles.cardSub}>
+                  สมาชิกที่กดเข้าผ่านลิงก์ Join-Request จะถูกบันทึก Telegram User ID ผูกกับ LINE/Stripe ในฐานข้อมูล เมื่อรายเดือนหมดระบบจะเตะออกทันที
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.2)' }}>
+                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>สมาชิก VIP ที่ผูก ID ในระบบ</div>
+                <strong style={{ fontSize: '1.35rem', color: '#38bdf8' }}>{botStatus.vipTracking?.activeTrackedCount ?? 0} คน</strong>
+              </div>
+              <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(244, 63, 94, 0.25)' }}>
+                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>หมดอายุ / รอเตะออก</div>
+                <strong style={{ fontSize: '1.35rem', color: (botStatus.vipTracking?.expiredCount ?? 0) > 0 ? '#f43f5e' : '#10b981' }}>
+                  {botStatus.vipTracking?.expiredCount ?? 0} คน
+                </strong>
+              </div>
+              <div style={{ padding: '12px', borderRadius: '10px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(148, 163, 184, 0.2)' }}>
+                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>สถานะ Webhook Secret</div>
+                <strong style={{ fontSize: '0.95rem', color: botStatus.webhookSecretConfigured ? '#10b981' : '#f59e0b' }}>
+                  {botStatus.webhookSecretConfigured ? '✓ พร้อมป้องกัน Webhook' : '⚠️ ยังไม่ตั้งค่า TELEGRAM_WEBHOOK_SECRET'}
+                </strong>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className={styles.dispatchBtn}
+                style={{ background: 'linear-gradient(135deg, #e11d48, #be123c)', padding: '10px 18px' }}
+                disabled={dbKicking || !botStatus.configured}
+                onClick={handleDbAutoKickExpired}
+              >
+                <UserMinus size={16} /> {dbKicking ? 'กำลังตรวจและเตะสมาชิก…' : '🔍 ตรวจและเตะสมาชิกหมดอายุทั้งหมดจาก DB ทันที'}
+              </button>
+              <button
+                type="button"
+                className={styles.dispatchBtn}
+                style={{ background: 'linear-gradient(135deg, #0f766e, #0d9488)', padding: '10px 18px' }}
+                disabled={registeringWebhook || !botStatus.configured}
+                onClick={handleRegisterWebhook}
+              >
+                <RefreshCw size={16} /> {registeringWebhook ? 'กำลังตั้งค่า…' : '🔗 ลงทะเบียน Telegram Webhook'}
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(148,163,184,0.16)' }}>
+              <label style={{ fontSize: '0.8rem', color: '#cbd5e1', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                พอร์ตพาร์ทเนอร์ไม่เทรดเกิน:
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={inactivityDays}
+                  onChange={e => setInactivityDays(Number(e.target.value) || 30)}
+                  style={{ width: '64px', padding: '4px 8px', borderRadius: '6px', background: 'rgba(15,23,42,0.8)', color: '#fff', border: '1px solid rgba(148,163,184,0.35)' }}
+                />
+                วัน
+              </label>
+              <label style={{ fontSize: '0.8rem', color: '#fbbf24', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={requireMinVolume}
+                  onChange={e => setRequireMinVolume(e.target.checked)}
+                />
+                บังคับเกณฑ์ค่าคอม ≥ 1,000 บาท/เดือน (ยกเว้นพอร์ตใหม่ 7 วัน)
+              </label>
+              <button
+                type="button"
+                className={styles.dispatchBtn}
+                style={{ background: 'linear-gradient(135deg, #b45309, #dc2626)', padding: '9px 16px' }}
+                disabled={kickingInactiveBroker || !botStatus.configured}
+                onClick={handleKickInactiveBroker}
+              >
+                <UserMinus size={16} /> {kickingInactiveBroker ? 'กำลังตรวจยอดเทรด…' : '🚫 เตะพอร์ตพาร์ทเนอร์ที่ไม่ถึงเกณฑ์ทันที'}
+              </button>
+            </div>
+          </div>
+
           {/* Card 1: Generate 1-Time VIP Invite Link */}
           <div className={styles.dispatchCard}>
             <div className={styles.cardHead}>
@@ -789,10 +979,19 @@ ${stage === 'ENTRY' ? '1. เปิดแอป MT4/MT5 กรอก Entry, SL, 
                   <UserPlus size={18} color="#22d3ee" /> สร้างลิงก์เข้ากลุ่ม VIP เฉพาะคน (One-Time Invite Link)
                 </h3>
                 <p className={styles.cardSub}>
-                  สร้างลิงก์เชิญเข้ากลุ่มแบบจำกัด 1 สิทธิ์ (Member Limit: 1) ลิงก์จะหมดอายุทันทีเมื่อมีคนกดเข้า 1 คน ป้องกันการแอบนำไปแชร์ต่อ
+                  แนะนำเลือกแบบ Join-Request เพื่อให้บอทรับคำขอและผูก Telegram User ID กับระบบสมาชิกอัตโนมัติ (เตะออกได้เมื่อหมดอายุ)
                 </p>
               </div>
             </div>
+
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '12px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={inviteJoinRequest}
+                onChange={e => setInviteJoinRequest(e.target.checked)}
+              />
+              ใช้โหมด Join-Request ผูกสิทธิ์สมาชิก &amp; Auto-Kick เมื่อหมดรายเดือน (แนะนำ)
+            </label>
 
             <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
               <div style={{ flex: '1', minWidth: '240px' }}>
